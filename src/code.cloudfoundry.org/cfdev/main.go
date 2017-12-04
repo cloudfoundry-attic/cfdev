@@ -3,13 +3,19 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"syscall"
+	"time"
 
+	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/user"
+	"code.cloudfoundry.org/garden"
+	"code.cloudfoundry.org/garden/client"
+	"code.cloudfoundry.org/garden/client/connection"
 )
 
 func main() {
@@ -39,8 +45,9 @@ func start() {
 	}
 
 	linuxkit := process.LinuxKit{
-		StatePath: statePath,
-		ImagePath: filepath.Join(devHome, "cfdev-efi.iso"),
+		StatePath:   statePath,
+		ImagePath:   filepath.Join(devHome, "cfdev-efi.iso"),
+		BoshISOPath: filepath.Join(devHome, "bosh-deps.iso"),
 	}
 
 	cmd := linuxkit.Command()
@@ -49,7 +56,19 @@ func start() {
 		panic(err)
 	}
 
-	fmt.Printf("started linuxkit at %v\n", cmd.Process.Pid)
+	fmt.Println("Starting the VM...")
+
+	garden := client.New(connection.New("tcp", "127.0.0.1:7777"))
+
+	waitForGarden(garden)
+
+	fmt.Println("Deploying the BOSH Director...")
+
+	if err := gdn.DeployBosh(garden); err != nil {
+		panic(err)
+	}
+
+	waitForBOSH()
 }
 
 func stop() {
@@ -58,7 +77,33 @@ func stop() {
 	pidBytes, _ := ioutil.ReadFile(hyperkitPid)
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 
-	fmt.Printf("stopping linuxkit pid %v\n", pid)
 	process, _ := os.FindProcess(int(pid))
 	process.Signal(syscall.SIGTERM)
+}
+
+func waitUntilListeningAt(addr string) {
+	for {
+		fmt.Printf("Waiting to you hear back from %v\n", addr)
+		_, err := net.Dial("tcp", addr)
+
+		if err == nil {
+			return
+		}
+
+		time.Sleep(time.Second)
+	}
+}
+
+func waitForBOSH() {
+	waitUntilListeningAt("localhost:25555")
+}
+
+func waitForGarden(client garden.Client) {
+	for {
+		if err := client.Ping(); err == nil {
+			return
+		}
+
+		time.Sleep(time.Second)
+	}
 }

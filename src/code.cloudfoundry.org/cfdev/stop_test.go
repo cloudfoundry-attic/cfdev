@@ -22,10 +22,7 @@ var _ = Describe("stop", func() {
 
 	BeforeEach(func() {
 		cfdevHome = createTempCFDevHomeDir()
-		targetISOPath := filepath.Join(cfdevHome, "cfdev-efi.iso")
-
-		copyGardenISOTo(targetISOPath)
-		Expect(targetISOPath).Should(BeAnExistingFile())
+		copyDependenciesTo(cfdevHome)
 	})
 
 	AfterEach(func() {
@@ -42,9 +39,11 @@ var _ = Describe("stop", func() {
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
-		Eventually(hyperkitPid, 30, 1).Should(BeAnExistingFile())
-		eventuallyShouldListenAt("localhost:7777")
+		Eventually(session, 300, 1).Should(gexec.Exit(0))
+		Expect(hyperkitPid).Should(BeAnExistingFile())
+
+		// Garden is listening
+		expectToListenAt("localhost:7777")
 
 		//PID
 		pidBytes, _ := ioutil.ReadFile(hyperkitPid)

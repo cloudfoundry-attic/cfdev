@@ -38,13 +38,17 @@ permit_device_control() {
   umount /tmp/devices-cgroup || true
 }
 
+export DIRECTOR_DIR=/var/vcap/director
+mkdir -p "${DIRECTOR_DIR}"
+
+exec 1> "${DIRECTOR_DIR}/deploy.log"
+exec 2>&1
+
 permit_device_control
 create_loop_devices
 
-export DIRECTOR_DIR=/var/vcap/director
 export BOSH_DIRECTOR_IP="10.245.0.2"
 
-mkdir -p "${DIRECTOR_DIR}"
 cp /etc/bosh/director.yml "${DIRECTOR_DIR}"
 
 for file_path in $DIRECTOR_DIR/cache/*; do
@@ -52,7 +56,7 @@ for file_path in $DIRECTOR_DIR/cache/*; do
   sed -i "s~url:.*$file_name~url: file://$file_path~g"  "${DIRECTOR_DIR}/director.yml"
 done
 
-bosh create-env \
+bosh --tty create-env \
   "${DIRECTOR_DIR}/director.yml" \
   --vars-store="${DIRECTOR_DIR}/creds.yml" \
   --state="${DIRECTOR_DIR}/state.json"
@@ -73,5 +77,5 @@ EOF
 
 source "${DIRECTOR_DIR}/env"
 
-bosh -n update-cloud-config \
+bosh --tty -n update-cloud-config \
   /etc/bosh/deployment/warden/cloud-config.yml

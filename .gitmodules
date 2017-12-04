@@ -1,3 +1,21 @@
 [submodule "src/code.cloudfoundry.org/cli"]
 	path = src/code.cloudfoundry.org/cli
 	url = git@github.com:cloudfoundry/cli.git
+[submodule "src/code.cloudfoundry.org/garden"]
+	path = src/code.cloudfoundry.org/garden
+	url = git@github.com:cloudfoundry/garden.git
+[submodule "src/code.cloudfoundry.org/lager"]
+	path = src/code.cloudfoundry.org/lager
+	url = git@github.com:cloudfoundry/lager.git
+[submodule "src/github.com/tedsuo/rata"]
+	path = src/github.com/tedsuo/rata
+	url = git@github.com:tedsuo/rata.git
+[submodule "src/github.com/bmizerany/pat"]
+	path = src/github.com/bmizerany/pat
+	url = git@github.com:bmizerany/pat.git
+[submodule "src/github.com/onsi/ginkgo"]
+	path = src/github.com/onsi/ginkgo
+	url = git@github.com:onsi/ginkgo.git
+[submodule "src/github.com/onsi/gomega"]
+	path = src/github.com/onsi/gomega
+	url = git@github.com:onsi/gomega.git

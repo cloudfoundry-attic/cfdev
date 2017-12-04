@@ -28,11 +28,9 @@ var _ = Describe("start", func() {
 
 	BeforeEach(func() {
 		cfdevHome = createTempCFDevHomeDir()
-		targetISOPath := filepath.Join(cfdevHome, "cfdev-efi.iso")
 		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
 
-		copyGardenISOTo(targetISOPath)
-		Expect(targetISOPath).To(BeAnExistingFile())
+		copyDependenciesTo(cfdevHome)
 	})
 
 	AfterEach(func() {
@@ -54,10 +52,14 @@ var _ = Describe("start", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session, 300, 1).Should(gexec.Exit(0))
+		Expect(hyperkitPid).Should(BeAnExistingFile())
 
-		Eventually(hyperkitPid, 30, 1).Should(BeAnExistingFile())
-		eventuallyShouldListenAt("localhost:7777")
+		// Garden is listening
+		expectToListenAt("localhost:7777")
+
+		// BOSH Director is listening
+		expectToListenAt("localhost:25555")
 	})
 
 	Context("when CFDEV_HOME is not writable", func() {
@@ -85,10 +87,19 @@ func createTempCFDevHomeDir() string {
 	return path
 }
 
-func copyGardenISOTo(dst string) {
+func copyDependenciesTo(homeDir string) {
 	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
-	src := filepath.Join(gopaths[0], "linuxkit", "garden-efi.iso")
+	vmISO := filepath.Join(gopaths[0], "linuxkit", "cfdev-efi.iso")
+	boshISO := filepath.Join(gopaths[0], "linuxkit", "bosh-deps.iso")
 
+	targetVMPath := filepath.Join(homeDir, "cfdev-efi.iso")
+	targetBoshPath := filepath.Join(homeDir, "bosh-deps.iso")
+
+	copyFile(vmISO, targetVMPath)
+	copyFile(boshISO, targetBoshPath)
+}
+
+func copyFile(src, dst string) {
 	srcFile, err := os.Open(src)
 	Expect(err).ToNot(HaveOccurred())
 	defer srcFile.Close()
@@ -101,9 +112,7 @@ func copyGardenISOTo(dst string) {
 	Expect(err).ToNot(HaveOccurred())
 }
 
-func eventuallyShouldListenAt(addr string) {
-	EventuallyWithOffset(1, func() error {
-		_, err := net.Dial("tcp", addr)
-		return err
-	}, 30).ShouldNot(HaveOccurred())
+func expectToListenAt(addr string) {
+	_, err := net.Dial("tcp", addr)
+	Expect(err).ShouldNot(HaveOccurred())
 }
