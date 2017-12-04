@@ -38,6 +38,9 @@ func start() {
 	}
 
 	statePath := filepath.Join(devHome, "state")
+	if err := os.RemoveAll(statePath); err != nil {
+		panic(err)
+	}
 
 	if err := os.MkdirAll(statePath, 0755); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create .cfdev state directory: %v\n", err)
@@ -53,6 +56,14 @@ func start() {
 	cmd := linuxkit.Command()
 
 	if err := cmd.Start(); err != nil {
+		panic(err)
+	}
+
+	linuxkitPid := filepath.Join(statePath, "linuxkit.pid")
+
+	err = ioutil.WriteFile(linuxkitPid, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
+
+	if err != nil {
 		panic(err)
 	}
 
@@ -73,12 +84,11 @@ func start() {
 
 func stop() {
 	devHome, _ := user.CFDevHome()
-	hyperkitPid := filepath.Join(devHome, "state", "hyperkit.pid")
-	pidBytes, _ := ioutil.ReadFile(hyperkitPid)
+	linuxkitPid := filepath.Join(devHome, "state", "linuxkit.pid")
+	pidBytes, _ := ioutil.ReadFile(linuxkitPid)
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 
-	process, _ := os.FindProcess(int(pid))
-	process.Signal(syscall.SIGTERM)
+	syscall.Kill(int(-pid), syscall.SIGKILL)
 }
 
 func waitUntilListeningAt(addr string) {

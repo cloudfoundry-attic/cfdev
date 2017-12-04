@@ -2,13 +2,11 @@ package main_test
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -18,27 +16,29 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-// TODO - hyperkit.pid is present & linuxkit cannot start
 var _ = Describe("start", func() {
 
 	var (
 		cfdevHome   string
-		hyperkitPid string
+		linuxkitPid string
+		stateDir    string
 	)
 
 	BeforeEach(func() {
 		cfdevHome = createTempCFDevHomeDir()
-		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
+		stateDir = filepath.Join(cfdevHome, "state")
+		linuxkitPid = filepath.Join(stateDir, "linuxkit.pid")
 
-		copyDependenciesTo(cfdevHome)
+		setupDependencies(cfdevHome)
 	})
 
 	AfterEach(func() {
-		pidBytes, _ := ioutil.ReadFile(hyperkitPid)
-		pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
+		gexec.KillAndWait()
+
+		pid := pidFromFile(stateDir, "linuxkit.pid")
 
 		if pid != 0 {
-			syscall.Kill(int(pid), syscall.SIGTERM)
+			syscall.Kill(int(-pid), syscall.SIGKILL)
 		}
 
 		os.RemoveAll(cfdevHome)
@@ -52,7 +52,10 @@ var _ = Describe("start", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 		Expect(err).ShouldNot(HaveOccurred())
+		Eventually(linuxkitPid, 10, 1).Should(BeAnExistingFile())
 		Eventually(session, 300, 1).Should(gexec.Exit(0))
+
+		hyperkitPid := filepath.Join(stateDir, "hyperkit.pid")
 		Expect(hyperkitPid).Should(BeAnExistingFile())
 
 		// Garden is listening
@@ -76,7 +79,30 @@ var _ = Describe("start", func() {
 
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session).Should(gexec.Exit(1))
-			Expect(hyperkitPid).ShouldNot(BeAnExistingFile())
+			Expect(linuxkitPid).ShouldNot(BeAnExistingFile())
+		})
+	})
+
+	Context("when the state directory has existing files", func() {
+		var dirtyFile string
+
+		BeforeEach(func() {
+			err := os.MkdirAll(stateDir, 0777)
+			Expect(err).ToNot(HaveOccurred())
+
+			dirtyFile = filepath.Join(stateDir, "dirty")
+			err = ioutil.WriteFile(dirtyFile, []byte{}, 0777)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("recreates a clean state directory", func() {
+			command := exec.Command(cliPath, "start")
+			command.Env = append(os.Environ(),
+				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
+
+			_, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+			Eventually(dirtyFile, 10, 1).ShouldNot(BeAnExistingFile())
 		})
 	})
 })
@@ -87,7 +113,7 @@ func createTempCFDevHomeDir() string {
 	return path
 }
 
-func copyDependenciesTo(homeDir string) {
+func setupDependencies(homeDir string) {
 	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
 	vmISO := filepath.Join(gopaths[0], "linuxkit", "cfdev-efi.iso")
 	boshISO := filepath.Join(gopaths[0], "linuxkit", "bosh-deps.iso")
@@ -95,21 +121,8 @@ func copyDependenciesTo(homeDir string) {
 	targetVMPath := filepath.Join(homeDir, "cfdev-efi.iso")
 	targetBoshPath := filepath.Join(homeDir, "bosh-deps.iso")
 
-	copyFile(vmISO, targetVMPath)
-	copyFile(boshISO, targetBoshPath)
-}
-
-func copyFile(src, dst string) {
-	srcFile, err := os.Open(src)
-	Expect(err).ToNot(HaveOccurred())
-	defer srcFile.Close()
-
-	dstFile, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE, 0777)
-	Expect(err).ToNot(HaveOccurred())
-	defer dstFile.Close()
-
-	_, err = io.Copy(dstFile, srcFile)
-	Expect(err).ToNot(HaveOccurred())
+	Expect(os.Symlink(vmISO, targetVMPath)).ToNot(HaveOccurred())
+	Expect(os.Symlink(boshISO, targetBoshPath)).ToNot(HaveOccurred())
 }
 
 func expectToListenAt(addr string) {

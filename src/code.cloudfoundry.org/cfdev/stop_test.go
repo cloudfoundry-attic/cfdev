@@ -16,23 +16,30 @@ import (
 
 var _ = Describe("stop", func() {
 	var (
-		cfdevHome   string
-		hyperkitPid string
+		cfdevHome string
+		stateDir  string
 	)
 
 	BeforeEach(func() {
 		cfdevHome = createTempCFDevHomeDir()
-		copyDependenciesTo(cfdevHome)
+		stateDir = filepath.Join(cfdevHome, "state")
+
+		setupDependencies(cfdevHome)
 	})
 
 	AfterEach(func() {
+		gexec.KillAndWait()
+
+		pid := pidFromFile(stateDir, "linuxkit.pid")
+
+		if pid != 0 {
+			syscall.Kill(int(-pid), syscall.SIGKILL)
+		}
+
 		os.RemoveAll(cfdevHome)
 	})
 
 	It("stops the linuxkit process", func() {
-		//start up
-		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
-
 		command := exec.Command(cliPath, "start")
 		command.Env = append(os.Environ(),
 			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
@@ -40,14 +47,14 @@ var _ = Describe("stop", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())
 		Eventually(session, 300, 1).Should(gexec.Exit(0))
-		Expect(hyperkitPid).Should(BeAnExistingFile())
 
-		// Garden is listening
+		// All services are up
 		expectToListenAt("localhost:7777")
+		expectToListenAt("localhost:25555")
 
 		//PID
-		pidBytes, _ := ioutil.ReadFile(hyperkitPid)
-		pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
+		linuxkitPid := pidFromFile(stateDir, "linuxkit.pid")
+		hyperkitPid := pidFromFile(stateDir, "hyperkit.pid")
 
 		//setup
 		command = exec.Command(cliPath, "stop")
@@ -56,14 +63,25 @@ var _ = Describe("stop", func() {
 
 		session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())
-
 		Eventually(session).Should(gexec.Exit(0))
-		Eventually(hyperkitPid, 30, 1).ShouldNot(BeAnExistingFile())
 
 		//ensure pid is not running
-		Expect(processIsRunning(int(pid))).To(BeFalse())
+		Eventually(func() (bool, error) {
+			return processIsRunning(linuxkitPid)
+		}).Should(BeFalse())
+
+		Eventually(func() (bool, error) {
+			return processIsRunning(hyperkitPid)
+		}).Should(BeFalse())
 	})
 })
+
+func pidFromFile(stateDir, pidFile string) int {
+	path := filepath.Join(stateDir, pidFile)
+	pidBytes, _ := ioutil.ReadFile(path)
+	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
+	return int(pid)
+}
 
 func processIsRunning(pid int) (bool, error) {
 	proc, err := os.FindProcess(pid)
