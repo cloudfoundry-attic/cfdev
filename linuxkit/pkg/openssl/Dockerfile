@@ -9,3 +9,4 @@ RUN rm -rf /out/etc/apk /out/lib/apk /out/var/cache
 FROM scratch
 WORKDIR /
 COPY --from=build /out/ /
+

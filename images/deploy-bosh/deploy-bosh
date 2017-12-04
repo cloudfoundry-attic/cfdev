@@ -44,10 +44,16 @@ create_loop_devices
 export DIRECTOR_DIR=/var/vcap/director
 export BOSH_DIRECTOR_IP="10.245.0.2"
 
-mkdir -p /var/vcap/director
+mkdir -p "${DIRECTOR_DIR}"
+cp /etc/bosh/director.yml "${DIRECTOR_DIR}"
+
+for file_path in $DIRECTOR_DIR/cache/*; do
+  file_name=$(basename $file_path)
+  sed -i "s~url:.*$file_name~url: file://$file_path~g"  "${DIRECTOR_DIR}/director.yml"
+done
 
 bosh create-env \
-  "/etc/bosh/director.yml" \
+  "${DIRECTOR_DIR}/director.yml" \
   --vars-store="${DIRECTOR_DIR}/creds.yml" \
   --state="${DIRECTOR_DIR}/state.json"
 
