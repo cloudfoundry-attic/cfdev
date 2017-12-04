@@ -66,10 +66,10 @@ var _ = Describe("hyperkit acceptance", func() {
 		eventuallyShouldListenAt("http://localhost:7777", 30)
 
 		By("waiting for bosh to listen")
-		eventuallyShouldListenAt("https://localhost:25555", 240)
+		eventuallyShouldListenAt("https://10.245.0.2:25555", 240)
 
 		By("waiting for cf router to listen")
-		eventuallyShouldListenAt("http://localhost:35555", 1200)
+		eventuallyShouldListenAt("http://10.244.0.34:80", 1200)
 
 		By("waiting for cfdev cli to exit when the deploy finished")
 		Eventually(session, 300).Should(gexec.Exit(0))
