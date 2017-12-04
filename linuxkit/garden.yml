@@ -88,6 +88,18 @@ services:
               "-container-ip","10.244.0.34",
               "-container-port","443"]
 
+  - name: expose-router-ssh-port
+    image: alpine:3.6
+    net: none
+    binds:
+      - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
+      - /var/vpnkit:/port
+    command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
+              "-host-ip","10.244.0.34",
+              "-host-port","2222",
+              "-container-ip","10.244.0.34",
+              "-container-port","2222"]
+
 # gaol create -n deploy-bosh -p \
 #   --network 10.246.0.0/16 \
 #   -r /var/vcap/director/cache/deploy-bosh.tar \
