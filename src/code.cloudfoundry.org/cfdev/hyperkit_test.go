@@ -146,13 +146,16 @@ func setupDependencies(cacheDir string) {
 	cfISO := filepath.Join(gopaths[0], "linuxkit", "cf-deps.iso")
 	boshISO := filepath.Join(gopaths[0], "linuxkit", "bosh-deps.iso")
 
-	targetVMPath := filepath.Join(cacheDir, "cfdev-efi.iso")
-	targetBoshPath := filepath.Join(cacheDir, "bosh-deps.iso")
-	targetCFPath := filepath.Join(cacheDir, "cf-deps.iso")
-
 	Expect(vmISO).To(BeAnExistingFile())
 	Expect(boshISO).To(BeAnExistingFile())
 	Expect(cfISO).To(BeAnExistingFile())
+
+	err := os.MkdirAll(cacheDir, 0777)
+	Expect(err).ToNot(HaveOccurred())
+
+	targetVMPath := filepath.Join(cacheDir, "cfdev-efi.iso")
+	targetBoshPath := filepath.Join(cacheDir, "bosh-deps.iso")
+	targetCFPath := filepath.Join(cacheDir, "cf-deps.iso")
 
 	Expect(os.Symlink(vmISO, targetVMPath)).ToNot(HaveOccurred())
 	Expect(os.Symlink(boshISO, targetBoshPath)).ToNot(HaveOccurred())
