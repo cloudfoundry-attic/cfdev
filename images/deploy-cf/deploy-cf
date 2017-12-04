@@ -3,6 +3,10 @@
 set -e
 
 export CF_DIR=/var/vcap/cf
+export CF_DOMAIN=v2.pcfdev.io
+export CF_ORG=cfdev-org
+export CF_SPACE=cfdev-space
+
 mkdir -p "${CF_DIR}"
 
 exec 1> >(tee -i "${CF_DIR}/deploy.log")
@@ -42,7 +46,7 @@ bosh --tty upload-stemcell \
 
 bosh --tty --non-interactive --deployment cf \
   deploy "${CF_DIR}/deployment.yml" \
-  -v system_domain=bosh-lite.com \
+  -v system_domain="${CF_DOMAIN}" \
   --no-redact \
   --vars-store "${CF_DIR}/vars.yml"
 
@@ -51,9 +55,21 @@ bosh --tty --non-interactive --deployment cf \
 bosh_lite_subnet=$(bosh int /etc/cf/deployment/bosh-lite/cloud-config.yml \
   --path /networks/name=default/subnets/0/range)
 
-cf api api.bosh-lite.com --skip-ssl-validation
+org=cfdev-org
+space=cfdev-space
+
+cf api "api.${CF_DOMAIN}" --skip-ssl-validation
 cf auth admin admin
 cf enable-feature-flag diego_docker
+
+cf create-user user pass
+cf create-org "${CF_ORG}"
+cf create-space "${CF_SPACE}" -o "${CF_ORG}"
+
+cf set-org-role user "${CF_ORG}" OrgManager
+cf set-space-role user "${CF_ORG}" "${CF_SPACE}" SpaceManager
+cf set-space-role user "${CF_ORG}" "${CF_SPACE}" SpaceDeveloper
+cf set-space-role user "${CF_ORG}" "${CF_SPACE}" SpaceAuditor
 
 cf create-security-group all_access /etc/cf/app-security-group.json
 cf bind-staging-security-group all_access

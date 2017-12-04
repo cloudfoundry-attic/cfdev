@@ -2,14 +2,14 @@ onboot:
   - name: add-garden-ip-to-loopback
     image: alpine:3.6
     capabilities:
-        - all
+      - all
     net: host
-    command: ["sh", "-c", "ifconfig lo:1 add 10.0.0.10 up"]
+    command: ["sh", "-c", "ifconfig lo:1 add 10.0.0.10 netmask 255.255.255.254 up"]
 
   - name: ensure-vcap-folder-exists
     image: alpine:3.6
     capabilities:
-        - CAP_SYS_ADMIN
+      - CAP_SYS_ADMIN
     binds:
       - /var/:/host_var:rbind,rshared
     rootfsPropagation: shared
@@ -59,22 +59,34 @@ services:
       - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
       - /var/vpnkit:/port
     command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
-              "-host-ip","127.0.0.1",
+              "-host-ip","10.245.0.2",
               "-host-port","25555",
               "-container-ip","10.245.0.2",
               "-container-port","25555"]
 
-  - name: expose-router-port
+  - name: expose-router-http-port
     image: alpine:3.6
     net: none
     binds:
       - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
       - /var/vpnkit:/port
     command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
-              "-host-ip","127.0.0.1",
-              "-host-port","35555",
+              "-host-ip","10.244.0.34",
+              "-host-port","80",
               "-container-ip","10.244.0.34",
               "-container-port","80"]
+
+  - name: expose-router-https-port
+    image: alpine:3.6
+    net: none
+    binds:
+      - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
+      - /var/vpnkit:/port
+    command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
+              "-host-ip","10.244.0.34",
+              "-host-port","443",
+              "-container-ip","10.244.0.34",
+              "-container-port","443"]
 
 # gaol create -n deploy-bosh -p \
 #   --network 10.246.0.0/16 \
