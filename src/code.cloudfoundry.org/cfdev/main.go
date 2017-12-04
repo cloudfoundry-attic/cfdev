@@ -175,7 +175,7 @@ func catalog() *resource.Catalog {
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/cf-deps.iso",
 				Name: "cf-deps.iso",
-				MD5:  "d7c843dac577f517689db307b884e2af",
+				MD5:  "81d87b3d44756518a633ba76d10be6f0",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/bosh-deps.iso",
