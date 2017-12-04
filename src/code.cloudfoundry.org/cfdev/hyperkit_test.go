@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 
 	. "github.com/onsi/ginkgo"
@@ -129,7 +130,49 @@ var _ = Describe("hyperkit acceptance", func() {
 			_, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(dirtyFile, 10, 1).ShouldNot(BeAnExistingFile())
+		})
+	})
 
+	Context("the linuxkit pid file references an existing process", func() {
+		var (
+			existingCmd *exec.Cmd
+			existingPid int
+			exited      int32
+		)
+
+		BeforeEach(func() {
+			err := os.MkdirAll(stateDir, 0777)
+			Expect(err).ToNot(HaveOccurred())
+
+			existingCmd = exec.Command("sleep", "300")
+			err = existingCmd.Start()
+			Expect(err).ToNot(HaveOccurred())
+
+			existingPid = existingCmd.Process.Pid
+			err = ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(existingPid)), 0777)
+			Expect(err).ToNot(HaveOccurred())
+
+			go func() {
+				existingCmd.Wait()
+				atomic.StoreInt32(&exited, 1)
+			}()
+		})
+
+		AfterEach(func() {
+			existingCmd.Process.Kill()
+		})
+
+		It("doesn't restart the linuxkit process", func() {
+			command := exec.Command(cliPath, "start")
+			command.Env = append(os.Environ(),
+				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session, 10, 1).Should(gexec.Exit(0))
+
+			Expect(pidFromFile(linuxkitPidPath)).To(Equal(existingPid))
+			Expect(atomic.LoadInt32(&exited)).To(BeEquivalentTo(0))
 		})
 	})
 })

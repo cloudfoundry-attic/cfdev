@@ -11,7 +11,7 @@ import (
 
 func TestCFDev(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "cfdev suite")
+	RunSpecs(t, "cf dev suite")
 }
 
 var (

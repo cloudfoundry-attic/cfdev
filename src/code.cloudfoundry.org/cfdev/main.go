@@ -42,9 +42,6 @@ func setupHomeDir() (string, string, string) {
 	}
 
 	stateDir := filepath.Join(homeDir, "state")
-	if err := os.RemoveAll(stateDir); err != nil {
-		panic(err)
-	}
 
 	if err := os.MkdirAll(stateDir, 0755); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create .cfdev state directory: %v\n", err)
@@ -59,6 +56,17 @@ func setupHomeDir() (string, string, string) {
 	}
 
 	return homeDir, stateDir, cacheDir
+}
+
+func cleanupStateDir(stateDir string) {
+	if err := os.RemoveAll(stateDir); err != nil {
+		panic(err)
+	}
+
+	if err := os.MkdirAll(stateDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create .cfdev state directory: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func download(cacheDir string) {
@@ -77,8 +85,35 @@ func download(cacheDir string) {
 	}
 }
 
+func isLinuxKitRunning(pidFile string) bool {
+	fileBytes, err := ioutil.ReadFile(pidFile)
+	if err != nil {
+		return false
+	}
+
+	pid, err := strconv.ParseInt(string(fileBytes), 10, 64)
+	if err != nil {
+		return false
+	}
+
+	if process, err := os.FindProcess(int(pid)); err == nil {
+		err = process.Signal(syscall.Signal(0))
+		return err == nil
+	}
+
+	return false
+}
+
 func start() {
 	_, stateDir, cacheDir := setupHomeDir()
+	linuxkitPidPath := filepath.Join(stateDir, "linuxkit.pid")
+
+	if isLinuxKitRunning(linuxkitPidPath) {
+		fmt.Println("CF Dev is already running...")
+		return
+	}
+
+	cleanupStateDir(stateDir)
 	download(cacheDir)
 
 	linuxkit := process.LinuxKit{
@@ -94,9 +129,7 @@ func start() {
 		panic(err)
 	}
 
-	linuxkitPid := filepath.Join(stateDir, "linuxkit.pid")
-
-	err := ioutil.WriteFile(linuxkitPid, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
+	err := ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
 
 	if err != nil {
 		panic(err)
