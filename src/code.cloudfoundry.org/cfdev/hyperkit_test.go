@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 	"syscall"
 
 	. "github.com/onsi/ginkgo"
@@ -24,14 +24,16 @@ var _ = Describe("hyperkit acceptance", func() {
 		cfdevHome       string
 		linuxkitPidPath string
 		stateDir        string
+		cacheDir        string
 	)
 
 	BeforeEach(func() {
 		cfdevHome = createTempCFDevHomeDir()
+		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
 
-		setupDependencies(cfdevHome)
+		setupDependencies(cacheDir)
 	})
 
 	AfterEach(func() {
@@ -138,15 +140,15 @@ func createTempCFDevHomeDir() string {
 	return path
 }
 
-func setupDependencies(homeDir string) {
+func setupDependencies(cacheDir string) {
 	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
 	vmISO := filepath.Join(gopaths[0], "linuxkit", "cfdev-efi.iso")
-	boshISO := filepath.Join(gopaths[0], "linuxkit", "bosh-deps.iso")
 	cfISO := filepath.Join(gopaths[0], "linuxkit", "cf-deps.iso")
+	boshISO := filepath.Join(gopaths[0], "linuxkit", "bosh-deps.iso")
 
-	targetVMPath := filepath.Join(homeDir, "cfdev-efi.iso")
-	targetBoshPath := filepath.Join(homeDir, "bosh-deps.iso")
-	targetCFPath := filepath.Join(homeDir, "cf-deps.iso")
+	targetVMPath := filepath.Join(cacheDir, "cfdev-efi.iso")
+	targetBoshPath := filepath.Join(cacheDir, "bosh-deps.iso")
+	targetCFPath := filepath.Join(cacheDir, "cf-deps.iso")
 
 	Expect(vmISO).To(BeAnExistingFile())
 	Expect(boshISO).To(BeAnExistingFile())

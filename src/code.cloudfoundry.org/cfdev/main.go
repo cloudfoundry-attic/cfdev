@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/process"
+	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/user"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
@@ -25,32 +27,65 @@ func main() {
 		start()
 	} else if os.Args[1] == "stop" {
 		stop()
+	} else if os.Args[1] == "download" {
+		_, _, cacheDir := setupHomeDir()
+		download(cacheDir)
 	}
 }
 
-func start() {
-	devHome, err := user.CFDevHome()
+func setupHomeDir() (string, string, string) {
+	homeDir, err := user.CFDevHome()
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create .cfdev home directory: %v\n", err)
 		os.Exit(1)
 	}
 
-	statePath := filepath.Join(devHome, "state")
-	if err := os.RemoveAll(statePath); err != nil {
+	stateDir := filepath.Join(homeDir, "state")
+	if err := os.RemoveAll(stateDir); err != nil {
 		panic(err)
 	}
 
-	if err := os.MkdirAll(statePath, 0755); err != nil {
+	if err := os.MkdirAll(stateDir, 0755); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create .cfdev state directory: %v\n", err)
 		os.Exit(1)
 	}
 
+	cacheDir := filepath.Join(homeDir, "cache")
+
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create .cfdev cache directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	return homeDir, stateDir, cacheDir
+}
+
+func download(cacheDir string) {
+	fmt.Println("Downloading Resources...")
+
+	downloader := resource.Downloader{}
+
+	cache := resource.Cache{
+		Dir:          cacheDir,
+		DownloadFunc: downloader.Start,
+	}
+
+	if err := cache.Sync(catalog()); err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to sync assets: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func start() {
+	_, stateDir, cacheDir := setupHomeDir()
+	download(cacheDir)
+
 	linuxkit := process.LinuxKit{
-		StatePath:   statePath,
-		ImagePath:   filepath.Join(devHome, "cfdev-efi.iso"),
-		BoshISOPath: filepath.Join(devHome, "bosh-deps.iso"),
-		CFISOPath:   filepath.Join(devHome, "cf-deps.iso"),
+		StatePath:   stateDir,
+		ImagePath:   filepath.Join(cacheDir, "cfdev-efi.iso"),
+		BoshISOPath: filepath.Join(cacheDir, "bosh-deps.iso"),
+		CFISOPath:   filepath.Join(cacheDir, "cf-deps.iso"),
 	}
 
 	cmd := linuxkit.Command()
@@ -59,9 +94,9 @@ func start() {
 		panic(err)
 	}
 
-	linuxkitPid := filepath.Join(statePath, "linuxkit.pid")
+	linuxkitPid := filepath.Join(stateDir, "linuxkit.pid")
 
-	err = ioutil.WriteFile(linuxkitPid, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
+	err := ioutil.WriteFile(linuxkitPid, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
 
 	if err != nil {
 		panic(err)
@@ -118,5 +153,40 @@ func waitForGarden(client garden.Client) {
 		}
 
 		time.Sleep(time.Second)
+	}
+}
+
+func catalog() *resource.Catalog {
+	override := os.Getenv("CFDEV_CATALOG")
+
+	if override != "" {
+		var c resource.Catalog
+		if err := json.Unmarshal([]byte(override), &c); err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to parse CFDEV_CATALOG env variable: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("Using CFDEV_CATALOG override")
+		return &c
+	}
+
+	return &resource.Catalog{
+		Items: []resource.Item{
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/cf-deps.iso",
+				Name: "cf-deps.iso",
+				MD5:  "d7c843dac577f517689db307b884e2af",
+			},
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/bosh-deps.iso",
+				Name: "bosh-deps.iso",
+				MD5:  "01897f5ffcee02c79d2df88ad2f4edf7",
+			},
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/cfdev-efi.iso",
+				Name: "cfdev-efi.iso",
+				MD5:  "6a788a2a06cf0c18ac1c2ff243d223a5",
+			},
+		},
 	}
 }
