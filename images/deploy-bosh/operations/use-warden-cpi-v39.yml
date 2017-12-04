@@ -1,0 +1,7 @@
+---
+- type: replace
+  path: /releases/name=bosh-warden-cpi
+  value:
+    name: bosh-warden-cpi
+    url: https://bosh.io/d/github.com/cppforlife/bosh-warden-cpi-release?v=39
+    sha1: 574e9aedc4305cf4c8a10308480cd5ac5f9652ec

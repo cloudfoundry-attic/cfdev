@@ -1,9 +1,32 @@
+onboot:
+  - name: add-garden-ip-to-loopback
+    image: alpine:3.6
+    capabilities:
+        - all
+    net: host
+    command: ["sh", "-c", "ifconfig lo:1 add 10.0.0.10 up"]
+
+  - name: ensure-vcap-folder-exists
+    image: alpine:3.6
+    capabilities:
+        - CAP_SYS_ADMIN
+    binds:
+      - /var/:/host_var:rbind,rshared
+    rootfsPropagation: shared
+    command: ["sh", "-c", "mkdir -p /host_var/lib/vcap && \
+                           mount -v --bind /host_var/lib/vcap /host_var/lib/vcap && \
+                           mount -v --make-shared /host_var/lib/vcap"]
+
 services:
   - name: garden
     image: pivotal/garden-runc:dev
     binds:
       - /var/lib:/var/lib
+      - /var/lib/vcap:/var/vcap:rshared,rbind
       - /etc/resolv.conf:/etc/resolv.conf
+    rootfsPropagation: shared
+    runtime:
+      mkdir: ["/var/vcap"]
 
   - name: expose-garden-port
     image: alpine:3.6
@@ -17,3 +40,9 @@ services:
               "-container-ip","127.0.0.1",
               "-container-port","7777"]
 
+# we bind /bin/true to iptables-save as a work around so the warden
+# cpi can delete vms without affecting ip tables
+# gaol create -n deploy-bosh -p \
+#   --network 10.246.0.0/16
+#   -r docker:///dprotaso/deploy-bosh \
+#   -m /var/vcap:/var/vcap

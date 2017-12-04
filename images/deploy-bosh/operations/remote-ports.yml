@@ -1,0 +1,4 @@
+---
+
+- type: remove
+  path: /resource_pools/name=vms/cloud_properties/ports

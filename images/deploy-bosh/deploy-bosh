@@ -1,0 +1,71 @@
+#!/bin/bash
+
+set -e
+
+create_loop_devices() {
+  echo "creating loop devices..."
+  for i in {0..255}
+  do
+    mknod -m 0660 /dev/loop${i} b 7 $i || true
+  done
+}
+
+permit_device_control() {
+  local devices_mount_info=$(cat /proc/self/cgroup | grep devices)
+
+  if [ -z "$devices_mount_info" ]; then
+    # cgroups not set up; must not be in a container
+    return
+  fi
+
+  local devices_subsytems=$(echo $devices_mount_info | cut -d: -f2)
+  local devices_subdir=$(echo $devices_mount_info | cut -d: -f3)
+
+  if [ "$devices_subdir" = "/" ]; then
+    # we're in the root devices cgroup; must not be in a container
+    return
+  fi
+
+  if [ ! -e /tmp/devices-cgroup ]; then
+    # mount our container's devices subsystem somewhere
+    mkdir /tmp/devices-cgroup
+    mount -t cgroup -o $devices_subsytems none /tmp/devices-cgroup
+  fi
+
+  # permit our cgroup to do everything with all devices
+  echo -n a > /tmp/devices-cgroup${devices_subdir}/devices.allow || true
+
+  umount /tmp/devices-cgroup || true
+}
+
+permit_device_control
+create_loop_devices
+
+export DIRECTOR_DIR=/var/vcap/director
+export BOSH_DIRECTOR_IP="10.245.0.2"
+
+mkdir -p /var/vcap/director
+
+bosh create-env \
+  "/etc/bosh/director.yml" \
+  --vars-store="${DIRECTOR_DIR}/creds.yml" \
+  --state="${DIRECTOR_DIR}/state.json"
+
+bosh int "${DIRECTOR_DIR}/creds.yml" \
+  --path /director_ssl/ca > "${DIRECTOR_DIR}/ca.crt"
+
+bosh int "${DIRECTOR_DIR}/creds.yml" \
+  --path /jumpbox_ssh/private_key > "${DIRECTOR_DIR}/jumpbox.key"
+
+cat <<EOF > "${DIRECTOR_DIR}/env"
+export BOSH_ENVIRONMENT="${BOSH_DIRECTOR_IP}"
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET=`bosh int "${DIRECTOR_DIR}/creds.yml" --path /admin_password`
+export BOSH_CA_CERT="${DIRECTOR_DIR}/ca.crt"
+export BOSH_GW_PRIVATE_KEY="${DIRECTOR_DIR}/jumpbox.key"
+EOF
+
+source "${DIRECTOR_DIR}/env"
+
+bosh -n update-cloud-config \
+  /etc/bosh/deployment/warden/cloud-config.yml
