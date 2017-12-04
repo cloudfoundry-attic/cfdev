@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 linuxkit run hyperkit \
 	-networking=vpnkit \
 	-disk size=20G \

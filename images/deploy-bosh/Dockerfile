@@ -1,34 +1,21 @@
-#FROM alpine:3.6
-#
-#RUN set -x && \
-#    apk add --update \
-#      bash \
-#      ca-certificates \
-#      coreutils \
-#      curl \
-#      git && \
-#    \
-#    curl -fsSL https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.26-r0/glibc-2.26-r0.apk \
-#       -o /tmp/glibc.apk && \
-#    \
-#    apk add --allow-untrusted /tmp/glibc.apk && \
-#    rm /tmp/glibc.apk
+FROM ruby:2.4.2-alpine3.6
 
-FROM ubuntu
-
-# iptables-save & iptables is used by warden cpi for
-# forwarding traffic to containers
 RUN set -x && \
-    apt-get update && \
-    apt-get install -y \
-      sudo \
+    apk add --no-cache \
       bash \
       ca-certificates \
       coreutils \
       curl \
-      git \
+      e2fsprogs \
       iptables \
-      ruby
+      sudo \
+      util-linux && \
+    \
+    curl -fsSL https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.26-r0/glibc-2.26-r0.apk \
+       -o /tmp/glibc.apk && \
+    \
+    apk add --no-cache --allow-untrusted /tmp/glibc.apk && \
+    rm /tmp/glibc.apk
 
 ENV BOSH_CLI_VERSION 2.0.44
 ENV BOSH_CLI_SHA256 97add408895a5d47d5524fe3eb67cb492dff7c259fe4b8afe29bdefbc88532d9
@@ -43,9 +30,18 @@ RUN set -x && \
 ENV BOSH_DEPLOYMENT_COMMIT 870a6744615120236ca78239da3a64dfa95d87b6
 
 RUN set -x && \
-    git clone https://github.com/cloudfoundry/bosh-deployment.git /etc/bosh/deployment && \
-    cd /etc/bosh/deployment && \
-    git checkout ${BOSH_DEPLOYMENT_COMMIT}
+    mkdir -p /etc/bosh && \
+    \
+    curl -fsSL https://github.com/cloudfoundry/bosh-deployment/archive/${BOSH_DEPLOYMENT_COMMIT}.zip \
+       -o /etc/bosh/deployment.zip && \
+    \
+    unzip /etc/bosh/deployment.zip -d /etc/bosh && \
+    \
+    rm /etc/bosh/deployment.zip && \
+    \
+    mv /etc/bosh/bosh-deployment-${BOSH_DEPLOYMENT_COMMIT} /etc/bosh/deployment && \
+    \
+    echo "${BOSH_DEPLOYMENT_COMMIT}" > /etc/bosh/deployment/commit
 
 ADD operations/* /etc/bosh/deployment/
 ADD deploy-bosh /usr/bin/deploy-bosh
@@ -66,7 +62,10 @@ RUN cd /etc/bosh/deployment && \
       -v internal_gw=10.245.0.1 \
       -v internal_ip=10.245.0.2 \
       -v garden_host=10.0.0.10 \
-      > "/etc/bosh/director.yml"
+      > "/etc/bosh/director.yml" && \
+    \
+    echo -e "\n# bosh-deployment commit: ${BOSH_DEPLOYMENT_COMMIT}" \
+      >> /etc/bosh/director.yml
 
 RUN mkdir -p /var/vcap
 
