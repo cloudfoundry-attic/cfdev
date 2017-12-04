@@ -1,0 +1,51 @@
+#!/bin/bash -l
+
+set -e -x
+
+main() {
+  source /usr/bin/garden-utils
+
+  # check for /proc/sys being mounted readonly, as systemd does
+  if ! grep -qs '/sys' /proc/mounts; then
+    mount -t sysfs sysfs /sys
+  fi
+
+  local mtu=$(cat /sys/class/net/$(ip route get 8.8.8.8 | awk '{ print $5 }')/mtu)
+  local tmpdir=$(mktemp -d)
+
+  export TMPDIR=$tmpdir
+  export TEMP=$tmpdir
+  export TMP=$tmpdir
+
+  local depot_path="${store_mountpoint}/garden/depot"
+  local garden_graph_path="${store_mountpoint}/garden/graph"
+  local grootfs_store="${store_mountpoint}/grootfs/store"
+
+  mkdir -p "${depot_path}"
+  mkdir -p "${garden_graph_path}"
+  mkdir -p "${grootfs_store}"
+
+  permit_device_control
+  create_loop_devices
+
+  btrfs-setup
+
+  /usr/bin/gdn server \
+    --allow-host-access \
+    --depot $depot_path \
+    --mtu $mtu \
+    --graph=$garden_graph_path \
+    --bind-ip 0.0.0.0 \
+    --bind-port 7777 \
+    --graph-cleanup-threshold-in-megabytes=1024 \
+    --iptables-bin=$(which iptables) \
+    --image-plugin=$(which grootfs) \
+    --image-plugin-extra-arg=--config \
+    --image-plugin-extra-arg=/etc/grootfs-unprivileged.yml \
+    --privileged-image-plugin=$(which grootfs) \
+    --privileged-image-plugin-extra-arg=--config \
+    --privileged-image-plugin-extra-arg=/etc/grootfs-privileged.yml
+}
+
+main $@
+

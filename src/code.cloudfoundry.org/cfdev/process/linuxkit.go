@@ -13,6 +13,7 @@ type LinuxKit struct {
 func (s *LinuxKit) Command() *exec.Cmd {
 	cmd := exec.Command("linuxkit", "run", "hyperkit",
 		"-networking=vpnkit",
+		"-disk", "size=10G",
 		"-state", s.StatePath,
 		"--uefi", s.ImagePath)
 

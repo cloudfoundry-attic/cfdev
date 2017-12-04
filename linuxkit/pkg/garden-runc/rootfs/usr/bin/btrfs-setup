@@ -1,0 +1,82 @@
+#!/bin/bash
+
+set -ex
+
+main() {
+  source /usr/bin/garden-utils
+
+  local privileged_store_path=${store_mountpoint}/grootfs/store/privileged
+  local privileged_volume_file=${store_mountpoint}/grootfs/store/privileged.backing-store
+  local privileged_config=/etc/grootfs-privileged.yml
+  local unprivileged_store_path=${store_mountpoint}/grootfs/store/unprivileged
+  local unprivileged_volume_file=${store_mountpoint}/grootfs/store/unprivileged.backing-store
+  local unprivileged_config=/etc/grootfs-unprivileged.yml
+
+  create_store $privileged_store_path $privileged_volume_file $privileged_config
+  init_privileged_store $privileged_config
+
+  create_store $unprivileged_store_path $unprivileged_volume_file $unprivileged_config
+  init_unprivileged_store $unprivileged_config
+
+  drax_setup
+}
+
+create_store() {
+  local store_path=$1
+  local volume_file=$2
+  local config_path=$3
+
+  echo "Creating ${store_path} store"
+
+  mkdir -p "$store_path"
+
+  create_volume_file $volume_file
+  format_volume_file $volume_file
+
+  mount_btrfs_volume $volume_file $store_path
+  enable_btrfs_quotas $store_path
+}
+
+init_privileged_store() {
+  local config_path=$1
+  grootfs --config ${config_path} init-store
+}
+
+init_unprivileged_store() {
+  local config_path=$1
+  grootfs --config ${config_path} init-store \
+    --uid-mapping "$(unprivileged_root_mapping)" \
+    --uid-mapping "$(unprivileged_range_mapping)" \
+    --gid-mapping "$(unprivileged_root_mapping)" \
+    --gid-mapping "$(unprivileged_range_mapping)"
+}
+
+
+drax_setup() {
+  echo "setting up drax..."
+  chmod u+s /usr/bin/drax
+}
+
+format_volume_file() {
+  local volume_file=$1
+  if [ -z "$(file $volume_file | grep -i "BTRFS Filesystem")" ]
+  then
+    echo "formatting btrfs volume..."
+    mkfs.btrfs -f $volume_file
+  fi
+}
+
+mount_btrfs_volume() {
+  local volume_file=$1
+  local store_path=$2
+
+  echo "mounting the btrfs volume..."
+  mount -o remount,user_subvol_rm_allowed $volume_file $store_path || mount -o user_subvol_rm_allowed $volume_file $store_path
+}
+
+enable_btrfs_quotas() {
+  local store_path=$1
+  btrfs quota enable $store_path
+}
+
+main

@@ -58,6 +58,7 @@ func stop() {
 	pidBytes, _ := ioutil.ReadFile(hyperkitPid)
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 
+	fmt.Printf("stopping linuxkit pid %v\n", pid)
 	process, _ := os.FindProcess(int(pid))
 	process.Signal(syscall.SIGTERM)
 }

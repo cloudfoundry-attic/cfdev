@@ -6,14 +6,14 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"os/exec"
 
 	"github.com/onsi/gomega/gexec"
 )
@@ -31,7 +31,7 @@ var _ = Describe("start", func() {
 		targetISOPath := filepath.Join(cfdevHome, "cfdev-efi.iso")
 		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
 
-		copyFileTo("./fixtures/test-image-efi.iso", targetISOPath)
+		copyGardenISOTo(targetISOPath)
 		Expect(targetISOPath).To(BeAnExistingFile())
 	})
 
@@ -42,6 +42,8 @@ var _ = Describe("start", func() {
 		if pid != 0 {
 			syscall.Kill(int(pid), syscall.SIGTERM)
 		}
+
+		os.RemoveAll(cfdevHome)
 	})
 
 	It("starts the linuxkit process", func() {
@@ -54,7 +56,7 @@ var _ = Describe("start", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
 
-		Eventually(hyperkitPid).Should(BeAnExistingFile())
+		Eventually(hyperkitPid, 30, 1).Should(BeAnExistingFile())
 		eventuallyShouldListenAt("localhost:7777")
 	})
 
@@ -83,7 +85,10 @@ func createTempCFDevHomeDir() string {
 	return path
 }
 
-func copyFileTo(src, dst string) {
+func copyGardenISOTo(dst string) {
+	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
+	src := filepath.Join(gopaths[0], "linuxkit", "garden-efi.iso")
+
 	srcFile, err := os.Open(src)
 	Expect(err).ToNot(HaveOccurred())
 	defer srcFile.Close()

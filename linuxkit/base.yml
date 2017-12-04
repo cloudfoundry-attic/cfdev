@@ -5,11 +5,27 @@ init:
   - linuxkit/init:42a92119e1ca10380e0d33e26c0cbcf85b9b3558
   - linuxkit/runc:817fdc592eac6cb7804fa1721a43a7f6e23fb50f
   - linuxkit/containerd:82be2bbb7cf83bab161ffe2a64624ba1107725ff
-
+  - linuxkit/ca-certificates:af4880e78edc28743f7c5e262678c67c6add4c26
+  - linuxkit/getty:626ccc8e1766c40447f29a790d3a7cfff126f2a2
+  # install vpnkit-expose-port and vpnkit-iptables-wrapper on host
+  - linuxkit/vpnkit-expose-port:15c56c57ac9a7adeec20b34f36f2bc165c347679
 onboot:
   - name: dhcpcd
     image: linuxkit/dhcpcd:48831507404049660b960e4055f544917d90378e
     command: ["/sbin/dhcpcd", "--nobackground", "-f", "/dhcpcd.conf", "-1"]
+
+   # Format and mount the disk image in /var/lib
+  - name: format
+    image: linuxkit/format:10e75e78e1f134d310c62e9a0352df1c67b0dd81
+  - name: mount
+    image: linuxkit/mount:41685ecc8039643948e5dff46e17584753469a7a
+    command: ["/usr/bin/mountie", "/var/lib"]
+
+  # make a swap file on the mounted disk
+  - name: swap
+    image: linuxkit/swap:25a2f13110585f3d964a8191fa3a84de51dbb8fd
+    command: ["/swap.sh", "--path", "/var/lib/swap", "--size", "1024M"]
+
   - name: mount-vpnkit
     image: alpine:3.6
     binds:
@@ -18,40 +34,18 @@ onboot:
         - CAP_SYS_ADMIN
     rootfsPropagation: shared
     command: ["sh", "-c", "mkdir /host_var/vpnkit && mount -v -t 9p -o trans=virtio,dfltuid=1001,dfltgid=50,version=9p2000 port /host_var/vpnkit"]
+
 services:
-
-  - name: getty
-    image: linuxkit/getty:626ccc8e1766c40447f29a790d3a7cfff126f2a2
-    env:
-     - INSECURE=true
-
   - name: acpid
     image: linuxkit/acpid:168f871c7211c9d5e96002d53cb497b26e2d622b
 
   - name: vpnkit-forwarder
     image: linuxkit/vpnkit-forwarder:c7e61d9250de0b21455dc5c8bb885bd8faa31621
+    net: host
     binds:
         - /var/vpnkit:/port
-    net: host
     command: ["/vpnkit-forwarder"]
 
-  - name: fake-garden
-    image: nginx:alpine
-    capabilities:
-     - CAP_NET_BIND_SERVICE
-     - CAP_CHOWN
-     - CAP_SETUID
-     - CAP_SETGID
-     - CAP_DAC_OVERRIDE
-
-  - name: vpnkit-expose-port
-    image: linuxkit/vpnkit-expose-port:15c56c57ac9a7adeec20b34f36f2bc165c347679
-    net: none
-    binds:
-        - /var/vpnkit:/port
-    command: ["/usr/bin/vpnkit-expose-port","-i",
-              "-host-ip","127.0.0.1","-host-port","7777",
-              "-container-ip","127.0.0.1","-container-port","80","-no-local-ip"]
 trust:
   org:
     - linuxkit

@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# https://github.com/cloudfoundry/grootfs-release/blob/develop/jobs/grootfs/templates/bin/utils.erb
+
+export store_mountpoint="/var/lib"
+
+# vcap_data_filesystem() {
+#   store="$(echo $store_mountpoint | sed 's|/|\\/|g')"
+#   echo $(df --print-type | awk '/'"$store"\$'/ {print $2}')
+# }
+
+create_volume_file() {
+  local volume_file=$1
+
+  # Do no recreate the volume file if it already exists
+  if [ ! -f "$volume_file" ]
+  then
+    echo "creating volume..."
+    truncate -s $(volume_size)  $volume_file
+  fi
+}
+
+create_loop_devices() {
+  echo "creating loop devices..."
+  for i in {0..255}
+  do
+    mknod -m 0660 /dev/loop${i} b 7 $i || true
+  done
+}
+
+# copied from https://github.com/concourse/concourse/blob/master/jobs/baggageclaim/templates/baggageclaim_ctl.erb#L54
+# break out of bosh-lite device limitations
+permit_device_control() {
+  local devices_mount_info=$(cat /proc/self/cgroup | grep devices)
+
+  if [ -z "$devices_mount_info" ]; then
+    # cgroups not set up; must not be in a container
+    return
+  fi
+
+  local devices_subsytems=$(echo $devices_mount_info | cut -d: -f2)
+  local devices_subdir=$(echo $devices_mount_info | cut -d: -f3)
+
+  if [ "$devices_subdir" = "/" ]; then
+    # we're in the root devices cgroup; must not be in a container
+    return
+  fi
+
+  if [ ! -e /tmp/devices-cgroup ]; then
+    # mount our container's devices subsystem somewhere
+    mkdir /tmp/devices-cgroup
+    mount -t cgroup -o $devices_subsytems none /tmp/devices-cgroup
+  fi
+
+  # permit our cgroup to do everything with all devices
+  echo -n a > /tmp/devices-cgroup${devices_subdir}/devices.allow || true
+
+  umount /tmp/devices-cgroup || true
+}
+
+setup_unprivileged_store() {
+  local store_path=$1
+
+  maximus_uid=$(/var/vcap/packages/idmapper/bin/maximus)
+  chown $maximus_uid:$maximus_uid $store_path
+  chmod 0700 $store_path
+}
+
+unprivileged_root_mapping() {
+  echo -n "0:4294967294:1"
+}
+
+unprivileged_range_mapping() {
+  echo -n "1:1:4294967293"
+}
+
+volume_size() {
+  echo 20000000000
+}
+
+delete_store() {
+  local config_path=$1
+  local store_path=$2
+  local volume_file=$3
+
+  # Allow grootfs delete-store and umount to fail, because we could
+  # have an malformed store.
+  grootfs --config $config_path delete-store || true
+  umount --force $store_path || true
+
+  # Ensure that the store is deleted, or fail
+  rm -rf $store_path
+  rm -f $volume_file
+}

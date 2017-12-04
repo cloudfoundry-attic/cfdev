@@ -19,6 +19,7 @@ var _ = Describe("LinuxKit process", func() {
 		Expect(start.Args).To(ConsistOf(
 			"linuxkit", "run", "hyperkit",
 			"-networking=vpnkit",
+			"-disk", "size=10G",
 			"-state", "/home-dir/.cfdev/state",
 			"--uefi", "/home-dir/.cfdev/image",
 		))

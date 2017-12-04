@@ -1,0 +1,10 @@
+store: /var/lib/grootfs/store/privileged
+driver: btrfs
+log_level: debug
+clean:
+  threshold_bytes: 1048576
+  ignore_images: []
+create:
+  insecure_registries: []
+  with_clean: true
+  without_mount: false

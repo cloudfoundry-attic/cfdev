@@ -1,0 +1,19 @@
+services:
+  - name: garden
+    image: pivotal/garden-runc:dev
+    binds:
+      - /var/lib:/var/lib
+      - /etc/resolv.conf:/etc/resolv.conf
+
+  - name: expose-garden-port
+    image: alpine:3.6
+    net: none
+    binds:
+      - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
+      - /var/vpnkit:/port
+    command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
+              "-host-ip","127.0.0.1",
+              "-host-port","7777",
+              "-container-ip","127.0.0.1",
+              "-container-port","7777"]
+

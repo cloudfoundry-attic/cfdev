@@ -15,20 +15,26 @@ import (
 )
 
 var _ = Describe("stop", func() {
-
 	var (
 		cfdevHome   string
 		hyperkitPid string
 	)
 
-	It("stops the linuxkit process", func() {
-		//start up
+	BeforeEach(func() {
 		cfdevHome = createTempCFDevHomeDir()
 		targetISOPath := filepath.Join(cfdevHome, "cfdev-efi.iso")
-		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
 
-		copyFileTo("./fixtures/test-image-efi.iso", targetISOPath)
-		Expect(targetISOPath).To(BeAnExistingFile())
+		copyGardenISOTo(targetISOPath)
+		Expect(targetISOPath).Should(BeAnExistingFile())
+	})
+
+	AfterEach(func() {
+		os.RemoveAll(cfdevHome)
+	})
+
+	It("stops the linuxkit process", func() {
+		//start up
+		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
 
 		command := exec.Command(cliPath, "start")
 		command.Env = append(os.Environ(),
@@ -37,8 +43,7 @@ var _ = Describe("stop", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ShouldNot(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
-
-		Eventually(hyperkitPid).Should(BeAnExistingFile())
+		Eventually(hyperkitPid, 30, 1).Should(BeAnExistingFile())
 		eventuallyShouldListenAt("localhost:7777")
 
 		//PID

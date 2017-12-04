@@ -1,0 +1,17 @@
+store: /var/lib/grootfs/store/unprivileged
+driver: btrfs
+log_level: debug
+clean:
+  threshold_bytes: 1048576
+  ignore_images: []
+create:
+  insecure_registries: []
+  with_clean: true
+  without_mount: false
+  uid_mappings:
+  - "0:4294967294:1"
+  - "1:1:4294967293"
+  gid_mappings:
+  - "0:4294967294:1"
+  - "1:1:4294967293"
+
