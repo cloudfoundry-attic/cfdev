@@ -15,10 +15,10 @@ import (
 
 	"os/exec"
 
-	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
+// TODO - hyperkit.pid is present & linuxkit cannot start
 var _ = Describe("start", func() {
 
 	var (
@@ -29,6 +29,8 @@ var _ = Describe("start", func() {
 	BeforeEach(func() {
 		cfdevHome = createTempCFDevHomeDir()
 		targetISOPath := filepath.Join(cfdevHome, "cfdev-efi.iso")
+		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
+
 		copyFileTo("./fixtures/test-image-efi.iso", targetISOPath)
 		Expect(targetISOPath).To(BeAnExistingFile())
 	})
@@ -36,7 +38,10 @@ var _ = Describe("start", func() {
 	AfterEach(func() {
 		pidBytes, _ := ioutil.ReadFile(hyperkitPid)
 		pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
-		syscall.Kill(int(pid), syscall.SIGTERM)
+
+		if pid != 0 {
+			syscall.Kill(int(pid), syscall.SIGTERM)
+		}
 	})
 
 	It("starts the linuxkit process", func() {
@@ -49,28 +54,27 @@ var _ = Describe("start", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
 
-		hyperkitPid = filepath.Join(cfdevHome, "state", "hyperkit.pid")
 		Eventually(hyperkitPid).Should(BeAnExistingFile())
-
-		eventuallyShouldListenAt("localhost:10080")
+		eventuallyShouldListenAt("localhost:7777")
 	})
 
-	// TODO - hyperkit.pid is present & linuxkit cannot start
-	// then the
+	Context("when CFDEV_HOME is not writable", func() {
+		BeforeEach(func() {
+			os.Chmod(cfdevHome, 0555)
+		})
 
-	XContext("when CFDEV_HOME is not writable", func() {
-		It("exits", func() {
+		It("fails to start linuxkit", func() {
 			command := exec.Command(cliPath, "start")
-			command.Env = append(os.Environ(), "CFDEV_HOME=/")
+			command.Env = append(os.Environ(),
+				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session.Err).Should(gbytes.Say("Unable to create .cfdev home directory.*"))
 			Eventually(session).Should(gexec.Exit(1))
+			Expect(hyperkitPid).ShouldNot(BeAnExistingFile())
 		})
 	})
-
 })
 
 func createTempCFDevHomeDir() string {
