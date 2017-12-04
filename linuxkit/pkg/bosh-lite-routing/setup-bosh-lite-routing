@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+
+DIRECTOR_IP=${1-"10.245.0.2"}
+BOSH_LITE_SUBNET=${2-"10.244.0.0/16"}
+DIRECTOR_PORT=${3-25555}
+
+is_bosh_up() {  
+  curl "${DIRECTOR_IP}:${DIRECTOR_PORT}" >/dev/null 2>&1 || return 1
+}
+
+while true; do
+  echo "Attempt to connect to the bosh director at ${DIRECTOR_IP}:${DIRECTOR_PORT}"
+  
+  set +e
+  is_bosh_up
+  success=$?
+  set -e
+
+  [[ $success == 0 ]] && break
+
+  echo "failed to connect"
+  sleep 1
+done
+
+echo "BOSH Director is up - adding the iptable route for ${BOSH_LITE_SUBNET}"
+
+ip route add "${BOSH_LITE_SUBNET}" via "${DIRECTOR_IP}"

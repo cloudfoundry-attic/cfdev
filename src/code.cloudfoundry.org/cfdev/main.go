@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -51,6 +50,7 @@ func start() {
 		StatePath:   statePath,
 		ImagePath:   filepath.Join(devHome, "cfdev-efi.iso"),
 		BoshISOPath: filepath.Join(devHome, "bosh-deps.iso"),
+		CFISOPath:   filepath.Join(devHome, "cf-deps.iso"),
 	}
 
 	cmd := linuxkit.Command()
@@ -69,7 +69,7 @@ func start() {
 
 	fmt.Println("Starting the VM...")
 
-	garden := client.New(connection.New("tcp", "127.0.0.1:7777"))
+	garden := client.New(connection.New("tcp", "localhost:7777"))
 
 	waitForGarden(garden)
 
@@ -79,7 +79,11 @@ func start() {
 		panic(err)
 	}
 
-	waitForBOSH()
+	fmt.Println("Deploying CF...")
+
+	if err := gdn.DeployCloudFoundry(garden); err != nil {
+		panic(err)
+	}
 }
 
 func stop() {
@@ -89,23 +93,6 @@ func stop() {
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 
 	syscall.Kill(int(-pid), syscall.SIGKILL)
-}
-
-func waitUntilListeningAt(addr string) {
-	for {
-		fmt.Printf("Waiting to you hear back from %v\n", addr)
-		_, err := net.Dial("tcp", addr)
-
-		if err == nil {
-			return
-		}
-
-		time.Sleep(time.Second)
-	}
-}
-
-func waitForBOSH() {
-	waitUntilListeningAt("localhost:25555")
 }
 
 func waitForGarden(client garden.Client) {

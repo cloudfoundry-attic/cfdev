@@ -2,9 +2,13 @@
 
 set -e
 
-linuxkit run hyperkit \
-	-networking=vpnkit \
-	-disk size=20G \
-	-disk file=bosh-deps.iso \
-	--uefi cfdev-efi.iso
+rm -rf cfdev-efi-state/
 
+linuxkit run hyperkit \
+	-cpus 4 \
+	-mem 8192 \
+	-networking=vpnkit \
+	-disk size=50G \
+	-disk file=bosh-deps.iso \
+	-disk file=cf-deps.iso \
+	--uefi cfdev-efi.iso

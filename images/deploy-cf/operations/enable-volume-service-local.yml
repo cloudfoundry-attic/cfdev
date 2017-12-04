@@ -1,0 +1,87 @@
+---
+- type: replace
+  path: /releases/-
+  value:
+    name: local-volume
+    version: 1    
+
+- type: replace
+  path: /releases/-
+  value:
+    name: broker-registrar
+    version: 3.2.2
+    url: https://bosh.io/d/github.com/cloudfoundry-community/broker-registrar-boshrelease?v=3.2.2
+    sha1: f82c6a346d871ccb9835b8e6341f966cf7ebc7c9
+
+
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/volume_services_enabled?
+  value: true
+
+- type: replace
+  path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/volume_services_enabled?
+  value: true
+
+- type: replace
+  path: /instance_groups/name=cc-clock/jobs/name=cloud_controller_clock/properties/cc/volume_services_enabled?
+  value: true
+
+- type: replace
+  path: /instance_groups/-
+  value:
+    name: local-volume-broker-registrar
+    instances: 1
+    azs: [z1]
+    lifecycle: errand
+    vm_type: default
+    stemcell: default
+    networks: [{name: default}]
+    jobs:
+    - name: broker-registrar
+      release: broker-registrar
+      properties:
+        servicebroker:
+          url: http://local-broker.((system_domain))
+          name: local-volume-broker
+          username: username
+          password: password
+        cf:
+          api_url: api.((system_domain))
+          username: admin
+          password: ((cf_admin_password))
+          skip_ssl_validation: true
+
+- type: replace
+  path: /instance_groups/name=diego-cell/jobs/-
+  value:
+    name: localdriver
+    release: local-volume
+
+- type: replace
+  path: /instance_groups/name=diego-cell/jobs/-
+  value:    
+    name: localbroker
+    release: local-volume
+    properties:
+      localbroker:
+        username: username
+        password: password
+        service-name: local-volume
+        plan-name: free
+        localdriver-url: http://127.0.0.1:9089
+
+- type: replace
+  path: /instance_groups/name=diego-cell/jobs/-
+  value: 
+    name: route_registrar
+    release: routing
+    properties:
+      route_registrar:
+        routes:
+        - name: local-broker
+          port: 8999
+          registration_interval: 10s
+          tags:
+            component: local-broker
+          uris:
+            - local-broker.((system_domain))

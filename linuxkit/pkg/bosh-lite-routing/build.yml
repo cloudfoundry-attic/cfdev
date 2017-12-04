@@ -1,0 +1,4 @@
+image: bosh-lite-routing
+org: pivotal
+network: true
+disable-content-trust: true

@@ -1,0 +1,133 @@
+---
+# --- Set Router Static IP ---
+- type: replace
+  path: /instance_groups/name=router/networks
+  value:
+  - name: default
+    static_ips: [10.244.0.34]
+
+# --- Add Bosh Lite Security Groups ---
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/default_running_security_groups
+  value:
+  - public_networks
+  - dns
+  - load_balancer
+- type: replace
+  path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/default_running_security_groups
+  value:
+  - public_networks
+  - dns
+  - load_balancer
+- type: replace
+  path: /instance_groups/name=cc-clock/jobs/name=cloud_controller_clock/properties/cc/default_running_security_groups
+  value:
+  - public_networks
+  - dns
+  - load_balancer
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/security_group_definitions/-
+  value:
+    name: load_balancer
+    rules:
+    - destination: 10.244.0.34
+      protocol: all
+- type: replace
+  path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/security_group_definitions/-
+  value:
+    name: load_balancer
+    rules:
+    - destination: 10.244.0.34
+      protocol: all
+- type: replace
+  path: /instance_groups/name=cc-clock/jobs/name=cloud_controller_clock/properties/cc/security_group_definitions/-
+  value:
+    name: load_balancer
+    rules:
+    - destination: 10.244.0.34
+      protocol: all
+
+# ----- Move SSH Proxy from diego-brain to router ----
+- type: remove
+  path: /instance_groups/name=diego-brain/vm_extensions
+- type: remove
+  path: /instance_groups/name=diego-brain/jobs/name=ssh_proxy
+- type: replace
+  path: /instance_groups/name=router/vm_extensions
+  value:
+  - ssh-proxy-and-router-lb
+- type: replace
+  path: /instance_groups/name=router/jobs/-
+  value:
+    name: ssh_proxy
+    release: diego
+    properties:
+      diego:
+        ssl:
+          skip_cert_verify: true
+        ssh_proxy:
+          enable_cf_auth: true
+          host_key: "((diego_ssh_proxy_host_key.private_key))"
+          uaa_secret: "((uaa_clients_ssh-proxy_secret))"
+          uaa_token_url: "https://uaa.((system_domain))/oauth/token"
+          bbs: &5
+            ca_cert: "((diego_bbs_client.ca))"
+            client_cert: "((diego_bbs_client.certificate))"
+            client_key: "((diego_bbs_client.private_key))"
+
+# ----- Scale Down ------
+- type: replace
+  path: /instance_groups/name=consul/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=nats/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=etcd/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=etcd/jobs/name=etcd/properties/etcd/cluster
+  value:
+  - instances: 1
+    name: etcd
+- type: replace
+  path: /instance_groups/name=diego-api/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=uaa/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=diego-brain/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=diego-cell/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=diego-cell/jobs/name=rep/properties/diego/rep/evacuation_timeout_in_seconds?
+  value: 0
+- type: replace
+  path: /instance_groups/name=router/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=api/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=cc-worker/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=cc-clock/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=cc-bridge/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=doppler/instances
+  value: 1
+- type: replace
+  path: /instance_groups/name=log-api/instances
+  value: 1
+
+# ----- Reduce default app memory to 256M ------
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/default_app_memory?
+  value: 256

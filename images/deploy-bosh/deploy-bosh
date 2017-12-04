@@ -41,7 +41,7 @@ permit_device_control() {
 export DIRECTOR_DIR=/var/vcap/director
 mkdir -p "${DIRECTOR_DIR}"
 
-exec 1> "${DIRECTOR_DIR}/deploy.log"
+exec 1> >(tee -i "${DIRECTOR_DIR}/deploy.log")
 exec 2>&1
 
 permit_device_control
@@ -53,7 +53,7 @@ cp /etc/bosh/director.yml "${DIRECTOR_DIR}"
 
 for file_path in $DIRECTOR_DIR/cache/*; do
   file_name=$(basename $file_path)
-  sed -i "s~url:.*$file_name~url: file://$file_path~g"  "${DIRECTOR_DIR}/director.yml"
+  sed -i "s~url:.*$file_name~url: file://$file_path~g" "${DIRECTOR_DIR}/director.yml"
 done
 
 bosh --tty create-env \
@@ -79,3 +79,9 @@ source "${DIRECTOR_DIR}/env"
 
 bosh --tty -n update-cloud-config \
   /etc/bosh/deployment/warden/cloud-config.yml
+
+# This would be done here if the container shared the same network
+# namespace as the host - which it does not.
+# Hence this is done by a linuxkit pkg named bosh-lite-routing
+#
+# ip route add 10.244.0.0/16 via "${BOSH_DIRECTOR_IP}"

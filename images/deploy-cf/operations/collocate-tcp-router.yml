@@ -1,0 +1,35 @@
+---
+
+- type: replace
+  path: /instance_groups/name=router/vm_extensions/-
+  value: cf-tcp-router-network-properties
+
+- type: replace
+  path: /instance_groups/name=router/jobs/-
+  value:    
+    name: tcp_router
+    release: routing
+    properties:
+      tcp_router:
+        oauth_secret: "((uaa_clients_tcp_router_secret))"
+        router_group: default-tcp
+        health_check_port: 8888
+        debug_address: "127.0.0.1:17003"
+      uaa:
+        ca_cert: "((uaa_ca.certificate))"
+        tls_port: 8443
+
+# --- add tcp-router clients to uaa ---
+- type: replace
+  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/tcp_router?
+  value:
+    authorities: routing.routes.read
+    authorized-grant-types: client_credentials
+    secret: "((uaa_clients_tcp_router_secret))"
+
+# --- define secrets for tcp-router uaa clients ---
+- type: replace
+  path: /variables/-
+  value:
+    name: uaa_clients_tcp_router_secret
+    type: password

@@ -30,6 +30,10 @@ main() {
 
   btrfs-setup
 
+  $(which iptables) -I INPUT -j ACCEPT
+  $(which iptables) -I FORWARD -j ACCEPT
+  $(which iptables) -I OUTPUT -j ACCEPT
+
   /usr/bin/gdn server \
     --allow-host-access \
     --depot $depot_path \

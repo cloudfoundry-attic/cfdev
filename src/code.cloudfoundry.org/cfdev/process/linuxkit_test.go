@@ -13,6 +13,7 @@ var _ = Describe("LinuxKit process", func() {
 			ImagePath:   "/home-dir/.cfdev/image",
 			StatePath:   "/home-dir/.cfdev/state",
 			BoshISOPath: "/home-dir/.cfdev/bosh.iso",
+			CFISOPath:   "/home-dir/.cfdev/cf.iso",
 		}
 		start := linuxkit.Command()
 
@@ -20,9 +21,12 @@ var _ = Describe("LinuxKit process", func() {
 		Expect(start.Args).To(ConsistOf(
 			"linuxkit", "run", "hyperkit",
 			"-console-file",
+			"-cpus", "4",
+			"-mem", "8192",
 			"-networking=vpnkit",
-			"-disk", "size=10G",
+			"-disk", "size=50G",
 			"-disk", "file=/home-dir/.cfdev/bosh.iso",
+			"-disk", "file=/home-dir/.cfdev/cf.iso",
 			"-state", "/home-dir/.cfdev/state",
 			"--uefi", "/home-dir/.cfdev/image",
 		))

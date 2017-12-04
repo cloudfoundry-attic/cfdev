@@ -1,0 +1,60 @@
+#!/bin/bash
+
+set -e
+
+export CF_DIR=/var/vcap/cf
+mkdir -p "${CF_DIR}"
+
+exec 1> >(tee -i "${CF_DIR}/deploy.log")
+exec 2>&1
+
+source /var/vcap/director/env
+
+function upload_stemcell() {
+  local stemcell_version=$(bosh interpolate /etc/cf/deployment.yml \
+    --path /stemcells/0/version)
+
+  local version=$(bosh stemcells | grep $stemcell_version)
+
+  if [ -z "$version" ]; then
+    echo "Uploading stemcell $stemcell_version"
+    bosh upload-stemcell \
+      https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=$stemcell_version
+  else
+    echo "stemcell $stemcell_version already uploaded"
+  fi
+}
+
+cp /etc/cf/deployment.yml "${CF_DIR}"
+
+for file_path in $CF_DIR/cache/*; do
+  file_name=$(basename $file_path)
+  sed -i "s~url:.*$file_name~url: file://$file_path~g"  "${CF_DIR}/deployment.yml"
+done
+
+bosh -n update-cloud-config \
+	/etc/cf/deployment/bosh-lite/cloud-config.yml
+
+stemcell_version=$(bosh interpolate /etc/cf/deployment.yml --path /stemcells/0/version)
+
+bosh --tty upload-stemcell \
+      "${CF_DIR}/cache/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=$stemcell_version"
+
+bosh --tty --non-interactive --deployment cf \
+  deploy "${CF_DIR}/deployment.yml" \
+  -v system_domain=bosh-lite.com \
+  --no-redact \
+  --vars-store "${CF_DIR}/vars.yml"
+
+#bosh run-errand local-volume-broker-registrar -d cf --keep-alive
+
+bosh_lite_subnet=$(bosh int /etc/cf/deployment/bosh-lite/cloud-config.yml \
+  --path /networks/name=default/subnets/0/range)
+
+cf api api.bosh-lite.com --skip-ssl-validation
+cf auth admin admin
+cf enable-feature-flag diego_docker
+
+cf create-security-group all_access /etc/cf/app-security-group.json
+cf bind-staging-security-group all_access
+cf bind-running-security-group all_access
