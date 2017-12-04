@@ -44,9 +44,10 @@ services:
 
 # we bind /bin/true to iptables-save as a work around so the warden
 # cpi can delete vms without affecting ip tables
+#
 # gaol create -n deploy-bosh -p \
 #   --network 10.246.0.0/16 \
-#   -r docker:///dprotaso/deploy-bosh \
+#   -r /var/vcap/director/cache/deploy-bosh.tar \
 #   -m /var/vcap:/var/vcap \
 #   -m /var/vcap/director/cache:/var/vcap/director/cache
 

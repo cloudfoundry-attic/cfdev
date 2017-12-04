@@ -2,9 +2,15 @@
 
 set -e
 
-current_dir="$PWD"
-manifest=$(docker run dprotaso/deploy-bosh cat /etc/bosh/director.yml)
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+$script_dir/../images/deploy-bosh/build.sh
+
+manifest=$(docker run pivotal/deploy-bosh cat /etc/bosh/director.yml)
 tmpdir=$(mktemp -d)
+trap "{ rm -rf $tmpdir; }" EXIT
+
+rm -rf bosh-deps.iso
 
 pushd "$tmpdir"
 
@@ -13,7 +19,12 @@ echo "$manifest" | bosh int - --path /resource_pools/name=vms/stemcell/url >> do
 
 mkdir iso
 
+cid=$(docker run -d pivotal/deploy-bosh /bin/sleep 1h)
+docker export "$cid" > iso/deploy-bosh.tar
+docker kill "$cid"
+docker rm "$cid"
+
 wget -c -P iso -i downloads.txt
-mkisofs -V bosh-deps -R -o "$current_dir/bosh-deps.iso" iso/*
+mkisofs -V bosh-deps -R -o "$script_dir/bosh-deps.iso" iso/*
 
 popd
