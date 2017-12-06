@@ -10,20 +10,27 @@ import (
 var _ = Describe("LinuxKit process", func() {
 	It("builds a command", func() {
 		linuxkit := process.LinuxKit{
-			ImagePath:   "/home-dir/.cfdev/image",
-			StatePath:   "/home-dir/.cfdev/state",
-			BoshISOPath: "/home-dir/.cfdev/bosh.iso",
-			CFISOPath:   "/home-dir/.cfdev/cf.iso",
+			ExecutablePath: "/home-dir/.cfdev/cache",
+			ImagePath:      "/home-dir/.cfdev/image",
+			StatePath:      "/home-dir/.cfdev/state",
+			BoshISOPath:    "/home-dir/.cfdev/bosh.iso",
+			CFISOPath:      "/home-dir/.cfdev/cf.iso",
 		}
+
 		start := linuxkit.Command()
 
-		Expect(start.Path).To(HaveSuffix("linuxkit"))
+		linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
+		Expect(start.Path).To(Equal(linuxkitExecPath))
 		Expect(start.Args).To(ConsistOf(
-			"linuxkit", "run", "hyperkit",
+			linuxkitExecPath,
+			"run", "hyperkit",
 			"-console-file",
 			"-cpus", "4",
 			"-mem", "8192",
-			"-networking=vpnkit",
+			"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
+			"-networking", "vpnkit",
+			"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
+			"-vpnkit", "/home-dir/.cfdev/cache/vpnkit",
 			"-disk", "size=50G",
 			"-disk", "file=/home-dir/.cfdev/bosh.iso",
 			"-disk", "file=/home-dir/.cfdev/cf.iso",

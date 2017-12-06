@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This still requires Docker For Mac
+
 set -e
 
 rm -rf cfdev-efi-state/

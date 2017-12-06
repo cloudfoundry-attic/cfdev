@@ -23,7 +23,7 @@ func (d *Downloader) Start(url, path string) error {
 		return fmt.Errorf("resource server returned status code %d", resp.StatusCode)
 	}
 
-	file, err := os.Create(path)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 
 	if err != nil {
 		return err

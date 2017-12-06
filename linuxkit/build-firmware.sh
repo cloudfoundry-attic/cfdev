@@ -1,0 +1,40 @@
+#!/bin/bash
+
+set -e
+set -x
+
+# https://github.com/freebsd/freebsd-ports/blob/master/sysutils/uefi-edk2-bhyve/Makefile
+
+if [ -z "${IN_DOCKER}" ]; then
+    docker run --rm \
+        -e IN_DOCKER=true \
+        -v $(pwd)/build-firmware.sh:/build-firmware.sh \
+        ubuntu:16.04 /build-firmware.sh > UEFI.fd
+
+    exit
+fi
+
+exec 3>&1
+exec 1>&2
+
+apt-get update
+apt-get install -y build-essential uuid-dev iasl git gcc-4.9 nasm python
+
+git clone --branch bhyve/UDK2014.SP1 --depth=1 https://github.com/freebsd/uefi-edk2.git edk2
+
+cd edk2
+
+unset ARCH
+unset MAKEFLAGS
+
+make -C BaseTools
+
+source edksetup.sh
+
+BUILD_ARGS="-DDEBUG_ON_SERIAL_PORT=TRUE -D FD_SIZE_2MB"
+UEFI_TARGET=RELEASE
+
+build -t GCC49 -a X64 -b ${UEFI_TARGET} -p BhyvePkg/BhyvePkgX64.dsc ${BUILD_ARGS}
+
+cat /edk2/Build/BhyveX64/${UEFI_TARGET}_GCC49/FV/BHYVE.fd >&3
+

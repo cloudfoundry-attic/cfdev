@@ -22,3 +22,6 @@
 [submodule "acceptance/src/github.com/cloudfoundry/cf-acceptance-tests"]
 	path = acceptance/src/github.com/cloudfoundry/cf-acceptance-tests
 	url = git@github.com:cloudfoundry/cf-acceptance-tests.git
+[submodule "src/github.com/golang/protobuf"]
+	path = src/github.com/golang/protobuf
+	url = git@github.com:golang/protobuf.git

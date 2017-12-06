@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -117,10 +118,11 @@ func start() {
 	download(cacheDir)
 
 	linuxkit := process.LinuxKit{
-		StatePath:   stateDir,
-		ImagePath:   filepath.Join(cacheDir, "cfdev-efi.iso"),
-		BoshISOPath: filepath.Join(cacheDir, "bosh-deps.iso"),
-		CFISOPath:   filepath.Join(cacheDir, "cf-deps.iso"),
+		ExecutablePath: cacheDir,
+		StatePath:      stateDir,
+		ImagePath:      filepath.Join(cacheDir, "cfdev-efi.iso"),
+		BoshISOPath:    filepath.Join(cacheDir, "bosh-deps.iso"),
+		CFISOPath:      filepath.Join(cacheDir, "cf-deps.iso"),
 	}
 
 	cmd := linuxkit.Command()
@@ -203,7 +205,7 @@ func catalog() *resource.Catalog {
 		return &c
 	}
 
-	return &resource.Catalog{
+	c := resource.Catalog{
 		Items: []resource.Item{
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/cf-deps.iso",
@@ -220,6 +222,31 @@ func catalog() *resource.Catalog {
 				Name: "cfdev-efi.iso",
 				MD5:  "6a788a2a06cf0c18ac1c2ff243d223a5",
 			},
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/vpnkit",
+				Name: "vpnkit",
+				MD5:  "de7500dea85c87d49e749c7afdc9b5fa",
+				OS:   "darwin",
+			},
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/hyperkit",
+				Name: "hyperkit",
+				MD5:  "61da21b4e82e2bf2e752d043482aa966",
+				OS:   "darwin",
+			},
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/linuxkit",
+				Name: "linuxkit",
+				MD5:  "d56da3b94c8a4146256f84f14bc41d8a",
+				OS:   "darwin",
+			},
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/UEFI.fd",
+				Name: "UEFI.fd",
+				MD5:  "2eff1c02d76fc3bde60f497ce1116b09",
+			},
 		},
 	}
+
+	return c.Filter(runtime.GOOS)
 }
