@@ -8,6 +8,7 @@ RUN set -x && \
       curl \
       e2fsprogs \
       iptables \
+      openssh \
       sudo \
       util-linux && \
     \
@@ -27,7 +28,7 @@ RUN set -x && \
     \
     chmod a+x /usr/bin/bosh
 
-ENV BOSH_DEPLOYMENT_COMMIT 870a6744615120236ca78239da3a64dfa95d87b6
+ENV BOSH_DEPLOYMENT_COMMIT 9d3cd699f6eb905cb763df967e8b7e6f16510d27
 
 RUN set -x && \
     mkdir -p /etc/bosh && \
@@ -55,8 +56,9 @@ RUN cd /etc/bosh/deployment && \
       -o warden/cpi-grootfs.yml \
       -o jumpbox-user.yml \
       -o disable-app-armor.yml \
-      -o remote-ports.yml \
+      -o remove-ports.yml \
       -o use-warden-cpi-v39.yml \
+      -o use-garden-1_10.yml \
       -v director_name="warden" \
       -v internal_cidr=10.245.0.0/24 \
       -v internal_gw=10.245.0.1 \

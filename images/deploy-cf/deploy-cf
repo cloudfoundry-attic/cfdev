@@ -14,21 +14,6 @@ exec 2>&1
 
 source /var/vcap/director/env
 
-function upload_stemcell() {
-  local stemcell_version=$(bosh interpolate /etc/cf/deployment.yml \
-    --path /stemcells/0/version)
-
-  local version=$(bosh stemcells | grep $stemcell_version)
-
-  if [ -z "$version" ]; then
-    echo "Uploading stemcell $stemcell_version"
-    bosh upload-stemcell \
-      https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=$stemcell_version
-  else
-    echo "stemcell $stemcell_version already uploaded"
-  fi
-}
-
 cp /etc/cf/deployment.yml "${CF_DIR}"
 
 for file_path in $CF_DIR/cache/*; do
@@ -37,7 +22,7 @@ for file_path in $CF_DIR/cache/*; do
 done
 
 bosh -n update-cloud-config \
-	/etc/cf/deployment/bosh-lite/cloud-config.yml
+	/etc/cf/deployment/iaas-support/bosh-lite/cloud-config.yml
 
 stemcell_version=$(bosh interpolate /etc/cf/deployment.yml --path /stemcells/0/version)
 
@@ -52,7 +37,7 @@ bosh --tty --non-interactive --deployment cf \
 
 #bosh run-errand local-volume-broker-registrar -d cf --keep-alive
 
-bosh_lite_subnet=$(bosh int /etc/cf/deployment/bosh-lite/cloud-config.yml \
+bosh_lite_subnet=$(bosh int /etc/cf/deployment/iaas-support/bosh-lite/cloud-config.yml \
   --path /networks/name=default/subnets/0/range)
 
 org=cfdev-org

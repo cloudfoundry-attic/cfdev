@@ -99,16 +99,3 @@ services:
               "-host-port","2222",
               "-container-ip","10.244.0.34",
               "-container-port","2222"]
-
-# gaol create -n deploy-bosh -p \
-#   --network 10.246.0.0/16 \
-#   -r /var/vcap/director/cache/deploy-bosh.tar \
-#   -m /var/vcap:/var/vcap \
-#   -m /var/vcap/director/cache:/var/vcap/director/cache
-
-# gaol create -n deploy-cf -p \
-#   --network 10.246.0.0/16 \
-#   -r /var/vcap/cf/cache/deploy-cf.tar \
-#   -m /var/vcap:/var/vcap \
-#   -m /var/vcap/cf/cache:/var/vcap/cf/cache
-

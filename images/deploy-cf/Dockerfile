@@ -5,7 +5,8 @@ RUN set -x && \
       bash \
       ca-certificates \
       coreutils \
-      curl && \
+      curl \
+      openssh && \
     \
     curl -fsSL https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.26-r0/glibc-2.26-r0.apk \
        -o /tmp/glibc.apk && \
@@ -33,7 +34,7 @@ RUN set -x && \
     \
     chmod a+x /usr/bin/cf
 
-ENV CF_DEPLOYMENT_COMMIT 97ac0712f409352972667721a34c96ba431578b7
+ENV CF_DEPLOYMENT_COMMIT 9be2644da8de08540891e24856bbdb88f9a83f67
 
 RUN set -x && \
     mkdir -p /etc/cf && \
@@ -60,13 +61,11 @@ ADD deploy-cf /usr/bin/deploy-cf
 RUN cd /etc/cf/deployment && \
       bosh int cf-deployment.yml \
       -o operations/use-compiled-releases.yml \
-      -o operations/bypass-cc-bridge.yml \
-      -o operations/bypass-cc-bridge-privileged-containers.yml \
+      -o operations/enable-privileged-container-support.yml \
       -o operations/experimental/use-grootfs.yml \
-      -o bosh-lite-with-cf-mysql.yml \
+      -o operations/bosh-lite.yml \
       -o garden-disable-app-armour.yml \
       -o collocate-tcp-router.yml \
-      -o capi-volume-fix-bump.yml \
       -o use-btrfs-grootfs.yml \
       -v cf_admin_password=admin \
       -v uaa_admin_client_secret=admin-client-secret \
