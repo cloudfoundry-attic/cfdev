@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -21,18 +22,43 @@ import (
 	"code.cloudfoundry.org/garden/client/connection"
 )
 
+const (
+	defaultDist    = "cf"
+	defaultVersion = "1.2.0"
+)
+
 func main() {
+	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
+	flavor := startCmd.String("f", defaultDist, "distribution")
+	version := startCmd.String("n", defaultVersion, "version to deploy")
+
 	if len(os.Args) == 1 {
 		fmt.Println("cfdev [start|stop]")
 		os.Exit(1)
-	} else if os.Args[1] == "start" {
+	}
+
+	switch os.Args[1] {
+	case "start":
+		startCmd.Parse(os.Args[2:])
+		if !isSupportedVersion(*flavor, *version) {
+			fmt.Printf("Distribution '%s' and version '%s' is not supported\n", *flavor, *version)
+			os.Exit(1)
+		}
+
 		start()
-	} else if os.Args[1] == "stop" {
+	case "stop":
 		stop()
-	} else if os.Args[1] == "download" {
+	case "download":
 		_, _, cacheDir := setupHomeDir()
 		download(cacheDir)
+	default:
+		fmt.Println("cfdev [start|stop]")
+		os.Exit(1)
 	}
+}
+
+func isSupportedVersion(flavor, version string) bool {
+	return flavor == "cf" && version == "1.2.0"
 }
 
 func setupHomeDir() (string, string, string) {

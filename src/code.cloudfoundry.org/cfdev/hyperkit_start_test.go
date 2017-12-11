@@ -19,7 +19,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("hyperkit acceptance", func() {
+var _ = Describe("hyperkit start acceptance", func() {
 
 	var (
 		cfdevHome       string
@@ -39,7 +39,6 @@ var _ = Describe("hyperkit acceptance", func() {
 
 	AfterEach(func() {
 		gexec.KillAndWait()
-
 		pid := pidFromFile("linuxkit.pid")
 
 		if pid != 0 {
@@ -49,52 +48,35 @@ var _ = Describe("hyperkit acceptance", func() {
 		os.RemoveAll(cfdevHome)
 	})
 
-	It("starts and stops the vm", func() {
-		command := exec.Command(cliPath, "start")
-		command.Env = append(os.Environ(),
-			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
+	Context("with an unsupported distribution", func() {
+		It("exits with code 1", func() {
+			command := exec.Command(cliPath, "start", "-f", "UNSUPPORTTED")
+			command.Env = append(os.Environ(),
+				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
+			session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
-		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Eventually(session).Should(gexec.Exit(1))
+		})
+	})
 
-		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
+	Context("with an unsupported version", func() {
+		It("exits with code 1", func() {
+			command := exec.Command(cliPath, "start", "-n", "9.9.9.9.9")
+			command.Env = append(os.Environ(),
+				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
+			session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
-		// FYI - this will take time until we use thin provisioned disks
-		hyperkitPidPath := filepath.Join(stateDir, "hyperkit.pid")
-		Eventually(hyperkitPidPath, 120, 1).Should(BeAnExistingFile())
-
-		By("waiting for garden to listen")
-		eventuallyShouldListenAt("http://localhost:7777", 30)
-
-		By("waiting for bosh to listen")
-		eventuallyShouldListenAt("https://10.245.0.2:25555", 240)
-
-		By("waiting for cf router to listen")
-		eventuallyShouldListenAt("http://10.244.0.34:80", 1200)
-
-		By("waiting for cfdev cli to exit when the deploy finished")
-		Eventually(session, 300).Should(gexec.Exit(0))
-
-		linuxkitPid := pidFromFile(linuxkitPidPath)
-		hyperkitPid := pidFromFile(hyperkitPidPath)
-
-		By("deploy finished - stopping...")
-		command = exec.Command(cliPath, "stop")
-		command.Env = append(os.Environ(),
-			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-
-		session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
-		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
-
-		//ensure pid is not running
-		eventuallyProcessStops(linuxkitPid)
-		eventuallyProcessStops(hyperkitPid)
+			Eventually(session).Should(gexec.Exit(1))
+		})
 	})
 
 	Context("when CFDEV_HOME is not writable", func() {
 		BeforeEach(func() {
 			os.Chmod(cfdevHome, 0555)
+		})
+
+		AfterEach(func() {
+			os.Chmod(cfdevHome, 0777)
 		})
 
 		It("fails to start linuxkit", func() {
@@ -179,24 +161,27 @@ var _ = Describe("hyperkit acceptance", func() {
 
 func setupDependencies(cacheDir string) {
 	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
-	vmISO := filepath.Join(gopaths[0], "linuxkit", "cfdev-efi.iso")
-	cfISO := filepath.Join(gopaths[0], "linuxkit", "cf-deps.iso")
-	boshISO := filepath.Join(gopaths[0], "linuxkit", "bosh-deps.iso")
 
-	Expect(vmISO).To(BeAnExistingFile())
-	Expect(boshISO).To(BeAnExistingFile())
-	Expect(cfISO).To(BeAnExistingFile())
+	assets := []string{
+		"cfdev-efi.iso",
+		"cf-deps.iso",
+		"bosh-deps.iso",
+		"vpnkit",
+		"hyperkit",
+		"linuxkit",
+		"UEFI.fd",
+	}
 
 	err := os.MkdirAll(cacheDir, 0777)
 	Expect(err).ToNot(HaveOccurred())
 
-	targetVMPath := filepath.Join(cacheDir, "cfdev-efi.iso")
-	targetBoshPath := filepath.Join(cacheDir, "bosh-deps.iso")
-	targetCFPath := filepath.Join(cacheDir, "cf-deps.iso")
+	for _, asset := range assets {
+		origin := filepath.Join(gopaths[0], "linuxkit", asset)
+		target := filepath.Join(cacheDir, asset)
 
-	Expect(os.Symlink(vmISO, targetVMPath)).ToNot(HaveOccurred())
-	Expect(os.Symlink(boshISO, targetBoshPath)).ToNot(HaveOccurred())
-	Expect(os.Symlink(cfISO, targetCFPath)).ToNot(HaveOccurred())
+		Expect(origin).To(BeAnExistingFile())
+		Expect(os.Symlink(origin, target)).ToNot(HaveOccurred())
+	}
 }
 
 func eventuallyShouldListenAt(url string, timeoutSec int) {
