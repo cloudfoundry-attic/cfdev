@@ -9,7 +9,9 @@
 ### Prior to running the CLI
 
 In linuxkit folder run the following:
-- build.sh - builds the vm iso
-- make-bosh-deps-iso.sh
-- make-cf-deps-iso.sh
+- build-image.sh - builds the vm iso
+- build-bosh-iso.sh
+- build-cf-iso.sh
+- build-firmware.sh
+- fetch-executables.sh
 - setup-ip-aliases.sh

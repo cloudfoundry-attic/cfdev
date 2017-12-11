@@ -16,3 +16,12 @@
 *.iso
 *.img
 **/*-state
+
+linuxkit/UEFI.fd
+linuxkit/hyperkit*
+linuxkit/linuxkit*
+linuxkit/vpnkit*
+
+acceptance/bin/
+acceptance/pkg/
+acceptance/src/github.com/cloudfoundry/results/
