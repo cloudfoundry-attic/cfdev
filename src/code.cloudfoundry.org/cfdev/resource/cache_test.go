@@ -202,6 +202,25 @@ var _ = Describe("Cache Sync", func() {
 			})
 		})
 	})
+
+	Context("asset verification is turned off", func() {
+		BeforeEach(func() {
+			cache.SkipAssetVerification = true
+		})
+
+		It("does not delete files with different checksums", func() {
+			corruptFile := filepath.Join(tmpDir, "second-resource")
+			Expect(corruptFile).To(BeAnExistingFile())
+		})
+
+		It("doesn't re-download files with different checksums", func() {
+			Expect(downloads).ToNot(ContainElement(download{
+				url:  "second-resource-url",
+				path: filepath.Join(tmpDir, "second-resource"),
+			}))
+		})
+
+	})
 })
 
 func createFile(dir, name, contents string) {

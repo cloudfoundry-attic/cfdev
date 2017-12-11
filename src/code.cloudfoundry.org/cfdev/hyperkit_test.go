@@ -177,12 +177,6 @@ var _ = Describe("hyperkit acceptance", func() {
 	})
 })
 
-func createTempCFDevHomeDir() string {
-	path, err := ioutil.TempDir("", "cfdev-home")
-	Expect(err).ToNot(HaveOccurred())
-	return path
-}
-
 func setupDependencies(cacheDir string) {
 	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
 	vmISO := filepath.Join(gopaths[0], "linuxkit", "cfdev-efi.iso")

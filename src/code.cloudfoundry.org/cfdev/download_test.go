@@ -1,17 +1,14 @@
 package main_test
 
 import (
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,7 +28,8 @@ var _ = Describe("download acceptance", func() {
 		cfdevHome = createTempCFDevHomeDir()
 		cacheDir = filepath.Join(cfdevHome, "cache")
 
-		fileHandler := http.FileServer(http.Dir(testResourcePath()))
+		serverAssetsDir := stageServerAssets()
+		fileHandler := http.FileServer(http.Dir(serverAssetsDir))
 		server = httptest.NewServer(fileHandler)
 	})
 
@@ -51,12 +49,28 @@ var _ = Describe("download acceptance", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session, 1200, 1).Should(gexec.Exit(0))
+		Eventually(session, 10, 1).Should(gexec.Exit(0))
 
 		files, err := ioutil.ReadDir(cacheDir)
 		Expect(err).ToNot(HaveOccurred())
 
-		Expect(names(files)).To(ConsistOf("bosh-deps.iso", "cf-deps.iso", "cfdev-efi.iso"))
+		Expect(names(files)).To(ConsistOf("some-asset"))
+	})
+
+	Context("downloaded asset has incorrect checksum", func() {
+		It("should exit", func() {
+			command := exec.Command(cliPath, "download")
+			command.Env = append(os.Environ(),
+				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome),
+				fmt.Sprintf("CFDEV_CATALOG=%s", badCatalog(server.URL)),
+			)
+
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Eventually(session, 10, 1).Should(gexec.Exit(1))
+
+		})
 	})
 })
 
@@ -70,33 +84,26 @@ func names(infos []os.FileInfo) []string {
 	return names
 }
 
-func testResourcePath() string {
-	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
-	return filepath.Join(gopaths[0], "linuxkit")
+func stageServerAssets() string {
+	dir, err := ioutil.TempDir("", "cfdev-server-assets")
+	Expect(err).ToNot(HaveOccurred())
+
+	filename := filepath.Join(dir, "some-asset")
+	err = ioutil.WriteFile(filename, []byte("some-content"), 0777)
+	Expect(err).ToNot(HaveOccurred())
+
+	return dir
 }
 
-func localCatalog(serverAddr string) string {
-	resourcePath := testResourcePath()
-	vmISO := filepath.Join(resourcePath, "cfdev-efi.iso")
-	cfISO := filepath.Join(resourcePath, "cf-deps.iso")
-	boshISO := filepath.Join(resourcePath, "bosh-deps.iso")
-
-	Expect(vmISO).To(BeAnExistingFile())
-	Expect(boshISO).To(BeAnExistingFile())
-	Expect(cfISO).To(BeAnExistingFile())
-
-	c := &resource.Catalog{}
-
-	for _, res := range [3]string{vmISO, cfISO, boshISO} {
-		name := filepath.Base(res)
-
-		c.Items = append(c.Items,
-			resource.Item{
-				URL:  fmt.Sprintf("%s/%s", serverAddr, name),
-				Name: name,
-				MD5:  computeMD5(res),
+func badCatalog(serverAddr string) string {
+	c := &resource.Catalog{
+		Items: []resource.Item{
+			{
+				URL:  fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
+				Name: "some-asset",
+				MD5:  "incorrect-md5",
 			},
-		)
+		},
 	}
 
 	bytes, err := json.Marshal(c)
@@ -105,15 +112,19 @@ func localCatalog(serverAddr string) string {
 	return string(bytes)
 }
 
-func computeMD5(file string) string {
-	f, err := os.Open(file)
+func localCatalog(serverAddr string) string {
+	c := &resource.Catalog{
+		Items: []resource.Item{
+			{
+				URL:  fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
+				Name: "some-asset",
+				MD5:  "ad60407c083b4ecc372614b8fcd9f305",
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(c)
 	Expect(err).ToNot(HaveOccurred())
 
-	defer f.Close()
-
-	h := md5.New()
-
-	_, err = io.Copy(h, f)
-	Expect(err).ToNot(HaveOccurred())
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return string(bytes)
 }

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -72,12 +73,13 @@ func cleanupStateDir(stateDir string) {
 
 func download(cacheDir string) {
 	fmt.Println("Downloading Resources...")
-
 	downloader := resource.Downloader{}
+	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
 
 	cache := resource.Cache{
-		Dir:          cacheDir,
-		DownloadFunc: downloader.Start,
+		Dir:                   cacheDir,
+		DownloadFunc:          downloader.Start,
+		SkipAssetVerification: skipVerify == "true",
 	}
 
 	if err := cache.Sync(catalog()); err != nil {

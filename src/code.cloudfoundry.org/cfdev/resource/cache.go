@@ -10,8 +10,9 @@ import (
 )
 
 type Cache struct {
-	Dir          string
-	DownloadFunc func(url, path string) error
+	Dir                   string
+	DownloadFunc          func(url, path string) error
+	SkipAssetVerification bool
 }
 
 func (c *Cache) Sync(clog *Catalog) error {
@@ -122,6 +123,10 @@ func (c *Cache) verifyFile(file string, expectedMD5 string) (state, error) {
 	}
 
 	defer f.Close()
+
+	if c.SkipAssetVerification {
+		return valid, nil
+	}
 
 	h := md5.New()
 

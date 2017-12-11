@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"io/ioutil"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -27,3 +28,9 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	gexec.CleanupBuildArtifacts()
 })
+
+func createTempCFDevHomeDir() string {
+	path, err := ioutil.TempDir("", "cfdev-home")
+	Expect(err).ToNot(HaveOccurred())
+	return path
+}
