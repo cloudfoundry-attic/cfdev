@@ -26,17 +26,14 @@ func (c *Cache) Sync(clog *Catalog) error {
 
 		switch result.state {
 		case missing:
-			err = c.DownloadFunc(result.item.URL, filename)
-			if err != nil {
+			if err := c.downloadAndVerify(result, filename); err != nil {
 				return err
 			}
 		case corrupt:
-			err := os.Remove(filename)
-			if err != nil {
+			if err := os.Remove(filename); err != nil {
 				return err
 			}
-			err = c.DownloadFunc(result.item.URL, filename)
-			if err != nil {
+			if err := c.downloadAndVerify(result, filename); err != nil {
 				return err
 			}
 		case valid:
@@ -50,13 +47,32 @@ func (c *Cache) Sync(clog *Catalog) error {
 	return nil
 }
 
+func (c *Cache) downloadAndVerify(res result, filename string) error {
+	if err := c.DownloadFunc(res.item.URL, filename); err != nil {
+		return err
+	}
+
+	state, err := c.verifyFile(filename, res.item.MD5)
+
+	if err != nil {
+		return err
+	}
+
+	if state == corrupt {
+		return fmt.Errorf("download file does not match checksum: %s %s",
+			res.item.Name, res.item.MD5)
+	}
+
+	return nil
+}
+
 func (c *Cache) scan(dir string, clog *Catalog) ([]result, error) {
 	var results []result
 
 	for _, item := range clog.Items {
 		itemPath := filepath.Join(dir, item.Name)
-
 		_, err := os.Stat(itemPath)
+
 		fileMissing := os.IsNotExist(err)
 
 		if err != nil && !fileMissing {
@@ -69,7 +85,7 @@ func (c *Cache) scan(dir string, clog *Catalog) ([]result, error) {
 
 		if fileMissing {
 			result.state = missing
-		} else if result.state, err = verifyFile(itemPath, item.MD5); err != nil {
+		} else if result.state, err = c.verifyFile(itemPath, item.MD5); err != nil {
 			return nil, err
 		}
 
@@ -77,7 +93,6 @@ func (c *Cache) scan(dir string, clog *Catalog) ([]result, error) {
 	}
 
 	files, err := ioutil.ReadDir(c.Dir)
-
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +115,8 @@ DirIteration:
 	return results, nil
 }
 
-func verifyFile(file string, expectedMD5 string) (state, error) {
+func (c *Cache) verifyFile(file string, expectedMD5 string) (state, error) {
 	f, err := os.Open(file)
-
 	if err != nil {
 		return corrupt, err
 	}

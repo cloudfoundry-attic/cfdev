@@ -27,34 +27,39 @@ var _ = Describe("Cache Sync", func() {
 		downloads = nil
 		tmpDir, _ = ioutil.TempDir("", "scan")
 
+		// This catalog is representative of the different actions
+		// the cache will encounter
+		// 1. Asset is missing
+		// 2. Existing asset contains incorrect checksum
+		// 3. Existing asset contains correct checksum
 		catalog = &resource.Catalog{
 			Items: []resource.Item{
 				{
 					Name: "first-resource",
 					URL:  "first-resource-url",
-					MD5:  "60484def35e5e27a5bda4f88dd5434d3", // md5 -s first-resource
+					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
 				},
 				{
 					Name: "second-resource",
 					URL:  "second-resource-url",
-					MD5:  "some-corrupt-md5",
+					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
 				},
 				{
 					Name: "third-resource",
 					URL:  "third-resource-url",
-					MD5:  "db0495de5b3a1d9eb92bfdc7bbe38564", // md5 -s third-resource
+					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
 				},
 			},
 		}
 
-		createFile(tmpDir, "second-resource")
-		createFile(tmpDir, "third-resource")
+		createFile(tmpDir, "second-resource", "wrong-content")
+		createFile(tmpDir, "third-resource", "content")
 
 		cache = &resource.Cache{
 			Dir: tmpDir,
 			DownloadFunc: func(url, path string) error {
 				downloads = append(downloads, download{url, path})
-				return nil
+				return ioutil.WriteFile(path, []byte("content"), 0777)
 			},
 		}
 	})
@@ -70,16 +75,15 @@ var _ = Describe("Cache Sync", func() {
 		}))
 	})
 
-	It("deletes corrupt files", func() {
-		corruptFile := filepath.Join(tmpDir, "second-resource")
-		Expect(corruptFile).ToNot(BeAnExistingFile())
-	})
-
 	It("re-downloads corrupt files to the target directory", func() {
+		originallyCorrupt := filepath.Join(tmpDir, "second-resource")
+
 		Expect(downloads).To(ContainElement(download{
 			url:  "second-resource-url",
-			path: filepath.Join(tmpDir, "second-resource"),
+			path: originallyCorrupt,
 		}))
+
+		Expect(ioutil.ReadFile(originallyCorrupt)).To(Equal([]byte("content")))
 	})
 
 	It("leaves valid files untouched", func() {
@@ -96,7 +100,7 @@ var _ = Describe("Cache Sync", func() {
 
 	Context("when unknown resources are present", func() {
 		BeforeEach(func() {
-			createFile(tmpDir, "unknown-resource")
+			createFile(tmpDir, "unknown-resource", "unknown-content")
 		})
 
 		It("deletes the unknown file", func() {
@@ -168,11 +172,41 @@ var _ = Describe("Cache Sync", func() {
 			Expect(err).To(MatchError("unable to download"))
 		})
 	})
+
+	Context("downloaded file contains incorrect checksum", func() {
+		Context("file was originally missing", func() {
+			BeforeEach(func() {
+				cache.DownloadFunc = func(url, path string) error {
+					createFile(tmpDir, "first-resource", "wrong-content")
+					createFile(tmpDir, "second-resource", "second-content")
+					return nil
+				}
+			})
+
+			It("returns an error", func() {
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("file was originally corrupt", func() {
+			BeforeEach(func() {
+				cache.DownloadFunc = func(url, path string) error {
+					createFile(tmpDir, "first-resource", "first-content")
+					createFile(tmpDir, "second-resource", "wrong-content")
+					return nil
+				}
+
+			})
+			It("returns an error", func() {
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
 })
 
-func createFile(path string, name string) {
-	filename := filepath.Join(path, name)
-	err := ioutil.WriteFile(filename, []byte(name), 0777)
+func createFile(dir, name, contents string) {
+	filename := filepath.Join(dir, name)
+	err := ioutil.WriteFile(filename, []byte(contents), 0777)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 }
 
