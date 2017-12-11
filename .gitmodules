@@ -25,3 +25,12 @@
 [submodule "src/github.com/golang/protobuf"]
 	path = src/github.com/golang/protobuf
 	url = git@github.com:golang/protobuf.git
+[submodule "src/golang.org/x/net"]
+	path = src/golang.org/x/net
+	url = git@github.com:golang/net.git
+[submodule "src/golang.org/x/text"]
+	path = src/golang.org/x/text
+	url = git@github.com:golang/text.git
+[submodule "src/gopkg.in/yaml.v2"]
+	path = src/gopkg.in/yaml.v2
+	url = git@github.com:go-yaml/yaml.git
