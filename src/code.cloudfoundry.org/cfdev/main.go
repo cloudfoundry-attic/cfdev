@@ -28,10 +28,6 @@ const (
 )
 
 func main() {
-	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
-	flavor := startCmd.String("f", defaultDist, "distribution")
-	version := startCmd.String("n", defaultVersion, "version to deploy")
-
 	if len(os.Args) == 1 {
 		fmt.Println("cfdev [start|stop]")
 		os.Exit(1)
@@ -39,12 +35,6 @@ func main() {
 
 	switch os.Args[1] {
 	case "start":
-		startCmd.Parse(os.Args[2:])
-		if !isSupportedVersion(*flavor, *version) {
-			fmt.Printf("Distribution '%s' and version '%s' is not supported\n", *flavor, *version)
-			os.Exit(1)
-		}
-
 		start()
 	case "stop":
 		stop()
@@ -88,7 +78,8 @@ func setupHomeDir() (string, string, string) {
 
 func cleanupStateDir(stateDir string) {
 	if err := os.RemoveAll(stateDir); err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Unable to clean up .cfdev state directory: %v\n", err)
+		os.Exit(1)
 	}
 
 	if err := os.MkdirAll(stateDir, 0755); err != nil {
@@ -134,6 +125,16 @@ func isLinuxKitRunning(pidFile string) bool {
 }
 
 func start() {
+	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
+	flavor := startCmd.String("f", defaultDist, "distribution")
+	version := startCmd.String("n", defaultVersion, "version to deploy")
+
+	startCmd.Parse(os.Args[2:])
+	if !isSupportedVersion(*flavor, *version) {
+		fmt.Fprintf(os.Stderr, "Distribution '%v' and version '%v' is not supported\n", *flavor, *version)
+		os.Exit(1)
+	}
+
 	_, stateDir, cacheDir := setupHomeDir()
 	linuxkitPidPath := filepath.Join(stateDir, "linuxkit.pid")
 
@@ -156,13 +157,15 @@ func start() {
 	cmd := linuxkit.Command()
 
 	if err := cmd.Start(); err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to start LinuxKit process: %v\n", err)
+		os.Exit(1)
 	}
 
 	err := ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
 
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to write LinuxKit pid file: %v\n", err)
+		os.Exit(1)
 	}
 
 	fmt.Println("Starting the VM...")
@@ -174,13 +177,15 @@ func start() {
 	fmt.Println("Deploying the BOSH Director...")
 
 	if err := gdn.DeployBosh(garden); err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to deploy the BOSH Director: %v\n", err)
+		os.Exit(1)
 	}
 
 	fmt.Println("Deploying CF...")
 
 	if err := gdn.DeployCloudFoundry(garden); err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to deploy the Cloud Foundry: %v\n", err)
+		os.Exit(1)
 	}
 
 	fmt.Println(`
