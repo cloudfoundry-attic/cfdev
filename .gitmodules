@@ -34,3 +34,12 @@
 [submodule "src/gopkg.in/yaml.v2"]
 	path = src/gopkg.in/yaml.v2
 	url = git@github.com:go-yaml/yaml.git
+[submodule "acceptance/src/github.com/cloudfoundry/cf-networking-release"]
+	path = acceptance/src/github.com/cloudfoundry/cf-networking-release
+	url = git@github.com:cloudfoundry/cf-networking-release.git
+[submodule "acceptance/src/github.com/cloudfoundry-incubator/routing-release"]
+	path = acceptance/src/github.com/cloudfoundry-incubator/routing-release
+	url = git@github.com:cloudfoundry-incubator/routing-release.git
+[submodule "linuxkit/pkg/expose-multiple-ports/vendor/github.com/moby/vpnkit"]
+	path = linuxkit/pkg/expose-multiple-ports/vendor/github.com/moby/vpnkit
+	url = git@github.com:moby/vpnkit.git

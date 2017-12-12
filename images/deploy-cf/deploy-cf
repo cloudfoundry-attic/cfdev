@@ -37,9 +37,6 @@ bosh --tty --non-interactive --deployment cf \
 
 #bosh run-errand local-volume-broker-registrar -d cf --keep-alive
 
-bosh_lite_subnet=$(bosh int /etc/cf/deployment/iaas-support/bosh-lite/cloud-config.yml \
-  --path /networks/name=default/subnets/0/range)
-
 org=cfdev-org
 space=cfdev-space
 

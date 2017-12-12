@@ -50,7 +50,7 @@ EOF
 }
 
 function run_networking_tests() {
-  networking_release_path="$script_dir/src/github.com/cloudfoundry-incubator/cf-networking-release"
+  networking_release_path="$script_dir/src/github.com/cloudfoundry/cf-networking-release"
 
   export CONFIG=$(mktemp -t config.XXXXXXXX)
   export APPS_DIR="$networking_release_path/src/example-apps"
@@ -84,8 +84,17 @@ EOF
 function run_routing_tests() {
   export CONFIG=$(mktemp -t config.XXXXXXXX)
 
-  local cf_vars_file="$script_dir/linuxkit/cf-vars.yml"
-  local tcp_emmiter_password=$(bosh int $cf_vars_file --path /uaa_clients_tcp_emitter_secret)
+  gaol create -p -n fetch-cf-vars \
+    -r /var/vcap/director/cache/deploy-bosh.tar \
+    -m /var/vcap:/var/vcap
+
+  local gaol_output=$(gaol run fetch-cf-vars \
+    --attach \
+    --command "grep uaa_clients_tcp_emitter_secret /var/vcap/cf/vars.yml")
+
+  local tcp_emitter_password=$(echo $gaol_output | cut -d' ' -f 2)
+
+  gaol destroy fetch-cf-vars
 
 cat <<EOF >$CONFIG
 {
@@ -104,7 +113,7 @@ cat <<EOF >$CONFIG
   "oauth": {
     "token_endpoint": "https://uaa.$domain",
     "client_name": "tcp_emitter",
-    "client_secret": "$tcp_emmiter_password",
+    "client_secret": "$tcp_emitter_password",
     "port": 443,
     "skip_ssl_validation": true
   }
@@ -219,10 +228,24 @@ EOF
   popd >/dev/null
 }
 
+# Remove PCF Dev 'all_access' application security group
+
+export CF_HOME=$(mktemp -d)
+cf api api.$domain --skip-ssl-validation
+cf auth admin admin
+
+cf unbind-staging-security-group all_access
+cf unbind-running-security-group all_access
+
+trap "{ \
+  cf bind-staging-security-group all_access; \
+  cf bind-running-security-group all_access; \
+}" EXIT
+
 
 run_cats $@
-#run_networking_tests $@
-#run_routing_tests $@
+run_networking_tests $@
+run_routing_tests $@
 #run_persi_tests $@
 #run_docker_registry_tests $@
 

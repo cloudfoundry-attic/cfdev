@@ -1,10 +1,10 @@
 
 
-### Build Dependencies
+### Build & Test Dependencies
 - Docker for Mac
 - Linuxkit - https://github.com/linuxkit/linuxkit
 - brew install cdrtools
-
+- garden cli - https://github.com/contraband/gaol
 
 ### Prior to running the CLI
 

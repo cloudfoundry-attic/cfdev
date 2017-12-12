@@ -1,6 +1,7 @@
 #!/bin/bash -e
 
 linuxkit pkg build -hash dev pkg/bosh-lite-routing
+linuxkit pkg build -hash dev pkg/expose-multiple-ports
 linuxkit pkg build -hash dev pkg/garden-runc
 linuxkit pkg build -hash dev pkg/openssl
 

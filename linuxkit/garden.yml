@@ -99,3 +99,14 @@ services:
               "-host-port","2222",
               "-container-ip","10.244.0.34",
               "-container-port","2222"]
+
+  - name: expose-router-tcp-ports
+    image: alpine:3.6
+    net: none
+    binds:
+      - /usr/bin/expose-multiple-ports:/usr/bin/expose-multiple-ports
+      - /var/vpnkit:/port
+    command: ["/usr/bin/expose-multiple-ports",
+              "-container-ip","10.244.0.34",
+              "-start-port","1024",
+              "-end-port","1123"]
