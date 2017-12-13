@@ -174,20 +174,20 @@ func start() {
 		CFISOPath:      filepath.Join(cacheDir, "cf-deps.iso"),
 	}
 
+	fmt.Println("Starting the VM...")
 	cmd := linuxkit.Command()
+
 	if err := cmd.Start(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to start LinuxKit process: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to start VM process: %v\n", err)
 		os.Exit(1)
 	}
 
 	err := ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to write LinuxKit pid file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to write VM pid file: %v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Println("Starting the VM...")
 
 	garden := client.New(connection.New("tcp", "localhost:7777"))
 

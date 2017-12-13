@@ -38,7 +38,7 @@ var _ = Describe("hyperkit start", func() {
 
 	AfterEach(func() {
 		gexec.KillAndWait()
-		pid := PidFromFile("linuxkit.pid")
+		pid := PidFromFile(linuxkitPidPath)
 
 		if pid != 0 {
 			syscall.Kill(int(-pid), syscall.SIGKILL)
@@ -101,7 +101,7 @@ var _ = Describe("hyperkit start", func() {
 			os.Chmod(cfdevHome, 0777)
 		})
 
-		It("fails to start linuxkit", func() {
+		It("exits with code 1", func() {
 			command := exec.Command(cliPath, "start")
 			command.Env = append(os.Environ(),
 				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))

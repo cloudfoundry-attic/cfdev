@@ -40,7 +40,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 	AfterEach(func() {
 		gexec.KillAndWait()
-		pid := PidFromFile("linuxkit.pid")
+		pid := PidFromFile(linuxkitPidPath)
 
 		if pid != 0 {
 			syscall.Kill(int(-pid), syscall.SIGKILL)
@@ -57,7 +57,8 @@ var _ = Describe("hyperkit lifecycle", func() {
 			fmt.Sprintf("CFDEV_SKIP_ASSET_CHECK=true"),
 			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
 
-		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		writer := gexec.NewPrefixedWriter("[cfdev start] ", GinkgoWriter)
+		session, err := gexec.Start(command, writer, writer)
 
 		Expect(err).ShouldNot(HaveOccurred())
 		Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
@@ -86,7 +87,8 @@ var _ = Describe("hyperkit lifecycle", func() {
 		command.Env = append(os.Environ(),
 			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
 
-		session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		writer = gexec.NewPrefixedWriter("[cfdev stop] ", GinkgoWriter)
+		session, err = gexec.Start(command, writer, writer)
 		Expect(err).ShouldNot(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
 
@@ -99,7 +101,8 @@ var _ = Describe("hyperkit lifecycle", func() {
 func RemoveIPAliases(aliases ...string) {
 	for _, alias := range aliases {
 		cmd := exec.Command("ifconfig", "lo0", "inet", alias+"/32", "remove")
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		writer := gexec.NewPrefixedWriter("[ifconfig] ", GinkgoWriter)
+		session, err := gexec.Start(cmd, writer, writer)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(session).Should(gexec.Exit())
 	}
