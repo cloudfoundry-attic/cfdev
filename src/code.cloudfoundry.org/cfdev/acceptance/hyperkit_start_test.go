@@ -1,15 +1,14 @@
-package main_test
+package acceptance
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"net/http"
+	"net"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync/atomic"
 	"syscall"
 
@@ -19,7 +18,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("hyperkit start acceptance", func() {
+var _ = Describe("hyperkit start", func() {
 
 	var (
 		cfdevHome       string
@@ -29,23 +28,46 @@ var _ = Describe("hyperkit start acceptance", func() {
 	)
 
 	BeforeEach(func() {
-		cfdevHome = createTempCFDevHomeDir()
+		cfdevHome = CreateTempCFDevHomeDir()
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
 
-		setupDependencies(cacheDir)
+		SetupDependencies(cacheDir)
 	})
 
 	AfterEach(func() {
 		gexec.KillAndWait()
-		pid := pidFromFile("linuxkit.pid")
+		pid := PidFromFile("linuxkit.pid")
 
 		if pid != 0 {
 			syscall.Kill(int(-pid), syscall.SIGKILL)
 		}
 
 		os.RemoveAll(cfdevHome)
+	})
+
+	Context("when not running as root", func() {
+		BeforeEach(func() {
+			me, err := user.Current()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(me.Uid).ToNot(Equal("0"), "test should not run as root")
+		})
+
+		Context("BOSH & CF Router IP addresses are not aliased", func() {
+			BeforeEach(func() {
+				ExpectIPAddressedToNotBeAliased(BoshDirectorIP, CFRouterIP)
+			})
+
+			It("exits with a code 1", func() {
+				command := exec.Command(cliPath, "start")
+				command.Env = append(os.Environ(),
+					fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
+				session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+				Eventually(session).Should(gexec.Exit(1))
+			})
+		})
 	})
 
 	Context("with an unsupported distribution", func() {
@@ -153,82 +175,19 @@ var _ = Describe("hyperkit start acceptance", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Eventually(session, 10, 1).Should(gexec.Exit(0))
 
-			Expect(pidFromFile(linuxkitPidPath)).To(Equal(existingPid))
+			Expect(PidFromFile(linuxkitPidPath)).To(Equal(existingPid))
 			Expect(atomic.LoadInt32(&exited)).To(BeEquivalentTo(0))
 		})
 	})
 })
 
-func setupDependencies(cacheDir string) {
-	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
-
-	assets := []string{
-		"cfdev-efi.iso",
-		"cf-deps.iso",
-		"bosh-deps.iso",
-		"vpnkit",
-		"hyperkit",
-		"linuxkit",
-		"UEFI.fd",
-	}
-
-	err := os.MkdirAll(cacheDir, 0777)
+func ExpectIPAddressedToNotBeAliased(aliases ...string) {
+	addrs, err := net.InterfaceAddrs()
 	Expect(err).ToNot(HaveOccurred())
 
-	for _, asset := range assets {
-		origin := filepath.Join(gopaths[0], "linuxkit", asset)
-		target := filepath.Join(cacheDir, asset)
-
-		Expect(origin).To(BeAnExistingFile())
-		Expect(os.Symlink(origin, target)).ToNot(HaveOccurred())
+	for _, addr := range addrs {
+		for _, alias := range aliases {
+			Expect(addr.String()).ToNot(Equal(alias + "/32"))
+		}
 	}
-}
-
-func eventuallyShouldListenAt(url string, timeoutSec int) {
-	Eventually(func() error {
-		return httpServerIsListeningAt(url)
-	}, timeoutSec, 1).ShouldNot(HaveOccurred())
-}
-
-func httpServerIsListeningAt(url string) error {
-	client := http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
-	resp, err := client.Get(url)
-
-	if resp != nil {
-		resp.Body.Close()
-	}
-
-	return err
-}
-
-func eventuallyProcessStops(pid int) {
-	EventuallyWithOffset(1, func() (bool, error) {
-		return processIsRunning(pid)
-	}).Should(BeFalse())
-}
-
-func processIsRunning(pid int) (bool, error) {
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return false, err
-	}
-
-	if err := proc.Signal(syscall.Signal(0)); err != nil {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-func pidFromFile(pidFile string) int {
-	pidBytes, _ := ioutil.ReadFile(pidFile)
-	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
-	return int(pid)
 }

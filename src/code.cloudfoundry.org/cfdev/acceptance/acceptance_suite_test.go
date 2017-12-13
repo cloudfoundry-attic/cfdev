@@ -1,7 +1,6 @@
-package main_test
+package acceptance
 
 import (
-	"io/ioutil"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -10,14 +9,12 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
+var cliPath string
+
 func TestCFDev(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "cf dev suite")
+	RunSpecs(t, "cf dev - acceptance suite")
 }
-
-var (
-	cliPath string
-)
 
 var _ = BeforeSuite(func() {
 	var err error
@@ -28,9 +25,3 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	gexec.CleanupBuildArtifacts()
 })
-
-func createTempCFDevHomeDir() string {
-	path, err := ioutil.TempDir("", "cfdev-home")
-	Expect(err).ToNot(HaveOccurred())
-	return path
-}

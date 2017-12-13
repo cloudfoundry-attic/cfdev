@@ -1,4 +1,4 @@
-package main_test
+package acceptance
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 )
 
-var _ = Describe("download acceptance", func() {
+var _ = Describe("download", func() {
 	var (
 		cfdevHome string
 		cacheDir  string
@@ -25,7 +25,7 @@ var _ = Describe("download acceptance", func() {
 	)
 
 	BeforeEach(func() {
-		cfdevHome = createTempCFDevHomeDir()
+		cfdevHome = CreateTempCFDevHomeDir()
 		cacheDir = filepath.Join(cfdevHome, "cache")
 
 		serverAssetsDir := stageServerAssets()

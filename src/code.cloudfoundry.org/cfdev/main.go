@@ -14,6 +14,7 @@ import (
 	"time"
 
 	gdn "code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/user"
@@ -25,6 +26,8 @@ import (
 const (
 	defaultDist    = "cf"
 	defaultVersion = "1.2.0"
+	BoshDirectorIP = "10.245.0.2"
+	CFRouterIP     = "10.244.0.34"
 )
 
 func main() {
@@ -124,6 +127,22 @@ func isLinuxKitRunning(pidFile string) bool {
 	return false
 }
 
+func setupNetworking() {
+	err := network.AddLoopbackAliases(BoshDirectorIP, CFRouterIP)
+
+	if err != nil {
+		if err == network.UnprivilegedError {
+			fmt.Fprint(os.Stderr, "Please run '"+os.Args[0]+" start' "+
+				"as root to setup network access to the BOSH Director/CF Router\n")
+		} else {
+			fmt.Fprintf(os.Stderr, "Unable to alias BOSH Director/CF Router IP: %v\n", err)
+		}
+
+		os.Exit(1)
+	}
+
+}
+
 func start() {
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	flavor := startCmd.String("f", defaultDist, "distribution")
@@ -144,6 +163,7 @@ func start() {
 	}
 
 	cleanupStateDir(stateDir)
+	setupNetworking()
 	download(cacheDir)
 
 	linuxkit := process.LinuxKit{
@@ -155,7 +175,6 @@ func start() {
 	}
 
 	cmd := linuxkit.Command()
-
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to start LinuxKit process: %v\n", err)
 		os.Exit(1)
