@@ -1,12 +1,36 @@
 #!/bin/bash
 
-if [[ $EUID -eq 0 ]]; then
-   echo "This script must not be run as root"
-   exit 1
-fi
+set -e
 
-ginkgo -r -v -skipPackage privileged
+extend_sudo_timeout() {
+  while true; do
+    sudo -v
+    sleep 60
+  done
+}
+
+disable_sudo() {
+    set +e
+    kill %1
+    sudo -K
+}
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "The tests require sudo password to be set"
+sudo echo "thanks!"
+trap disable_sudo EXIT
+
+# We need to extend sudo timeout for our acceptance test to run
+extend_sudo_timeout &
+
+cd $script_dir
 
 pushd acceptance/privileged > /dev/null
-  sudo -E ginkgo -r -v privileged
+  ginkgo -v
 popd > /dev/null
+
+# Invalidate sudo credentials
+disable_sudo
+
+ginkgo -r -v -skipPackage privileged

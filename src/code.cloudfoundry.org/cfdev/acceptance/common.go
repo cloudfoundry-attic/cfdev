@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -97,4 +98,20 @@ func PidFromFile(pidFile string) int {
 	pidBytes, _ := ioutil.ReadFile(pidFile)
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 	return int(pid)
+}
+
+func HasSudoPrivilege() bool {
+	cmd := exec.Command("sh", "-c", "sudo -n true")
+	err := cmd.Run()
+
+	if err == nil {
+		return true
+	}
+
+	switch t := err.(type) {
+	case *exec.ExitError:
+		return t.Success()
+	default:
+		panic(err)
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"syscall"
 
@@ -24,10 +23,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 	)
 
 	BeforeEach(func() {
-		me, err := user.Current()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(me.Uid).To(Equal("0"), "lifecycle tests should be run as root")
-
+		Expect(HasSudoPrivilege()).To(BeTrue())
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 
 		cfdevHome = CreateTempCFDevHomeDir()
@@ -100,7 +96,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 func RemoveIPAliases(aliases ...string) {
 	for _, alias := range aliases {
-		cmd := exec.Command("ifconfig", "lo0", "inet", alias+"/32", "remove")
+		cmd := exec.Command("sudo", "-n", "ifconfig", "lo0", "inet", alias+"/32", "remove")
 		writer := gexec.NewPrefixedWriter("[ifconfig] ", GinkgoWriter)
 		session, err := gexec.Start(cmd, writer, writer)
 		Expect(err).ToNot(HaveOccurred())

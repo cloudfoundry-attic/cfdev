@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"sync/atomic"
@@ -15,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -47,11 +47,9 @@ var _ = Describe("hyperkit start", func() {
 		os.RemoveAll(cfdevHome)
 	})
 
-	Context("when not running as root", func() {
+	Context("when lacking sudo privileges", func() {
 		BeforeEach(func() {
-			me, err := user.Current()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(me.Uid).ToNot(Equal("0"), "test should not run as root")
+			Expect(HasSudoPrivilege()).To(BeFalse())
 		})
 
 		Context("BOSH & CF Router IP addresses are not aliased", func() {
@@ -59,13 +57,14 @@ var _ = Describe("hyperkit start", func() {
 				ExpectIPAddressedToNotBeAliased(BoshDirectorIP, CFRouterIP)
 			})
 
-			It("exits with a code 1", func() {
+			It("notifies and prompts for a password in order to sudo", func() {
 				command := exec.Command(cliPath, "start")
 				command.Env = append(os.Environ(),
 					fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-				session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
-				Eventually(session).Should(gexec.Exit(1))
+				session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Eventually(session.Out).Should(gbytes.Say("Setting up IP aliases"))
+				Eventually(session.Err).Should(gbytes.Say("Password:"))
 			})
 		})
 	})

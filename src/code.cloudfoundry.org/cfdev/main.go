@@ -131,16 +131,9 @@ func setupNetworking() {
 	err := network.AddLoopbackAliases(BoshDirectorIP, CFRouterIP)
 
 	if err != nil {
-		if err == network.UnprivilegedError {
-			fmt.Fprint(os.Stderr, "Please run '"+os.Args[0]+" start' "+
-				"as root to setup network access to the BOSH Director/CF Router\n")
-		} else {
-			fmt.Fprintf(os.Stderr, "Unable to alias BOSH Director/CF Router IP: %v\n", err)
-		}
-
+		fmt.Fprintf(os.Stderr, "Unable to alias BOSH Director/CF Router IP: %v\n", err)
 		os.Exit(1)
 	}
-
 }
 
 func start() {
