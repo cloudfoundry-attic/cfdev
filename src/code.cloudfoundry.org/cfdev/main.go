@@ -17,6 +17,7 @@ import (
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
+	"code.cloudfoundry.org/cfdev/shell"
 	"code.cloudfoundry.org/cfdev/user"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
@@ -44,6 +45,8 @@ func main() {
 	case "download":
 		_, _, cacheDir := setupHomeDir()
 		download(cacheDir)
+	case "bosh":
+		bosh(os.Args[2:])
 	default:
 		fmt.Println("cfdev [start|stop]")
 		os.Exit(1)
@@ -200,7 +203,7 @@ func start() {
 		os.Exit(1)
 	}
 
-	fmt.Println(`
+	fmt.Print(`
   ██████╗███████╗██████╗ ███████╗██╗   ██╗
  ██╔════╝██╔════╝██╔══██╗██╔════╝██║   ██║
  ██║     █████╗  ██║  ██║█████╗  ██║   ██║
@@ -213,7 +216,8 @@ To begin using CF Dev, please run:
     cf login -a https://api.v2.pcfdev.io --skip-ssl-validation
 
 Admin user => Email: admin / Password: admin
-Regular user => Email: user / Password: pass`)
+Regular user => Email: user / Password: pass
+`)
 
 }
 
@@ -224,6 +228,30 @@ func stop() {
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 
 	syscall.Kill(int(-pid), syscall.SIGKILL)
+}
+
+func bosh(args []string) {
+	if len(args) == 0 || args[1] != "env" {
+		cmd := os.Args[0]
+		fmt.Fprintf(os.Stderr, `Usage: eval "$(%s bosh env)"`, cmd)
+		fmt.Fprintln(os.Stderr)
+		os.Exit(1)
+	}
+
+	gClient := client.New(connection.New("tcp", "localhost:7777"))
+	boshConfiguration, err := gdn.FetchBOSHConfig(gClient)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to fetch bosh configuration: %v\n", err)
+		os.Exit(1)
+	}
+
+	shellScript, err := shell.FormatConfig(boshConfiguration)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to format bosh configuration: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Print(shellScript)
 }
 
 func waitForGarden(client garden.Client) {

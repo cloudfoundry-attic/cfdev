@@ -71,8 +71,8 @@ cat <<EOF > "${DIRECTOR_DIR}/env"
 export BOSH_ENVIRONMENT="${BOSH_DIRECTOR_IP}"
 export BOSH_CLIENT=admin
 export BOSH_CLIENT_SECRET=`bosh int "${DIRECTOR_DIR}/creds.yml" --path /admin_password`
-export BOSH_CA_CERT="${DIRECTOR_DIR}/ca.crt"
-export BOSH_GW_PRIVATE_KEY="${DIRECTOR_DIR}/jumpbox.key"
+export BOSH_CA_CERT="$(cat ${DIRECTOR_DIR}/ca.crt)"
+export BOSH_GW_PRIVATE_KEY="$(cat ${DIRECTOR_DIR}/jumpbox.key"
 EOF
 
 source "${DIRECTOR_DIR}/env"

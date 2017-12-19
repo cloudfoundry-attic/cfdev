@@ -27,10 +27,10 @@ extend_sudo_timeout &
 cd $script_dir
 
 pushd acceptance/privileged > /dev/null
-  ginkgo -v
+  ginkgo $@
 popd > /dev/null
 
 # Invalidate sudo credentials
 disable_sudo
 
-ginkgo -r -v -skipPackage privileged
+ginkgo -r -skipPackage privileged $@

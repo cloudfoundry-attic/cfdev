@@ -47,7 +47,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 	})
 
-	It("starts and stops the vm", func() {
+	It("runs the entire vm lifecycle", func() {
 		command := exec.Command(cliPath, "start")
 		command.Env = append(os.Environ(),
 			fmt.Sprintf("CFDEV_SKIP_ASSET_CHECK=true"),
@@ -66,8 +66,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		By("waiting for garden to listen")
 		EventuallyShouldListenAt("http://"+GardenIP+":7777", 30)
 
-		By("waiting for bosh to listen")
-		EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 240)
+		EventuallyWeCanTargetTheBOSHDirector()
 
 		By("waiting for cf router to listen")
 		EventuallyShouldListenAt("http://"+CFRouterIP+":80", 1200)
@@ -93,6 +92,28 @@ var _ = Describe("hyperkit lifecycle", func() {
 		EventuallyProcessStops(hyperkitPid)
 	})
 })
+
+func EventuallyWeCanTargetTheBOSHDirector() {
+	By("waiting for bosh to listen")
+	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 240)
+
+	// Even though the test below is very similar this fails fast when `bosh env`
+	// command is broken
+	w := gexec.NewPrefixedWriter("[cfdev bosh env] ", GinkgoWriter)
+	session, err := gexec.Start(exec.Command(cliPath, "bosh", "env"), w, w)
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session).Should(gexec.Exit(0))
+
+	// This test is more representative of how `bosh env` should be invoked
+	w = gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
+	boshCmd := exec.Command("/bin/sh",
+		"-e",
+		"-c", fmt.Sprintf(`eval "$(%s bosh env) && bosh env"`, cliPath))
+
+	session, err = gexec.Start(boshCmd, w, w)
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session, 30, 1).Should(gexec.Exit(0))
+}
 
 func RemoveIPAliases(aliases ...string) {
 	for _, alias := range aliases {
