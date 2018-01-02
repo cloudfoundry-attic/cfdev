@@ -1,8 +1,10 @@
 package process
 
 import (
+	"fmt"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -19,6 +21,17 @@ func (s *LinuxKit) Command() *exec.Cmd {
 	hyperkit := filepath.Join(s.ExecutablePath, "hyperkit")
 	uefi := filepath.Join(s.ExecutablePath, "UEFI.fd")
 	vpnkit := filepath.Join(s.ExecutablePath, "vpnkit")
+	qcowtool := filepath.Join(s.ExecutablePath, "qcow-tool")
+
+	diskArgs := []string{
+		"type=qcow",
+		"size=50G",
+		"trim=true",
+		fmt.Sprintf("qcow-tool=%s", qcowtool),
+		"qcow-onflush=os",
+		"qcow-compactafter=262144",
+		"qcow-keeperased=262144",
+	}
 
 	cmd := exec.Command(linuxkit, "run", "hyperkit",
 		"-console-file",
@@ -28,7 +41,7 @@ func (s *LinuxKit) Command() *exec.Cmd {
 		"-networking", "vpnkit",
 		"-vpnkit", vpnkit,
 		"-fw", uefi,
-		"-disk", "size=50G",
+		"-disk", strings.Join(diskArgs, ","),
 		"-disk", "file="+s.BoshISOPath,
 		"-disk", "file="+s.CFISOPath,
 		"-state", s.StatePath,

@@ -21,6 +21,7 @@ linuxkit/UEFI.fd
 linuxkit/hyperkit*
 linuxkit/linuxkit*
 linuxkit/vpnkit*
+linuxkit/qcow-tool*
 
 acceptance/bin/
 acceptance/pkg/

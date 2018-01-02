@@ -31,7 +31,7 @@ var _ = Describe("LinuxKit process", func() {
 			"-networking", "vpnkit",
 			"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
 			"-vpnkit", "/home-dir/.cfdev/cache/vpnkit",
-			"-disk", "size=50G",
+			"-disk", "type=qcow,size=50G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
 			"-disk", "file=/home-dir/.cfdev/bosh.iso",
 			"-disk", "file=/home-dir/.cfdev/cf.iso",
 			"-state", "/home-dir/.cfdev/state",

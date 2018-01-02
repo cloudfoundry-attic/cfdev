@@ -310,7 +310,13 @@ func catalog() *resource.Catalog {
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/linuxkit",
 				Name: "linuxkit",
-				MD5:  "d56da3b94c8a4146256f84f14bc41d8a",
+				MD5:  "1abf9134ac5e00b4608a8c5cd838cf40",
+				OS:   "darwin",
+			},
+			{
+				URL:  "https://s3.amazonaws.com/pcfdev-development/qcow-tool",
+				Name: "qcow-tool",
+				MD5:  "22f3a57096ae69027c13c4933ccdd96c",
 				OS:   "darwin",
 			},
 			{

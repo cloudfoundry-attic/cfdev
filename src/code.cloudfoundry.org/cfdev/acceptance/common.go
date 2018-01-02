@@ -37,6 +37,7 @@ func SetupDependencies(cacheDir string) {
 		"hyperkit",
 		"linuxkit",
 		"UEFI.fd",
+		"qcow-tool",
 	}
 
 	err := os.MkdirAll(cacheDir, 0777)
