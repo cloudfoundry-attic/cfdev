@@ -231,7 +231,7 @@ func stop() {
 }
 
 func bosh(args []string) {
-	if len(args) == 0 || args[1] != "env" {
+	if len(args) == 0 || args[0] != "env" {
 		cmd := os.Args[0]
 		fmt.Fprintf(os.Stderr, `Usage: eval "$(%s bosh env)"`, cmd)
 		fmt.Fprintln(os.Stderr)
