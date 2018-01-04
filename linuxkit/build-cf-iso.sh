@@ -2,13 +2,21 @@
 
 set -e
 
+function has_uncompiled_packages() {
+  tar xOf "$1" release.MF 2> /dev/null | grep -q ^packages
+}
+
+function is_release() {
+  tar tf "$1" 2> /dev/null | grep -q release.MF
+}
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-$script_dir/../images/deploy-cf/build.sh
+"${script_dir}/../images/deploy-cf/build.sh"
 
 manifest=$(docker run pivotal/deploy-cf cat /etc/cf/deployment.yml)
 tmpdir=$(mktemp -d)
-trap "{ rm -rf $tmpdir; }" EXIT
+trap '{ rm -rf ${tmpdir}; }' EXIT
 
 rm -rf cf-deps.iso
 
@@ -27,7 +35,19 @@ docker kill "$cid"
 docker rm "$cid"
 
 wget -c -P iso -i downloads.txt
-mkisofs -V cf-deps -R -o "$script_dir/cf-deps.iso" iso/*
 
+for f in iso/*; do
+ if ! is_release "$f"; then
+   continue
+ fi
+
+ if ! has_uncompiled_packages "$f"; then
+   continue
+ fi
+
+ "${script_dir}/compile-release.sh" "$f" "$stemcell_version" "$PWD/$f"
+done
+
+mkisofs -V cf-deps -R -o "$script_dir/cf-deps.iso" iso/*
 
 popd

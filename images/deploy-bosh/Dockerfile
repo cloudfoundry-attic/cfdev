@@ -1,4 +1,29 @@
+FROM golang:1.9-alpine3.6 as bosh-cli-builder
+
+ENV BOSH_CLI_COMMIT 15dd4c843e161ed6410b4d91947484b3b87f39ce
+
+RUN set -x && \
+    apk add --no-cache curl bash && \
+    mkdir -p /go/src/github.com/cloudfoundry && \
+    \
+    curl -fsSL https://github.com/pcfdev-forks/bosh-cli/archive/${BOSH_CLI_COMMIT}.zip \
+       -o /cli.zip && \
+    \
+    cd /go/src/github.com/cloudfoundry && \
+    \
+    unzip /cli.zip -d $PWD && \
+    \
+    rm /cli.zip && \
+    \
+    mv bosh-cli-${BOSH_CLI_COMMIT} bosh-cli && \
+    \
+    chmod +x bosh-cli/bin/build && \
+    \
+    bosh-cli/bin/build
+
 FROM ruby:2.4.2-alpine3.6
+
+COPY --from=bosh-cli-builder /go/src/github.com/cloudfoundry/bosh-cli/out/bosh /usr/bin/bosh
 
 RUN set -x && \
     apk add --no-cache \
@@ -17,16 +42,6 @@ RUN set -x && \
     \
     apk add --no-cache --allow-untrusted /tmp/glibc.apk && \
     rm /tmp/glibc.apk
-
-ENV BOSH_CLI_VERSION 2.0.44
-ENV BOSH_CLI_SHA256 97add408895a5d47d5524fe3eb67cb492dff7c259fe4b8afe29bdefbc88532d9
-
-RUN set -x && \
-    curl -fsSL "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-${BOSH_CLI_VERSION}-linux-amd64" \
-       -o /usr/bin/bosh && \
-    echo "${BOSH_CLI_SHA256} /usr/bin/bosh" | sha256sum -c - && \
-    \
-    chmod a+x /usr/bin/bosh
 
 ENV BOSH_DEPLOYMENT_COMMIT 9d3cd699f6eb905cb763df967e8b7e6f16510d27
 
