@@ -282,7 +282,7 @@ func catalog() *resource.Catalog {
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/cf-oss-deps.iso",
 				Name: "cf-oss-deps.iso",
-				MD5:  "c62115e8a81630e100dec5341675b42d",
+				MD5:  "8ed3817f3bd85c0a62402e77ea9ccc9f",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/cfdev-efi.iso",
