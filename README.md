@@ -10,8 +10,7 @@
 
 In linuxkit folder run the following:
 - build-image.sh - builds the vm iso
-- build-bosh-iso.sh
-- build-cf-iso.sh
+- build-cf-oss-dep-iso.sh
 - build-firmware.sh
 - fetch-executables.sh
 - setup-ip-aliases.sh
