@@ -8,7 +8,6 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 rm -rf $script_dir/cfdev-efi-state
 
-
 linuxkit_bin="$script_dir/linuxkit"
 hyperkit_bin="$script_dir/hyperkit"
 vpnkit_bin="$script_dir/vpnkit"
@@ -24,6 +23,5 @@ $linuxkit_bin run hyperkit \
 	-networking vpnkit \
 	-vpnkit $vpnkit_bin \
 	-disk type=qcow,size=50G,trim=true,qcow-tool=$qcowtool_bin,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144 \
-	-disk file=bosh-deps.iso \
-	-disk file=cf-deps.iso \
+	-disk file=cf-oss-deps.iso \
 	--uefi cfdev-efi.iso

@@ -15,7 +15,7 @@ func FetchBOSHConfig(client garden.Client) (BOSHConfiguration, error) {
 		Privileged: true,
 		Network:    "10.246.0.0/16",
 		Image: garden.ImageRef{
-			URI: "/var/vcap/director/cache/deploy-bosh.tar",
+			URI: "/var/vcap/cache/workspace.tar",
 		},
 		BindMounts: []garden.BindMount{
 			{

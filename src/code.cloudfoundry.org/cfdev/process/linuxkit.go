@@ -9,11 +9,10 @@ import (
 )
 
 type LinuxKit struct {
-	ExecutablePath string
-	ImagePath      string
-	StatePath      string
-	BoshISOPath    string
-	CFISOPath      string
+	ExecutablePath      string
+	StatePath           string
+	OSImagePath         string
+	DependencyImagePath string
 }
 
 func (s *LinuxKit) Command() *exec.Cmd {
@@ -42,10 +41,10 @@ func (s *LinuxKit) Command() *exec.Cmd {
 		"-vpnkit", vpnkit,
 		"-fw", uefi,
 		"-disk", strings.Join(diskArgs, ","),
-		"-disk", "file="+s.BoshISOPath,
-		"-disk", "file="+s.CFISOPath,
+		"-disk", "file="+s.DependencyImagePath,
 		"-state", s.StatePath,
-		"--uefi", s.ImagePath)
+		"--uefi",
+		s.OSImagePath)
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,

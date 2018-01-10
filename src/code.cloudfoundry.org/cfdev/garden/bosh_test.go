@@ -35,7 +35,7 @@ var _ = Describe("DeployBosh", func() {
 			Privileged: true,
 			Network:    "10.246.0.0/16",
 			Image: garden.ImageRef{
-				URI: "/var/vcap/director/cache/deploy-bosh.tar",
+				URI: "/var/vcap/cache/workspace.tar",
 			},
 			BindMounts: []garden.BindMount{
 				{
@@ -44,8 +44,8 @@ var _ = Describe("DeployBosh", func() {
 					Mode:    garden.BindMountModeRW,
 				},
 				{
-					SrcPath: "/var/vcap/director/cache",
-					DstPath: "/var/vcap/director/cache",
+					SrcPath: "/var/vcap/cache",
+					DstPath: "/var/vcap/cache",
 					Mode:    garden.BindMountModeRO,
 				},
 			},

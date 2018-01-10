@@ -12,7 +12,7 @@ func DeployBosh(client garden.Client) error {
 		Privileged: true,
 		Network:    "10.246.0.0/16",
 		Image: garden.ImageRef{
-			URI: "/var/vcap/director/cache/deploy-bosh.tar",
+			URI: "/var/vcap/cache/workspace.tar",
 		},
 		BindMounts: []garden.BindMount{
 			{
@@ -21,8 +21,8 @@ func DeployBosh(client garden.Client) error {
 				Mode:    garden.BindMountModeRW,
 			},
 			{
-				SrcPath: "/var/vcap/director/cache",
-				DstPath: "/var/vcap/director/cache",
+				SrcPath: "/var/vcap/cache",
+				DstPath: "/var/vcap/cache",
 				Mode:    garden.BindMountModeRO,
 			},
 		},

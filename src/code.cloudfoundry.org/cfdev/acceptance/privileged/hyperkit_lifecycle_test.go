@@ -88,8 +88,8 @@ var _ = Describe("hyperkit lifecycle", func() {
 		Eventually(session).Should(gexec.Exit(0))
 
 		//ensure pid is not running
-		EventuallyProcessStops(linuxkitPid)
-		EventuallyProcessStops(hyperkitPid)
+		EventuallyProcessStops(linuxkitPid, 5)
+		EventuallyProcessStops(hyperkitPid, 5)
 	})
 })
 

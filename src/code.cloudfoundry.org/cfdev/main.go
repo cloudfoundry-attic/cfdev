@@ -163,11 +163,10 @@ func start() {
 	download(cacheDir)
 
 	linuxkit := process.LinuxKit{
-		ExecutablePath: cacheDir,
-		StatePath:      stateDir,
-		ImagePath:      filepath.Join(cacheDir, "cfdev-efi.iso"),
-		BoshISOPath:    filepath.Join(cacheDir, "bosh-deps.iso"),
-		CFISOPath:      filepath.Join(cacheDir, "cf-deps.iso"),
+		ExecutablePath:      cacheDir,
+		StatePath:           stateDir,
+		OSImagePath:         filepath.Join(cacheDir, "cfdev-efi.iso"),
+		DependencyImagePath: filepath.Join(cacheDir, "cf-oss-deps.iso"),
 	}
 
 	fmt.Println("Starting the VM...")
@@ -281,19 +280,14 @@ func catalog() *resource.Catalog {
 	c := resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/cf-deps.iso",
-				Name: "cf-deps.iso",
-				MD5:  "81d87b3d44756518a633ba76d10be6f0",
-			},
-			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/bosh-deps.iso",
-				Name: "bosh-deps.iso",
-				MD5:  "01897f5ffcee02c79d2df88ad2f4edf7",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/cf-oss-deps.iso",
+				Name: "cf-oss-deps.iso",
+				MD5:  "bd332aeb9efac05fc03337b483b32cf0",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/cfdev-efi.iso",
 				Name: "cfdev-efi.iso",
-				MD5:  "6a788a2a06cf0c18ac1c2ff243d223a5",
+				MD5:  "e054a12ce8fe9759ab8066f533ad388a",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/vpnkit",

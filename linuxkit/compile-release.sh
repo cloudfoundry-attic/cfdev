@@ -19,8 +19,14 @@ if [ -z "$image_id" ]; then
       wget --continue "$stemcell_url"
       tar zxvf "${stemcell_name}"
       docker import image "bosh/stemcells:${stemcell_version}-raw"
-      cid=$(docker run -d "bosh/stemcells:${stemcell_version}-raw" apt-get install -y ruby)
-      docker wait "${cid}"
+      cid=$(docker run -d "bosh/stemcells:${stemcell_version}-raw" bash -e -c 'apt-get update && apt-get install -y ruby')
+      exit_code=$(docker wait "${cid}")
+
+      if [ "${exit_code}" -ne "0" ]; then
+        echo "docker failed to run bosh/stemcells"
+        exit 1
+      fi
+
       docker commit "${cid}" "bosh/stemcells:${stemcell_version}"
       docker rm "${cid}"
       docker rmi "bosh/stemcells:${stemcell_version}-raw"

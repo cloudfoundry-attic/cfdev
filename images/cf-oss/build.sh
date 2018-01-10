@@ -2,4 +2,4 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-docker build -t pivotal/deploy-bosh $DIR
+docker build -t pivotal/cf-oss $DIR

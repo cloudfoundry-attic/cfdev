@@ -35,7 +35,7 @@ var _ = Describe("DeployCloudFoundry", func() {
 			Privileged: true,
 			Network:    "10.246.0.0/16",
 			Image: garden.ImageRef{
-				URI: "/var/vcap/cf/cache/deploy-cf.tar",
+				URI: "/var/vcap/cache/workspace.tar",
 			},
 			BindMounts: []garden.BindMount{
 				{
@@ -44,8 +44,8 @@ var _ = Describe("DeployCloudFoundry", func() {
 					Mode:    garden.BindMountModeRW,
 				},
 				{
-					SrcPath: "/var/vcap/cf/cache",
-					DstPath: "/var/vcap/cf/cache",
+					SrcPath: "/var/vcap/cache",
+					DstPath: "/var/vcap/cache",
 					Mode:    garden.BindMountModeRO,
 				},
 			},

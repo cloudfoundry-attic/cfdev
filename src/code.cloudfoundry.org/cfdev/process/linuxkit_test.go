@@ -10,11 +10,10 @@ import (
 var _ = Describe("LinuxKit process", func() {
 	It("builds a command", func() {
 		linuxkit := process.LinuxKit{
-			ExecutablePath: "/home-dir/.cfdev/cache",
-			ImagePath:      "/home-dir/.cfdev/image",
-			StatePath:      "/home-dir/.cfdev/state",
-			BoshISOPath:    "/home-dir/.cfdev/bosh.iso",
-			CFISOPath:      "/home-dir/.cfdev/cf.iso",
+			ExecutablePath:      "/home-dir/.cfdev/cache",
+			OSImagePath:         "/home-dir/.cfdev/image",
+			StatePath:           "/home-dir/.cfdev/state",
+			DependencyImagePath: "/home-dir/.cfdev/bosh-cf-deps.iso",
 		}
 
 		start := linuxkit.Command()
@@ -32,8 +31,7 @@ var _ = Describe("LinuxKit process", func() {
 			"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
 			"-vpnkit", "/home-dir/.cfdev/cache/vpnkit",
 			"-disk", "type=qcow,size=50G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
-			"-disk", "file=/home-dir/.cfdev/bosh.iso",
-			"-disk", "file=/home-dir/.cfdev/cf.iso",
+			"-disk", "file=/home-dir/.cfdev/bosh-cf-deps.iso",
 			"-state", "/home-dir/.cfdev/state",
 			"--uefi", "/home-dir/.cfdev/image",
 		))

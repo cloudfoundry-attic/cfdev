@@ -16,7 +16,7 @@ source /var/vcap/director/env
 
 cp /etc/cf/deployment.yml "${CF_DIR}"
 
-for file_path in $CF_DIR/cache/*; do
+for file_path in /var/vcap/cache/*; do
   file_name=$(basename $file_path)
   sed -i "s~url:.*$file_name~url: file://$file_path~g"  "${CF_DIR}/deployment.yml"
 done
@@ -27,7 +27,7 @@ bosh -n update-cloud-config \
 stemcell_version=$(bosh interpolate /etc/cf/deployment.yml --path /stemcells/0/version)
 
 bosh --tty upload-stemcell \
-      "${CF_DIR}/cache/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=$stemcell_version"
+      "/var/vcap/cache/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=$stemcell_version"
 
 bosh --tty --non-interactive --deployment cf \
   deploy "${CF_DIR}/deployment.yml" \

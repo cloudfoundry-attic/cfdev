@@ -51,7 +51,7 @@ export BOSH_DIRECTOR_IP="10.245.0.2"
 
 cp /etc/bosh/director.yml "${DIRECTOR_DIR}"
 
-for file_path in $DIRECTOR_DIR/cache/*; do
+for file_path in /var/vcap/cache/*; do
   file_name=$(basename $file_path)
   sed -i "s~url:.*$file_name~url: file://$file_path~g" "${DIRECTOR_DIR}/director.yml"
 done
@@ -79,6 +79,9 @@ source "${DIRECTOR_DIR}/env"
 
 bosh --tty -n update-cloud-config \
   /etc/bosh/deployment/warden/cloud-config.yml
+
+# Remove BOSH CLI cached files
+rm -rf $HOME/.bosh
 
 # This would be done here if the container shared the same network
 # namespace as the host - which it does not.

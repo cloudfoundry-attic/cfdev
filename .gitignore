@@ -22,6 +22,7 @@ linuxkit/hyperkit*
 linuxkit/linuxkit*
 linuxkit/vpnkit*
 linuxkit/qcow-tool*
+linuxkit/download-cache/*
 
 acceptance/bin/
 acceptance/pkg/

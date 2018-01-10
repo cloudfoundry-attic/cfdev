@@ -2,8 +2,8 @@
 
 gaol create -n deploy-cf -p \
   --network 10.246.0.0/16 \
-  -r /var/vcap/cf/cache/deploy-cf.tar \
+  -r /var/vcap/cache/workspace.tar \
   -m /var/vcap:/var/vcap \
-  -m /var/vcap/cf/cache:/var/vcap/cf/cache
+  -m /var/vcap/cache:/var/vcap/cache
 
 gaol run deploy-cf --attach -c /usr/bin/deploy-cf

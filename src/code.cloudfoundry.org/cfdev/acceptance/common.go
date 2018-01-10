@@ -31,8 +31,7 @@ func SetupDependencies(cacheDir string) {
 
 	assets := []string{
 		"cfdev-efi.iso",
-		"cf-deps.iso",
-		"bosh-deps.iso",
+		"cf-oss-deps.iso",
 		"vpnkit",
 		"hyperkit",
 		"linuxkit",
@@ -76,10 +75,10 @@ func HttpServerIsListeningAt(url string) error {
 	return err
 }
 
-func EventuallyProcessStops(pid int) {
+func EventuallyProcessStops(pid int, timeoutSec int) {
 	EventuallyWithOffset(1, func() (bool, error) {
 		return ProcessIsRunning(pid)
-	}).Should(BeFalse())
+	}, timeoutSec).Should(BeFalse())
 }
 
 func ProcessIsRunning(pid int) (bool, error) {
