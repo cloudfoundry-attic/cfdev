@@ -33,8 +33,7 @@ const (
 
 func main() {
 	if len(os.Args) == 1 {
-		fmt.Println("cfdev [start|stop]")
-		os.Exit(1)
+		usage()
 	}
 
 	switch os.Args[1] {
@@ -50,9 +49,13 @@ func main() {
 	case "catalog":
 		printCatalog()
 	default:
-		fmt.Println("cfdev [start|stop]")
-		os.Exit(1)
+		usage()
 	}
+}
+
+func usage() {
+	fmt.Println("cfdev [start|stop|bosh]")
+	os.Exit(1)
 }
 
 func isSupportedVersion(flavor, version string) bool {
