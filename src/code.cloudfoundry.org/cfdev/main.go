@@ -47,6 +47,8 @@ func main() {
 		download(cacheDir)
 	case "bosh":
 		bosh(os.Args[2:])
+	case "catalog":
+		printCatalog()
 	default:
 		fmt.Println("cfdev [start|stop]")
 		os.Exit(1)
@@ -251,6 +253,17 @@ func bosh(args []string) {
 	}
 
 	fmt.Print(shellScript)
+}
+
+func printCatalog() {
+	bytes, err := json.MarshalIndent(catalog(), "", "  ")
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to marshal catalog: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(string(bytes))
 }
 
 func waitForGarden(client garden.Client) {
