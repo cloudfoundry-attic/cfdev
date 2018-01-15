@@ -125,10 +125,19 @@ RUN cd /etc/cf/deployment && \
       -o operations/use-compiled-releases.yml \
       -o operations/enable-privileged-container-support.yml \
       -o operations/experimental/use-grootfs.yml \
+      \
+      -o operations/experimental/skip-consul-cell-registrations.yml \
+      -o operations/experimental/skip-consul-locks.yml \
+      -o operations/experimental/use-bosh-dns.yml \
+      -o operations/experimental/use-bosh-dns-for-containers.yml \
+      -o operations/experimental/disable-consul.yml \
       -o operations/bosh-lite.yml \
+      -o operations/experimental/disable-consul-bosh-lite.yml \
+      \
       -o garden-disable-app-armour.yml \
       -o collocate-tcp-router.yml \
       -o use-btrfs-grootfs.yml \
+      \
       -v cf_admin_password=admin \
       -v uaa_admin_client_secret=admin-client-secret \
       > "/etc/cf/deployment.yml" && \
