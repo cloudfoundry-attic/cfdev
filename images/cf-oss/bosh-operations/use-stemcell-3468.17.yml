@@ -1,0 +1,6 @@
+---
+- type: replace
+  path: /resource_pools/name=vms/stemcell
+  value:
+    url: https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=3468.17
+    sha1: 1dad6d85d6e132810439daba7ca05694cec208ab

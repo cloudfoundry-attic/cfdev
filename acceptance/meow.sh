@@ -252,6 +252,7 @@ run_routing_tests $@
 # not enabled for cats
 # include_credhub
 # include_capi_experimental
+# include_service_instance_sharing
 # include_zipkin
 # include_isolation_segments
 # include_routing_isolation_segments

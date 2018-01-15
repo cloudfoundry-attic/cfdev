@@ -56,7 +56,7 @@ RUN set -x && \
 
 
 ## Deployments
-ENV BOSH_DEPLOYMENT_COMMIT 9d3cd699f6eb905cb763df967e8b7e6f16510d27
+ENV BOSH_DEPLOYMENT_COMMIT 218e6d5030d89ca9f31c50b8b308e2a78d2a0997
 
 RUN set -x && \
     mkdir -p /etc/bosh && \
@@ -81,10 +81,13 @@ RUN cd /etc/bosh/deployment && \
       -o bosh-lite-grootfs.yml \
       -o warden/cpi.yml \
       -o warden/cpi-grootfs.yml \
+      \
       -o jumpbox-user.yml \
       -o disable-app-armor.yml \
       -o remove-ports.yml \
       -o use-warden-cpi-v39.yml \
+      -o use-stemcell-3468.17.yml \
+      \
       -v director_name="warden" \
       -v internal_cidr=10.245.0.0/24 \
       -v internal_gw=10.245.0.1 \
@@ -96,7 +99,7 @@ RUN cd /etc/bosh/deployment && \
       >> /etc/bosh/director.yml
 
 
-ENV CF_DEPLOYMENT_COMMIT 9be2644da8de08540891e24856bbdb88f9a83f67
+ENV CF_DEPLOYMENT_COMMIT e25735313e7fdc4508222c760e93f38f2e9c4812
 
 RUN set -x && \
     mkdir -p /etc/cf && \
