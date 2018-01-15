@@ -32,6 +32,7 @@ fetch linuxkit
 fetch qcow-tool
 
 # See vpnkit repo for circle ci instructions
+# Revision 75434cdd2c2c7c3be257f07f3b7c1a91eca27225
 fetch vpnkit
 
 
