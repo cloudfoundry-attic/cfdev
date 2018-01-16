@@ -18,6 +18,11 @@ iso_file="${script_dir}/cf-oss-deps.iso"
 rm -rf "${iso_file}"
 rm -rf "${download_list}"
 
+
+if [ -z "$SKIP_PURGE" ]; then
+  rm -rf "${download_dir}"
+fi
+
 mkdir -p "${download_dir}"
 touch "${download_list}"
 

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -148,6 +149,7 @@ func start() {
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	flavor := startCmd.String("f", defaultDist, "distribution")
 	version := startCmd.String("n", defaultVersion, "version to deploy")
+	registriesFlag := startCmd.String("r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 
 	startCmd.Parse(os.Args[2:])
 	if !isSupportedVersion(*flavor, *version) {
@@ -161,6 +163,13 @@ func start() {
 	if isLinuxKitRunning(linuxkitPidPath) {
 		fmt.Println("CF Dev is already running...")
 		return
+	}
+
+	registries, err := parseDockerRegistriesFlag(*registriesFlag)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to parse docker registries %v\n", err)
+		os.Exit(1)
 	}
 
 	cleanupStateDir(stateDir)
@@ -182,7 +191,7 @@ func start() {
 		os.Exit(1)
 	}
 
-	err := ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
+	err = ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to write VM pid file: %v\n", err)
@@ -202,7 +211,7 @@ func start() {
 
 	fmt.Println("Deploying CF...")
 
-	if err := gdn.DeployCloudFoundry(garden); err != nil {
+	if err := gdn.DeployCloudFoundry(garden, registries); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to deploy the Cloud Foundry: %v\n", err)
 		os.Exit(1)
 	}
@@ -223,6 +232,33 @@ Admin user => Email: admin / Password: admin
 Regular user => Email: user / Password: pass
 `)
 
+}
+
+func parseDockerRegistriesFlag(flag string) ([]string, error) {
+	if flag == "" {
+		return nil, nil
+	}
+
+	values := strings.Split(flag, ",")
+
+	registries := make([]string, 0, len(values))
+
+	for _, value := range values {
+		// Including the // will cause url.Parse to validate 'value' as a host:port
+		u, err := url.Parse("//" + value)
+
+		if err != nil {
+			// Grab the more succinct error message
+			if urlErr, ok := err.(*url.Error); ok {
+				err = urlErr.Err
+			}
+			return nil, fmt.Errorf("'%v' - %v", value, err)
+		}
+
+		registries = append(registries, u.Host)
+	}
+
+	return registries, nil
 }
 
 func stop() {
@@ -296,14 +332,14 @@ func catalog() *resource.Catalog {
 	c := resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/cf-oss-deps.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/153570833/cf-oss-deps.iso",
 				Name: "cf-oss-deps.iso",
-				MD5:  "b150acf63552bc64bf1574dc4953da75",
+				MD5:  "7d122c74925fc1fb7f8850ec1042cc78",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/cfdev-efi.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/153570833/cfdev-efi.iso",
 				Name: "cfdev-efi.iso",
-				MD5:  "e054a12ce8fe9759ab8066f533ad388a",
+				MD5:  "6b4714f527e1c50fef336d4f49f31edf",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/vpnkit",

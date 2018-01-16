@@ -2,6 +2,7 @@ package garden_test
 
 import (
 	"errors"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -9,12 +10,14 @@ import (
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/gardenfakes"
+	"gopkg.in/yaml.v2"
 )
 
 var _ = Describe("DeployCloudFoundry", func() {
 	var (
-		fakeClient *gardenfakes.FakeClient
-		err        error
+		fakeClient       *gardenfakes.FakeClient
+		err              error
+		dockerRegistries []string
 	)
 
 	BeforeEach(func() {
@@ -23,7 +26,7 @@ var _ = Describe("DeployCloudFoundry", func() {
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.DeployCloudFoundry(fakeClient)
+		err = gdn.DeployCloudFoundry(fakeClient, dockerRegistries)
 	})
 
 	It("creates a container", func() {
@@ -50,6 +53,32 @@ var _ = Describe("DeployCloudFoundry", func() {
 				},
 			},
 		}))
+	})
+
+	Context("when a list of docker registries is provided", func() {
+		BeforeEach(func() {
+			dockerRegistries = []string{
+				"host.pcfdev.io:5000",
+				"host.pcfdev.io:5001",
+			}
+		})
+
+		It("sets the DOCKER_REGISTRIES variable when creating the container", func() {
+			spec := fakeClient.CreateArgsForCall(0)
+			Expect(spec.Env).To(ContainElement(HavePrefix("DOCKER_REGISTRIES=")))
+		})
+
+		It("sets the DOCKER_REGISTRIES value to be a yaml array of registries", func() {
+			spec := fakeClient.CreateArgsForCall(0)
+			result := strings.SplitN(spec.Env[0], "=", 2)
+
+			var registries []string
+
+			err := yaml.Unmarshal([]byte(result[1]), &registries)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(result[0]).To(Equal("DOCKER_REGISTRIES"))
+			Expect(registries).To(ConsistOf("host.pcfdev.io:5000", "host.pcfdev.io:5001"))
+		})
 	})
 
 	Context("creating the container succeeds", func() {

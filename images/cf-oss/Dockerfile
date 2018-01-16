@@ -118,7 +118,6 @@ RUN set -x && \
 ADD cf-operations /etc/cf/deployment/
 
 #-o enable-volume-service-local.yml
-#-o allow-local-docker-registry.yml
 
 RUN cd /etc/cf/deployment && \
       bosh int cf-deployment.yml \
@@ -134,6 +133,8 @@ RUN cd /etc/cf/deployment && \
       -o operations/bosh-lite.yml \
       -o operations/experimental/disable-consul-bosh-lite.yml \
       \
+      -o allow-local-docker-registry.yml \
+      -o add-host-pcfdev-dns-record.yml \
       -o garden-disable-app-armour.yml \
       -o collocate-tcp-router.yml \
       -o use-btrfs-grootfs.yml \

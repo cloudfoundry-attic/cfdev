@@ -6,6 +6,8 @@ export CF_DIR=/var/vcap/cf
 export CF_DOMAIN=v2.pcfdev.io
 export CF_ORG=cfdev-org
 export CF_SPACE=cfdev-space
+export HOST_IP="${HOST_IP:-192.168.65.1}"
+export DOCKER_REGISTRIES="${DOCKER_REGISTRIES:-[\"host.pcfdev.io:5000\"]}"
 
 mkdir -p "${CF_DIR}"
 
@@ -32,6 +34,8 @@ bosh --tty upload-stemcell \
 bosh --tty --non-interactive --deployment cf \
   deploy "${CF_DIR}/deployment.yml" \
   -v system_domain="${CF_DOMAIN}" \
+  -v host_ip="${HOST_IP}" \
+  -v insecure_docker_registries="${DOCKER_REGISTRIES}" \
   --no-redact \
   --vars-store "${CF_DIR}/vars.yml"
 

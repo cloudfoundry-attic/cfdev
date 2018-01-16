@@ -1,15 +1,12 @@
 ---
 - type: replace
   path: /instance_groups/name=diego-cell/jobs/name=garden/properties/garden/insecure_docker_registry_list?
-  value:
-  - 192.168.98.175:5000
+  value: ((insecure_docker_registries))
 
 - type: replace
-  path: /instance_groups/name=diego-cell/jobs/name=grootfs/properties/grootfs/insecure_docker_registry_list?
-  value:
-  - 192.168.98.175:5000
+  path: /instance_groups/name=diego-cell/jobs/name=grootfs/properties?/grootfs/insecure_docker_registry_list?
+  value: ((insecure_docker_registries))
 
 - type: replace
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/diego/insecure_docker_registry_list?
-  value:
-  - 192.168.98.175:5000
+  value: ((insecure_docker_registries))

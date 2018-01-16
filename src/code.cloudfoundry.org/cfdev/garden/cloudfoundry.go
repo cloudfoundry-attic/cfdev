@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	"code.cloudfoundry.org/garden"
+	"gopkg.in/yaml.v2"
 )
 
-func DeployCloudFoundry(client garden.Client) error {
+func DeployCloudFoundry(client garden.Client, dockerRegistries []string) error {
 	containerSpec := garden.ContainerSpec{
 		Handle:     "deploy-cf",
 		Privileged: true,
@@ -26,6 +27,16 @@ func DeployCloudFoundry(client garden.Client) error {
 				Mode:    garden.BindMountModeRO,
 			},
 		},
+	}
+
+	if len(dockerRegistries) > 0 {
+		bytes, err := yaml.Marshal(dockerRegistries)
+
+		if err != nil {
+			return err
+		}
+
+		containerSpec.Env = append(containerSpec.Env, "DOCKER_REGISTRIES="+string(bytes))
 	}
 
 	container, err := client.Create(containerSpec)

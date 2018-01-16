@@ -191,8 +191,6 @@ function run_docker_registry_tests() {
   docker login localhost:5000 -u testuser -p testpassword
   docker push localhost:5000/diego-docker-app-custom
 
-  local host_ip=192.168.98.175
-
 cat <<EOF >${CONFIG}
 {
   "api": "api.$domain",
@@ -209,7 +207,7 @@ cat <<EOF >${CONFIG}
   "include_routing": false,
   "include_docker": true,
   "include_private_docker_registry": true,
-  "private_docker_registry_image": "$host_ip:5000/diego-docker-app-custom",
+  "private_docker_registry_image": "host.pcfdev.io:5000/diego-docker-app-custom",
   "private_docker_registry_username": "testuser",
   "private_docker_registry_password": "testpassword",
 
@@ -224,7 +222,16 @@ EOF
 
 
   pushd src/github.com/cloudfoundry/cf-acceptance-tests >/dev/null
+    # Apply our patches
+    # Remove this patch when cf-deployment's corresponding cats has
+    # https://github.com/cloudfoundry/cf-acceptance-tests/pull/262
+    git apply $script_dir/patches/private-docker-registry-auth.patch
+
     GOPATH=$script_dir ./bin/test -slowSpecThreshold=120 ${@:2} .
+
+    # Undo our patches
+    git apply -R $script_dir/patches/private-docker-registry-auth.patch
+
   popd >/dev/null
 }
 
@@ -247,7 +254,13 @@ run_cats $@
 run_networking_tests $@
 run_routing_tests $@
 #run_persi_tests $@
-#run_docker_registry_tests $@
+
+# Docker registry will run on a local IP so we
+# allow containers to access internal networks again
+cf bind-staging-security-group all_access
+cf bind-running-security-group all_access
+
+run_docker_registry_tests $@
 
 # not enabled for cats
 # include_credhub
