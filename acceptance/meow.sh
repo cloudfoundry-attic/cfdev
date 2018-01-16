@@ -205,6 +205,8 @@ cat <<EOF >${CONFIG}
   "include_detect": false,
   "include_persistent_app": false,
   "include_routing": false,
+  "include_v3": false,
+  "include_capi_no_bridge": false,
   "include_docker": true,
   "include_private_docker_registry": true,
   "private_docker_registry_image": "host.pcfdev.io:5000/diego-docker-app-custom",
@@ -225,6 +227,7 @@ EOF
     # Apply our patches
     # Remove this patch when cf-deployment's corresponding cats has
     # https://github.com/cloudfoundry/cf-acceptance-tests/pull/262
+    git checkout .
     git apply $script_dir/patches/private-docker-registry-auth.patch
 
     GOPATH=$script_dir ./bin/test -slowSpecThreshold=120 ${@:2} .
