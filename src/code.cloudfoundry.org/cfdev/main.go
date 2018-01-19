@@ -332,14 +332,14 @@ func catalog() *resource.Catalog {
 	c := resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/153570833/cf-oss-deps.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/153674145/cf-oss-deps.iso",
 				Name: "cf-oss-deps.iso",
-				MD5:  "7d122c74925fc1fb7f8850ec1042cc78",
+				MD5:  "587d28ff4d055daab33b92a914ebdb12",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/153570833/cfdev-efi.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/153674145/cfdev-efi.iso",
 				Name: "cfdev-efi.iso",
-				MD5:  "6b4714f527e1c50fef336d4f49f31edf",
+				MD5:  "5aa4c5461776a9b99f76e5e01a92b5dd",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/vpnkit",

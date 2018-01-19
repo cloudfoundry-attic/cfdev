@@ -35,6 +35,8 @@ services:
     image: pivotal/bosh-lite-routing:dev
     net: host
     capabilities: ["all"]
+    binds:
+      - /var/lib/vcap:/var/vcap
 
   - name: expose-garden-port
     image: alpine:3.6

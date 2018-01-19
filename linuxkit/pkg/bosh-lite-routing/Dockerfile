@@ -10,7 +10,7 @@ RUN apk add \
   --allow-untrusted --no-cache --initdb -p /out \
   \
   busybox \
-  curl \ 
+  inotify-tools \
   iptables
 
 RUN rm -rf /out/etc/apk /out/lib/apk /out/var/cache

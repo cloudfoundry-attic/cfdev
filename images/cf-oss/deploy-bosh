@@ -83,8 +83,23 @@ bosh --tty -n update-cloud-config \
 # Remove BOSH CLI cached files
 rm -rf $HOME/.bosh
 
-# This would be done here if the container shared the same network
-# namespace as the host - which it does not.
-# Hence this is done by a linuxkit pkg named bosh-lite-routing
+# Setting up the ip table route would be done here if the container shared
+# the same network namespace as the host vm - which it does not.
 #
 # ip route add 10.244.0.0/16 via "${BOSH_DIRECTOR_IP}"
+#
+# Hence this is done by a linuxkit pkg named bosh-lite-routing
+#
+# We trigger running ip route command by creating a file.
+touch "${DIRECTOR_DIR}/trigger-route-setup"
+#
+# We previously polled the BOSH Director IP using curl/wget. This had the
+# problem of creating an unbounded number of TCP connections in the VM due to
+# bad routing.
+#
+# This happened because the Director's subnet was not associated with a network
+# device causing traffic to be routed outside the vm. Once outside due to
+# the Director IP alias on the loopback device and since vpnkit was listening on
+# the IP/port, traffic would flow back to the VM. Finally, the
+# vpnkit-forwarder in the VM would make the same original request to the BOSH
+# Director IP continuing the loop
