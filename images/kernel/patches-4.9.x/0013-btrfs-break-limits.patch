@@ -1,0 +1,24 @@
+diff --git a/fs/btrfs/qgroup.c b/fs/btrfs/qgroup.c
+index dfd9986..4a3de41 100644
+--- a/fs/btrfs/qgroup.c
++++ b/fs/btrfs/qgroup.c
+@@ -2130,15 +2130,15 @@ static int qgroup_reserve(struct btrfs_root *root, u64 num_bytes)
+ 		if ((qg->lim_flags & BTRFS_QGROUP_LIMIT_MAX_RFER) &&
+ 		    qg->reserved + (s64)qg->rfer + num_bytes >
+ 		    qg->max_rfer) {
+-			ret = -EDQUOT;
+-			goto out;
++			//	ret = -EDQUOT;
++			//	goto out;
+ 		}
+
+ 		if ((qg->lim_flags & BTRFS_QGROUP_LIMIT_MAX_EXCL) &&
+ 		    qg->reserved + (s64)qg->excl + num_bytes >
+ 		    qg->max_excl) {
+-			ret = -EDQUOT;
+-			goto out;
++			//	ret = -EDQUOT;
++			//	goto out;
+ 		}
+
+ 		list_for_each_entry(glist, &qg->groups, next_group) {
