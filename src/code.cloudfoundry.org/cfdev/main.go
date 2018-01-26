@@ -46,7 +46,8 @@ func main() {
 		_, _, cacheDir := setupHomeDir()
 		download(cacheDir)
 	case "bosh":
-		bosh(os.Args[2:])
+		_, stateDir, _ := setupHomeDir()
+		bosh(os.Args[2:], stateDir)
 	case "catalog":
 		printCatalog()
 	default:
@@ -270,24 +271,25 @@ func stop() {
 	syscall.Kill(int(-pid), syscall.SIGKILL)
 }
 
-func bosh(args []string) {
+func bosh(args []string, stateDir string) {
 	if len(args) == 0 || args[0] != "env" {
 		cmd := os.Args[0]
-		fmt.Fprintf(os.Stderr, `Usage: eval "$(%s bosh env)"`, cmd)
+		fmt.Fprintf(os.Stderr, `Usage: eval $(%s bosh env)`, cmd)
 		fmt.Fprintln(os.Stderr)
 		os.Exit(1)
 	}
 
 	gClient := client.New(connection.New("tcp", "localhost:7777"))
-	boshConfiguration, err := gdn.FetchBOSHConfig(gClient)
+	config, err := gdn.FetchBOSHConfig(gClient)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to fetch bosh configuration: %v\n", err)
 		os.Exit(1)
 	}
 
-	shellScript, err := shell.FormatConfig(boshConfiguration)
+	env := shell.Environment{StateDir: stateDir}
+	shellScript, err := env.Prepare(config)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to format bosh configuration: %v\n", err)
+		fmt.Fprintf(os.Stderr, "failed to prepare bosh configuration: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -332,14 +334,14 @@ func catalog() *resource.Catalog {
 	c := resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154380215/cf-oss-deps.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154616055/cf-oss-deps.iso",
 				Name: "cf-oss-deps.iso",
-				MD5:  "a5263be97b80d5def6bd56afb1b2ad5c",
+				MD5:  "d9c80d5834d2ae8ebf81378cddd2658b",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154380215/cfdev-efi.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154616055/cfdev-efi.iso",
 				Name: "cfdev-efi.iso",
-				MD5:  "e0537d3f080ec8a6e7f79d995453d53d",
+				MD5:  "feb9b5bf23469a024c37cb08a499d640",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/vpnkit",

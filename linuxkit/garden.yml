@@ -50,7 +50,7 @@ services:
               "-container-ip","127.0.0.1",
               "-container-port","7777"]
 
-  - name: expose-bosh-port
+  - name: expose-bosh-http-port
     image: alpine:3.6
     net: none
     binds:
@@ -61,6 +61,18 @@ services:
               "-host-port","25555",
               "-container-ip","10.245.0.2",
               "-container-port","25555"]
+
+  - name: expose-bosh-ssh-port
+    image: alpine:3.6
+    net: none
+    binds:
+      - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
+      - /var/vpnkit:/port
+    command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
+              "-host-ip","10.245.0.2",
+              "-host-port","22",
+              "-container-ip","10.245.0.2",
+              "-container-port","22"]
 
   - name: expose-router-http-port
     image: alpine:3.6

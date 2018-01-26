@@ -82,11 +82,14 @@ var _ = Describe("Fetching BOSH Configuration", func() {
 
 			It("returns the configuration", func() {
 				Expect(boshConfig).Should(Equal(gdn.BOSHConfiguration{
-					AdminUsername: "admin",
-					AdminPassword: "admin-password",
-					CACertificate: "ca-certificate",
-					SSHPrivateKey: "ssh-private-key",
-					IPAddress:     "10.245.0.2",
+					AdminUsername:   "admin",
+					AdminPassword:   "admin-password",
+					CACertificate:   "ca-certificate",
+					DirectorAddress: "10.245.0.2",
+
+					GatewayHost:       "10.245.0.2",
+					GatewayPrivateKey: "ssh-private-key",
+					GatewayUsername:   "jumpbox",
 				}))
 			})
 

@@ -65,11 +65,14 @@ func FetchBOSHConfig(client garden.Client) (BOSHConfiguration, error) {
 }
 
 type BOSHConfiguration struct {
-	AdminUsername string
-	AdminPassword string
-	CACertificate string
-	SSHPrivateKey string
-	IPAddress     string
+	AdminUsername   string
+	AdminPassword   string
+	CACertificate   string
+	DirectorAddress string
+
+	GatewayHost       string
+	GatewayPrivateKey string
+	GatewayUsername   string
 }
 
 type yamlResponse struct {
@@ -97,11 +100,14 @@ func (r *yamlResponse) convert() (BOSHConfiguration, error) {
 		return conf, errors.New("jumpbox ssh key was not returned")
 	}
 
-	conf.IPAddress = "10.245.0.2"
+	conf.DirectorAddress = "10.245.0.2"
 	conf.AdminUsername = "admin"
 	conf.AdminPassword = r.AdminPassword
 	conf.CACertificate = r.DirectorSSL.CACertificate
-	conf.SSHPrivateKey = r.JumpboxSSH.PrivateKey
+
+	conf.GatewayHost = conf.DirectorAddress
+	conf.GatewayUsername = "jumpbox"
+	conf.GatewayPrivateKey = r.JumpboxSSH.PrivateKey
 
 	return conf, nil
 }
