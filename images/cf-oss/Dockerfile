@@ -118,6 +118,13 @@ RUN set -x && \
 ADD cf-operations /etc/cf/deployment/
 
 #-o enable-volume-service-local.yml
+RUN cd /etc/cf/deployment && \
+    bosh int iaas-support/bosh-lite/cloud-config.yml \
+      -o set-cloud-config-subnet.yml \
+      > "/etc/cf/cloud-config.yml" && \
+    \
+    echo -e "\n# cf-deployment commit: ${CF_DEPLOYMENT_COMMIT}" \
+      >> /etc/cf/cloud-config.yml
 
 RUN cd /etc/cf/deployment && \
       bosh int cf-deployment.yml \
@@ -138,6 +145,7 @@ RUN cd /etc/cf/deployment && \
       -o garden-disable-app-armour.yml \
       -o collocate-tcp-router.yml \
       -o use-btrfs-grootfs.yml \
+      -o set-cfdev-subnet.yml \
       \
       -v cf_admin_password=admin \
       -v uaa_admin_client_secret=admin-client-secret \

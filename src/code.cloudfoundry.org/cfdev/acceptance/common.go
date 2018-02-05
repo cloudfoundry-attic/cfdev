@@ -17,7 +17,7 @@ import (
 const (
 	GardenIP       = "localhost"
 	BoshDirectorIP = "10.245.0.2"
-	CFRouterIP     = "10.244.0.34"
+	CFRouterIP     = "10.144.0.34"
 )
 
 func CreateTempCFDevHomeDir() string {

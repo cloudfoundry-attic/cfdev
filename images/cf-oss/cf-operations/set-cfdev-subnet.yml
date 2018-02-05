@@ -1,0 +1,14 @@
+---
+- type: replace
+  path: /instance_groups/name=router/networks
+  value:
+  - name: default
+    static_ips: [10.144.0.34]
+
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/security_group_definitions/name=load_balancer
+  value:
+    name: load_balancer
+    rules:
+    - destination: 10.144.0.34
+      protocol: all

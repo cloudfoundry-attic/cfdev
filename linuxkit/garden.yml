@@ -46,7 +46,7 @@ services:
       - /var/vpnkit:/port
     command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
               "-host-ip","127.0.0.1",
-              "-host-port","7777",
+              "-host-port","8888",
               "-container-ip","127.0.0.1",
               "-container-port","7777"]
 
@@ -81,9 +81,9 @@ services:
       - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
       - /var/vpnkit:/port
     command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
-              "-host-ip","10.244.0.34",
+              "-host-ip","10.144.0.34",
               "-host-port","80",
-              "-container-ip","10.244.0.34",
+              "-container-ip","10.144.0.34",
               "-container-port","80"]
 
   - name: expose-router-https-port
@@ -93,9 +93,9 @@ services:
       - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
       - /var/vpnkit:/port
     command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
-              "-host-ip","10.244.0.34",
+              "-host-ip","10.144.0.34",
               "-host-port","443",
-              "-container-ip","10.244.0.34",
+              "-container-ip","10.144.0.34",
               "-container-port","443"]
 
   - name: expose-router-ssh-port
@@ -105,9 +105,9 @@ services:
       - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
       - /var/vpnkit:/port
     command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
-              "-host-ip","10.244.0.34",
+              "-host-ip","10.144.0.34",
               "-host-port","2222",
-              "-container-ip","10.244.0.34",
+              "-container-ip","10.144.0.34",
               "-container-port","2222"]
 
   - name: expose-router-tcp-ports
@@ -117,6 +117,6 @@ services:
       - /usr/bin/expose-multiple-ports:/usr/bin/expose-multiple-ports
       - /var/vpnkit:/port
     command: ["/usr/bin/expose-multiple-ports",
-              "-container-ip","10.244.0.34",
+              "-container-ip","10.144.0.34",
               "-start-port","1024",
               "-end-port","1123"]

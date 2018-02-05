@@ -29,7 +29,7 @@ const (
 	defaultDist    = "cf"
 	defaultVersion = "1.2.0"
 	BoshDirectorIP = "10.245.0.2"
-	CFRouterIP     = "10.244.0.34"
+	CFRouterIP     = "10.144.0.34"
 )
 
 func main() {
@@ -199,7 +199,7 @@ func start() {
 		os.Exit(1)
 	}
 
-	garden := client.New(connection.New("tcp", "localhost:7777"))
+	garden := client.New(connection.New("tcp", "localhost:8888"))
 
 	waitForGarden(garden)
 
@@ -227,7 +227,7 @@ func start() {
              is now running!
 
 To begin using CF Dev, please run:
-    cf login -a https://api.v2.pcfdev.io --skip-ssl-validation
+    cf login -a https://api.v3.pcfdev.io --skip-ssl-validation
 
 Admin user => Email: admin / Password: admin
 Regular user => Email: user / Password: pass
@@ -279,7 +279,7 @@ func bosh(args []string, stateDir string) {
 		os.Exit(1)
 	}
 
-	gClient := client.New(connection.New("tcp", "localhost:7777"))
+	gClient := client.New(connection.New("tcp", "localhost:8888"))
 	config, err := gdn.FetchBOSHConfig(gClient)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to fetch bosh configuration: %v\n", err)
@@ -334,14 +334,14 @@ func catalog() *resource.Catalog {
 	c := resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154616055/cf-oss-deps.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154522932/cf-oss-deps.iso",
 				Name: "cf-oss-deps.iso",
-				MD5:  "d9c80d5834d2ae8ebf81378cddd2658b",
+				MD5:  "c79863e02b0ee9f984c0dd5d863d6af2",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154616055/cfdev-efi.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154522932/cfdev-efi.iso",
 				Name: "cfdev-efi.iso",
-				MD5:  "feb9b5bf23469a024c37cb08a499d640",
+				MD5:  "fd1e13bb7badcacefc4e810d12a83b1d",
 			},
 			{
 				URL:  "https://s3.amazonaws.com/pcfdev-development/vpnkit",

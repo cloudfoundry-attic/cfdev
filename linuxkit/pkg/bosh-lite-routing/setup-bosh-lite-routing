@@ -3,7 +3,7 @@
 set -e
 
 DIRECTOR_IP=${1-"10.245.0.2"}
-BOSH_LITE_SUBNET=${2-"10.244.0.0/16"}
+BOSH_LITE_SUBNET=${2-"10.144.0.0/16"}
 DIRECTOR_PORT=${3-25555}
 
 mkdir -p /var/vcap/director

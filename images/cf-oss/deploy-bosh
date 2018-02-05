@@ -76,16 +76,13 @@ EOF
 
 source "${DIRECTOR_DIR}/env"
 
-bosh --tty -n update-cloud-config \
-  /etc/bosh/deployment/warden/cloud-config.yml
-
 # Remove BOSH CLI cached files
 rm -rf $HOME/.bosh
 
 # Setting up the ip table route would be done here if the container shared
 # the same network namespace as the host vm - which it does not.
 #
-# ip route add 10.244.0.0/16 via "${BOSH_DIRECTOR_IP}"
+# ip route add 10.144.0.0/16 via "${BOSH_DIRECTOR_IP}"
 #
 # Hence this is done by a linuxkit pkg named bosh-lite-routing
 #

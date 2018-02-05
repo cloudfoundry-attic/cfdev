@@ -3,7 +3,7 @@
 set -e
 
 export CF_DIR=/var/vcap/cf
-export CF_DOMAIN=v2.pcfdev.io
+export CF_DOMAIN=v3.pcfdev.io
 export CF_ORG=cfdev-org
 export CF_SPACE=cfdev-space
 export HOST_IP="${HOST_IP:-192.168.65.1}"
@@ -24,7 +24,7 @@ for file_path in /var/vcap/cache/*; do
 done
 
 bosh -n update-cloud-config \
-	/etc/cf/deployment/iaas-support/bosh-lite/cloud-config.yml
+	/etc/cf/cloud-config.yml
 
 stemcell_version=$(bosh interpolate /etc/cf/deployment.yml --path /stemcells/0/version)
 

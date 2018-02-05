@@ -3,7 +3,7 @@
 set -e
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-domain=${1-v2.pcfdev.io}
+domain=${1-v3.pcfdev.io}
 
 function run_cats() {
   export CONFIG=$(mktemp -t config.XXXXXXXX)

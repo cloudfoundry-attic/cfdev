@@ -22,6 +22,9 @@ rm -rf "${download_list}"
 mkdir -p "${download_dir}" "${compiled_dir}"
 touch "${download_list}"
 
+
+"${script_dir}/../images/cf-oss/build.sh"
+
 # Collect download items
 manifest_bosh=$(docker run pivotal/cf-oss cat /etc/bosh/director.yml)
 stemcell_url=$(echo "${manifest_bosh}" | bosh int - --path /resource_pools/name=vms/stemcell/url)
@@ -37,7 +40,6 @@ echo "https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=
 iso_dir=$(mktemp -d)
 
 # Place the 'workspace' container image
-"${script_dir}/../images/cf-oss/build.sh"
 cid=$(docker run -d pivotal/cf-oss sleep infinity)
 docker export "$cid" > "${iso_dir}/workspace.tar"
 docker kill "$cid"
