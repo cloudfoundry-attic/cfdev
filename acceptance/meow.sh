@@ -71,7 +71,7 @@ cat <<EOF >${CONFIG}
   "proxy_instances": 1,
   "proxy_applications": 1,
   "extra_listen_ports": 2,
-  "prefix":"CATS-networking-"
+  "prefix":"cf-networking"
 }
 EOF
 
