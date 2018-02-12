@@ -12,6 +12,7 @@ var _ = Describe("LinuxKit process", func() {
 		linuxkit := process.LinuxKit{
 			ExecutablePath:      "/home-dir/.cfdev/cache",
 			OSImagePath:         "/home-dir/.cfdev/image",
+			HomeDir:             "/home-dir/.cfdev",
 			StatePath:           "/home-dir/.cfdev/state",
 			DependencyImagePath: "/home-dir/.cfdev/bosh-cf-deps.iso",
 		}
@@ -27,9 +28,9 @@ var _ = Describe("LinuxKit process", func() {
 			"-cpus", "4",
 			"-mem", "8192",
 			"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
-			"-networking", "vpnkit",
+			"-networking",
+			"vpnkit,/home-dir/.cfdev/vpnkit_eth.sock,/home-dir/.cfdev/vpnkit_port.sock",
 			"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
-			"-vpnkit", "/home-dir/.cfdev/cache/vpnkit",
 			"-disk", "type=qcow,size=50G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
 			"-disk", "file=/home-dir/.cfdev/bosh-cf-deps.iso",
 			"-state", "/home-dir/.cfdev/state",

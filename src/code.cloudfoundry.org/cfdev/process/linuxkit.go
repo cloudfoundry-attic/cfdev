@@ -11,6 +11,7 @@ import (
 type LinuxKit struct {
 	ExecutablePath      string
 	StatePath           string
+	HomeDir             string
 	OSImagePath         string
 	DependencyImagePath string
 }
@@ -19,8 +20,9 @@ func (s *LinuxKit) Command() *exec.Cmd {
 	linuxkit := filepath.Join(s.ExecutablePath, "linuxkit")
 	hyperkit := filepath.Join(s.ExecutablePath, "hyperkit")
 	uefi := filepath.Join(s.ExecutablePath, "UEFI.fd")
-	vpnkit := filepath.Join(s.ExecutablePath, "vpnkit")
 	qcowtool := filepath.Join(s.ExecutablePath, "qcow-tool")
+	vpnkitEthSock := filepath.Join(s.HomeDir, "vpnkit_eth.sock")
+	vpnkitPortSock := filepath.Join(s.HomeDir, "vpnkit_port.sock")
 
 	diskArgs := []string{
 		"type=qcow",
@@ -37,8 +39,7 @@ func (s *LinuxKit) Command() *exec.Cmd {
 		"-cpus", "4",
 		"-mem", "8192",
 		"-hyperkit", hyperkit,
-		"-networking", "vpnkit",
-		"-vpnkit", vpnkit,
+		"-networking", fmt.Sprintf("vpnkit,%v,%v", vpnkitEthSock, vpnkitPortSock),
 		"-fw", uefi,
 		"-disk", strings.Join(diskArgs, ","),
 		"-disk", "file="+s.DependencyImagePath,

@@ -5,11 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+
+	"syscall"
 
 	. "code.cloudfoundry.org/cfdev/acceptance"
 )
@@ -18,6 +19,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 	var (
 		cfdevHome       string
 		linuxkitPidPath string
+		vpnkitPidPath   string
 		stateDir        string
 		cacheDir        string
 	)
@@ -30,16 +32,22 @@ var _ = Describe("hyperkit lifecycle", func() {
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
+		vpnkitPidPath = filepath.Join(stateDir, "vpnkit.pid")
 
 		SetupDependencies(cacheDir)
 	})
 
 	AfterEach(func() {
 		gexec.KillAndWait()
-		pid := PidFromFile(linuxkitPidPath)
+		vmPid := PidFromFile(linuxkitPidPath)
+		vpnPid := PidFromFile(vpnkitPidPath)
 
-		if pid != 0 {
-			syscall.Kill(int(-pid), syscall.SIGKILL)
+		if vmPid != 0 {
+			syscall.Kill(int(-vmPid), syscall.SIGKILL)
+		}
+
+		if vpnPid != 0 {
+			syscall.Kill(int(-vpnPid), syscall.SIGKILL)
 		}
 
 		os.RemoveAll(cfdevHome)
@@ -55,8 +63,12 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 		writer := gexec.NewPrefixedWriter("[cfdev start] ", GinkgoWriter)
 		session, err := gexec.Start(command, writer, writer)
-
 		Expect(err).ShouldNot(HaveOccurred())
+
+		By("settingup VPNKit dependencies")
+		Eventually(filepath.Join(cfdevHome, "http_proxy.json"))
+
+		Eventually(vpnkitPidPath, 10, 1).Should(BeAnExistingFile())
 		Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
 
 		// FYI - this will take time until we use thin provisioned disks
@@ -76,6 +88,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 		linuxkitPid := PidFromFile(linuxkitPidPath)
 		hyperkitPid := PidFromFile(hyperkitPidPath)
+		vpnkitPid := PidFromFile(vpnkitPidPath)
 
 		By("deploy finished - stopping...")
 		command = exec.Command(cliPath, "stop")
@@ -90,6 +103,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		//ensure pid is not running
 		EventuallyProcessStops(linuxkitPid, 5)
 		EventuallyProcessStops(hyperkitPid, 5)
+		EventuallyProcessStops(vpnkitPid, 5)
 	})
 })
 

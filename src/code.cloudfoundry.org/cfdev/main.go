@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"code.cloudfoundry.org/cfdev/env"
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
@@ -146,6 +147,32 @@ func setupNetworking() {
 	}
 }
 
+func setupVPNKit(homeDir string) {
+	httpProxyPath := filepath.Join(homeDir, "http_proxy.json")
+
+	proxyConfig := env.BuildProxyConfig(BoshDirectorIP, CFRouterIP)
+	proxyContents, err := json.Marshal(proxyConfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create proxy config: %v\n", err)
+		os.Exit(1)
+	}
+
+	if _, err := os.Stat(httpProxyPath); os.IsNotExist(err) {
+		err = os.Remove(httpProxyPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to remove 'http_proxy.json' %v\n", err)
+		}
+	}
+
+	httpProxyConfig := []byte(proxyContents)
+	err = ioutil.WriteFile(httpProxyPath, httpProxyConfig, 0777)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to setup VPNKit dependencies %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("writing %s to %s", string(httpProxyConfig), httpProxyPath)
+}
+
 func start() {
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	flavor := startCmd.String("f", defaultDist, "distribution")
@@ -158,8 +185,9 @@ func start() {
 		os.Exit(1)
 	}
 
-	_, stateDir, cacheDir := setupHomeDir()
+	homeDir, stateDir, cacheDir := setupHomeDir()
 	linuxkitPidPath := filepath.Join(stateDir, "linuxkit.pid")
+	vpnkitPidPath := filepath.Join(stateDir, "vpnkit.pid")
 
 	if isLinuxKitRunning(linuxkitPidPath) {
 		fmt.Println("CF Dev is already running...")
@@ -167,7 +195,6 @@ func start() {
 	}
 
 	registries, err := parseDockerRegistriesFlag(*registriesFlag)
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to parse docker registries %v\n", err)
 		os.Exit(1)
@@ -176,24 +203,43 @@ func start() {
 	cleanupStateDir(stateDir)
 	setupNetworking()
 	download(cacheDir)
+	setupVPNKit(homeDir)
+
+	vpnKit := process.VpnKit{
+		HomeDir:  homeDir,
+		CacheDir: cacheDir,
+		StateDir: stateDir,
+	}
+
+	fmt.Println("Starting VPNKit ...")
+	vCmd := vpnKit.Command()
+	if err := vCmd.Start(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to start VPNKit process: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = ioutil.WriteFile(vpnkitPidPath, []byte(strconv.Itoa(vCmd.Process.Pid)), 0777)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to write vpnKit pid file: %v\n", err)
+		os.Exit(1)
+	}
 
 	linuxkit := process.LinuxKit{
 		ExecutablePath:      cacheDir,
 		StatePath:           stateDir,
+		HomeDir:             homeDir,
 		OSImagePath:         filepath.Join(cacheDir, "cfdev-efi.iso"),
 		DependencyImagePath: filepath.Join(cacheDir, "cf-oss-deps.iso"),
 	}
 
 	fmt.Println("Starting the VM...")
 	cmd := linuxkit.Command()
-
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to start VM process: %v\n", err)
 		os.Exit(1)
 	}
 
 	err = ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(cmd.Process.Pid)), 0777)
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to write VM pid file: %v\n", err)
 		os.Exit(1)
@@ -269,6 +315,12 @@ func stop() {
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 
 	syscall.Kill(int(-pid), syscall.SIGKILL)
+
+	vpnkitPid := filepath.Join(devHome, "state", "vpnkit.pid")
+	pidBytes, _ = ioutil.ReadFile(vpnkitPid)
+	pid, _ = strconv.ParseInt(string(pidBytes), 10, 64)
+
+	syscall.Kill(int(-pid), syscall.SIGKILL)
 }
 
 func bosh(args []string, stateDir string) {
@@ -334,41 +386,41 @@ func catalog() *resource.Catalog {
 	c := resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154522932/cf-oss-deps.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154480282/cf-oss-deps.iso",
 				Name: "cf-oss-deps.iso",
 				MD5:  "c79863e02b0ee9f984c0dd5d863d6af2",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154522932/cfdev-efi.iso",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154480282/cfdev-efi.iso",
 				Name: "cfdev-efi.iso",
 				MD5:  "fd1e13bb7badcacefc4e810d12a83b1d",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/vpnkit",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154480282/vpnkit",
 				Name: "vpnkit",
-				MD5:  "de7500dea85c87d49e749c7afdc9b5fa",
+				MD5:  "4eb4c3477e8296f4e97b5c89983d4ff3",
 				OS:   "darwin",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/hyperkit",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154480282/hyperkit",
 				Name: "hyperkit",
 				MD5:  "61da21b4e82e2bf2e752d043482aa966",
 				OS:   "darwin",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/linuxkit",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154480282/linuxkit",
 				Name: "linuxkit",
-				MD5:  "1abf9134ac5e00b4608a8c5cd838cf40",
+				MD5:  "9ae23eec8d297f41caff3450d6a03b3c",
 				OS:   "darwin",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/qcow-tool",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154480282/qcow-tool",
 				Name: "qcow-tool",
 				MD5:  "22f3a57096ae69027c13c4933ccdd96c",
 				OS:   "darwin",
 			},
 			{
-				URL:  "https://s3.amazonaws.com/pcfdev-development/UEFI.fd",
+				URL:  "https://s3.amazonaws.com/pcfdev-development/stories/154480282/UEFI.fd",
 				Name: "UEFI.fd",
 				MD5:  "2eff1c02d76fc3bde60f497ce1116b09",
 			},

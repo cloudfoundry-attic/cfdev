@@ -11,7 +11,6 @@ extend_sudo_timeout() {
 
 disable_sudo() {
     set +e
-    kill %1
     sudo -K
 }
 
@@ -24,13 +23,13 @@ trap disable_sudo EXIT
 # We need to extend sudo timeout for our acceptance test to run
 extend_sudo_timeout &
 
-cd $script_dir
+cd "$script_dir"
 
 pushd acceptance/privileged > /dev/null
-  ginkgo $@
+  ginkgo "$@"
 popd > /dev/null
 
 # Invalidate sudo credentials
 disable_sudo
 
-ginkgo -r -skipPackage privileged $@
+ginkgo -r -skipPackage privileged "$@"
