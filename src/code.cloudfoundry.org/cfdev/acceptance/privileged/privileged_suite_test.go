@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var cliPath string
+var pluginPath string
 
 func TestPrivileged(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -18,7 +18,7 @@ func TestPrivileged(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	cliPath, err = gexec.Build("code.cloudfoundry.org/cfdev")
+	pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev")
 	Expect(err).ShouldNot(HaveOccurred())
 })
 

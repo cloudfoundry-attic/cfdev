@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
@@ -15,6 +14,8 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"code.cloudfoundry.org/cfdev/resource"
+	"github.com/onsi/gomega/gbytes"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 )
 
 var _ = Describe("download", func() {
@@ -25,51 +26,70 @@ var _ = Describe("download", func() {
 	)
 
 	BeforeEach(func() {
+		cfHome, err := ioutil.TempDir("", "cf-home")
+		Expect(err).ToNot(HaveOccurred())
 		cfdevHome = CreateTempCFDevHomeDir()
+
+		os.Setenv("CF_HOME", cfHome)
+		os.Setenv("CFDEV_HOME", cfdevHome)
+
 		cacheDir = filepath.Join(cfdevHome, "cache")
 
 		serverAssetsDir := stageServerAssets()
 		fileHandler := http.FileServer(http.Dir(serverAssetsDir))
 		server = httptest.NewServer(fileHandler)
+
+		session := cf.Cf("install-plugin", pluginPath, "-f")
+		Eventually(session).Should(gexec.Exit(0))
+		session = cf.Cf("plugins")
+		Eventually(session).Should(gbytes.Say("cfdev"))
+		Eventually(session).Should(gexec.Exit(0))
 	})
 
 	AfterEach(func() {
 		gexec.KillAndWait()
 		os.RemoveAll(cfdevHome)
 		server.Close()
+
+		session := cf.Cf("uninstall-plugin", "cfdev")
+		Eventually(session).Should(gexec.Exit(0))
+
+		os.Unsetenv("CF_HOME")
+		os.Unsetenv("CFDEV_HOME")
 	})
 
-	It("downloads assets", func() {
-		command := exec.Command(cliPath, "download")
-		command.Env = append(os.Environ(),
-			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome),
-			fmt.Sprintf("CFDEV_CATALOG=%s", localCatalog(server.URL)),
-		)
+	Context("when the catalog is valid", func(){
+		BeforeEach(func(){
+			os.Setenv("CFDEV_CATALOG", localCatalog(server.URL))
+		})
 
-		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		AfterEach(func(){
+			os.Unsetenv("CFDEV_CATALOG")
+		})
 
-		Expect(err).ShouldNot(HaveOccurred())
-		Eventually(session, 10, 1).Should(gexec.Exit(0))
+		It("downloads assets", func() {
+			session := cf.Cf("dev", "download")
+			Eventually(session, 10, 1).Should(gexec.Exit(0))
 
-		files, err := ioutil.ReadDir(cacheDir)
-		Expect(err).ToNot(HaveOccurred())
+			files, err := ioutil.ReadDir(cacheDir)
+			Expect(err).ToNot(HaveOccurred())
 
-		Expect(names(files)).To(ConsistOf("some-asset"))
+			Expect(names(files)).To(ConsistOf("some-asset"))
+		})
 	})
 
 	Context("downloaded asset has incorrect checksum", func() {
+		BeforeEach(func(){
+			os.Setenv("CFDEV_CATALOG", badCatalog(server.URL))
+		})
+
+		AfterEach(func(){
+			os.Unsetenv("CFDEV_CATALOG")
+		})
+
 		It("should exit", func() {
-			command := exec.Command(cliPath, "download")
-			command.Env = append(os.Environ(),
-				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome),
-				fmt.Sprintf("CFDEV_CATALOG=%s", badCatalog(server.URL)),
-			)
-
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
-			Expect(err).ShouldNot(HaveOccurred())
+			session := cf.Cf("dev", "download")
 			Eventually(session, 10, 1).Should(gexec.Exit(1))
-
 		})
 	})
 })

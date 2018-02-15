@@ -10,9 +10,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"syscall"
+	//"syscall"
 
 	. "code.cloudfoundry.org/cfdev/acceptance"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+	"io/ioutil"
+	"syscall"
 )
 
 var _ = Describe("hyperkit lifecycle", func() {
@@ -28,6 +31,9 @@ var _ = Describe("hyperkit lifecycle", func() {
 		Expect(HasSudoPrivilege()).To(BeTrue())
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 
+		cfHome, err := ioutil.TempDir("", "cf-home")
+		Expect(err).ToNot(HaveOccurred())
+
 		cfdevHome = CreateTempCFDevHomeDir()
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
@@ -35,6 +41,14 @@ var _ = Describe("hyperkit lifecycle", func() {
 		vpnkitPidPath = filepath.Join(stateDir, "vpnkit.pid")
 
 		SetupDependencies(cacheDir)
+		os.Setenv("CF_HOME", cfHome)
+		os.Setenv("CFDEV_HOME", cfdevHome)
+		os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
+
+		session := cf.Cf("install-plugin", pluginPath, "-f")
+		Eventually(session).Should(gexec.Exit(0))
+		session = cf.Cf("plugins")
+		Eventually(session).Should(gexec.Exit(0))
 	})
 
 	AfterEach(func() {
@@ -51,19 +65,14 @@ var _ = Describe("hyperkit lifecycle", func() {
 		}
 
 		os.RemoveAll(cfdevHome)
-
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
+
+		session := cf.Cf("uninstall-plugin", "cfdev")
+		Eventually(session).Should(gexec.Exit(0))
 	})
 
 	It("runs the entire vm lifecycle", func() {
-		command := exec.Command(cliPath, "start")
-		command.Env = append(os.Environ(),
-			fmt.Sprintf("CFDEV_SKIP_ASSET_CHECK=true"),
-			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-
-		writer := gexec.NewPrefixedWriter("[cfdev start] ", GinkgoWriter)
-		session, err := gexec.Start(command, writer, writer)
-		Expect(err).ShouldNot(HaveOccurred())
+		session := cf.Cf("dev", "start")
 
 		By("settingup VPNKit dependencies")
 		Eventually(filepath.Join(cfdevHome, "http_proxy.json"))
@@ -91,13 +100,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		vpnkitPid := PidFromFile(vpnkitPidPath)
 
 		By("deploy finished - stopping...")
-		command = exec.Command(cliPath, "stop")
-		command.Env = append(os.Environ(),
-			fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-
-		writer = gexec.NewPrefixedWriter("[cfdev stop] ", GinkgoWriter)
-		session, err = gexec.Start(command, writer, writer)
-		Expect(err).ShouldNot(HaveOccurred())
+		session = cf.Cf("dev", "stop")
 		Eventually(session).Should(gexec.Exit(0))
 
 		//ensure pid is not running
@@ -113,18 +116,17 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 
 	// Even though the test below is very similar this fails fast when `bosh env`
 	// command is broken
-	w := gexec.NewPrefixedWriter("[cfdev bosh env] ", GinkgoWriter)
-	session, err := gexec.Start(exec.Command(cliPath, "bosh", "env"), w, w)
-	Expect(err).ToNot(HaveOccurred())
+
+	session := cf.Cf("dev", "bosh", "env")
 	Eventually(session).Should(gexec.Exit(0))
 
 	// This test is more representative of how `bosh env` should be invoked
-	w = gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
+	w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
 	boshCmd := exec.Command("/bin/sh",
 		"-e",
-		"-c", fmt.Sprintf(`eval "$(%s bosh env) && bosh env"`, cliPath))
+		"-c", fmt.Sprintf(`eval "$(cf dev bosh env)" && bosh env`))
 
-	session, err = gexec.Start(boshCmd, w, w)
+	session, err := gexec.Start(boshCmd, w, w)
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(session, 30, 1).Should(gexec.Exit(0))
 }

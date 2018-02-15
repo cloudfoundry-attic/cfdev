@@ -1,7 +1,6 @@
 package acceptance
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 )
 
 var _ = Describe("hyperkit start", func() {
@@ -28,7 +28,19 @@ var _ = Describe("hyperkit start", func() {
 	)
 
 	BeforeEach(func() {
+		cfHome, err := ioutil.TempDir("", "cf-home")
+		Expect(err).ToNot(HaveOccurred())
 		cfdevHome = CreateTempCFDevHomeDir()
+		os.Setenv("CF_HOME", cfHome)
+		os.Setenv("CFDEV_HOME", cfdevHome)
+		os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
+		session := cf.Cf("install-plugin", pluginPath, "-f")
+		Eventually(session).Should(gexec.Exit(0))
+		session = cf.Cf("plugins")
+		Eventually(session).Should(gbytes.Say("cfdev"))
+		Eventually(session).Should(gexec.Exit(0))
+
+
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
@@ -45,6 +57,12 @@ var _ = Describe("hyperkit start", func() {
 		}
 
 		os.RemoveAll(cfdevHome)
+		session := cf.Cf("uninstall-plugin", "cfdev")
+		Eventually(session).Should(gexec.Exit(0))
+
+		os.Unsetenv("CF_HOME")
+		os.Unsetenv("CFDEV_HOME")
+		os.Unsetenv("CFDEV_SKIP_ASSET_CHECK")
 	})
 
 	Context("when lacking sudo privileges", func() {
@@ -58,11 +76,7 @@ var _ = Describe("hyperkit start", func() {
 			})
 
 			It("notifies and prompts for a password in order to sudo", func() {
-				command := exec.Command(cliPath, "start")
-				command.Env = append(os.Environ(),
-					fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-
-				session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				session := cf.Cf("dev", "start")
 				Eventually(session.Out).Should(gbytes.Say("Setting up IP aliases"))
 				Eventually(session.Err).Should(gbytes.Say("Password:"))
 			})
@@ -71,22 +85,14 @@ var _ = Describe("hyperkit start", func() {
 
 	Context("with an unsupported distribution", func() {
 		It("exits with code 1", func() {
-			command := exec.Command(cliPath, "start", "-f", "UNSUPPORTTED")
-			command.Env = append(os.Environ(),
-				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-			session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
+			session := cf.Cf("dev", "start", "-f", "UNSUPPORTTED")
 			Eventually(session).Should(gexec.Exit(1))
 		})
 	})
 
 	Context("with an unsupported version", func() {
 		It("exits with code 1", func() {
-			command := exec.Command(cliPath, "start", "-n", "9.9.9.9.9")
-			command.Env = append(os.Environ(),
-				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-			session, _ := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
+			session := cf.Cf("dev", "start", "-n", "9.9.9.9.9")
 			Eventually(session).Should(gexec.Exit(1))
 		})
 	})
@@ -101,13 +107,7 @@ var _ = Describe("hyperkit start", func() {
 		})
 
 		It("exits with code 1", func() {
-			command := exec.Command(cliPath, "start")
-			command.Env = append(os.Environ(),
-				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
-			Expect(err).ShouldNot(HaveOccurred())
+			session := cf.Cf("dev", "start")
 			Eventually(session).Should(gexec.Exit(1))
 			Expect(linuxkitPidPath).ShouldNot(BeAnExistingFile())
 		})
@@ -126,12 +126,7 @@ var _ = Describe("hyperkit start", func() {
 		})
 
 		It("recreates a clean state directory", func() {
-			command := exec.Command(cliPath, "start")
-			command.Env = append(os.Environ(),
-				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-
-			_, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
+			cf.Cf("dev", "start")
 			Eventually(dirtyFile, 10, 1).ShouldNot(BeAnExistingFile())
 		})
 	})
@@ -166,13 +161,8 @@ var _ = Describe("hyperkit start", func() {
 		})
 
 		It("doesn't restart the linuxkit process", func() {
-			command := exec.Command(cliPath, "start")
-			command.Env = append(os.Environ(),
-				fmt.Sprintf("CFDEV_HOME=%s", cfdevHome))
-
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ShouldNot(HaveOccurred())
-			Eventually(session, 10, 1).Should(gexec.Exit(0))
+			session := cf.Cf("dev", "start")
+			Eventually(session).Should(gexec.Exit(0))
 
 			Expect(PidFromFile(linuxkitPidPath)).To(Equal(existingPid))
 			Expect(atomic.LoadInt32(&exited)).To(BeEquivalentTo(0))

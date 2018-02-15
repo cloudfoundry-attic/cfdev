@@ -55,7 +55,6 @@ func (v *VpnKit) SetupVPNKit(homeDir string) {
 	}
 
 	if _, err := os.Stat(httpProxyPath); err != nil {
-		//httpProxyConfig := []byte("{\"http\":\"localhost:8989\"}")
 		httpProxyConfig := []byte("{}")
 		err = ioutil.WriteFile(httpProxyPath, httpProxyConfig, 0777)
 		if err != nil {

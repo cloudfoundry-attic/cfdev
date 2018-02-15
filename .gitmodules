@@ -43,3 +43,6 @@
 [submodule "linuxkit/pkg/expose-multiple-ports/vendor/github.com/moby/vpnkit"]
 	path = linuxkit/pkg/expose-multiple-ports/vendor/github.com/moby/vpnkit
 	url = git@github.com:moby/vpnkit.git
+[submodule "src/code.cloudfoundry.org/cfdev/vendor/github.com/cloudfoundry-incubator/cf-test-helpers"]
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/cloudfoundry-incubator/cf-test-helpers
+	url = git@github.com:cloudfoundry-incubator/cf-test-helpers.git

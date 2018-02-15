@@ -3,10 +3,12 @@
 set -e
 # Currently for acceptance we symlink files
 
+STORY_ID="$1"
+
 function fetch() {
     set -e
     rm -rf $1
-    wget -O $1 https://s3.amazonaws.com/pcfdev-development/$1
+    wget -O $1 https://s3.amazonaws.com/pcfdev-development/stories/"$STORY_ID"/"$1"
     chmod +x $1
 }
 
