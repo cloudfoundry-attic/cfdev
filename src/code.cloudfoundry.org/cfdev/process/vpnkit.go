@@ -7,12 +7,17 @@ import (
 	"os/exec"
 	"path"
 	"syscall"
+	"path/filepath"
+	"code.cloudfoundry.org/cfdev/env"
+	"encoding/json"
 )
 
 type VpnKit struct {
 	HomeDir  string
 	CacheDir string
 	StateDir string
+	BoshDirectorIP string
+	CFRouterIP string
 }
 
 func (v *VpnKit) Command() *exec.Cmd {
@@ -33,34 +38,26 @@ func (v *VpnKit) Command() *exec.Cmd {
 	return cmd
 }
 
-func (v *VpnKit) SetupVPNKit(homeDir string) {
-	vpnkitEthPath := path.Join(homeDir, "vpnkit_eth.sock")
-	vpnkitPortPath := path.Join(homeDir, "vpnkit_port.sock")
-	httpProxyPath := path.Join(homeDir, "http_proxy.json")
+func (v *VpnKit) SetupVPNKit() error {
+	httpProxyPath := filepath.Join(v.HomeDir, "http_proxy.json")
 
-	if _, err := os.Stat(vpnkitEthPath); err != nil {
-		err := ioutil.WriteFile(vpnkitEthPath, []byte(""), 0777)
+	proxyConfig := env.BuildProxyConfig(v.BoshDirectorIP, v.CFRouterIP)
+	proxyContents, err := json.Marshal(proxyConfig)
+	if err != nil {
+		return fmt.Errorf("Unable to create proxy config: %v\n", err)
+	}
+
+	if _, err := os.Stat(httpProxyPath); !os.IsNotExist(err) {
+		err = os.Remove(httpProxyPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to setup VPNKit dependencies %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("Unable to remove 'http_proxy.json' %v\n", err)
 		}
 	}
 
-	if _, err := os.Stat(vpnkitPortPath); err != nil {
-		err = ioutil.WriteFile(vpnkitPortPath, []byte(""), 0777)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to setup VPNKit dependencies %v\n", err)
-			os.Exit(1)
-		}
+	httpProxyConfig := []byte(proxyContents)
+	err = ioutil.WriteFile(httpProxyPath, httpProxyConfig, 0777)
+	if err != nil {
+		return err
 	}
-
-	if _, err := os.Stat(httpProxyPath); err != nil {
-		httpProxyConfig := []byte("{}")
-		err = ioutil.WriteFile(httpProxyPath, httpProxyConfig, 0777)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to setup VPNKit dependencies %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("writing %s to %s", string(httpProxyConfig), httpProxyPath)
-	}
+	return nil
 }

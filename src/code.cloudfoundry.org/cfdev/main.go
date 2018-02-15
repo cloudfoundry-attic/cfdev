@@ -7,6 +7,8 @@ import (
 	"code.cloudfoundry.org/cli/plugin"
 	"os/signal"
 	"syscall"
+	"code.cloudfoundry.org/cli/cf/terminal"
+	"code.cloudfoundry.org/cli/cf/trace"
 )
 
 func main() {
@@ -21,7 +23,17 @@ func main() {
 		close(exitChan)
 	}()
 
-	cfdev := &Plugin{exitChan}
+	ui := terminal.NewUI(
+		os.Stdin,
+		os.Stdout,
+		terminal.NewTeePrinter(os.Stdout),
+		trace.NewLogger(os.Stdout, false, "", ""),
+	)
+
+	cfdev := &Plugin{
+		Exit: exitChan,
+		UI:   ui,
+	}
 
 	plugin.Start(cfdev)
 }
@@ -32,6 +44,7 @@ type Command interface {
 
 type Plugin struct {
 	Exit chan struct{}
+	UI   terminal.UI
 }
 
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
@@ -61,14 +74,14 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
-func usage() {
-	fmt.Println("cfdev [start|stop|bosh]")
+func(p *Plugin) usage() {
+	p.UI.Say("cfdev [start|stop|bosh]")
 	os.Exit(1)
 }
 
 func (p *Plugin) execute(args []string) {
 	if len(args) == 0 {
-		usage()
+		p.usage()
 	}
 
 	var command Command
@@ -76,22 +89,35 @@ func (p *Plugin) execute(args []string) {
 	case "start":
 		command = &cmd.Start{
 			Exit: p.Exit,
+			UI: p.UI,
 		}
 	case "stop":
 		command = &cmd.Stop{}
 	case "download":
 		command = &cmd.Download{
 			Exit: p.Exit,
+			UI: p.UI,
 		}
 	case "bosh":
 		command = &cmd.Bosh{
 			Exit: p.Exit,
+			UI: p.UI,
 		}
 	case "catalog":
 		command = &cmd.Catalog{}
 	default:
-		usage()
+		p.usage()
 	}
 
-	command.Run(args[1:])
+	err := command.Run(args[1:])
+
+	select {
+	case <-p.Exit:
+		os.Exit(128)
+	default:
+		if err != nil {
+			fmt.Printf("Error encountered running '%s' : %s", args[0], err)
+			os.Exit(2)
+		}
+	}
 }

@@ -7,49 +7,40 @@ import (
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
 	"code.cloudfoundry.org/cfdev/shell"
-	"code.cloudfoundry.org/cli/cf/terminal"
-	"code.cloudfoundry.org/cli/cf/trace"
 )
 
 type Bosh struct{
 	Exit chan struct{}
+	UI UI
 }
 
-func(b *Bosh) Run(args []string) {
+func(b *Bosh) Run(args []string) error {
 	go func() {
 		<-b.Exit
 		os.Exit(128)
 	}()
-
-	cfui := terminal.NewUI(
-		os.Stdin,
-		os.Stdout,
-		terminal.NewTeePrinter(os.Stdout),
-		trace.NewLogger(os.Stdout, false, "", ""),
-	)
-
-
-	_, stateDir, _ := setupHomeDir()
+	_, stateDir, _, err := setupHomeDir()
+	if err != nil {
+		return err
+	}
 
 	if len(args) == 0 || args[0] != "env" {
-		fmt.Fprintf(os.Stderr, `Usage: eval $(cf dev bosh env)`)
-		fmt.Fprintln(os.Stderr)
-		os.Exit(1)
+		b.UI.Say(`Usage: eval $(cf dev bosh env)`)
+		return nil
 	}
 
 	gClient := client.New(connection.New("tcp", "localhost:8888"))
 	config, err := gdn.FetchBOSHConfig(gClient)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to fetch bosh configuration: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf( "failed to fetch bosh configuration: %v\n", err)
 	}
 
 	env := shell.Environment{StateDir: stateDir}
 	shellScript, err := env.Prepare(config)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to prepare bosh configuration: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf( "failed to prepare bosh configuration: %v\n", err)
 	}
 
-	cfui.Say(shellScript)
+	b.UI.Say(shellScript)
+	return nil
 }

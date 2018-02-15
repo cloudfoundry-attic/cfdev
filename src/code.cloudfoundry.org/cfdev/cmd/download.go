@@ -7,18 +7,23 @@ import (
 	"os"
 )
 
-type Download struct{
+type Download struct {
 	Exit chan struct{}
+	UI UI
 }
 
-func(d *Download) Run(args []string) {
+func (d *Download) Run(args []string) error {
 	go func() {
 		<-d.Exit
 		os.Exit(128)
 	}()
 
-	_, _, cacheDir := setupHomeDir()
-	fmt.Println("Downloading Resources...")
+	_, _, cacheDir, err := setupHomeDir()
+	if err != nil {
+		return nil
+	}
+
+	d.UI.Say("Downloading Resources...")
 	downloader := resource.Downloader{}
 	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
 
@@ -28,8 +33,13 @@ func(d *Download) Run(args []string) {
 		SkipAssetVerification: skipVerify == "true",
 	}
 
-	if err := cache.Sync(catalog()); err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to sync assets: %v\n", err)
-		os.Exit(1)
+	catalog, err := catalog(d.UI)
+	if err != nil {
+		return err
 	}
+
+	if err := cache.Sync(catalog); err != nil {
+		return fmt.Errorf("Unable to sync assets: %v\n", err)
+	}
+	return nil
 }

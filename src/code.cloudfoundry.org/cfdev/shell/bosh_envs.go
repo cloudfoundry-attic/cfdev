@@ -20,13 +20,11 @@ func (e *Environment) Prepare(config garden.BOSHConfiguration) (string, error) {
 	certPath := filepath.Join(e.StateDir, "bosh-ca-cert")
 
 	err := ioutil.WriteFile(keyPath, []byte(config.GatewayPrivateKey), 0600)
-
 	if err != nil {
 		return "", err
 	}
 
 	err = ioutil.WriteFile(certPath, []byte(config.CACertificate), 0666)
-
 	if err != nil {
 		return "", err
 	}
