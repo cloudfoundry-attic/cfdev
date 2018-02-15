@@ -1,4 +1,16 @@
 
+### Install & Run CFDev
+Download CFDev binary
+`curl -O https://s3.amazonaws.com/pcfdev-development/stories/153571042/cfdev`
+
+Uninstall PCFDev plugin if its installed
+`cf uninstall-plugin pcfdev`
+
+Install the CFDev plugin
+`cf install-plugin <path to cfdev binary> -f`
+
+Run CFDev
+`cf dev start`
 
 ### Build & Test Dependencies
 - Docker for Mac
