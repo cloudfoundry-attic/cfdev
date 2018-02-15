@@ -6,23 +6,22 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 type LinuxKit struct {
-	ExecutablePath      string
-	StatePath           string
-	HomeDir             string
-	OSImagePath         string
-	DependencyImagePath string
+	Config config.Config
 }
 
 func (s *LinuxKit) Command() *exec.Cmd {
-	linuxkit := filepath.Join(s.ExecutablePath, "linuxkit")
-	hyperkit := filepath.Join(s.ExecutablePath, "hyperkit")
-	uefi := filepath.Join(s.ExecutablePath, "UEFI.fd")
-	qcowtool := filepath.Join(s.ExecutablePath, "qcow-tool")
-	vpnkitEthSock := filepath.Join(s.HomeDir, "vpnkit_eth.sock")
-	vpnkitPortSock := filepath.Join(s.HomeDir, "vpnkit_port.sock")
+	linuxkit := filepath.Join(s.Config.CacheDir, "linuxkit")
+	hyperkit := filepath.Join(s.Config.CacheDir, "hyperkit")
+	uefi := filepath.Join(s.Config.CacheDir, "UEFI.fd")
+	qcowtool := filepath.Join(s.Config.CacheDir, "qcow-tool")
+	vpnkitEthSock := filepath.Join(s.Config.CFDevHome, "vpnkit_eth.sock")
+	vpnkitPortSock := filepath.Join(s.Config.CFDevHome, "vpnkit_port.sock")
+	dependencyImagePath := filepath.Join(s.Config.CacheDir, "cf-oss-deps.iso")
+	osImagePath := filepath.Join(s.Config.CacheDir, "cfdev-efi.iso")
 
 	diskArgs := []string{
 		"type=qcow",
@@ -42,10 +41,10 @@ func (s *LinuxKit) Command() *exec.Cmd {
 		"-networking", fmt.Sprintf("vpnkit,%v,%v", vpnkitEthSock, vpnkitPortSock),
 		"-fw", uefi,
 		"-disk", strings.Join(diskArgs, ","),
-		"-disk", "file="+s.DependencyImagePath,
-		"-state", s.StatePath,
+		"-disk", "file="+dependencyImagePath,
+		"-state", s.Config.StateDir,
 		"--uefi",
-		s.OSImagePath)
+		osImagePath)
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,

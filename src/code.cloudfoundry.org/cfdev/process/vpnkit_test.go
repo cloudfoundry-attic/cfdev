@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"code.cloudfoundry.org/cfdev/process"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 var _ = Describe("VPNKit", func() {
@@ -14,9 +15,11 @@ var _ = Describe("VPNKit", func() {
 		stateDir := "/home/state"
 
 		vpnKit := process.VpnKit{
-			HomeDir:  homeDir,
-			CacheDir: cacheDir,
-			StateDir: stateDir,
+			Config: config.Config{
+				CFDevHome:  homeDir,
+				CacheDir: cacheDir,
+				StateDir: stateDir,
+			},
 		}
 
 		cmd := vpnKit.Command()

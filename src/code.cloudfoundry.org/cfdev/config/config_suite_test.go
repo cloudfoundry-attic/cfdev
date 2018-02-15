@@ -1,4 +1,4 @@
-package network_test
+package config_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestNetwork(t *testing.T) {
+func TestConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "cf dev - network suite")
+	RunSpecs(t, "cf dev - config suite")
 }

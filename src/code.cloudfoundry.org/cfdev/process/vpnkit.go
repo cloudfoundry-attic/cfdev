@@ -10,26 +10,23 @@ import (
 	"path/filepath"
 	"code.cloudfoundry.org/cfdev/env"
 	"encoding/json"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 type VpnKit struct {
-	HomeDir  string
-	CacheDir string
-	StateDir string
-	BoshDirectorIP string
-	CFRouterIP string
+	Config config.Config
 }
 
 func (v *VpnKit) Command() *exec.Cmd {
-	cmd := exec.Command(path.Join(v.CacheDir, "vpnkit"),
+	cmd := exec.Command(path.Join(v.Config.CacheDir, "vpnkit"),
 		"--ethernet",
-		path.Join(v.HomeDir, "vpnkit_eth.sock"),
+		path.Join(v.Config.CFDevHome, "vpnkit_eth.sock"),
 		"--port",
-		path.Join(v.HomeDir, "vpnkit_port.sock"),
+		path.Join(v.Config.CFDevHome, "vpnkit_port.sock"),
 		"--vsock-path",
-		path.Join(v.StateDir, "connect"),
+		path.Join(v.Config.StateDir, "connect"),
 		"--http",
-		path.Join(v.HomeDir, "http_proxy.json"))
+		path.Join(v.Config.CFDevHome, "http_proxy.json"))
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
@@ -39,9 +36,9 @@ func (v *VpnKit) Command() *exec.Cmd {
 }
 
 func (v *VpnKit) SetupVPNKit() error {
-	httpProxyPath := filepath.Join(v.HomeDir, "http_proxy.json")
+	httpProxyPath := filepath.Join(v.Config.CFDevHome, "http_proxy.json")
 
-	proxyConfig := env.BuildProxyConfig(v.BoshDirectorIP, v.CFRouterIP)
+	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP)
 	proxyContents, err := json.Marshal(proxyConfig)
 	if err != nil {
 		return fmt.Errorf("Unable to create proxy config: %v\n", err)

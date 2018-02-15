@@ -12,7 +12,7 @@ type Catalog struct{
 }
 
 func (c *Catalog) Run(args []string) error {
-	catalog, err := catalog(c.UI)
+	catalog, err := catalog()
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func (c *Catalog) Run(args []string) error {
 	return nil
 }
 
-func catalog(ui UI) (*resource.Catalog, error) {
+func catalog() (*resource.Catalog, error) {
 	override := os.Getenv("CFDEV_CATALOG")
 
 	if override != "" {
@@ -34,8 +34,6 @@ func catalog(ui UI) (*resource.Catalog, error) {
 		if err := json.Unmarshal([]byte(override), &c); err != nil {
 			return nil, fmt.Errorf("Unable to parse CFDEV_CATALOG env variable: %v\n", err)
 		}
-
-		ui.Say("Using CFDEV_CATALOG override")
 		return &c, nil
 	}
 

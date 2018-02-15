@@ -7,6 +7,10 @@ import (
 	"os"
 
 	"code.cloudfoundry.org/cfdev/env"
+	"code.cloudfoundry.org/cfdev/config"
+	"path/filepath"
+	"io/ioutil"
+	"fmt"
 )
 
 var _ = Describe("env", func() {
@@ -51,6 +55,129 @@ var _ = Describe("env", func() {
 			Expect(proxyConfig.Http).To(Equal("upper-some-http-proxy"))
 			Expect(proxyConfig.Https).To(Equal("upper-some-https-proxy"))
 			Expect(proxyConfig.NoProxy).To(Equal("upper-some-no-proxy,bosh-ip,router-ip"))
+		})
+	})
+
+	Describe("SetupEnvironment", func() {
+		var dir string
+		var err error
+
+		Context("when the paths are writable", func() {
+			BeforeEach(func() {
+				dir, err = ioutil.TempDir(os.TempDir(), "test-space")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				os.RemoveAll(dir)
+			})
+
+			It("Creates home, state, and cache dirs", func() {
+				homeDir := filepath.Join(dir, "some-cfdev-home")
+				cacheDir := filepath.Join(dir, "some-cache-dir")
+				stateDir := filepath.Join(dir, "some-state-dir")
+
+				conf := config.Config{
+					CFDevHome: homeDir,
+					CacheDir:  cacheDir,
+					StateDir:  stateDir,
+				}
+
+				Expect(env.Setup(conf)).To(Succeed())
+				_, err := os.Stat(homeDir)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = os.Stat(cacheDir)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = os.Stat(stateDir)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("when setup fails", func(){
+			var (
+				dir string
+				homeDir string
+				cacheDir string
+				stateDir string
+			)
+			BeforeEach(func() {
+				dir, err = ioutil.TempDir(os.TempDir(), "test-space")
+				Expect(err).NotTo(HaveOccurred())
+
+				homeDir = filepath.Join(dir, "some-cfdev-hom")
+				cacheDir = filepath.Join(dir, "some-cache-dir")
+				stateDir = filepath.Join(dir, "some-state-dir")
+			})
+
+			AfterEach(func() {
+				os.RemoveAll(dir)
+			})
+
+			Context("when home dir cannot be created", func() {
+				BeforeEach(func() {
+					ioutil.WriteFile(homeDir,[]byte{},0400)
+				})
+
+				AfterEach(func(){
+					os.RemoveAll(homeDir)
+				})
+
+				It("returns an error", func() {
+					conf := config.Config{
+						CFDevHome: homeDir,
+						CacheDir:  cacheDir,
+						StateDir:  stateDir,
+					}
+
+					err := env.Setup(conf)
+					Expect(err.Error()).
+						To(ContainSubstring(fmt.Sprintf("failed to create home dir at path %s", homeDir)))
+				})
+			})
+
+			Context("when cache dir cannot be created", func() {
+				BeforeEach(func() {
+					ioutil.WriteFile(cacheDir,[]byte{},0400)
+				})
+
+				AfterEach(func(){
+					os.RemoveAll(cacheDir)
+				})
+
+				It("returns an error", func() {
+					conf := config.Config{
+						CFDevHome: homeDir,
+						CacheDir:  cacheDir,
+						StateDir:  stateDir,
+					}
+
+					err := env.Setup(conf)
+					Expect(err.Error()).
+						To(ContainSubstring(fmt.Sprintf("failed to create cache dir at path %s",cacheDir)))
+				})
+			})
+
+			Context("when state dir cannot be created", func() {
+				BeforeEach(func() {
+					ioutil.WriteFile(stateDir,[]byte{},0400)
+				})
+
+				AfterEach(func(){
+					os.RemoveAll(stateDir)
+				})
+
+				It("returns an error", func() {
+					conf := config.Config{
+						CFDevHome: homeDir,
+						CacheDir:  cacheDir,
+						StateDir:  stateDir,
+					}
+
+					err := env.Setup(conf)
+					Expect(err.Error()).
+						To(ContainSubstring(fmt.Sprintf("failed to create state dir at path %s", stateDir)))
+				})
+			})
 		})
 	})
 })

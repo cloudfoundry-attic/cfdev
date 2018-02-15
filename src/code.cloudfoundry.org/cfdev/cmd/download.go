@@ -5,11 +5,14 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 	"strings"
 	"os"
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/env"
 )
 
 type Download struct {
 	Exit chan struct{}
 	UI UI
+	Config config.Config
 }
 
 func (d *Download) Run(args []string) error {
@@ -18,12 +21,15 @@ func (d *Download) Run(args []string) error {
 		os.Exit(128)
 	}()
 
-	_, _, cacheDir, err := setupHomeDir()
-	if err != nil {
+	if err := env.Setup(d.Config); err != nil {
 		return nil
 	}
 
 	d.UI.Say("Downloading Resources...")
+	return download(d.Config.CacheDir)
+}
+
+func download(cacheDir string) error {
 	downloader := resource.Downloader{}
 	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
 
@@ -33,7 +39,7 @@ func (d *Download) Run(args []string) error {
 		SkipAssetVerification: skipVerify == "true",
 	}
 
-	catalog, err := catalog(d.UI)
+	catalog, err := catalog()
 	if err != nil {
 		return err
 	}

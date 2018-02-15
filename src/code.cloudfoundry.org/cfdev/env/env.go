@@ -3,6 +3,8 @@ package env
 import (
 	"os"
 	"strings"
+	"code.cloudfoundry.org/cfdev/config"
+	"fmt"
 )
 
 type ProxyConfig struct {
@@ -42,4 +44,19 @@ func BuildProxyConfig(boshDirectorIp string, cfRouterIp string) ProxyConfig {
 	}
 
 	return proxyConfig
+}
+
+func Setup(config config.Config) error {
+	if err := os.MkdirAll(config.CFDevHome, 0755); err != nil {
+		return fmt.Errorf("failed to create home dir at path %s: %s", config.CFDevHome, err)
+	}
+
+	if err := os.MkdirAll(config.CacheDir, 0755); err != nil {
+		return fmt.Errorf("failed to create cache dir at path %s: %s", config.CacheDir, err)
+	}
+
+	if err := os.MkdirAll(config.StateDir, 0755); err != nil {
+		return fmt.Errorf("failed to create state dir at path %s: %s", config.StateDir, err)
+	}
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 func main() {
@@ -30,9 +31,12 @@ func main() {
 		trace.NewLogger(os.Stdout, false, "", ""),
 	)
 
+	conf := config.NewConfig()
+
 	cfdev := &Plugin{
 		Exit: exitChan,
 		UI:   ui,
+		Config: conf,
 	}
 
 	plugin.Start(cfdev)
@@ -45,6 +49,7 @@ type Command interface {
 type Plugin struct {
 	Exit chan struct{}
 	UI   terminal.UI
+	Config config.Config
 }
 
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
@@ -90,18 +95,23 @@ func (p *Plugin) execute(args []string) {
 		command = &cmd.Start{
 			Exit: p.Exit,
 			UI: p.UI,
+			Config: p.Config,
 		}
 	case "stop":
-		command = &cmd.Stop{}
+		command = &cmd.Stop{
+			Config: p.Config,
+		}
 	case "download":
 		command = &cmd.Download{
 			Exit: p.Exit,
 			UI: p.UI,
+			Config: p.Config,
 		}
 	case "bosh":
 		command = &cmd.Bosh{
 			Exit: p.Exit,
 			UI: p.UI,
+			Config: p.Config,
 		}
 	case "catalog":
 		command = &cmd.Catalog{}

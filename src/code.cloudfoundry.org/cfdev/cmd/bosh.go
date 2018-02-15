@@ -7,11 +7,13 @@ import (
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
 	"code.cloudfoundry.org/cfdev/shell"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 type Bosh struct{
 	Exit chan struct{}
 	UI UI
+	Config config.Config
 }
 
 func(b *Bosh) Run(args []string) error {
@@ -19,10 +21,6 @@ func(b *Bosh) Run(args []string) error {
 		<-b.Exit
 		os.Exit(128)
 	}()
-	_, stateDir, _, err := setupHomeDir()
-	if err != nil {
-		return err
-	}
 
 	if len(args) == 0 || args[0] != "env" {
 		b.UI.Say(`Usage: eval $(cf dev bosh env)`)
@@ -35,7 +33,7 @@ func(b *Bosh) Run(args []string) error {
 		return fmt.Errorf( "failed to fetch bosh configuration: %v\n", err)
 	}
 
-	env := shell.Environment{StateDir: stateDir}
+	env := shell.Environment{StateDir: b.Config.StateDir}
 	shellScript, err := env.Prepare(config)
 	if err != nil {
 		return fmt.Errorf( "failed to prepare bosh configuration: %v\n", err)

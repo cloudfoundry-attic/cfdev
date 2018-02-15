@@ -5,16 +5,17 @@ import (
 	. "github.com/onsi/gomega"
 
 	"code.cloudfoundry.org/cfdev/process"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 var _ = Describe("LinuxKit process", func() {
 	It("builds a command", func() {
 		linuxkit := process.LinuxKit{
-			ExecutablePath:      "/home-dir/.cfdev/cache",
-			OSImagePath:         "/home-dir/.cfdev/image",
-			HomeDir:             "/home-dir/.cfdev",
-			StatePath:           "/home-dir/.cfdev/state",
-			DependencyImagePath: "/home-dir/.cfdev/bosh-cf-deps.iso",
+			Config: config.Config{
+				CFDevHome: "/home-dir/.cfdev",
+				StateDir: "/home-dir/.cfdev/state",
+				CacheDir: "/home-dir/.cfdev/cache",
+			},
 		}
 
 		start := linuxkit.Command()
@@ -32,9 +33,9 @@ var _ = Describe("LinuxKit process", func() {
 			"vpnkit,/home-dir/.cfdev/vpnkit_eth.sock,/home-dir/.cfdev/vpnkit_port.sock",
 			"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
 			"-disk", "type=qcow,size=50G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
-			"-disk", "file=/home-dir/.cfdev/bosh-cf-deps.iso",
+			"-disk", "file=/home-dir/.cfdev/cache/cf-oss-deps.iso",
 			"-state", "/home-dir/.cfdev/state",
-			"--uefi", "/home-dir/.cfdev/image",
+			"--uefi", "/home-dir/.cfdev/cache/cfdev-efi.iso",
 		))
 		Expect(start.SysProcAttr.Setpgid).To(BeTrue())
 	})

@@ -5,7 +5,6 @@ import (
 	"os"
 	"io/ioutil"
 	"strconv"
-	"path/filepath"
 	"flag"
 	"time"
 	"syscall"
@@ -13,17 +12,12 @@ import (
 	"net/url"
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/network"
-	"code.cloudfoundry.org/cfdev/resource"
-	"code.cloudfoundry.org/cfdev/user"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
-)
-
-const (
-	BoshDirectorIP = "10.245.0.2"
-	CFRouterIP     = "10.144.0.34"
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/env"
 )
 
 type UI interface {
@@ -33,6 +27,7 @@ type UI interface {
 type Start struct {
 	Exit chan struct{}
 	UI UI
+	Config config.Config
 }
 
 func (s *Start) Run(args []string) error {
@@ -40,61 +35,50 @@ func (s *Start) Run(args []string) error {
 	registriesFlag := startCmd.String("r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 	startCmd.Parse(args)
 
-	homeDir, stateDir, cacheDir, err := setupHomeDir()
-	if err != nil {
+	if err := env.Setup(s.Config); err != nil {
 		return err
 	}
 
-	linuxkitPidPath := filepath.Join(stateDir, "linuxkit.pid")
-	vpnkitPidPath := filepath.Join(stateDir, "vpnkit.pid")
-	hyperkitPidPath := filepath.Join(stateDir, "hyperkit.pid")
-
-	if isLinuxKitRunning(linuxkitPidPath) {
+	if isLinuxKitRunning(s.Config.LinuxkitPidFile) {
 		s.UI.Say("CF Dev is already running...")
 		return nil
 	}
 
-	registries, err := parseDockerRegistriesFlag(*registriesFlag)
+	registries, err := s.parseDockerRegistriesFlag(*registriesFlag)
 	if err != nil {
 		fmt.Errorf("Unable to parse docker registries %v\n", err)
 		os.Exit(1)
 	}
 
 	vpnKit := process.VpnKit{
-		HomeDir:        homeDir,
-		CacheDir:       cacheDir,
-		StateDir:       stateDir,
-		BoshDirectorIP: BoshDirectorIP,
-		CFRouterIP:     CFRouterIP,
+		Config: s.Config,
 	}
 	vCmd := vpnKit.Command()
 
 	linuxkit := process.LinuxKit{
-		ExecutablePath:      cacheDir,
-		StatePath:           stateDir,
-		HomeDir:             homeDir,
-		OSImagePath:         filepath.Join(cacheDir, "cfdev-efi.iso"),
-		DependencyImagePath: filepath.Join(cacheDir, "cf-oss-deps.iso"),
+		Config: s.Config,
 	}
+
 	lCmd := linuxkit.Command()
 
 	go func() {
 		<-s.Exit
-		process.Terminate(linuxkitPidPath)
-		process.Terminate(vpnkitPidPath)
-		process.Kill(hyperkitPidPath)
+		process.Terminate(s.Config.LinuxkitPidFile)
+		process.Terminate(s.Config.VpnkitPidFile)
+		process.Kill(s.Config.HyperkitPidFile)
 		os.Exit(128)
 	}()
 
-	if err = cleanupStateDir(stateDir); err != nil {
+	if err = cleanupStateDir(s.Config.StateDir); err != nil {
 		return err
 	}
 
-	if err = setupNetworking(); err != nil {
+	if err = s.setupNetworking(); err != nil {
 		return err
 	}
 
-	if err = s.download(cacheDir); err != nil {
+	s.UI.Say("Downloading Resources...")
+	if err = download(s.Config.CacheDir); err != nil {
 		return err
 	}
 
@@ -107,7 +91,7 @@ func (s *Start) Run(args []string) error {
 		return fmt.Errorf("Failed to start VPNKit process: %v\n", err)
 	}
 
-	err = ioutil.WriteFile(vpnkitPidPath, []byte(strconv.Itoa(vCmd.Process.Pid)), 0777)
+	err = ioutil.WriteFile(s.Config.VpnkitPidFile, []byte(strconv.Itoa(vCmd.Process.Pid)), 0777)
 	if err != nil {
 		return fmt.Errorf("Failed to write vpnKit pid file: %v\n", err)
 	}
@@ -117,23 +101,20 @@ func (s *Start) Run(args []string) error {
 		return fmt.Errorf("Failed to start VM process: %v\n", err)
 	}
 
-	err = ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(lCmd.Process.Pid)), 0777)
+	err = ioutil.WriteFile(s.Config.LinuxkitPidFile, []byte(strconv.Itoa(lCmd.Process.Pid)), 0777)
 	if err != nil {
 		return fmt.Errorf("Failed to write VM pid file: %v\n", err)
 	}
 
 	garden := client.New(connection.New("tcp", "localhost:8888"))
-
 	waitForGarden(garden)
 
 	s.UI.Say("Deploying the BOSH Director...")
-
 	if err := gdn.DeployBosh(garden); err != nil {
 		return fmt.Errorf("Failed to deploy the BOSH Director: %v\n", err)
 	}
 
 	s.UI.Say("Deploying CF...")
-
 	if err := gdn.DeployCloudFoundry(garden, registries); err != nil {
 		return fmt.Errorf("Failed to deploy the Cloud Foundry: %v\n", err)
 	}
@@ -164,28 +145,6 @@ func waitForGarden(client garden.Client) {
 
 		time.Sleep(time.Second)
 	}
-}
-
-func setupHomeDir() (string, string, string, error) {
-	homeDir, err := user.CFDevHome()
-
-	if err != nil {
-		return "", "", "", fmt.Errorf("Unable to create .cfdev home directory: %v\n", err)
-	}
-
-	stateDir := filepath.Join(homeDir, "state")
-
-	if err := os.MkdirAll(stateDir, 0755); err != nil {
-		return "", "", "", fmt.Errorf("Unable to create .cfdev state directory: %v\n", err)
-	}
-
-	cacheDir := filepath.Join(homeDir, "cache")
-
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return "", "", "", fmt.Errorf("Unable to create .cfdev cache directory: %v\n", err)
-	}
-
-	return homeDir, stateDir, cacheDir, nil
 }
 
 func isLinuxKitRunning(pidFile string) bool {
@@ -219,8 +178,8 @@ func cleanupStateDir(stateDir string) error {
 	return nil
 }
 
-func setupNetworking() error {
-	err := network.AddLoopbackAliases(BoshDirectorIP, CFRouterIP)
+func(s *Start) setupNetworking() error {
+	err := network.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP)
 
 	if err != nil {
 		return fmt.Errorf("Unable to alias BOSH Director/CF Router IP: %v\n", err)
@@ -229,29 +188,7 @@ func setupNetworking() error {
 	return nil
 }
 
-func(s *Start) download(cacheDir string) error {
-	s.UI.Say("Downloading Resources...")
-	downloader := resource.Downloader{}
-	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
-
-	cache := resource.Cache{
-		Dir:                   cacheDir,
-		DownloadFunc:          downloader.Start,
-		SkipAssetVerification: skipVerify == "true",
-	}
-
-	catalog, err := catalog(s.UI)
-	if err != nil {
-		return err
-	}
-
-	if err := cache.Sync(catalog); err != nil {
-		return fmt.Errorf("Unable to sync assets: %v\n", err)
-	}
-	return nil
-}
-
-func parseDockerRegistriesFlag(flag string) ([]string, error) {
+func(s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 	if flag == "" {
 		return nil, nil
 	}
