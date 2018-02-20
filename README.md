@@ -22,7 +22,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 1. Install the CFDev plugin `cf install-plugin <path to cfdev binary> -f`
 
 ## Start
-1. Run CFDev `cf dev start`
+Run CFDev `cf dev start`
 
 ```
 ssisil:Dev ssisil$ cf dev start
