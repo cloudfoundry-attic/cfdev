@@ -17,12 +17,12 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 * [CF CLI](https://github.com/cloudfoundry/cli)
 
 ## Install 
-1. Download the CF Dev binary `curl -O https://s3.amazonaws.com/pcfdev-development/stories/153571042/cfdev`
-1. (optional) Uninstall PCFDev plugin if its installed `cf uninstall-plugin pcfdev`
-1. Install the CFDev plugin `cf install-plugin <path to cfdev binary> -f`
+1. Download the CF Dev binary `curl -O https://s3.amazonaws.com/pcfdev-development/stories/153571042/cfdev`.
+1. (optional) Uninstall PCFDev plugin if its installed `cf uninstall-plugin pcfdev`.
+1. Install the CFDev plugin `cf install-plugin <path to cfdev binary> -f`.
 
 ## Start
-Run CFDev `cf dev start`
+Run CFDev `cf dev start`.
 
 ```
 Downloading Resources...
@@ -47,9 +47,9 @@ Regular user => Email: user / Password: pass
 
 ```
 ## Run BOSH with CF Dev
-1. Install [BOSH CLIv2](https://bosh.io/docs/cli-v2.html)
-1. Set envornment variables to point BOSH to your CF Dev instance `eval "$(cf dev bosh env)"`
-1. Run BOSH `bosh <command you want to run>`
+1. Install [BOSH CLIv2](https://bosh.io/docs/cli-v2.html).
+1. Set envornment variables to point BOSH to your CF Dev instance `eval "$(cf dev bosh env)"`.
+1. Run BOSH `bosh <command you want to run>`.
 
 ## Uninstall
 
@@ -57,4 +57,4 @@ To temporarily stop CF Dev run `cf dev stop`.
 
 To destroy your CF Dev VM run `cf dev destroy`.
 
-To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`
+To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
