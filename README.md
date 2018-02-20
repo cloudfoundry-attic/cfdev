@@ -8,41 +8,50 @@
       ╚═════╝╚═╝     ╚═════╝ ╚══════╝  ╚═══╝
                 is now running!
 
+***********************************
 
+CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s laptop or workstation using native hypervisors and a fully functional BOSH Director. CF Dev gives application developers the full Cloud Foundry experience in a lightweight, easy to install package. CF Dev is intended for application developers who wish to develop and debug their application locally on a full-featured Cloud Foundry. CF Dev is also an excellent getting started environment for developers interested in learning and exploring Cloud Foundry.
 
+### Prerequisites
 
-### Install & Run CFDev
-Download CFDev binary
-`curl -O https://s3.amazonaws.com/pcfdev-development/stories/153571042/cfdev`
+* [CF CLI](https://github.com/cloudfoundry/cli)
 
-Uninstall PCFDev plugin if its installed
-`cf uninstall-plugin pcfdev`
+## Install 
+1. Download the CF Dev binary `curl -O https://s3.amazonaws.com/pcfdev-development/stories/153571042/cfdev`
+1. (optional) Uninstall PCFDev plugin if its installed `cf uninstall-plugin pcfdev`
+1. Install the CFDev plugin `cf install-plugin <path to cfdev binary> -f`
 
-Install the CFDev plugin
-`cf install-plugin <path to cfdev binary> -f`
+## Start
+1. Run CFDev `cf dev start`
 
-Run CFDev
-`cf dev start`
+```
+ssisil:Dev ssisil$ cf dev start
+Downloading Resources...
+Starting VPNKit ...
+Starting the VM...
+Deploying the BOSH Director...
+Deploying CF...
 
-### Build & Test Dependencies
-- Docker for Mac
-- Linuxkit - https://github.com/linuxkit/linuxkit
-- brew install cdrtools
-- garden cli - https://github.com/contraband/gaol
+  ██████╗███████╗██████╗ ███████╗██╗   ██╗
+ ██╔════╝██╔════╝██╔══██╗██╔════╝██║   ██║
+ ██║     █████╗  ██║  ██║█████╗  ██║   ██║
+ ██║     ██╔══╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝
+ ╚██████╗██║     ██████╔╝███████╗ ╚████╔╝
+  ╚═════╝╚═╝     ╚═════╝ ╚══════╝  ╚═══╝
+             is now running!
 
-### Running the VM manually
+To begin using CF Dev, please run:
+    cf login -a https://api.v3.pcfdev.io --skip-ssl-validation
 
-In linuxkit folder run the following:
-- build-image.sh - builds the vm iso
-- build-cf-oss-dep-iso.sh
-- build-firmware.sh
-- fetch-executables.sh
-- setup-ip-aliases.sh
-- run.sh
-- deploy-bosh.sh
-- deploy-cf.sh
+Admin user => Email: admin / Password: admin
+Regular user => Email: user / Password: pass
 
-### Running tests
+```
 
-- Remove IP aliases prior to running tests. Use `linuxkit/teardown-ip-aliases.sh`
-- See `src/code.cloudfoundry.org/cfdev/run-tests.sh` to see which tests need require sudo (root access)
+## Uninstall
+
+To temporarily stop CF Dev run `cf dev stop`.
+
+To destroy your CF Dev VM run `cf dev destroy`.
+
+To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`
