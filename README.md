@@ -47,7 +47,7 @@ Regular user => Email: user / Password: pass
 
 ```
 ## Run BOSH with CF Dev
-1. Install [BOSH CLIv2](https://bosh.io/docs/cli-v2.html).
+1. (if needed) Install [BOSH CLI v2](https://bosh.io/docs/cli-v2.html).
 1. Set envornment variables to point BOSH to your CF Dev instance `eval "$(cf dev bosh env)"`.
 1. Run BOSH `bosh <command you want to run>`.
 
