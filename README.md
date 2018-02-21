@@ -30,7 +30,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 * [CF CLI](https://github.com/cloudfoundry/cli)
 
 ## Install 
-1. Download the CF Dev binary `curl -O https://s3.amazonaws.com/pcfdev-development/stories/153571042/cfdev`.
+1. Download the CF Dev binary [here](https://s3.amazonaws.com/pcfdev-development/stories/153571042/cfdev).
 1. (if needed) Uninstall PCF Dev plugin if its installed `cf uninstall-plugin pcfdev`.
 1. Install the CF Dev plugin `cf install-plugin <path to cfdev binary> -f`.
 
