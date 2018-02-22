@@ -26,10 +26,10 @@ func (d *Download) Run(args []string) error {
 	}
 
 	d.UI.Say("Downloading Resources...")
-	return download(d.Config.CacheDir)
+	return download(d.Config.Dependencies, d.Config.CacheDir)
 }
 
-func download(cacheDir string) error {
+func download(dependencies resource.Catalog, cacheDir string) error {
 	downloader := resource.Downloader{}
 	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
 
@@ -39,12 +39,7 @@ func download(cacheDir string) error {
 		SkipAssetVerification: skipVerify == "true",
 	}
 
-	catalog, err := catalog()
-	if err != nil {
-		return err
-	}
-
-	if err := cache.Sync(catalog); err != nil {
+	if err := cache.Sync(&dependencies); err != nil {
 		return fmt.Errorf("Unable to sync assets: %v\n", err)
 	}
 	return nil

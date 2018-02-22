@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
-	"code.cloudfoundry.org/cfdev/cmd"
-	"code.cloudfoundry.org/cli/plugin"
 	"os/signal"
 	"syscall"
+
+	"code.cloudfoundry.org/cfdev/cmd"
+	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
-	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cli/plugin"
 )
 
 func main() {
@@ -34,8 +35,8 @@ func main() {
 	conf := config.NewConfig()
 
 	cfdev := &Plugin{
-		Exit: exitChan,
-		UI:   ui,
+		Exit:   exitChan,
+		UI:     ui,
 		Config: conf,
 	}
 
@@ -47,8 +48,8 @@ type Command interface {
 }
 
 type Plugin struct {
-	Exit chan struct{}
-	UI   terminal.UI
+	Exit   chan struct{}
+	UI     terminal.UI
 	Config config.Config
 }
 
@@ -79,7 +80,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
-func(p *Plugin) usage() {
+func (p *Plugin) usage() {
 	p.UI.Say("cfdev [start|stop|bosh]")
 	os.Exit(1)
 }
@@ -93,8 +94,8 @@ func (p *Plugin) execute(args []string) {
 	switch args[0] {
 	case "start":
 		command = &cmd.Start{
-			Exit: p.Exit,
-			UI: p.UI,
+			Exit:   p.Exit,
+			UI:     p.UI,
 			Config: p.Config,
 		}
 	case "stop":
@@ -103,18 +104,21 @@ func (p *Plugin) execute(args []string) {
 		}
 	case "download":
 		command = &cmd.Download{
-			Exit: p.Exit,
-			UI: p.UI,
+			Exit:   p.Exit,
+			UI:     p.UI,
 			Config: p.Config,
 		}
 	case "bosh":
 		command = &cmd.Bosh{
-			Exit: p.Exit,
-			UI: p.UI,
+			Exit:   p.Exit,
+			UI:     p.UI,
 			Config: p.Config,
 		}
 	case "catalog":
-		command = &cmd.Catalog{}
+		command = &cmd.Catalog{
+			UI:     p.UI,
+			Config: p.Config,
+		}
 	default:
 		p.usage()
 	}

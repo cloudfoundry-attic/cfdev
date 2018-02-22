@@ -78,7 +78,7 @@ func (s *Start) Run(args []string) error {
 	}
 
 	s.UI.Say("Downloading Resources...")
-	if err = download(s.Config.CacheDir); err != nil {
+	if err = download(s.Config.Dependencies, s.Config.CacheDir); err != nil {
 		return err
 	}
 
