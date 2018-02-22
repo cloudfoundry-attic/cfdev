@@ -31,7 +31,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 
 ## Install 
 1. Download the CF Dev binary [here](https://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.1-darwin).
-1. (if needed) Uninstall PCF Dev plugin if its installed `cf uninstall-plugin pcfdev`.
+1. _(if needed)_ Uninstall PCF Dev plugin if its installed `cf uninstall-plugin pcfdev`.
 1. Install the CF Dev plugin `cf install-plugin <path to cfdev binary> -f`.
 
 ## Start
@@ -39,7 +39,7 @@ Run CF Dev `cf dev start`.
 
 
 ## Run BOSH with CF Dev
-1. (if needed) Install [BOSH CLI v2](https://bosh.io/docs/cli-v2.html).
+1. _(if needed)_ Install [BOSH CLI v2](https://bosh.io/docs/cli-v2.html).
 1. Set environment variables to point BOSH to your CF Dev instance `eval "$(cf dev bosh env)"`.
 1. Run BOSH `bosh <command you want to run>`.
 
