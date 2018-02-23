@@ -49,3 +49,7 @@ Run CF Dev `cf dev start`.
 To temporarily stop CF Dev run `cf dev stop`.
 
 To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
+
+## Contributing
+
+If you are interested in contributing to PCF Dev, please refer to the [contributing guidelines](CONTRIBUTING.md) and [development instructions](DEVELOP.md).
