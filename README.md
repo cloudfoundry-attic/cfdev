@@ -52,4 +52,4 @@ To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
 
 ## Contributing
 
-If you are interested in contributing to PCF Dev, please refer to the [contributing guidelines](CONTRIBUTING.md) and [development instructions](DEVELOP.md).
+If you are interested in contributing to CF Dev, please refer to the [contributing guidelines](CONTRIBUTING.md) and [development instructions](DEVELOP.md).
