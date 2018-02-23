@@ -44,7 +44,7 @@ type Config struct {
 	Dependencies    resource.Catalog
 }
 
-func NewConfig() Config {
+func NewConfig() (Config, error) {
 	cfdevHome := os.Getenv("CFDEV_HOME")
 	if cfdevHome == "" {
 		cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
@@ -52,7 +52,7 @@ func NewConfig() Config {
 
 	catalog, err := catalog()
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 
 	return Config{
@@ -65,7 +65,7 @@ func NewConfig() Config {
 		VpnkitPidFile:   filepath.Join(cfdevHome, "state", "vpnkit.pid"),
 		HyperkitPidFile: filepath.Join(cfdevHome, "state", "hyperkit.pid"),
 		Dependencies:    catalog,
-	}
+	}, nil
 }
 
 func catalog() (resource.Catalog, error) {

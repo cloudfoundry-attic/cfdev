@@ -32,7 +32,11 @@ func main() {
 		trace.NewLogger(os.Stdout, false, "", ""),
 	)
 
-	conf := config.NewConfig()
+	conf, err := config.NewConfig()
+	if err != nil {
+		ui.Failed(err.Error())
+		os.Exit(1)
+	}
 
 	cfdev := &Plugin{
 		Exit:   exitChan,

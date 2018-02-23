@@ -23,7 +23,8 @@ var _ = Describe("config", func() {
 				os.Setenv("HOME", oldHome)
 			})
 			It("returns a config object with default values", func() {
-				conf := config.NewConfig()
+				conf, err := config.NewConfig()
+				Expect(err).NotTo(HaveOccurred())
 				Expect(conf.BoshDirectorIP).To(Equal("10.245.0.2"))
 				Expect(conf.CFRouterIP).To(Equal("10.144.0.34"))
 				Expect(conf.CFDevHome).To(Equal(filepath.Join("some-home-dir", ".cfdev")))
@@ -45,7 +46,8 @@ var _ = Describe("config", func() {
 			os.Unsetenv("CFDEV_HOME")
 		})
 		It("returns a config object with default values", func() {
-			conf := config.NewConfig()
+			conf, err := config.NewConfig()
+			Expect(err).NotTo(HaveOccurred())
 			Expect(conf.BoshDirectorIP).To(Equal("10.245.0.2"))
 			Expect(conf.CFRouterIP).To(Equal("10.144.0.34"))
 			Expect(conf.CFDevHome).To(Equal(filepath.Join("some-cfdev-home")))
