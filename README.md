@@ -47,6 +47,4 @@ Run CF Dev `cf dev start`.
 
 To temporarily stop CF Dev run `cf dev stop`.
 
-To destroy your CF Dev VM run `cf dev destroy`.
-
 To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
