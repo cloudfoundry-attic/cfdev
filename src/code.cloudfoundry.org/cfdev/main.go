@@ -77,7 +77,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 				Name:     "dev",
 				HelpText: "Start and stop a single vm CF deployment running on your workstation",
 				UsageDetails: plugin.Usage{
-					Usage: "cfdev [start|stop|bosh]",
+					Usage: "cf dev [start|stop|bosh]",
 				},
 			},
 		},
@@ -85,7 +85,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 }
 
 func (p *Plugin) usage() {
-	p.UI.Say("cfdev [start|stop|bosh]")
+	p.UI.Say("cf dev [start|stop|bosh]")
 	os.Exit(1)
 }
 
