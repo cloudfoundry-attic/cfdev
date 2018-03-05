@@ -1,0 +1,12 @@
+---
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: ~/cfdev
+    steps:
+      - checkout
+      - run: git submodule update --init --recursive
+      - run: echo 'export GOPATH=$HOME/cfdev' >> $BASH_ENV
+      - run: go build code.cloudfoundry.org/cfdev
