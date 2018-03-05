@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# This still requires Docker For Mac
+
+set -ex
+
+while getopts "c:" arg; do
+  case $arg in
+    c) cf_oss_deps_iso="$OPTARG"
+      ;;
+  esac
+done
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+linuxkit_dir="$script_dir"/../linuxkit
+
+rm -rf $linuxkit_dir/cfdev-efi-state
+
+linuxkit_bin="$linuxkit_dir/linuxkit"
+hyperkit_bin="$linuxkit_dir/hyperkit"
+vpnkit_bin="$linuxkit_dir/vpnkit"
+qcowtool_bin="$linuxkit_dir/qcow-tool"
+uefi_fw="$linuxkit_dir/UEFI.fd"
+cfdev_efi="$linuxkit_dir/cfdev-efi.iso"
+
+$linuxkit_bin run hyperkit \
+    -console-file \
+    -hyperkit $hyperkit_bin \
+	-cpus 4 \
+	-mem 8192 \
+	-fw $uefi_fw \
+	-networking vpnkit \
+	-vpnkit $vpnkit_bin \
+	-disk type=qcow,size=50G,trim=true,qcow-tool=$qcowtool_bin,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144 \
+	-disk file="$cf_oss_deps_iso" \
+	--uefi "$cfdev_efi"

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -ex
+
+while getopts "c:" arg; do
+  case $arg in
+    c) cf_deployment=$OPTARG
+      ;;
+  esac
+done
+
+if [[ -z $cf_deployment ]]; then
+  echo "USAGE: generate-cf-manifest -c <path-to-cf-deployment>"
+  exit 1
+fi
+
+scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+output_dir="$scripts_dir"/../output
+ops_dir="$scripts_dir"/../images/cf-oss/cf-operations
+
+mkdir -p "$output_dir"
+
+pushd "$cf_deployment"
+  # cf_deployment_version="$(git describe --tags --always || tr -d v)"
+
+  bosh int cf-deployment.yml \
+  -o operations/use-compiled-releases.yml \
+  -o operations/enable-privileged-container-support.yml \
+  -o operations/experimental/use-grootfs.yml \
+  -o operations/experimental/skip-consul-cell-registrations.yml \
+  -o operations/experimental/skip-consul-locks.yml \
+  -o operations/experimental/use-bosh-dns.yml \
+  -o operations/experimental/use-bosh-dns-for-containers.yml \
+  -o operations/experimental/disable-consul.yml \
+  -o operations/bosh-lite.yml \
+  -o operations/experimental/disable-consul-bosh-lite.yml \
+  \
+  -o "$ops_dir"/allow-local-docker-registry.yml \
+  -o "$ops_dir"/add-host-pcfdev-dns-record.yml \
+  -o "$ops_dir"/garden-disable-app-armour.yml \
+  -o "$ops_dir"/collocate-tcp-router.yml \
+  -o "$ops_dir"/use-btrfs-grootfs.yml \
+  -o "$ops_dir"/set-cfdev-subnet.yml \
+  \
+  -v cf_admin_password=admin \
+  -v uaa_admin_client_secret=admin-client-secret \
+  > "$output_dir/cf.yml"
+popd

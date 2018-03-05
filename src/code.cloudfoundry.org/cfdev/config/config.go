@@ -13,8 +13,8 @@ var (
 	cfdepsUrl string
 	cfdepsMd5 string
 
-	cfefiUrl string
-	cfefiMd5 string
+	cfdevefiUrl string
+	cfdevefiMd5 string
 
 	vpnkitUrl string
 	vpnkitMd5 string
@@ -87,9 +87,9 @@ func catalog() (resource.Catalog, error) {
 				MD5:  cfdepsMd5,
 			},
 			{
-				URL:  cfefiUrl,
+				URL:  cfdevefiUrl,
 				Name: "cfdev-efi.iso",
-				MD5:  cfefiMd5,
+				MD5:  cfdevefiMd5,
 			},
 			{
 				URL:  vpnkitUrl,

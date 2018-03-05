@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+set -ex
+
+while getopts "m:c:" arg; do
+  case $arg in
+    m) manifest="$OPTARG"
+      ;;
+    c) cloud_config="$OPTARG"
+  esac
+done
+
+if [[ -z $manifest || -z $cloud_config ]]; then
+  echo "USAGE: build-cf-deps-tar -m <path-to-cf-manifest> -s <path-to-compilation-stemcell> -c <path-to-cloud-config>"
+  exit 2
+fi
+
+if [[ -z "$BOSH_ENVIRONMENT" ]]; then
+  echo "ERROR: a bosh director is required to compile releases, please set your BOSH_* env variables"
+  exit 3
+fi
+
+dir="$(cd "$( dirname $0)" && pwd)"
+output_dir="$dir"/../output
+releases_dir="$(mktemp -d)"
+mkdir -p "$output_dir"
+mkdir -p "$releases_dir"
+trap cleanup EXIT
+
+cleanup () {
+  rm -rf "$releases_dir"
+}
+
+stemcell_version () {
+  rq -y <"$manifest" | jq -r '.stemcells[0].version'
+}
+
+name () {
+  echo "$1" | jq -r .name
+}
+
+url () {
+  echo "$1" | jq -r .url
+}
+
+version () {
+  echo "$1" | jq -r .version
+}
+
+filename () {
+  echo "$(name "$1")-$(version "$1")-ubuntu-trusty-$(stemcell_version).tgz"
+}
+
+
+download_warden_stemcell () {
+  pushd "$releases_dir"
+    wget "https://s3.amazonaws.com/bosh-core-stemcells/warden/bosh-stemcell-$(stemcell_version)-warden-boshlite-ubuntu-trusty-go_agent.tgz"
+  popd
+}
+
+download_compiled_releases () {
+  compiled_releases="$(rq -y <"$manifest" | jq -c '.releases[] | select(has("stemcell"))')"
+  for release in $compiled_releases; do
+    wget "$(url "$release")" -O "$releases_dir"/"$(filename "$release")"
+  done
+}
+
+compile_releases () {
+    releases_to_compile="$(rq -y <"$manifest" | jq -c '.releases[] | select(has("stemcell") | not)')"
+    compilation_manifest="$(rq -y <"$manifest" | jq 'del(.instance_groups) | del(.addons) | del(.variables)' | rq -Y)"
+    bosh upload-stemcell "https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-$(stemcell_version)-google-kvm-ubuntu-trusty-go_agent.tgz"
+    bosh -n deploy -d cf <(echo "$compilation_manifest")
+    for release in $releases_to_compile; do
+      if [[ "$release" =~ bosh-dns* ]]; then
+        ## we cant compile bosh-dns-windows so only compile the linux job
+        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$releases_dir" --job bosh-dns
+      else
+        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$releases_dir"
+      fi
+      mv "$releases_dir"/"$(name "$release")-$(version "$release")"-*.tgz "$releases_dir"/"$(filename $release)"
+    done
+}
+
+finalize_manifest () {
+  releases="$(rq -y <"$manifest" | jq -c '.releases[]')"
+  for release in $releases; do
+    sed "s~url:.*$(name "$release").*~url: file:///var/vcap/cache/$(filename "$release")~g" "$manifest" > "$releases_dir"/deployment.yml
+  done
+}
+
+tar_deps () {
+  cp "$cloud_config" "$releases_dir"
+  pushd "$releases_dir"
+    tar czf "$output_dir"/cf.tgz *
+  popd
+}
+
+main () {
+  download_warden_stemcell
+  download_compiled_releases
+  compile_releases
+  finalize_manifest
+  tar_deps
+}
+
+main

@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+set -ex
+
+while getopts "c:b:" arg; do
+  case $arg in
+    c) cf_deps=$OPTARG
+      ;;
+    b) bosh_deps=$OPTARG
+  esac
+done
+
+if [[ -z "$cf_deps" || -z "$bosh_deps" ]]; then
+  echo "USAGE: ./build-cf-iso -c <cf-deps-tar> -b <bosh-deps-tar>"
+  exit 1
+fi
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+output_dir="$script_dir/../output"
+iso_file="$output_dir"/cf-oss-deps.iso
+
+rm -rf "$iso_file"
+mkdir -p "$output_dir"
+iso_dir="$(mktemp -d)"
+trap cleanup EXIT
+
+
+cleanup() {
+  rm -rf "$iso_dir"
+}
+
+build() {
+  "$script_dir"/../images/cf-oss/build.sh
+}
+
+
+export() {
+  # Place the 'workspace' container image
+  cid=$(docker run -d pivotal/cf-oss sleep infinity)
+  docker export "$cid" > "${iso_dir}/workspace.tar"
+  docker kill "$cid"
+  docker rm "$cid"
+}
+
+add_deps(){
+  tar xzf "$cf_deps" -C $iso_dir
+  tar xzf "$bosh_deps" -C $iso_dir
+}
+
+make_iso() {
+  mkisofs -V cf-oss-deps -R -o "$iso_file" "$iso_dir"
+}
+
+main () {
+  build
+  export
+  add_deps
+  make_iso
+}
+
+main

@@ -17,6 +17,8 @@
 *.img
 **/*-state
 
+output
+
 linuxkit/UEFI.fd
 linuxkit/hyperkit*
 linuxkit/linuxkit*

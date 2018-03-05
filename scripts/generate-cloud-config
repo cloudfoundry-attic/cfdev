@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -ex
+
+while getopts "c:" arg; do
+  case $arg in
+    c) cf_deployment=$OPTARG
+      ;;
+  esac
+done
+
+if [[ -z $cf_deployment ]]; then
+  echo "USAGE: generate-cloud-config -c <path-to-cf-deployment>"
+  exit 1
+fi
+
+scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+output_dir="$scripts_dir"/../output
+ops_dir="$scripts_dir"/../images/cf-oss/cf-operations
+
+mkdir -p "$output_dir"
+
+pushd "$cf_deployment"
+  # cf_deployment_version="$(git describe --tags --always || tr -d v)"
+
+  bosh int iaas-support/bosh-lite/cloud-config.yml \
+    -o "$ops_dir"/set-cloud-config-subnet.yml \
+    > "$output_dir/cloud-config.yml"
+popd
