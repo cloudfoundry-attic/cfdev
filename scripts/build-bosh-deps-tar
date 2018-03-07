@@ -93,7 +93,7 @@ compile_releases () {
 finalize_manifest () {
   releases="$(rq -y <"$manifest" | jq -c '.releases[]')"
   for release in $releases; do
-    sed "s~url:.*$(name "$release").*~url: file:///var/vcap/cache/$(filename "$release")~g" "$manifest" > "$releases_dir"/deployment.yml
+    sed "s~url:.*$(name "$release").*~url: file:///var/vcap/cache/$(filename "$release")~g" "$manifest" > "$releases_dir"/director.yml
   done
 }
 

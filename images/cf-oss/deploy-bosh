@@ -49,12 +49,7 @@ create_loop_devices
 
 export BOSH_DIRECTOR_IP="10.245.0.2"
 
-cp /etc/bosh/director.yml "${DIRECTOR_DIR}"
-
-for file_path in /var/vcap/cache/*; do
-  file_name=$(basename $file_path)
-  sed -i "s~url:.*$file_name~url: file://$file_path~g" "${DIRECTOR_DIR}/director.yml"
-done
+cp /var/vcap/cache/director.yml "${DIRECTOR_DIR}"
 
 bosh --tty create-env \
   "${DIRECTOR_DIR}/director.yml" \

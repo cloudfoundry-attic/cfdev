@@ -11,7 +11,7 @@ while getopts "m:c:" arg; do
 done
 
 if [[ -z $manifest || -z $cloud_config ]]; then
-  echo "USAGE: build-cf-deps-tar -m <path-to-cf-manifest> -s <path-to-compilation-stemcell> -c <path-to-cloud-config>"
+  echo "USAGE: build-cf-deps-tar -m <path-to-cf-manifest> -c <path-to-cloud-config>"
   exit 2
 fi
 
@@ -89,7 +89,7 @@ finalize_manifest () {
 }
 
 tar_deps () {
-  cp "$cloud_config" "$releases_dir"
+  cp "$cloud_config" "$releases_dir"/cloud-config.yml
   pushd "$releases_dir"
     tar czf "$output_dir"/cf.tgz *
   popd

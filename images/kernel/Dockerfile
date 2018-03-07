@@ -41,8 +41,8 @@ ENV KERNEL_SOURCE=https://www.kernel.org/pub/linux/kernel/v4.x/linux-${KERNEL_VE
 ENV KERNEL_SHA256_SUMS=https://www.kernel.org/pub/linux/kernel/v4.x/sha256sums.asc
 ENV KERNEL_PGP2_SIGN=https://www.kernel.org/pub/linux/kernel/v4.x/linux-${KERNEL_VERSION}.tar.sign
 
-ENV WIREGUARD_VERSION=0.0.20180118
-ENV WIREGUARD_SHA256=463f3b402deb66b7ceac8df2d50944f32683933356455d6c1c7453926db3a8a3
+ENV WIREGUARD_VERSION=0.0.20180304
+ENV WIREGUARD_SHA256=efb1652f0da67fb2731040439b6abb820a5e2f1bc177aa15c5dce68ea3327787
 ENV WIREGUARD_URL=https://git.zx2c4.com/WireGuard/snapshot/WireGuard-${WIREGUARD_VERSION}.tar.xz
 
 # We copy the entire directory. This copies some unneeded files, but

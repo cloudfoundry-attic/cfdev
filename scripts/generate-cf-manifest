@@ -21,15 +21,17 @@ ops_dir="$scripts_dir"/../images/cf-oss/cf-operations
 mkdir -p "$output_dir"
 
 pushd "$cf_deployment"
-  # cf_deployment_version="$(git describe --tags --always || tr -d v)"
 
   bosh int cf-deployment.yml \
+  \
+  -o "$ops_dir"/use-bosh-dns.yml \
+  \
   -o operations/use-compiled-releases.yml \
   -o operations/enable-privileged-container-support.yml \
   -o operations/experimental/use-grootfs.yml \
+  \
   -o operations/experimental/skip-consul-cell-registrations.yml \
   -o operations/experimental/skip-consul-locks.yml \
-  -o operations/experimental/use-bosh-dns.yml \
   -o operations/experimental/use-bosh-dns-for-containers.yml \
   -o operations/experimental/disable-consul.yml \
   -o operations/bosh-lite.yml \

@@ -16,20 +16,15 @@ exec 2>&1
 
 source /var/vcap/director/env
 
-cp /etc/cf/deployment.yml "${CF_DIR}"
-
-for file_path in /var/vcap/cache/*; do
-  file_name=$(basename $file_path)
-  sed -i "s~url:.*$file_name~url: file://$file_path~g"  "${CF_DIR}/deployment.yml"
-done
+cp /var/vcap/cache/deployment.yml "${CF_DIR}"
 
 bosh -n update-cloud-config \
-	/etc/cf/cloud-config.yml
+	/var/vcap/cache/cloud-config.yml
 
-stemcell_version=$(bosh interpolate /etc/cf/deployment.yml --path /stemcells/0/version)
+stemcell_version=$(bosh interpolate /var/vcap/cache/deployment.yml --path /stemcells/0/version)
 
 bosh --tty upload-stemcell \
-      "/var/vcap/cache/bosh-warden-boshlite-ubuntu-trusty-go_agent?v=$stemcell_version"
+      "/var/vcap/cache/bosh-stemcell-$stemcell_version-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 
 bosh --tty --non-interactive --deployment cf \
   deploy "${CF_DIR}/deployment.yml" \
@@ -38,8 +33,6 @@ bosh --tty --non-interactive --deployment cf \
   -v insecure_docker_registries="${DOCKER_REGISTRIES}" \
   --no-redact \
   --vars-store "${CF_DIR}/vars.yml"
-
-#bosh run-errand local-volume-broker-registrar -d cf --keep-alive
 
 org=cfdev-org
 space=cfdev-space
