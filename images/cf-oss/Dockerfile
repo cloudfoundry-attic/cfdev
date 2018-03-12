@@ -42,7 +42,15 @@ RUN set -x && \
     rm /tmp/glibc.apk
 
 ### CLIs
+ENV CF_CLI_VERSION 6.32.0
 COPY --from=bosh-cli-builder /go/src/github.com/cloudfoundry/bosh-cli/out/bosh /usr/bin/bosh
+
+RUN set -x && \
+    curl -fsSL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=${CF_CLI_VERSION}&source=github-rel" \
+        | tar -xz -C /usr/bin cf && \
+    echo "${CF_CLI_SHA256} /usr/bin/cf" | sha256sum -c - && \
+    \
+    chmod a+x /usr/bin/cf
 
 ## Local scripts & dependencies
 ADD app-security-group.json /etc/cf/app-security-group.json
