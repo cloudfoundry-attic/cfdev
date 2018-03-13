@@ -1,23 +1,24 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"io/ioutil"
-	"strconv"
 	"flag"
-	"time"
-	"syscall"
-	"strings"
+	"fmt"
+	"io/ioutil"
 	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
+
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/env"
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
-	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/env"
 )
 
 type UI interface {
@@ -25,8 +26,8 @@ type UI interface {
 }
 
 type Start struct {
-	Exit chan struct{}
-	UI UI
+	Exit   chan struct{}
+	UI     UI
 	Config config.Config
 }
 
@@ -63,9 +64,9 @@ func (s *Start) Run(args []string) error {
 
 	go func() {
 		<-s.Exit
-		process.Terminate(s.Config.LinuxkitPidFile)
-		process.Terminate(s.Config.VpnkitPidFile)
-		process.Kill(s.Config.HyperkitPidFile)
+		process.SignalAndCleanup(s.Config.LinuxkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
+		process.SignalAndCleanup(s.Config.VpnkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
+		process.SignalAndCleanup(s.Config.HyperkitPidFile, s.Config.CFDevHome, syscall.SIGKILL)
 		os.Exit(128)
 	}()
 
@@ -178,7 +179,7 @@ func cleanupStateDir(stateDir string) error {
 	return nil
 }
 
-func(s *Start) setupNetworking() error {
+func (s *Start) setupNetworking() error {
 	err := network.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP)
 
 	if err != nil {
@@ -188,7 +189,7 @@ func(s *Start) setupNetworking() error {
 	return nil
 }
 
-func(s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
+func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 	if flag == "" {
 		return nil, nil
 	}
