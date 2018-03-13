@@ -115,4 +115,25 @@ var _ = Describe("Start", func() {
 			Expect(targetPath).ToNot(BeARegularFile())
 		})
 	})
+
+	Context("url is a local file path", func() {
+		var testDir string
+		BeforeEach(func() {
+			testDir, err = ioutil.TempDir("", "cfdev.downloader.")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ioutil.WriteFile(filepath.Join(testDir, "file"), []byte("contents"), 0644)).To(Succeed())
+
+			contents, err := ioutil.ReadFile(filepath.Join(testDir, "file"))
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(contents).To(Equal([]byte("contents")))
+			url = filepath.Join("file:/", testDir, "file")
+		})
+		AfterEach(func() { os.RemoveAll(testDir) })
+
+		It("should copy local file", func() {
+			Expect(ioutil.ReadFile(filepath.Join(testDir, "file"))).To(Equal([]byte("contents")))
+			Expect(ioutil.ReadFile(targetPath)).To(Equal([]byte("contents")))
+		})
+	})
 })
