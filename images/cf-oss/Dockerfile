@@ -43,12 +43,13 @@ RUN set -x && \
 
 ### CLIs
 ENV CF_CLI_VERSION 6.32.0
+ENV CF_CLI_SHA256 de3f7cf48cefac8f42b908c4e32f01b37b90a6f0d8ff7353ac884a7b00ff0e08
 COPY --from=bosh-cli-builder /go/src/github.com/cloudfoundry/bosh-cli/out/bosh /usr/bin/bosh
 
 RUN set -x && \
-    curl -fsSL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=${CF_CLI_VERSION}&source=github-rel" \
+    curl -fsSL "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=$CF_CLI_VERSION&source=github-rel" \
         | tar -xz -C /usr/bin cf && \
-    echo "${CF_CLI_SHA256} /usr/bin/cf" | sha256sum -c - && \
+    echo "$CF_CLI_SHA256 /usr/bin/cf" | sha256sum -c - && \
     \
     chmod a+x /usr/bin/cf
 
