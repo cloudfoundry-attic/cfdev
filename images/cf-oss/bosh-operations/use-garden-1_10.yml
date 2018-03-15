@@ -1,8 +1,0 @@
----
-- type: replace
-  path: /releases/name=garden-runc
-  value:
-    name: garden-runc
-    version: 1.10.0
-    sha1: 05e91f2685b16fac1f9d72cd26ae0aa9c6a1ac3e
-    url: https://storage.googleapis.com/cf-deployment-compiled-releases/garden-runc-1.10.0-ubuntu-trusty-3468.11-20171124-212011-384066371.tgz

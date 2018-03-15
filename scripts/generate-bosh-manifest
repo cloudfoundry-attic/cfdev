@@ -32,7 +32,7 @@ pushd "$bosh_deployment"
       -o "$ops_dir"/disable-app-armor.yml \
       -o "$ops_dir"/remove-ports.yml \
       -o "$ops_dir"/use-warden-cpi-v39.yml \
-      -o "$ops_dir"/use-stemcell-3468.17.yml \
+      -o "$ops_dir"/use-stemcell-3541.9.yml \
       \
       -v director_name="warden" \
       -v internal_cidr=10.245.0.0/24 \

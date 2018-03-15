@@ -24,8 +24,6 @@
           - '*.singleton-blobstore.default.cf.bosh'
           cc-uploader.service.cf.internal:
           - '*.api.default.cf.bosh'
-          cf-etcd.service.cf.internal:
-          - '*.etcd.default.cf.bosh'
           cloud-controller-ng.service.cf.internal:
           - '*.api.default.cf.bosh'
           consul.service.cf.internal:
@@ -62,12 +60,45 @@
           - '*.scheduler.default.cf.bosh'
           uaa.service.cf.internal:
           - '*.uaa.default.cf.bosh'
+        api:
+          client:
+            tls: ((dns_api_client_tls))
+          server:
+            tls: ((dns_api_server_tls))
       release: bosh-dns
     name: bosh-dns
 - type: replace
   path: /releases/-
   value:
     name: bosh-dns
-    sha1: 9231b7c7d2f6aa85e0cb77fdeef7add54fdb3f1a
-    url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=0.2.0
-    version: 0.2.0
+    sha1: f7242b8cf5da6db583802159d28edaed80fce9a8
+    url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=1.3.0
+    version: 1.3.0
+- type: replace
+  path: /variables/-
+  value:
+    name: dns_api_tls_ca
+    options:
+      common_name: dnsApiTlsCa
+      is_ca: true
+    type: certificate
+- type: replace
+  path: /variables/-
+  value:
+    name: dns_api_client_tls
+    options:
+      ca: dns_api_tls_ca
+      common_name: api.bosh-dns
+      extended_key_usage:
+      - client_auth
+    type: certificate
+- type: replace
+  path: /variables/-
+  value:
+    name: dns_api_server_tls
+    options:
+      ca: dns_api_tls_ca
+      common_name: api.bosh-dns
+      extended_key_usage:
+      - server_auth
+    type: certificate

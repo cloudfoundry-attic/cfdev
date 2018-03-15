@@ -4,7 +4,7 @@
   value: ((insecure_docker_registries))
 
 - type: replace
-  path: /instance_groups/name=diego-cell/jobs/name=grootfs/properties?/grootfs/insecure_docker_registry_list?
+  path: /instance_groups/name=diego-cell/jobs/name=garden/properties?/grootfs/insecure_docker_registry_list?
   value: ((insecure_docker_registries))
 
 - type: replace
