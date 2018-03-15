@@ -30,18 +30,23 @@ var (
 
 	uefiUrl string
 	uefiMd5 string
+
+	cfdevdUrl string
+	cfdevdMd5 string
 )
 
 type Config struct {
-	BoshDirectorIP  string
-	CFRouterIP      string
-	CFDevHome       string
-	StateDir        string
-	CacheDir        string
-	LinuxkitPidFile string
-	VpnkitPidFile   string
-	HyperkitPidFile string
-	Dependencies    resource.Catalog
+	BoshDirectorIP         string
+	CFRouterIP             string
+	CFDevHome              string
+	StateDir               string
+	CacheDir               string
+	LinuxkitPidFile        string
+	VpnkitPidFile          string
+	HyperkitPidFile        string
+	Dependencies           resource.Catalog
+	CFDevDSocketPath       string
+	CFDevDInstallationPath string
 }
 
 func NewConfig() (Config, error) {
@@ -56,15 +61,17 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-		BoshDirectorIP:  "10.245.0.2",
-		CFRouterIP:      "10.144.0.34",
-		CFDevHome:       cfdevHome,
-		StateDir:        filepath.Join(cfdevHome, "state"),
-		CacheDir:        filepath.Join(cfdevHome, "cache"),
-		LinuxkitPidFile: filepath.Join(cfdevHome, "state", "linuxkit.pid"),
-		VpnkitPidFile:   filepath.Join(cfdevHome, "state", "vpnkit.pid"),
-		HyperkitPidFile: filepath.Join(cfdevHome, "state", "hyperkit.pid"),
-		Dependencies:    catalog,
+		BoshDirectorIP:         "10.245.0.2",
+		CFRouterIP:             "10.144.0.34",
+		CFDevHome:              cfdevHome,
+		StateDir:               filepath.Join(cfdevHome, "state"),
+		CacheDir:               filepath.Join(cfdevHome, "cache"),
+		LinuxkitPidFile:        filepath.Join(cfdevHome, "state", "linuxkit.pid"),
+		VpnkitPidFile:          filepath.Join(cfdevHome, "state", "vpnkit.pid"),
+		HyperkitPidFile:        filepath.Join(cfdevHome, "state", "hyperkit.pid"),
+		Dependencies:           catalog,
+		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
+		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
 	}, nil
 }
 
@@ -115,6 +122,11 @@ func catalog() (resource.Catalog, error) {
 				URL:  uefiUrl,
 				Name: "UEFI.fd",
 				MD5:  uefiMd5,
+			},
+			{
+				URL:  cfdevdUrl,
+				Name: "cfdevd",
+				MD5:  cfdevdMd5,
 			},
 		},
 	}, nil

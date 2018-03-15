@@ -79,9 +79,14 @@ func (s *Start) Run(args []string) error {
 	}
 
 	s.UI.Say("Downloading Resources...")
-
 	if err = download(s.Config.Dependencies, s.Config.CacheDir); err != nil {
 		return err
+	}
+
+	if !process.IsCFDevDInstalled(s.Config.CFDevDSocketPath, s.Config.CFDevDInstallationPath, s.Config.Dependencies.Lookup("cfdevd").MD5) {
+		if err := process.InstallCFDevD(s.Config.CacheDir); err != nil {
+			return err
+		}
 	}
 
 	if err = vpnKit.SetupVPNKit(); err != nil {

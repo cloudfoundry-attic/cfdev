@@ -1,6 +1,9 @@
 package cmd_test
 
 import (
+	"encoding/binary"
+	"net"
+
 	. "code.cloudfoundry.org/cfdev/cmd"
 
 	"io/ioutil"
@@ -140,6 +143,71 @@ var _ = Describe("Stop", func() {
 			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
 			Expect(vpnkitPidPath).ToNot(BeAnExistingFile())
 			Expect(hyperkitPidPath).ToNot(BeAnExistingFile())
+		})
+	})
+
+	Context("cfdevd socket exists", func() {
+		var tmpDir string
+		var instructions chan byte
+		var uninstallErrorCode int
+		BeforeEach(func() {
+			tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
+			stop.Config.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
+			instructions = make(chan byte, 1)
+			ln, err := net.Listen("unix", stop.Config.CFDevDSocketPath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(stop.Config.CFDevDSocketPath).To(BeAnExistingFile())
+			go func() {
+				conn, err := ln.Accept()
+				Expect(err).NotTo(HaveOccurred())
+				handshake := make([]byte, 49, 49)
+				binary.Read(conn, binary.LittleEndian, handshake)
+				binary.Write(conn, binary.LittleEndian, handshake)
+				instruction := make([]byte, 1, 1)
+				binary.Read(conn, binary.LittleEndian, instruction)
+				instructions <- instruction[0]
+				if uninstallErrorCode == -1 {
+					conn.Close()
+				} else {
+					binary.Write(conn, binary.LittleEndian, []byte{byte(uninstallErrorCode)})
+				}
+			}()
+		})
+		AfterEach(func() {
+			os.RemoveAll(tmpDir)
+		})
+		It("succeeds and sends the uninstall command to cfdevd", func() {
+			uninstallErrorCode = 0
+			Expect(stop.Run([]string{})).To(Succeed())
+
+			Eventually(instructions).Should(Receive(Equal(byte(1))))
+		})
+		Context("cfdevd stops after receiving uninstall command, thus closes connection before writing success code", func() {
+			It("succeeds", func() {
+				uninstallErrorCode = -1
+				Expect(stop.Run([]string{})).To(Succeed())
+
+				Eventually(instructions).Should(Receive(Equal(byte(1))))
+			})
+		})
+		Context("cfdevd returns error to uninstall", func() {
+			It("returns the error", func() {
+				uninstallErrorCode = 1
+				Expect(stop.Run([]string{})).To(MatchError("failed to uninstall cfdevd: errorcode: 1"))
+			})
+		})
+	})
+	Context("cfdevd socket is specified but does not exist", func() {
+		var tmpDir string
+		BeforeEach(func() {
+			tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
+			stop.Config.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
+		})
+		AfterEach(func() {
+			os.RemoveAll(tmpDir)
+		})
+		It("succeeds", func() {
+			Expect(stop.Run([]string{})).To(Succeed())
 		})
 	})
 })

@@ -1,12 +1,11 @@
 package privileged_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
+	"os"
 	"testing"
 
-	"os"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/onsi/gomega/gexec"
 )
@@ -21,10 +20,9 @@ func TestPrivileged(t *testing.T) {
 var _ = BeforeSuite(func() {
 	pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")
 	if pluginPath == "" {
-		var err error
-		pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev")
-		Expect(err).ShouldNot(HaveOccurred())
+		Fail("please provide CFDEV_PLUGIN_PATH (use ./generate-plugin.sh)")
 	}
+	os.Unsetenv("BOSH_ALL_PROXY")
 })
 
 var _ = AfterSuite(func() {

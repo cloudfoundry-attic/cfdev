@@ -10,8 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	//"syscall"
-
 	"io/ioutil"
 	"syscall"
 
@@ -119,7 +117,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")
-	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 240)
+	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 360)
 
 	// Even though the test below is very similar this fails fast when `bosh env`
 	// command is broken

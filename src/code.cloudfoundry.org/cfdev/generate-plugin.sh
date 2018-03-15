@@ -28,7 +28,9 @@ go build \
      -X $pkg.qcowtoolUrl=file://$cache_dir/qcow-tool
      -X $pkg.qcowtoolMd5=$(md5 "$cache_dir"/qcow-tool | awk '{ print $4 }')
      -X $pkg.uefiUrl=file://$cache_dir/UEFI.fd
-     -X $pkg.uefiMd5=$(md5 "$cache_dir"/UEFI.fd | awk '{ print $4 }')" \
+     -X $pkg.uefiMd5=$(md5 "$cache_dir"/UEFI.fd | awk '{ print $4 }')
+     -X $pkg.cfdevdUrl=file://$cache_dir/cfdevd
+     -X $pkg.cfdevdMd5=$(md5 "$cache_dir"/cfdevd | awk '{ print $4 }')" \
      code.cloudfoundry.org/cfdev
 
 

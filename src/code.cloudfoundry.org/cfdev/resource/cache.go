@@ -117,30 +117,34 @@ DirIteration:
 }
 
 func (c *Cache) verifyFile(file string, expectedMD5 string) (state, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return corrupt, err
-	}
-
-	defer f.Close()
-
 	if c.SkipAssetVerification {
 		return valid, nil
 	}
 
-	h := md5.New()
-
-	if _, err := io.Copy(h, f); err != nil {
+	md5Hash, err := MD5(file)
+	if err != nil {
 		return corrupt, err
 	}
-
-	md5Hash := fmt.Sprintf("%x", h.Sum(nil))
-
 	if md5Hash != expectedMD5 {
 		return corrupt, nil
 	}
 
 	return valid, nil
+}
+
+func MD5(file string) (string, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := md5.New()
+
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 type state int

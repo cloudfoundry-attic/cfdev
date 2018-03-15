@@ -1,11 +1,12 @@
 package config_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdev/config"
 	"os"
 	"path/filepath"
+
+	"code.cloudfoundry.org/cfdev/config"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("config", func() {
@@ -13,13 +14,13 @@ var _ = Describe("config", func() {
 		Context("when CFDEV_HOME is not set", func() {
 			var oldHome string
 
-			BeforeEach(func(){
+			BeforeEach(func() {
 				oldHome = os.Getenv("HOME")
 				os.Unsetenv("CFDEV_HOME")
 				os.Setenv("HOME", "some-home-dir")
 			})
 
-			AfterEach(func(){
+			AfterEach(func() {
 				os.Setenv("HOME", oldHome)
 			})
 			It("returns a config object with default values", func() {
@@ -38,11 +39,11 @@ var _ = Describe("config", func() {
 	})
 
 	Context("when CFDEV_HOME is set", func() {
-		BeforeEach(func(){
+		BeforeEach(func() {
 			os.Setenv("CFDEV_HOME", "some-cfdev-home")
 		})
 
-		AfterEach(func(){
+		AfterEach(func() {
 			os.Unsetenv("CFDEV_HOME")
 		})
 		It("returns a config object with default values", func() {

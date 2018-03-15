@@ -59,6 +59,12 @@ type Plugin struct {
 
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	if args[0] == "CLI-MESSAGE-UNINSTALL" {
+		stop := &cmd.Stop{
+			Config: p.Config,
+		}
+		if err := stop.Run([]string{}); err != nil {
+			p.UI.Say("Error stopping cfdev: %s", err)
+		}
 		return
 	}
 	p.execute(args[1:])
