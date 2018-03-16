@@ -23,7 +23,7 @@ echo "GENERATE CF ISO"
 
 ./build-cf-deps-iso -c $PWD/../output/cf.tgz  -b $PWD/../output/bosh.tgz
 
-echo "BUID EFI IMAGE"
+echo "BUILD EFI IMAGE"
 
 ./build-image
 
