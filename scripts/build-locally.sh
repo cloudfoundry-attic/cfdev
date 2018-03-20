@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -ex
+
 echo "GENERATE CLOUD CONFIG"
 
 ./generate-cloud-config -c ~/workspace/cf-deployment/
