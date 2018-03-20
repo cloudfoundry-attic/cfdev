@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -ex
+
+cd "$(dirname "$0")/.."
+rm -rf output
+mkdir output
+
+echo "GENERATE CLOUD CONFIG"
+
+./scripts/generate-cloud-config -c ../cf-deployment/
+
+echo "GENERATE CF MANIFEST"
+
+./scripts/generate-cf-manifest -c ../cf-deployment/
+
+echo "GENERATE CF DEPS TAR"
+
+./scripts/build-cf-deps-tar -m output/cf.yml -c output/cloud-config.yml
+
+echo "GENERATE BOSH MANIFEST"
+
+./scripts/generate-bosh-manifest -b ../bosh-deployment/
+
+echo "GENERATE BOSH TAR"
+
+./scripts/build-bosh-deps-tar -m output/bosh.yml
+
+echo "GENERATE CF ISO"
+
+./scripts/build-cf-deps-iso -c output/cf.tgz  -b output/bosh.tgz
+
+echo "BUILD EFI IMAGE"
+
+./scripts/build-image
+
+echo "NOW, PLEASE GENERATE CF PLUGIN VIA: $PWD/src/code.cloudfoundry.org/cfdev/generate-plugin.sh"

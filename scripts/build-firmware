@@ -37,4 +37,3 @@ UEFI_TARGET=RELEASE
 build -t GCC49 -a X64 -b ${UEFI_TARGET} -p BhyvePkg/BhyvePkgX64.dsc ${BUILD_ARGS}
 
 cat /edk2/Build/BhyveX64/${UEFI_TARGET}_GCC49/FV/BHYVE.fd >&3
-

@@ -99,7 +99,7 @@ finalize_manifest () {
   releases="$(rq -y <"$manifest" | jq -c '.releases[]')"
   cp "$manifest" "$releases_dir"/director.yml
   for release in $releases; do
-    sed -i'' "s~url:$(url "$release")~url: file:///var/vcap/cache/$(filename "$release")~g" "$releases_dir"/director.yml
+    $(which sed) -i'' "s~url: $(url "$release")~url: file:///var/vcap/cache/$(filename "$release")~g" "$releases_dir"/director.yml
   done
 }
 
