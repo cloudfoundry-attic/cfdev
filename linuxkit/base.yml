@@ -2,9 +2,9 @@ kernel:
   image: linuxkit/kernel:4.9.86
   cmdline: "console=ttyS0 vsyscall=emulate"
 init:
-  - linuxkit/init:b212cfeb4bb6330e0a7547d8010fe2e8489b677a
-  - linuxkit/runc:7c39a68490a12cde830e1922f171c451fb08e731
-  - linuxkit/containerd:37e397ebfc6bd5d8e18695b121166ffd0cbfd9f0
+  - linuxkit/init:42a92119e1ca10380e0d33e26c0cbcf85b9b3558
+  - linuxkit/runc:817fdc592eac6cb7804fa1721a43a7f6e23fb50f
+  - linuxkit/containerd:82be2bbb7cf83bab161ffe2a64624ba1107725ff
   - linuxkit/ca-certificates:af4880e78edc28743f7c5e262678c67c6add4c26
   - linuxkit/getty:626ccc8e1766c40447f29a790d3a7cfff126f2a2
   # install vpnkit-expose-port and vpnkit-iptables-wrapper on host
