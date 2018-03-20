@@ -13,6 +13,11 @@ if [[ -z $bosh_deployment ]]; then
   echo "USAGE: generate-bosh-manifest -b <path-to-bosh-deployment>"
   exit 1
 fi
+if [[ ! -f $bosh_deployment ]]; then
+  echo "ERROR: bosh_deployment $bosh_deployment does not exist"
+  exit 2
+fi
+bosh_deployment="$(cd "$(dirname "$bosh_deployment")"; pwd)/$(basename "$bosh_deployment")"
 
 scripts_dir="$(cd "$(dirname "$0")" && pwd)"
 output_dir="$scripts_dir"/../output

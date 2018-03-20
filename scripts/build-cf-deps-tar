@@ -14,6 +14,12 @@ if [[ -z $manifest || -z $cloud_config ]]; then
   echo "USAGE: build-cf-deps-tar -m <path-to-cf-manifest> -c <path-to-cloud-config>"
   exit 2
 fi
+if [[ ! -f $manifest || ! -f $cloud_config ]]; then
+  echo "ERROR: Either $manifest of $cloud_config do not exist"
+  exit 2
+fi
+manifest="$(cd "$(dirname "$manifest")"; pwd)/$(basename "$manifest")"
+cloud_config="$(cd "$(dirname "$cloud_config")"; pwd)/$(basename "$cloud_config")"
 
 if [[ -z "$BOSH_ENVIRONMENT" ]]; then
   echo "ERROR: a bosh director is required to compile releases, please set your BOSH_* env variables"
@@ -83,8 +89,9 @@ compile_releases () {
 
 finalize_manifest () {
   releases="$(rq -y <"$manifest" | jq -c '.releases[]')"
+  cp "$manifest" "$releases_dir"/deployment.yml
   for release in $releases; do
-    sed "s~url:.*$(name "$release").*~url: file:///var/vcap/cache/$(filename "$release")~g" "$manifest" > "$releases_dir"/deployment.yml
+    sed -i "" "s~url: $(url "$release")~url: file:///var/vcap/cache/$(filename "$release")~g" "$releases_dir"/deployment.yml
   done
 }
 

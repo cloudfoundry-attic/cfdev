@@ -14,6 +14,12 @@ if [[ -z "$cf_deps" || -z "$bosh_deps" ]]; then
   echo "USAGE: ./build-cf-iso -c <cf-deps-tar> -b <bosh-deps-tar>"
   exit 1
 fi
+if [[ ! -f $cf_deps || ! -f $bosh_deps ]]; then
+  echo "ERROR: Either $manifest of $cloud_config do not exist"
+  exit 2
+fi
+cf_deps="$(cd "$(dirname "$cf_deps")"; pwd)/$(basename "$cf_deps")"
+bosh_deps="$(cd "$(dirname "$bosh_deps")"; pwd)/$(basename "$bosh_deps")"
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 output_dir="$script_dir/../output"

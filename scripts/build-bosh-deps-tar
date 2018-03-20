@@ -13,6 +13,11 @@ if [[ -z $manifest ]]; then
   echo "USAGE: build-bosh-deps-tar -m <path-to-bosh-manifest>"
   exit 2
 fi
+if [[ ! -f $manifest ]]; then
+  echo "ERROR: manifest $manifest does not exist"
+  exit 2
+fi
+manifest="$(cd "$(dirname "$manifest")"; pwd)/$(basename "$manifest")"
 
 if [[ -z "$BOSH_ENVIRONMENT" ]]; then
   echo "ERROR: a bosh director is required to compile releases, please set your BOSH_* env variables"
@@ -92,8 +97,9 @@ compile_releases () {
 
 finalize_manifest () {
   releases="$(rq -y <"$manifest" | jq -c '.releases[]')"
+  cp "$manifest" "$releases_dir"/director.yml
   for release in $releases; do
-    sed "s~url:.*$(name "$release").*~url: file:///var/vcap/cache/$(filename "$release")~g" "$manifest" > "$releases_dir"/director.yml
+    sed -i "" "s~url:$(url "$release")~url: file:///var/vcap/cache/$(filename "$release")~g" "$releases_dir"/director.yml
   done
 }
 

@@ -13,6 +13,11 @@ if [[ -z $cf_deployment ]]; then
   echo "USAGE: generate-cf-manifest -c <path-to-cf-deployment>"
   exit 1
 fi
+if [[ ! -f $cf_deployment ]]; then
+  echo "ERROR: cf_deployment $cf_deployment does not exist"
+  exit 2
+fi
+cf_deployment="$(cd "$(dirname "$cf_deployment")"; pwd)/$(basename "$cf_deployment")"
 
 scripts_dir="$(cd "$(dirname "$0")" && pwd)"
 output_dir="$scripts_dir"/../output
