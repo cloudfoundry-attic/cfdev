@@ -13,7 +13,7 @@ if [[ -z $cf_deployment ]]; then
   echo "USAGE: generate-cf-manifest -c <path-to-cf-deployment>"
   exit 1
 fi
-if [[ ! -f $cf_deployment ]]; then
+if [[ ! -d $cf_deployment ]]; then
   echo "ERROR: cf_deployment $cf_deployment does not exist"
   exit 2
 fi
