@@ -51,5 +51,5 @@ func download(dependencies resource.Catalog, cacheDir string) error {
 }
 
 func logCatalog(dependencies resource.Catalog, cacheDir string) {
-	_ := ioutil.WriteFile(filepath.Join(cacheDir, "catalog.txt"), []byte(fmt.Sprintf("%+v", dependencies.Items)), 0644)
+	ioutil.WriteFile(filepath.Join(cacheDir, "catalog.txt"), []byte(fmt.Sprintf("%+v", dependencies.Items)), 0644)
 }
