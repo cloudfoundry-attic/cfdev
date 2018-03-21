@@ -12,10 +12,11 @@ import (
 
 	//"syscall"
 
-	. "code.cloudfoundry.org/cfdev/acceptance"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"io/ioutil"
 	"syscall"
+
+	. "code.cloudfoundry.org/cfdev/acceptance"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 )
 
 var _ = Describe("hyperkit lifecycle", func() {
@@ -44,6 +45,8 @@ var _ = Describe("hyperkit lifecycle", func() {
 		os.Setenv("CF_HOME", cfHome)
 		os.Setenv("CFDEV_HOME", cfdevHome)
 		os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
+
+		fmt.Println("CF DEV HOME : %v", cfdevHome)
 
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))

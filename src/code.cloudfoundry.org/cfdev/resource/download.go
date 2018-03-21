@@ -24,7 +24,7 @@ func (d *Downloader) Start(uri, path string) error {
 	} else {
 		resp, err := http.Get(uri)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not download '%s': %s", uri, err)
 		}
 
 		defer resp.Body.Close()

@@ -2,16 +2,20 @@ package cmd
 
 import (
 	"fmt"
-	"code.cloudfoundry.org/cfdev/resource"
-	"strings"
 	"os"
+	"strings"
+
+	"io/ioutil"
+	"path/filepath"
+
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
+	"code.cloudfoundry.org/cfdev/resource"
 )
 
 type Download struct {
-	Exit chan struct{}
-	UI UI
+	Exit   chan struct{}
+	UI     UI
 	Config config.Config
 }
 
@@ -30,6 +34,7 @@ func (d *Download) Run(args []string) error {
 }
 
 func download(dependencies resource.Catalog, cacheDir string) error {
+	logCatalog(dependencies, cacheDir)
 	downloader := resource.Downloader{}
 	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
 
@@ -43,4 +48,8 @@ func download(dependencies resource.Catalog, cacheDir string) error {
 		return fmt.Errorf("Unable to sync assets: %v\n", err)
 	}
 	return nil
+}
+
+func logCatalog(dependencies resource.Catalog, cacheDir string) {
+	_ := ioutil.WriteFile(filepath.Join(cacheDir, "catalog.txt"), []byte(fmt.Sprintf("%+v", dependencies.Items)), 0644)
 }
