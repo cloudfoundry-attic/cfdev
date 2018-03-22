@@ -80,7 +80,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		By("settingup VPNKit dependencies")
 		Eventually(filepath.Join(cfdevHome, "http_proxy.json"))
 
-		Eventually(vpnkitPidPath, 10, 1).Should(BeAnExistingFile())
+		Eventually(vpnkitPidPath, 600, 1).Should(BeAnExistingFile())
 		Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
 
 		// FYI - this will take time until we use thin provisioned disks
