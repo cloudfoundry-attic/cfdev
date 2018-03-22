@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 
 	"syscall"
@@ -18,6 +17,16 @@ import (
 
 var _ = Describe("Process Test", func() {
 	Describe("SignalAndCleanup", func() {
+		var pidfile string
+		BeforeEach(func() {
+			f, _ := ioutil.TempFile("", "pidfile.")
+			pidfile = f.Name()
+			f.Close()
+		})
+		AfterEach(func() {
+			os.Remove(pidfile)
+		})
+
 		It("", func() {
 			Expect(true).To(BeTrue())
 		})
@@ -27,7 +36,6 @@ var _ = Describe("Process Test", func() {
 				cmd := exec.Command("sleep", "99999")
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				pidfile := filepath.Join(os.Getenv("TMPDIR"), "some-pidfile")
 				ioutil.WriteFile(pidfile, []byte(strconv.Itoa(cmd.Process.Pid)), os.ModePerm)
 
 				Expect(process.SignalAndCleanup(pidfile, "sleep", syscall.SIGTERM)).To(Succeed())
@@ -37,35 +45,28 @@ var _ = Describe("Process Test", func() {
 		})
 
 		Context("when the pidfile cannot be read", func() {
-			var pidfile *os.File
 			BeforeEach(func() {
-				pidfile, _ = ioutil.TempFile("", "")
-				pidfile.Chmod(000)
-				pidfile.Close()
+				os.Chmod(pidfile, 000)
 			})
-			AfterEach(func() { os.Remove(pidfile.Name()) })
 			It("returns an error", func() {
-				Expect(process.SignalAndCleanup(pidfile.Name(), "sleep", syscall.SIGTERM)).To(MatchError("failed to read pidfile " + pidfile.Name()))
+				Expect(process.SignalAndCleanup(pidfile, "sleep", syscall.SIGTERM)).To(MatchError("failed to read pidfile " + pidfile))
 			})
 		})
 
 		Context("when the pidfile does not contain a pid", func() {
 			It("returns an error", func() {
-				pidfile := filepath.Join(os.Getenv("TMPDIR"), "some-bad-pidfile")
 				ioutil.WriteFile(pidfile, []byte("some-bad-pid"), os.ModePerm)
-				Expect(process.SignalAndCleanup(pidfile, "sleep", syscall.SIGTERM).Error()).To(ContainSubstring("some-bad-pidfile did not contain an integer"))
+				Expect(process.SignalAndCleanup(pidfile, "sleep", syscall.SIGTERM).Error()).To(ContainSubstring(pidfile + " did not contain an integer"))
 			})
 		})
 
 		Context("process description does not contain matcher", func() {
 			var session *gexec.Session
-			var pidfile string
 			BeforeEach(func() {
 				var err error
 				cmd := exec.Command("sleep", "99999")
 				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				pidfile = filepath.Join(os.Getenv("TMPDIR"), "some-pidfile")
 				ioutil.WriteFile(pidfile, []byte(strconv.Itoa(cmd.Process.Pid)), os.ModePerm)
 			})
 

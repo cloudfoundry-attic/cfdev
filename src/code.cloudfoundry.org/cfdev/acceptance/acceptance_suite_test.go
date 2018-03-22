@@ -6,6 +6,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"os"
+
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -17,9 +19,12 @@ func TestCFDev(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	var err error
-	pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev")
-	Expect(err).ShouldNot(HaveOccurred())
+	pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")
+	if pluginPath == "" {
+		var err error
+		pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev")
+		Expect(err).ShouldNot(HaveOccurred())
+	}
 })
 
 var _ = AfterSuite(func() {
