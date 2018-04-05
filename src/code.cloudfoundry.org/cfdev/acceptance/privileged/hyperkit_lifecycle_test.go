@@ -77,7 +77,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 	It("runs the entire vm lifecycle", func() {
 		session := cf.Cf("dev", "start")
-		Eventually(session, 10*time.Minute).Should(gbytes.Say("Starting VPNKit"))
+		Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 		By("settingup VPNKit dependencies")
 		Eventually(filepath.Join(cfdevHome, "http_proxy.json"), 10, 1).Should(BeAnExistingFile())
