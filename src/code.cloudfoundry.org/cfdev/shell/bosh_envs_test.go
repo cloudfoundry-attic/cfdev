@@ -3,6 +3,7 @@ package shell_test
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"regexp"
 
 	. "github.com/onsi/ginkgo"
@@ -13,9 +14,10 @@ import (
 )
 
 var _ = Describe("Formatting BOSH Configuration", func() {
-
-	It("formats BOSH configuration for eval'ing", func() {
-		config := garden.BOSHConfiguration{
+	var config garden.BOSHConfiguration
+	var env shell.Environment
+	BeforeEach(func() {
+		config = garden.BOSHConfiguration{
 			AdminUsername:   "admin",
 			AdminPassword:   "admin-password",
 			CACertificate:   "ca-certificate",
@@ -26,6 +28,18 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 			GatewayPrivateKey: "ssh-private-key",
 		}
 
+		dir, err := ioutil.TempDir("", "cfdev-state-dir")
+		Expect(err).ToNot(HaveOccurred())
+
+		env = shell.Environment{
+			StateDir: dir,
+		}
+	})
+	AfterEach(func() {
+		os.RemoveAll(env.StateDir)
+	})
+
+	It("formats BOSH configuration for eval'ing", func() {
 		expectedExports := []string{
 			`export BOSH_ENVIRONMENT="10.245.0.2"`,
 			`export BOSH_CLIENT="admin"`,
@@ -39,13 +53,6 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 			`export BOSH_GW_PRIVATE_KEY=`,
 		}
 
-		dir, err := ioutil.TempDir("", "cfdev-state-dir")
-		Expect(err).ToNot(HaveOccurred())
-
-		env := shell.Environment{
-			StateDir: dir,
-		}
-
 		exports, err := env.Prepare(config)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -55,6 +62,33 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 
 		ExpectExportToContainFilePathWithContent(exports, "BOSH_GW_PRIVATE_KEY", "ssh-private-key")
 		ExpectExportToContainFilePathWithContent(exports, "BOSH_CA_CERT", "ca-certificate")
+	})
+
+	Context("previous BOSH environment variables are set", func() {
+		BeforeEach(func() {
+			os.Setenv("BOSH_ALL_PROXY", "something")
+			os.Setenv("RANDOM_ENV_FOR_TEST", "something")
+		})
+		AfterEach(func() {
+			os.Unsetenv("BOSH_ALL_PROXY")
+			os.Unsetenv("RANDOM_ENV_FOR_TEST")
+		})
+		It("unsets any other previously set BOSH environment variables", func() {
+			exports, err := env.Prepare(config)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(exports).To(MatchRegexp(`(?m)^unset BOSH_ALL_PROXY$`))
+		})
+		It("only unsets BOSH_ALL_PROXY if it is currently set", func() {
+			os.Unsetenv("BOSH_ALL_PROXY")
+			exports, err := env.Prepare(config)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(exports).ToNot(ContainSubstring("BOSH_ALL_PROXY"))
+		})
+		It("does not unset  other environment variables", func() {
+			exports, err := env.Prepare(config)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(exports).ToNot(ContainSubstring("RANDOM_ENV_FOR_TEST"))
+		})
 	})
 
 	Context("unable save files to the state dir", func() {

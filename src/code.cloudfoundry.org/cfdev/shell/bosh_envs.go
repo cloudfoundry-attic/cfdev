@@ -2,6 +2,8 @@ package shell
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"bytes"
 
@@ -50,8 +52,15 @@ func (e *Environment) Prepare(config garden.BOSHConfiguration) (string, error) {
 	}
 
 	var output bytes.Buffer
+
+	for _, envvar := range os.Environ() {
+		if strings.HasPrefix(envvar, "BOSH_") {
+			envvar = strings.Split(envvar, "=")[0]
+			fmt.Fprintf(&output, "unset %s\n", envvar)
+		}
+	}
 	for _, name := range order {
-		fmt.Fprintf(&output, "export %v=\"%v\"\n", name, values[name])
+		fmt.Fprintf(&output, "export %s=\"%s\"\n", name, values[name])
 	}
 	return output.String(), nil
 }
