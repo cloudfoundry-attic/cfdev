@@ -8,6 +8,8 @@ import (
 
 	"os"
 
+	"time"
+
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -25,6 +27,8 @@ var _ = BeforeSuite(func() {
 		pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev")
 		Expect(err).ShouldNot(HaveOccurred())
 	}
+
+	SetDefaultEventuallyTimeout(5 * time.Second)
 })
 
 var _ = AfterSuite(func() {

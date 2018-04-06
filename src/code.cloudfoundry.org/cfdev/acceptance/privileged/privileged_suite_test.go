@@ -7,6 +7,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"time"
+
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -23,6 +25,8 @@ var _ = BeforeSuite(func() {
 		Fail("please provide CFDEV_PLUGIN_PATH (use ./generate-plugin.sh)")
 	}
 	os.Unsetenv("BOSH_ALL_PROXY")
+
+	SetDefaultEventuallyTimeout(10 * time.Second)
 })
 
 var _ = AfterSuite(func() {
