@@ -1,9 +1,0 @@
----
-
-- type: replace
-  path: /instance_groups/name=diego-cell/jobs/name=garden/properties?/grootfs/driver
-  value: btrfs
-
-- type: replace
-  path: /instance_groups/name=diego-cell/jobs/name=garden/properties?/grootfs/graph_cleanup_threshold_in_mb
-  value: 0
