@@ -62,6 +62,30 @@ services:
               "-container-ip","10.245.0.2",
               "-container-port","25555"]
 
+  - name: expose-bosh-uaa
+    image: alpine:3.6
+    net: none
+    binds:
+      - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
+      - /var/vpnkit:/port
+    command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
+              "-host-ip","10.245.0.2",
+              "-host-port","8443",
+              "-container-ip","10.245.0.2",
+              "-container-port","8443"]
+
+  - name: expose-bosh-credhub
+    image: alpine:3.6
+    net: none
+    binds:
+      - /usr/bin/vpnkit-expose-port:/usr/bin/vpnkit-expose-port
+      - /var/vpnkit:/port
+    command: ["/usr/bin/vpnkit-expose-port","-i", "-no-local-ip",
+              "-host-ip","10.245.0.2",
+              "-host-port","8844",
+              "-container-ip","10.245.0.2",
+              "-container-port","8844"]
+
   - name: expose-bosh-ssh-port
     image: alpine:3.6
     net: none
