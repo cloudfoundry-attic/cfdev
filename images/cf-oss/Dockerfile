@@ -1,6 +1,6 @@
 FROM golang:1.9-alpine3.6 as bosh-cli-builder
 
-ENV BOSH_CLI_COMMIT 15dd4c843e161ed6410b4d91947484b3b87f39ce
+ENV BOSH_CLI_COMMIT 052d4add5d2d5d3501b4ace855f41b826bbdc2e6
 
 RUN set -x && \
     apk add --no-cache curl bash && \
