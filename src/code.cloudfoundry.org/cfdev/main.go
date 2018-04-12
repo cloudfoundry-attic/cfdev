@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cli/cf/terminal"
@@ -100,6 +101,8 @@ func (p *Plugin) execute(args []string) {
 		p.usage()
 	}
 
+	cfanalytics.PromptOptIn(p.Config, p.UI)
+
 	var command Command
 	switch args[0] {
 	case "start":
@@ -126,6 +129,11 @@ func (p *Plugin) execute(args []string) {
 		}
 	case "catalog":
 		command = &cmd.Catalog{
+			UI:     p.UI,
+			Config: p.Config,
+		}
+	case "telemetry":
+		command = &cmd.Telemetry{
 			UI:     p.UI,
 			Config: p.Config,
 		}

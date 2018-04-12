@@ -41,9 +41,11 @@ type Config struct {
 	CFDevHome              string
 	StateDir               string
 	CacheDir               string
+	AnalyticsDir           string
 	LinuxkitPidFile        string
 	VpnkitPidFile          string
 	HyperkitPidFile        string
+	AnalyticsFile          string
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
@@ -66,9 +68,11 @@ func NewConfig() (Config, error) {
 		CFDevHome:              cfdevHome,
 		StateDir:               filepath.Join(cfdevHome, "state"),
 		CacheDir:               filepath.Join(cfdevHome, "cache"),
+		AnalyticsDir:           filepath.Join(cfdevHome, "analytics"),
 		LinuxkitPidFile:        filepath.Join(cfdevHome, "state", "linuxkit.pid"),
 		VpnkitPidFile:          filepath.Join(cfdevHome, "state", "vpnkit.pid"),
 		HyperkitPidFile:        filepath.Join(cfdevHome, "state", "hyperkit.pid"),
+		AnalyticsFile:          "analytics.txt",
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),

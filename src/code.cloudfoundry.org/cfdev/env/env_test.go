@@ -6,11 +6,14 @@ import (
 
 	"os"
 
-	"code.cloudfoundry.org/cfdev/env"
-	"code.cloudfoundry.org/cfdev/config"
-	"path/filepath"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+
+	"path"
+
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/env"
 )
 
 var _ = Describe("env", func() {
@@ -62,7 +65,7 @@ var _ = Describe("env", func() {
 		var dir string
 		var err error
 
-		Context("when the paths are writable", func() {
+		Context("Setup when the paths are writable", func() {
 			BeforeEach(func() {
 				dir, err = ioutil.TempDir(os.TempDir(), "test-space")
 				Expect(err).NotTo(HaveOccurred())
@@ -72,7 +75,7 @@ var _ = Describe("env", func() {
 				os.RemoveAll(dir)
 			})
 
-			It("Creates home, state, and cache dirs", func() {
+			It("Creates home, state, cache", func() {
 				homeDir := filepath.Join(dir, "some-cfdev-home")
 				cacheDir := filepath.Join(dir, "some-cache-dir")
 				stateDir := filepath.Join(dir, "some-state-dir")
@@ -93,10 +96,37 @@ var _ = Describe("env", func() {
 			})
 		})
 
-		Context("when setup fails", func(){
+		Context("Setup Analytics when the paths are writable", func() {
+			BeforeEach(func() {
+				dir, err = ioutil.TempDir(os.TempDir(), "test-space")
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				os.RemoveAll(dir)
+			})
+
+			It("Creates analytics dir & file", func() {
+				analyticsDir := filepath.Join(dir, "some-analytics-dir")
+				analyticsFile := "some-file.txt"
+
+				conf := config.Config{
+					AnalyticsDir:  analyticsDir,
+					AnalyticsFile: analyticsFile,
+				}
+
+				Expect(env.SetupAnalytics(conf)).To(Succeed())
+				_, err = os.Stat(analyticsDir)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = os.Stat(path.Join(analyticsDir, analyticsFile))
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("when setup fails", func() {
 			var (
-				dir string
-				homeDir string
+				dir      string
+				homeDir  string
 				cacheDir string
 				stateDir string
 			)
@@ -115,10 +145,10 @@ var _ = Describe("env", func() {
 
 			Context("when home dir cannot be created", func() {
 				BeforeEach(func() {
-					ioutil.WriteFile(homeDir,[]byte{},0400)
+					ioutil.WriteFile(homeDir, []byte{}, 0400)
 				})
 
-				AfterEach(func(){
+				AfterEach(func() {
 					os.RemoveAll(homeDir)
 				})
 
@@ -137,10 +167,10 @@ var _ = Describe("env", func() {
 
 			Context("when cache dir cannot be created", func() {
 				BeforeEach(func() {
-					ioutil.WriteFile(cacheDir,[]byte{},0400)
+					ioutil.WriteFile(cacheDir, []byte{}, 0400)
 				})
 
-				AfterEach(func(){
+				AfterEach(func() {
 					os.RemoveAll(cacheDir)
 				})
 
@@ -153,16 +183,16 @@ var _ = Describe("env", func() {
 
 					err := env.Setup(conf)
 					Expect(err.Error()).
-						To(ContainSubstring(fmt.Sprintf("failed to create cache dir at path %s",cacheDir)))
+						To(ContainSubstring(fmt.Sprintf("failed to create cache dir at path %s", cacheDir)))
 				})
 			})
 
 			Context("when state dir cannot be created", func() {
 				BeforeEach(func() {
-					ioutil.WriteFile(stateDir,[]byte{},0400)
+					ioutil.WriteFile(stateDir, []byte{}, 0400)
 				})
 
-				AfterEach(func(){
+				AfterEach(func() {
 					os.RemoveAll(stateDir)
 				})
 
