@@ -16,6 +16,7 @@ import (
 
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+	"time"
 )
 
 var _ = Describe("hyperkit starts and telemetry", func() {
@@ -25,6 +26,8 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		vpnkitPidPath   string
 		stateDir        string
 		cacheDir        string
+		session *gexec.Session
+		err error
 	)
 
 	BeforeEach(func() {
@@ -44,55 +47,49 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		os.Setenv("CF_HOME", cfHome)
 		os.Setenv("CFDEV_HOME", cfdevHome)
 
-		fmt.Println(cfdevHome)
 		os.RemoveAll(path.Join(cfdevHome, "analytics"))
 
 		cmd := exec.Command("/usr/local/bin/cf", "install-plugin", os.Getenv("CFDEV_PLUGIN_PATH"), "-f")
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(session).Should(gexec.Exit())
 	})
 
 	AfterEach(func() {
 		os.RemoveAll(path.Join(cfdevHome, "analytics"))
+		session.Kill()
 	})
 
 	It("optout", func() {
 		cmd := exec.Command("/usr/local/bin/cf", "dev", "start")
 		inWriter, _ := cmd.StdinPipe()
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-
+		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
+
 		Eventually(session).Should(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
 		fmt.Fprintln(inWriter, "no")
 
-		Eventually(session).Should(gbytes.Say("Downloading"))
-
-		path := path.Join(cfdevHome, "analytics", "analytics.txt")
-		contents, err := ioutil.ReadFile(path)
-
-		Expect(string(contents)).Should(Equal("optout"))
-		session.Kill()
+		Eventually(func() (string, error) {
+			contents, err := ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
+			return string(contents), err
+		}).Should(Equal("optout"))
 	})
 
 	It("optin", func() {
 		cmd := exec.Command("/usr/local/bin/cf", "dev", "start")
 		inWriter, _ := cmd.StdinPipe()
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-
+		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
+
 		Eventually(session).Should(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
 		fmt.Fprintln(inWriter, "yes")
 
-		Eventually(session).Should(gbytes.Say("Downloading"))
-
-		path := path.Join(cfdevHome, "analytics", "analytics.txt")
-		contents, err := ioutil.ReadFile(path)
-
-		Expect(string(contents)).Should(Equal("optin"))
-		session.Kill()
+		Eventually(func() (string, error) {
+			contents, err := ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
+			return string(contents), err
+		}).Should(Equal("optin"))
 	})
 
 	It("is already opted in", func() {
@@ -102,17 +99,11 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		cmd := exec.Command("/usr/local/bin/cf", "dev", "start")
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-
+		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
-		Eventually(session).Should(gbytes.Say("Downloading"))
+		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
-		path := path.Join(cfdevHome, "analytics", "analytics.txt")
-		contents, err := ioutil.ReadFile(path)
-
-		Expect(string(contents)).Should(Equal("optin"))
-		session.Kill()
+		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(Equal([]byte("optin")))
 	})
 })
