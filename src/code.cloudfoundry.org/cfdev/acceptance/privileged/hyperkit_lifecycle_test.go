@@ -117,7 +117,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")
-	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 360)
+	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 480)
 
 	// Even though the test below is very similar this fails fast when `bosh env`
 	// command is broken
