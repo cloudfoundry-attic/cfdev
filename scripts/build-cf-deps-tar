@@ -28,13 +28,13 @@ fi
 
 dir="$(cd "$( dirname $0)" && pwd)"
 output_dir="$dir"/../output
-releases_dir="$(mktemp -d)"
+tmpdir="$(mktemp -d)"
 mkdir -p "$output_dir"
-mkdir -p "$releases_dir"
+mkdir -p "$tmpdir"/releases
 trap cleanup EXIT
 
 cleanup () {
-  rm -rf "$releases_dir"
+  rm -rf "$tmpdir"
 }
 
 stemcell_version () {
@@ -59,7 +59,7 @@ filename () {
 
 
 download_warden_stemcell () {
-  pushd "$releases_dir"
+  pushd "$tmpdir"
     wget "https://s3.amazonaws.com/bosh-core-stemcells/warden/bosh-stemcell-$(stemcell_version)-warden-boshlite-ubuntu-trusty-go_agent.tgz"
   popd
 }
@@ -67,7 +67,7 @@ download_warden_stemcell () {
 download_compiled_releases () {
   compiled_releases="$(rq -y <"$manifest" | jq -c '.releases[] | select(has("stemcell"))')"
   for release in $compiled_releases; do
-    wget "$(url "$release")" -O "$releases_dir"/"$(filename "$release")"
+    wget "$(url "$release")" -O "$tmpdir"/releases/"$(filename "$release")"
   done
 }
 
@@ -79,25 +79,18 @@ compile_releases () {
     for release in $releases_to_compile; do
       if [[ "$release" =~ bosh-dns* ]]; then
         ## we cant compile bosh-dns-windows so only compile the linux job
-        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$releases_dir" --job bosh-dns
+        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$tmpdir"/releases --job bosh-dns
       else
-        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$releases_dir"
+        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$tmpdir"/releases
       fi
-      mv "$releases_dir"/"$(name "$release")-$(version "$release")"-*.tgz "$releases_dir"/"$(filename $release)"
+      mv "$tmpdir"/releases/"$(name "$release")-$(version "$release")"-*.tgz "$tmpdir"/releases/"$(filename $release)"
     done
 }
 
-finalize_manifest () {
-  releases="$(rq -y <"$manifest" | jq -c '.releases[]')"
-  cp "$manifest" "$releases_dir"/deployment.yml
-  for release in $releases; do
-    $(which sed) -i'' "s~url: $(url "$release")~url: file:///var/vcap/cache/$(filename "$release")~g" "$releases_dir"/deployment.yml
-  done
-}
-
 tar_deps () {
-  cp "$cloud_config" "$releases_dir"/cloud-config.yml
-  pushd "$releases_dir"
+  cp "$manifest" "$tmpdir"/deployment.yml
+  cp "$cloud_config" "$tmpdir"/cloud-config.yml
+  pushd "$tmpdir"
     tar czf "$output_dir"/cf.tgz *
   popd
 }
@@ -106,7 +99,6 @@ main () {
   download_warden_stemcell
   download_compiled_releases
   compile_releases
-  finalize_manifest
   tar_deps
 }
 

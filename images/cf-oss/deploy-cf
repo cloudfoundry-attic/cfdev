@@ -17,21 +17,21 @@ exec 2>&1
 
 source /var/vcap/director/env
 
-cp $CACHE_DIR/deployment.yml "${CF_DIR}"
+cp "$CACHE_DIR"/deployment.yml "$CF_DIR"
 
-if [ -f $CACHE_DIR/cloud-config.yml ]; then
-  bosh -n update-cloud-config $CACHE_DIR/cloud-config.yml
+if [ -f "$CACHE_DIR"/cloud-config.yml ]; then
+  bosh -n update-cloud-config "$CACHE_DIR"/cloud-config.yml
 fi
-if [ -f $CACHE_DIR/runtime-config.yml ]; then
-  bosh -n update-runtime-config $CACHE_DIR/runtime-config.yml --name=cf
+if [ -f "$CACHE_DIR"/runtime-config.yml ]; then
+  bosh -n update-runtime-config "$CACHE_DIR"/runtime-config.yml --name=cf
 fi
 
-for filename in $CACHE_DIR/bosh-stemcell-*.tgz; do
-  bosh --tty upload-stemcell $filename
+for filename in "$CACHE_DIR"/bosh-stemcell-*.tgz; do
+  bosh --tty upload-stemcell "$filename"
 done
 
-for filename in $CACHE_DIR/releases/*.tgz; do
-  bosh --tty upload-release $filename
+for filename in "$CACHE_DIR"/releases/*.tgz; do
+  bosh --tty upload-release "$filename"
 done
 
 if [ "$(curl -s -k "https://$BOSH_ENVIRONMENT:25555/info" | jq '.features.config_server.status')" == "true" ]; then
