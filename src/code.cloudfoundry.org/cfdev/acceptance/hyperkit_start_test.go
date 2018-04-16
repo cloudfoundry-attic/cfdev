@@ -50,7 +50,7 @@ var _ = Describe("hyperkit start", func() {
 	})
 
 	AfterEach(func() {
-		gexec.KillAndWait()
+		gexec.Kill()
 		pid := PidFromFile(linuxkitPidPath)
 
 		if pid != 0 {

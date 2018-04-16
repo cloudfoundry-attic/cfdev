@@ -47,7 +47,7 @@ var _ = Describe("download", func() {
 	})
 
 	AfterEach(func() {
-		gexec.KillAndWait()
+		gexec.Kill()
 		os.RemoveAll(cfdevHome)
 		server.Close()
 
