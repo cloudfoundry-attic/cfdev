@@ -13,6 +13,9 @@ pkg="code.cloudfoundry.org/cfdev/config"
 export GOOS=darwin
 export GOARCH=amd64
 
+go build code.cloudfoundry.org/cfdevd
+cfdevd="$PWD"/cfdevd
+
 go build \
   -ldflags \
     "-X $pkg.cfdepsUrl=file://$cfdev/output/cf-oss-deps.iso
@@ -29,8 +32,8 @@ go build \
      -X $pkg.qcowtoolMd5=$(md5 "$cache_dir"/qcow-tool | awk '{ print $4 }')
      -X $pkg.uefiUrl=file://$cache_dir/UEFI.fd
      -X $pkg.uefiMd5=$(md5 "$cache_dir"/UEFI.fd | awk '{ print $4 }')
-     -X $pkg.cfdevdUrl=file://$cache_dir/cfdevd
-     -X $pkg.cfdevdMd5=$(md5 "$cache_dir"/cfdevd | awk '{ print $4 }')" \
+     -X $pkg.cfdevdUrl=file://$cfdevd
+     -X $pkg.cfdevdMd5=$(md5 "$cfdevd" | awk '{ print $4 }')" \
      code.cloudfoundry.org/cfdev
 
 
