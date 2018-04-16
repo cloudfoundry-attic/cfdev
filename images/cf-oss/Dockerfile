@@ -31,6 +31,7 @@ RUN set -x && \
       curl \
       e2fsprogs \
       iptables \
+      jq \
       openssh \
       sudo \
       util-linux && \

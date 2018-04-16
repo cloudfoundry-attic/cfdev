@@ -2,6 +2,7 @@
 
 set -e
 
+export CACHE_DIR=${CACHE_DIR:-/var/vcap/cache}
 export CF_DIR=/var/vcap/cf
 export CF_DOMAIN=v3.pcfdev.io
 export CF_ORG=cfdev-org
@@ -16,26 +17,39 @@ exec 2>&1
 
 source /var/vcap/director/env
 
-cp /var/vcap/cache/deployment.yml "${CF_DIR}"
+cp $CACHE_DIR/deployment.yml "${CF_DIR}"
 
-bosh -n update-cloud-config \
-	/var/vcap/cache/cloud-config.yml
+if [ -f $CACHE_DIR/cloud-config.yml ]; then
+  bosh -n update-cloud-config $CACHE_DIR/cloud-config.yml
+fi
+if [ -f $CACHE_DIR/runtime-config.yml ]; then
+  bosh -n update-runtime-config $CACHE_DIR/runtime-config.yml --name=cf
+fi
 
-stemcell_version=$(bosh interpolate /var/vcap/cache/deployment.yml --path /stemcells/0/version)
+for filename in $CACHE_DIR/bosh-stemcell-*.tgz; do
+  bosh --tty upload-stemcell $filename
+done
 
-bosh --tty upload-stemcell \
-      "/var/vcap/cache/bosh-stemcell-$stemcell_version-warden-boshlite-ubuntu-trusty-go_agent.tgz"
+for filename in $CACHE_DIR/releases/*.tgz; do
+  bosh --tty upload-release $filename
+done
 
-bosh --tty --non-interactive --deployment cf \
-  deploy "${CF_DIR}/deployment.yml" \
-  -v system_domain="${CF_DOMAIN}" \
-  -v host_ip="${HOST_IP}" \
-  -v insecure_docker_registries="${DOCKER_REGISTRIES}" \
-  --no-redact \
-  --vars-store "${CF_DIR}/vars.yml"
-
-org=cfdev-org
-space=cfdev-space
+if [ "$(curl -s -k "https://$BOSH_ENVIRONMENT:25555/info" | jq '.features.config_server.status')" == "true" ]; then
+  bosh --tty --non-interactive --deployment cf \
+    deploy "${CF_DIR}/deployment.yml" \
+    -v system_domain="${CF_DOMAIN}" \
+    -v host_ip="${HOST_IP}" \
+    -v insecure_docker_registries="${DOCKER_REGISTRIES}" \
+    --no-redact
+else
+  bosh --tty --non-interactive --deployment cf \
+    deploy "${CF_DIR}/deployment.yml" \
+    -v system_domain="${CF_DOMAIN}" \
+    -v host_ip="${HOST_IP}" \
+    -v insecure_docker_registries="${DOCKER_REGISTRIES}" \
+    --no-redact \
+    --vars-store "${CF_DIR}/vars.yml"
+fi
 
 cf api "api.${CF_DOMAIN}" --skip-ssl-validation
 cf auth admin admin
