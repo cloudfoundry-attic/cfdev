@@ -1,4 +1,0 @@
----
-- type: replace
-  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/catalina_opts?
-  value: -Xms200m -Xmx200m -Xss1m -XX:MetaspaceSize=144m -XX:MaxMetaspaceSize=144m

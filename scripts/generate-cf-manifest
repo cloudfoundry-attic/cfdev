@@ -45,7 +45,7 @@ pushd "$cf_deployment"
   -o "$ops_dir"/garden-disable-app-armour.yml \
   -o "$ops_dir"/collocate-tcp-router.yml \
   -o "$ops_dir"/set-cfdev-subnet.yml \
-  -o "$ops_dir"/set-uaa-xms.yml \
+  -o "$ops_dir"/lower-memory.yml \
   \
   -v cf_admin_password=admin \
   -v uaa_admin_client_secret=admin-client-secret \
