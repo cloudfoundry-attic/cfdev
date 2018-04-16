@@ -90,7 +90,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		Eventually(hyperkitPidPath, 120, 1).Should(BeAnExistingFile())
 
 		By("waiting for garden to listen")
-		EventuallyShouldListenAt("http://"+GardenIP+":8888", 120)
+		EventuallyShouldListenAt("http://"+GardenIP+":8888", 240)
 
 		EventuallyWeCanTargetTheBOSHDirector()
 
