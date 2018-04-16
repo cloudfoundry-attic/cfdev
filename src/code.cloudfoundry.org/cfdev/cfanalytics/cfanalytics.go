@@ -34,7 +34,7 @@ CF Dev collects anonymous usage data to help us improve your user experience. We
 
 https://github.com/pivotal-cf/cfdev/wiki/Telemetry
 
-Are you ok with CF Dev periodically capturing anonymized telemetry [Y/n]?`)
+Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?`)
 		err = SetTelemetryState(response, conf)
 		if err != nil {
 			return err
@@ -52,9 +52,9 @@ func SetTelemetryState(response string, conf config.Config) error {
 	}
 
 	if strings.ToLower(response) == "y" || strings.ToLower(response) == "yes" {
-		ioutil.WriteFile(analyticsFilePath, []byte("optin"), 0755)
+		ioutil.WriteFile(analyticsFilePath, []byte("optin"), 0644)
 	} else {
-		ioutil.WriteFile(analyticsFilePath, []byte("optout"), 0755)
+		ioutil.WriteFile(analyticsFilePath, []byte("optout"), 0644)
 	}
 
 	return nil

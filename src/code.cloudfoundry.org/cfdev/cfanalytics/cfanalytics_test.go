@@ -27,7 +27,7 @@ CF Dev collects anonymous usage data to help us improve your user experience. We
 
 https://github.com/pivotal-cf/cfdev/wiki/Telemetry
 
-Are you ok with CF Dev periodically capturing anonymized telemetry [Y/n]?` {
+Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?` {
 		m.WasCalled = true
 	}
 
