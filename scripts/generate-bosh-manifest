@@ -2,9 +2,13 @@
 
 set -ex
 
-while getopts "b:" arg; do
+while getopts "b:cu" arg; do
   case $arg in
     b) bosh_deployment=$OPTARG
+      ;;
+    c) include_credhub=true
+      ;;
+    u) include_uaa=true
       ;;
   esac
 done
@@ -24,15 +28,25 @@ output_dir="$scripts_dir"/../output
 ops_dir="$scripts_dir"/../images/cf-oss/bosh-operations
 
 mkdir -p "$output_dir"
-
-pushd "$bosh_deployment"
-    bosh int bosh.yml \
+ops=( \
       -o bosh-lite.yml \
       -o bosh-lite-runc.yml \
       -o bosh-lite-grootfs.yml \
       -o warden/cpi.yml \
       -o warden/cpi-grootfs.yml \
       -o jumpbox-user.yml \
+)
+if [[ $include_uaa ]]; then
+  ops+=(-o uaa.yml)
+fi
+
+if [[ $include_credhub ]]; then
+  ops+=(-o credhub.yml)
+fi
+
+pushd "$bosh_deployment"
+    bosh int bosh.yml \
+      ${ops[@]} \
       \
       -o "$ops_dir"/disable-app-armor.yml \
       -o "$ops_dir"/remove-ports.yml \
