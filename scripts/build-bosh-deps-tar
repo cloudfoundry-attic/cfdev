@@ -30,13 +30,10 @@ releases_dir="$(mktemp -d)"
 mkdir -p "$output_dir"
 mkdir -p "$releases_dir"
 trap cleanup EXIT
+export STEMCELL_VERSION="3541.9"
 
 cleanup () {
   rm -rf "$releases_dir"
-}
-
-stemcell_version () {
-  echo "3541.9"
 }
 
 name () {
@@ -52,12 +49,12 @@ version () {
 }
 
 filename () {
-  echo "$(name "$1")-$(version "$1")-ubuntu-trusty-$(stemcell_version).tgz"
+  echo "$(name "$1")-$(version "$1")-ubuntu-trusty-$STEMCELL_VERSION.tgz"
 }
 
 download_warden_stemcell () {
   pushd "$releases_dir"
-    wget "https://s3.amazonaws.com/bosh-core-stemcells/warden/bosh-stemcell-$(stemcell_version)-warden-boshlite-ubuntu-trusty-go_agent.tgz"
+    wget "https://s3.amazonaws.com/bosh-core-stemcells/warden/bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
   popd
 }
 
@@ -75,7 +72,7 @@ name: bosh
 stemcells:
 - alias: default
   os: ubuntu-trusty
-  version: '3468.17'
+  version: $STEMCELL_VERSION
 update:
   canaries: 1
   canary_watch_time: 30000-1200000
@@ -87,20 +84,17 @@ EOF
 compile_releases () {
     releases_to_compile="$(rq -y <"$manifest" | jq '[.releases[] | select(.url | contains("compiled") | not)]')"
     compilation_manifest="$(echo "$compilation_manifest_template" | rq -y | jq ".releases=$releases_to_compile" | rq -Y)"
-    bosh upload-stemcell "https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-$(stemcell_version)-google-kvm-ubuntu-trusty-go_agent.tgz"
+    bosh upload-stemcell "https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-$STEMCELL_VERSION-google-kvm-ubuntu-trusty-go_agent.tgz"
     bosh -n deploy -d bosh <(echo "$compilation_manifest")
     for release in $(echo $releases_to_compile | jq -c .[]) ; do
-        bosh -d bosh export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$releases_dir"
+        bosh -d bosh export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$STEMCELL_VERSION" --dir "$releases_dir"
         mv "$releases_dir"/"$(name "$release")-$(version "$release")"-*.tgz "$releases_dir"/"$(filename $release)"
     done
 }
 
 finalize_manifest () {
-  releases="$(rq -y <"$manifest" | jq -c '.releases[]')"
-  cp "$manifest" "$releases_dir"/director.yml
-  for release in $releases; do
-    $(which sed) -i'' "s~url: $(url "$release")~url: file:///var/vcap/cache/$(filename "$release")~g" "$releases_dir"/director.yml
-  done
+  JQ_FILTER='.releases=(.releases | map(.url=("file:///var/vcap/cache/" + .name + "-" + (.version | tostring) + "-ubuntu-trusty-" + env.STEMCELL_VERSION + ".tgz")))'
+  cat "$manifest" | rq -y | jq "$JQ_FILTER" | rq -j -Y > "$releases_dir"/director.yml
 }
 
 tar_deps () {
