@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+
 	"code.cloudfoundry.org/cfdev/config"
 )
 
@@ -13,7 +14,7 @@ type LinuxKit struct {
 	Config config.Config
 }
 
-func (s *LinuxKit) Command() *exec.Cmd {
+func (s *LinuxKit) Command(cpus, mem int) *exec.Cmd {
 	linuxkit := filepath.Join(s.Config.CacheDir, "linuxkit")
 	hyperkit := filepath.Join(s.Config.CacheDir, "hyperkit")
 	uefi := filepath.Join(s.Config.CacheDir, "UEFI.fd")
@@ -35,8 +36,8 @@ func (s *LinuxKit) Command() *exec.Cmd {
 
 	cmd := exec.Command(linuxkit, "run", "hyperkit",
 		"-console-file",
-		"-cpus", "4",
-		"-mem", "8192",
+		"-cpus", fmt.Sprintf("%d", cpus),
+		"-mem", fmt.Sprintf("%d", mem),
 		"-hyperkit", hyperkit,
 		"-networking", fmt.Sprintf("vpnkit,%v,%v", vpnkitEthSock, vpnkitPortSock),
 		"-fw", uefi,

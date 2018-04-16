@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/process"
 )
 
 var _ = Describe("LinuxKit process", func() {
@@ -13,12 +13,12 @@ var _ = Describe("LinuxKit process", func() {
 		linuxkit := process.LinuxKit{
 			Config: config.Config{
 				CFDevHome: "/home-dir/.cfdev",
-				StateDir: "/home-dir/.cfdev/state",
-				CacheDir: "/home-dir/.cfdev/cache",
+				StateDir:  "/home-dir/.cfdev/state",
+				CacheDir:  "/home-dir/.cfdev/cache",
 			},
 		}
 
-		start := linuxkit.Command()
+		start := linuxkit.Command(4, 8192)
 
 		linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
 		Expect(start.Path).To(Equal(linuxkitExecPath))
