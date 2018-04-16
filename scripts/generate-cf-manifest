@@ -32,7 +32,6 @@ pushd "$cf_deployment"
   -o "$ops_dir"/use-bosh-dns.yml \
   \
   -o operations/use-compiled-releases.yml \
-  -o operations/enable-privileged-container-support.yml \
   \
   -o operations/experimental/skip-consul-cell-registrations.yml \
   -o operations/experimental/skip-consul-locks.yml \
