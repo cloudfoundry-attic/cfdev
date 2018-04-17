@@ -91,7 +91,7 @@ tar_deps () {
   cp "$manifest" "$tmpdir"/deployment.yml
   cp "$cloud_config" "$tmpdir"/cloud-config.yml
   pushd "$tmpdir"
-    tar czf "$output_dir"/cf.tgz *
+    tar cvzf "$output_dir"/cf.tgz *
   popd
 }
 
