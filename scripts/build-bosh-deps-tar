@@ -30,7 +30,7 @@ releases_dir="$(mktemp -d)"
 mkdir -p "$output_dir"
 mkdir -p "$releases_dir"
 trap cleanup EXIT
-export STEMCELL_VERSION="3541.9"
+export STEMCELL_VERSION="3541.12"
 
 cleanup () {
   rm -rf "$releases_dir"
@@ -93,8 +93,9 @@ compile_releases () {
 }
 
 finalize_manifest () {
-  JQ_FILTER='.releases=(.releases | map(.url=("file:///var/vcap/cache/" + .name + "-" + (.version | tostring) + "-ubuntu-trusty-" + env.STEMCELL_VERSION + ".tgz")))'
-  cat "$manifest" | rq -y | jq "$JQ_FILTER" | rq -j -Y > "$releases_dir"/director.yml
+  JQ_RELEASES='.releases=(.releases | map(.url=("file:///var/vcap/cache/" + .name + "-" + (.version | tostring) + "-ubuntu-trusty-" + env.STEMCELL_VERSION + ".tgz")))'
+  JQ_STEMCELLS='.stemcells=(.stemcells | map(.url=("file:///var/vcap/cache/bosh-stemcell-" + env.STEMCELL_VERSION + "-warden-boshlite-ubuntu-trusty-go_agent.tgz")))'
+  cat "$manifest" | rq -y | jq "$JQ_RELEASES" | jq "$JQ_STEMCELLS" | rq -j -Y > "$releases_dir"/director.yml
 }
 
 tar_deps () {
