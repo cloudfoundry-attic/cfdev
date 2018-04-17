@@ -3,12 +3,13 @@
   path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/catalina_opts?
   value: -Xms200m -Xmx200m -Xss1m -XX:MetaspaceSize=144m -XX:MaxMetaspaceSize=144m
 
-# - type: replace
-#   path: /instance_groups/name=database/jobs/name=mysql/properties/cf_mysql/mysql/enable_galera?
-#   value: false
 - type: replace
   path: /instance_groups/name=database/jobs/name=mysql/properties/cf_mysql/mysql/binlog_enabled?
   value: false
 - type: replace
   path: /instance_groups/name=database/jobs/name=mysql/properties/cf_mysql/mysql/max_connections?
   value: 100
+
+- type: replace
+  path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/jobs?/local?/number_of_workers?
+  value: 1
