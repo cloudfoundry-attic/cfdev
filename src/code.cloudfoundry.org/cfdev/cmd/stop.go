@@ -20,7 +20,10 @@ type Stop struct {
 }
 
 func (s *Stop) Run(args []string) error {
-	cfanalytics.TrackEvent(cfanalytics.STOP, "cf", s.AnalyticsClient)
+	if s.AnalyticsClient != nil {
+		cfanalytics.TrackEvent(cfanalytics.STOP, "cf", s.AnalyticsClient)
+		s.AnalyticsClient.Close()
+	}
 
 	var reterr error
 	var all sync.WaitGroup

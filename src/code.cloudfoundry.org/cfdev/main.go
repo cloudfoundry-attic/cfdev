@@ -15,6 +15,8 @@ import (
 	"gopkg.in/segmentio/analytics-go.v3"
 )
 
+var analyticsClient analytics.Client
+
 func main() {
 	exitChan := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
@@ -62,7 +64,8 @@ type Plugin struct {
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	if args[0] == "CLI-MESSAGE-UNINSTALL" {
 		stop := &cmd.Stop{
-			Config: p.Config,
+			Config:          p.Config,
+			AnalyticsClient: analyticsClient,
 		}
 		if err := stop.Run([]string{}); err != nil {
 			p.UI.Say("Error stopping cfdev: %s", err)
@@ -102,7 +105,7 @@ func (p *Plugin) execute(args []string) {
 		p.usage()
 	}
 
-	analyticsClient := analytics.New(p.Config.AnalyticsKey)
+	analyticsClient = analytics.New(p.Config.AnalyticsKey)
 	cfanalytics.PromptOptIn(p.Config, p.UI)
 
 	var command Command
