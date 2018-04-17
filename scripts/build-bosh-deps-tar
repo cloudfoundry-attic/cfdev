@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -euxo pipefail
 
 while getopts "m:" arg; do
   case $arg in
@@ -9,7 +9,7 @@ while getopts "m:" arg; do
   esac
 done
 
-if [[ -z $manifest ]]; then
+if [[ -z ${manifest:-} ]]; then
   echo "USAGE: build-bosh-deps-tar -m <path-to-bosh-manifest>"
   exit 2
 fi
@@ -19,7 +19,7 @@ if [[ ! -f $manifest ]]; then
 fi
 manifest="$(cd "$(dirname "$manifest")"; pwd)/$(basename "$manifest")"
 
-if [[ -z "$BOSH_ENVIRONMENT" ]]; then
+if [[ -z "${BOSH_ENVIRONMENT:-}" ]]; then
   echo "ERROR: a bosh director is required to compile releases, please set your BOSH_* env variables"
   exit 3
 fi
@@ -94,7 +94,7 @@ compile_releases () {
 
 finalize_manifest () {
   JQ_RELEASES='.releases=(.releases | map(.url=("file:///var/vcap/cache/" + .name + "-" + (.version | tostring) + "-ubuntu-trusty-" + env.STEMCELL_VERSION + ".tgz")))'
-  JQ_STEMCELLS='.stemcells=(.stemcells | map(.url=("file:///var/vcap/cache/bosh-stemcell-" + env.STEMCELL_VERSION + "-warden-boshlite-ubuntu-trusty-go_agent.tgz")))'
+  JQ_STEMCELLS='.resource_pools[0].stemcell.url=("file:///var/vcap/cache/bosh-stemcell-" + env.STEMCELL_VERSION + "-warden-boshlite-ubuntu-trusty-go_agent.tgz")'
   cat "$manifest" | rq -y | jq "$JQ_RELEASES" | jq "$JQ_STEMCELLS" | rq -j -Y > "$releases_dir"/director.yml
 }
 
