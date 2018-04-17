@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -106,6 +107,11 @@ func (s *Start) Run(args []string) error {
 	}
 
 	s.UI.Say("Starting the VM...")
+	lCmd.Stdout, err = os.Create(filepath.Join(s.Config.CFDevHome, "linuxkit.log"))
+	if err != nil {
+		return fmt.Errorf("Failed to open logfile: %v\n", err)
+	}
+	lCmd.Stderr = lCmd.Stdout
 	if err := lCmd.Start(); err != nil {
 		return fmt.Errorf("Failed to start VM process: %v\n", err)
 	}
