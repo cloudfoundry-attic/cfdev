@@ -33,7 +33,8 @@ go build \
      -X $pkg.uefiUrl=file://$cache_dir/UEFI.fd
      -X $pkg.uefiMd5=$(md5 "$cache_dir"/UEFI.fd | awk '{ print $4 }')
      -X $pkg.cfdevdUrl=file://$cfdevd
-     -X $pkg.cfdevdMd5=$(md5 "$cfdevd" | awk '{ print $4 }')" \
+     -X $pkg.cfdevdMd5=$(md5 "$cfdevd" | awk '{ print $4 }')
+     -X $pkg.analyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" \
      code.cloudfoundry.org/cfdev
 
 

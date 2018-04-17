@@ -12,6 +12,7 @@ import (
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 func main() {
@@ -101,19 +102,22 @@ func (p *Plugin) execute(args []string) {
 		p.usage()
 	}
 
+	analyticsClient := analytics.New(p.Config.AnalyticsKey)
 	cfanalytics.PromptOptIn(p.Config, p.UI)
 
 	var command Command
 	switch args[0] {
 	case "start":
 		command = &cmd.Start{
-			Exit:   p.Exit,
-			UI:     p.UI,
-			Config: p.Config,
+			Exit:            p.Exit,
+			UI:              p.UI,
+			Config:          p.Config,
+			AnalyticsClient: analyticsClient,
 		}
 	case "stop":
 		command = &cmd.Stop{
-			Config: p.Config,
+			Config:          p.Config,
+			AnalyticsClient: analyticsClient,
 		}
 	case "download":
 		command = &cmd.Download{

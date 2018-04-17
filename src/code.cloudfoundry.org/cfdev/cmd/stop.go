@@ -8,15 +8,20 @@ import (
 	"sync"
 	"syscall"
 
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/process"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type Stop struct {
-	Config config.Config
+	Config          config.Config
+	AnalyticsClient analytics.Client
 }
 
 func (s *Stop) Run(args []string) error {
+	cfanalytics.TrackEvent(cfanalytics.STOP, "cf", s.AnalyticsClient)
+
 	var reterr error
 	var all sync.WaitGroup
 	all.Add(4)

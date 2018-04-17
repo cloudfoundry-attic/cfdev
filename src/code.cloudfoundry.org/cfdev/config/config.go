@@ -33,6 +33,8 @@ var (
 
 	cfdevdUrl string
 	cfdevdMd5 string
+
+	analyticsKey string
 )
 
 type Config struct {
@@ -49,6 +51,7 @@ type Config struct {
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
+	AnalyticsKey           string
 }
 
 func NewConfig() (Config, error) {
@@ -76,6 +79,7 @@ func NewConfig() (Config, error) {
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
+		AnalyticsKey:           analyticsKey,
 	}, nil
 }
 

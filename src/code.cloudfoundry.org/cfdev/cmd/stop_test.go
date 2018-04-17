@@ -16,7 +16,25 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
+
+type MockClient struct {
+	WasCalledWith analytics.Message
+}
+
+func (mc *MockClient) Enqueue(message analytics.Message) error {
+	mc.WasCalledWith = message
+	return nil
+}
+
+func (mc *MockClient) Close() error {
+	return nil
+}
+
+func (mc *MockClient) SendAnalytics() error {
+	return nil
+}
 
 var _ = Describe("Stop", func() {
 	var linuxkit, vpnkit, hyperkit *gexec.Session
@@ -30,12 +48,17 @@ var _ = Describe("Stop", func() {
 		hyperkitPidPath = filepath.Join(state, "hyperkit.pid")
 		vpnkitPidPath = filepath.Join(state, "vpnkit.pid")
 
+		mockClient := MockClient{
+			WasCalledWith: analytics.Track{},
+		}
+
 		stop = Stop{
 			Config: config.Config{
 				LinuxkitPidFile: linuxkitPidPath,
 				HyperkitPidFile: hyperkitPidPath,
 				VpnkitPidFile:   vpnkitPidPath,
 			},
+			AnalyticsClient: &mockClient,
 		}
 	})
 	Context("all processes are running and pid files exist", func() {

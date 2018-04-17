@@ -12,6 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"io"
+
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
 	gdn "code.cloudfoundry.org/cfdev/garden"
@@ -20,19 +23,28 @@ import (
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type UI interface {
 	Say(message string, args ...interface{})
 }
 
+type ClientInterface interface {
+	io.Closer
+	Enqueue(analytics.Message) error
+}
+
 type Start struct {
-	Exit   chan struct{}
-	UI     UI
-	Config config.Config
+	Exit            chan struct{}
+	UI              UI
+	Config          config.Config
+	AnalyticsClient analytics.Client
 }
 
 func (s *Start) Run(args []string) error {
+	cfanalytics.TrackEvent(cfanalytics.START_BEGIN, "cf", s.AnalyticsClient)
+
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	registriesFlag := startCmd.String("r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 	cpusFlag := startCmd.Int("c", 4, "cpus to allocate to vm")
@@ -149,6 +161,9 @@ To begin using CF Dev, please run:
 Admin user => Email: admin / Password: admin
 Regular user => Email: user / Password: pass
 `)
+
+	cfanalytics.TrackEvent(cfanalytics.START_END, "cf", s.AnalyticsClient)
+
 	return nil
 }
 

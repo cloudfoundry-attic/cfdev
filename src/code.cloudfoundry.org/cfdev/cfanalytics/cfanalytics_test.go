@@ -6,10 +6,16 @@ import (
 
 	"path"
 
+	"bytes"
+	"net"
+
+	"encoding/json"
+
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type MockUI struct {
@@ -158,6 +164,43 @@ var _ = Describe("Optin", func() {
 
 			content, _ = ioutil.ReadFile(analyticsFilePath)
 			Expect(string(content)).To(Equal("optin"))
+		})
+	})
+
+	Context("GetUUID", func() {
+		It("should return non-empty string", func() {
+			Expect(cfanalytics.GetUUID()).ToNot(BeEmpty())
+		})
+
+		It("should not return unhashed mac address", func() {
+			var addr string
+			interfaces, err := net.Interfaces()
+			if err == nil {
+				for _, i := range interfaces {
+					if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+						addr = i.HardwareAddr.String()
+						break
+					}
+				}
+			}
+
+			Expect(cfanalytics.GetUUID()).ToNot(Equal(addr))
+		})
+	})
+
+	Context("TrackEvent", func() {
+		It("should track event", func() {
+			mockClient := MockClient{
+				WasCalledWith: analytics.Track{},
+			}
+
+			err := cfanalytics.TrackEvent("TEST EVENT", "cf", &mockClient)
+			Expect(err).ToNot(HaveOccurred())
+
+			out, err := json.Marshal(mockClient.WasCalledWith)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(out).Should(ContainSubstring("TEST EVENT"))
 		})
 	})
 })
