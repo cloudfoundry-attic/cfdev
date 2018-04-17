@@ -52,3 +52,9 @@
 [submodule "src/github.com/golang/mock"]
 	path = src/github.com/golang/mock
 	url = git@github.com:golang/mock.git
+[submodule "src/gopkg.in/segmentio/analytics-go.v3"]
+	path = src/gopkg.in/segmentio/analytics-go.v3
+	url = git@github.com:segmentio/analytics-go.git
+[submodule "src/github.com/segmentio/backo-go"]
+	path = src/github.com/segmentio/backo-go
+	url = git@github.com:segmentio/backo-go.git
