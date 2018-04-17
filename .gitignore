@@ -17,18 +17,19 @@
 *.img
 **/*-state
 
-output
+/output/
 
-linuxkit/UEFI.fd
-linuxkit/hyperkit*
-linuxkit/linuxkit*
-linuxkit/vpnkit*
-linuxkit/qcow-tool*
-linuxkit/download-cache/*
-linuxkit/compiled-cache/*
+/linuxkit/UEFI.fd
+/linuxkit/hyperkit*
+/linuxkit/linuxkit*
+/linuxkit/vpnkit*
+/linuxkit/qcow-tool*
+/linuxkit/download-cache/*
+/linuxkit/compiled-cache/*
 
-acceptance/bin/
-acceptance/pkg/
-acceptance/src/github.com/cloudfoundry/results/
+/acceptance/bin/
+/acceptance/pkg/
+/acceptance/src/github.com/cloudfoundry/results/
 
-src/code.cloudfoundry.org/cfdev/cfdev
+/src/code.cloudfoundry.org/cfdev/cfdev
+/src/code.cloudfoundry.org/cfdev/cfdevd
