@@ -23,7 +23,7 @@ var _ = Describe("DeployBosh", func() {
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.DeployBosh(fakeClient)
+		err = gdn.DeployBosh(fakeClient, nil)
 	})
 
 	It("creates a container", func() {

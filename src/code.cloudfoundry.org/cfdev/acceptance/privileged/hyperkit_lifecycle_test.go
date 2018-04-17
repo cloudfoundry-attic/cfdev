@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"io/ioutil"
 	"syscall"
 
 	"time"
@@ -33,10 +32,11 @@ var _ = Describe("hyperkit lifecycle", func() {
 		Expect(HasSudoPrivilege()).To(BeTrue())
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 
-		cfHome, err := ioutil.TempDir("", "cf-home")
-		Expect(err).ToNot(HaveOccurred())
-
-		cfdevHome = CreateTempCFDevHomeDir()
+		cfdevHome = os.Getenv("CFDEV_HOME")
+		if cfdevHome == "" {
+			cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
+			os.Remove(filepath.Join(cfdevHome, "http_proxy.json"))
+		}
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
@@ -46,8 +46,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 			SetupDependencies(cacheDir)
 			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
 		}
-		os.Setenv("CF_HOME", cfHome)
-		os.Setenv("CFDEV_HOME", cfdevHome)
 
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))
@@ -68,10 +66,9 @@ var _ = Describe("hyperkit lifecycle", func() {
 			syscall.Kill(int(-vpnPid), syscall.SIGKILL)
 		}
 
-		os.RemoveAll(cfdevHome)
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 
-		session := cf.Cf("uninstall-plugin", "cfdev")
+		session := cf.Cf("dev", "stop")
 		Eventually(session).Should(gexec.Exit(0))
 	})
 

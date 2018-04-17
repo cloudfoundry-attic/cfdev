@@ -26,7 +26,7 @@ var _ = Describe("DeployCloudFoundry", func() {
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.DeployCloudFoundry(fakeClient, dockerRegistries)
+		err = gdn.DeployCloudFoundry(fakeClient, dockerRegistries, nil)
 	})
 
 	It("creates a container", func() {
