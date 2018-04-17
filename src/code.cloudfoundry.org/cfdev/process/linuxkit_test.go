@@ -18,7 +18,7 @@ var _ = Describe("LinuxKit process", func() {
 			},
 		}
 
-		start := linuxkit.Command(4, 8192)
+		start := linuxkit.Command(4, 4096)
 
 		linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
 		Expect(start.Path).To(Equal(linuxkitExecPath))
@@ -27,7 +27,7 @@ var _ = Describe("LinuxKit process", func() {
 			"run", "hyperkit",
 			"-console-file",
 			"-cpus", "4",
-			"-mem", "8192",
+			"-mem", "4096",
 			"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
 			"-networking",
 			"vpnkit,/home-dir/.cfdev/vpnkit_eth.sock,/home-dir/.cfdev/vpnkit_port.sock",

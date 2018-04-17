@@ -35,8 +35,8 @@ type Start struct {
 func (s *Start) Run(args []string) error {
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	registriesFlag := startCmd.String("r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
-	cpusFlag := startCmd.Int("cpus", 4, "cpus to allocate to vm")
-	memFlag := startCmd.Int("mem", 8192, "memory to allocate to vm")
+	cpusFlag := startCmd.Int("c", 4, "cpus to allocate to vm")
+	memFlag := startCmd.Int("m", 4096, "memory to allocate to vm in MB")
 	startCmd.Parse(args)
 
 	if err := env.Setup(s.Config); err != nil {
