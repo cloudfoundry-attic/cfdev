@@ -137,12 +137,20 @@ func (s *Start) Run(args []string) error {
 	waitForGarden(garden)
 
 	s.UI.Say("Deploying the BOSH Director...")
-	if err := gdn.DeployBosh(garden); err != nil {
+	deployBoshLog, err := os.Create(filepath.Join(s.Config.CFDevHome, "deploy-bosh.log"))
+	if err != nil {
+		return fmt.Errorf("Failed to create bosh deploy log: %v\n", err)
+	}
+	if err := gdn.DeployBosh(garden, deployBoshLog); err != nil {
 		return fmt.Errorf("Failed to deploy the BOSH Director: %v\n", err)
 	}
 
 	s.UI.Say("Deploying CF...")
-	if err := gdn.DeployCloudFoundry(garden, registries); err != nil {
+	deployCfLog, err := os.Create(filepath.Join(s.Config.CFDevHome, "deploy-cf.log"))
+	if err != nil {
+		return fmt.Errorf("Failed to create cf deploy log: %v\n", err)
+	}
+	if err := gdn.DeployCloudFoundry(garden, registries, deployCfLog); err != nil {
 		return fmt.Errorf("Failed to deploy the Cloud Foundry: %v\n", err)
 	}
 
