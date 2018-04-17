@@ -25,7 +25,7 @@ function run_cats() {
     "include_docker": true,
     "include_internet_dependent": true,
     "include_persistent_app": true,
-    "include_privileged_container_support": true,
+    "include_privileged_container_support": false,
     "include_route_services": true,
     "include_routing": true,
     "include_security_groups": true,
