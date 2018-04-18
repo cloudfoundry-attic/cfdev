@@ -66,7 +66,7 @@ var _ = Describe("Optin", func() {
 	})
 
 	It("prompts user & creates file when analytics file is missing", func() {
-		cfanalytics.PromptOptIn(conf, &mockUI)
+		Expect(cfanalytics.PromptOptIn(conf, &mockUI)).To(Succeed())
 
 		Expect(analyticsFilePath).To(BeAnExistingFile())
 		Expect(mockUI.WasCalled).To(Equal(true))
@@ -75,7 +75,7 @@ var _ = Describe("Optin", func() {
 	It("prompts user when analytics file is present but empty", func() {
 		ioutil.WriteFile(analyticsFilePath, []byte(""), 0777)
 
-		cfanalytics.PromptOptIn(conf, &mockUI)
+		Expect(cfanalytics.PromptOptIn(conf, &mockUI)).To(Succeed())
 
 		Expect(analyticsFilePath).To(BeAnExistingFile())
 		Expect(mockUI.WasCalled).To(Equal(true))
@@ -85,7 +85,7 @@ var _ = Describe("Optin", func() {
 		os.MkdirAll(conf.AnalyticsDir, 0755)
 		ioutil.WriteFile(analyticsFilePath, []byte("optedin"), 0755)
 
-		cfanalytics.PromptOptIn(conf, &mockUI)
+		Expect(cfanalytics.PromptOptIn(conf, &mockUI)).To(Succeed())
 
 		Expect(analyticsFilePath).To(BeAnExistingFile())
 		Expect(mockUI.WasCalled).To(Equal(false))
@@ -95,72 +95,46 @@ var _ = Describe("Optin", func() {
 		os.MkdirAll(conf.AnalyticsDir, 0755)
 		ioutil.WriteFile(analyticsFilePath, []byte("optedout"), 0755)
 
+		Expect(cfanalytics.PromptOptIn(conf, &mockUI)).To(Succeed())
+
 		Expect(analyticsFilePath).To(BeAnExistingFile())
 		Expect(mockUI.WasCalled).To(Equal(false))
 	})
 
 	Context("User responds to prompt with", func() {
-		BeforeEach(func() {
-			os.MkdirAll(conf.AnalyticsDir, 0755)
-			ioutil.WriteFile(analyticsFilePath, []byte(""), 0755)
-		})
-
-		It("anything & analytics file does not exist", func() {
-			os.Remove(analyticsFilePath)
-			err := cfanalytics.SetTelemetryState("y", conf)
-			Expect(err).To(HaveOccurred())
-		})
-
 		It("yes & analytics file will contain optin", func() {
-			err := cfanalytics.SetTelemetryState("yes", conf)
-			Expect(err).ToNot(HaveOccurred())
-
-			content, _ := ioutil.ReadFile(analyticsFilePath)
-			Expect(string(content)).To(Equal("optin"))
+			Expect(cfanalytics.SetTelemetryState("yes", conf)).To(Succeed())
+			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optin")))
 		})
 
 		It("Y & analytics file will contain optin", func() {
-			err := cfanalytics.SetTelemetryState("Y", conf)
-			Expect(err).ToNot(HaveOccurred())
-
-			content, _ := ioutil.ReadFile(analyticsFilePath)
-			Expect(string(content)).To(Equal("optin"))
+			Expect(cfanalytics.SetTelemetryState("Y", conf)).To(Succeed())
+			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optin")))
 		})
 
 		It("no & analytics file will contain optout", func() {
-			err := cfanalytics.SetTelemetryState("no", conf)
-			Expect(err).ToNot(HaveOccurred())
-
-			content, _ := ioutil.ReadFile(analyticsFilePath)
-			Expect(string(content)).To(Equal("optout"))
+			Expect(cfanalytics.SetTelemetryState("no", conf)).To(Succeed())
+			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optout")))
 		})
 
 		It("N & analytics file will contain optout", func() {
-			err := cfanalytics.SetTelemetryState("N", conf)
-			Expect(err).ToNot(HaveOccurred())
-
-			content, _ := ioutil.ReadFile(analyticsFilePath)
-			Expect(string(content)).To(Equal("optout"))
+			Expect(cfanalytics.SetTelemetryState("N", conf)).To(Succeed())
+			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optout")))
 		})
 
 		It("MumboJumbo & analytics file will contain optout", func() {
-			err := cfanalytics.SetTelemetryState("MumboJumbo", conf)
-			Expect(err).ToNot(HaveOccurred())
-
-			content, _ := ioutil.ReadFile(analyticsFilePath)
-			Expect(string(content)).To(Equal("optout"))
+			Expect(cfanalytics.SetTelemetryState("MumboJumbo", conf)).To(Succeed())
+			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optout")))
 		})
 
 		It("yes & analytics file is overwritten", func() {
+			os.MkdirAll(conf.AnalyticsDir, 0755)
 			ioutil.WriteFile(analyticsFilePath, []byte("JUNK"), 0755)
-			content, _ := ioutil.ReadFile(analyticsFilePath)
-			Expect(string(content[:])).To(Equal("JUNK"))
+			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("JUNK")))
 
-			err := cfanalytics.SetTelemetryState("yes", conf)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(cfanalytics.SetTelemetryState("yes", conf)).To(Succeed())
 
-			content, _ = ioutil.ReadFile(analyticsFilePath)
-			Expect(string(content)).To(Equal("optin"))
+			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optin")))
 		})
 	})
 

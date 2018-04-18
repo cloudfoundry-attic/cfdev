@@ -1,7 +1,6 @@
 package cfanalytics
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -9,7 +8,6 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/env"
 	"github.com/denisbrodbeck/machineid"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
@@ -44,25 +42,15 @@ type UI interface {
 }
 
 func PromptOptIn(conf config.Config, ui UI) error {
-	_, err := os.Stat(path.Join(conf.AnalyticsDir, conf.AnalyticsFile))
-	if err != nil {
-		err = env.SetupAnalytics(conf)
-		if err != nil {
-			fmt.Printf("ERROR CREATING FILE: %v /n", path.Join(conf.AnalyticsDir, conf.AnalyticsFile))
-			return err
-		}
-	}
-
 	contents, _ := ioutil.ReadFile(path.Join(conf.AnalyticsDir, conf.AnalyticsFile))
-	if string(contents[:]) == "" {
+	if string(contents) == "" {
 		response := ui.Ask(`
 CF Dev collects anonymous usage data to help us improve your user experience. We intend to share these anonymous usage analytics with user community by publishing quarterly reports at :
 
 https://github.com/pivotal-cf/cfdev/wiki/Telemetry
 
 Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?`)
-		err = SetTelemetryState(response, conf)
-		if err != nil {
+		if err := SetTelemetryState(response, conf); err != nil {
 			return err
 		}
 	}
@@ -71,17 +59,14 @@ Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?`)
 }
 
 func SetTelemetryState(response string, conf config.Config) error {
-	analyticsFilePath := path.Join(conf.AnalyticsDir, conf.AnalyticsFile)
-	_, err := os.Stat(analyticsFilePath)
-	if err != nil {
+	if err := os.MkdirAll(conf.AnalyticsDir, 0755); err != nil {
 		return err
 	}
 
+	fileContents := "optout"
 	if strings.ToLower(response) == "y" || strings.ToLower(response) == "yes" {
-		ioutil.WriteFile(analyticsFilePath, []byte("optin"), 0644)
-	} else {
-		ioutil.WriteFile(analyticsFilePath, []byte("optout"), 0644)
+		fileContents = "optin"
 	}
 
-	return nil
+	return ioutil.WriteFile(path.Join(conf.AnalyticsDir, conf.AnalyticsFile), []byte(fileContents), 0644)
 }

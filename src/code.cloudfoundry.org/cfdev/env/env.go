@@ -5,9 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"io/ioutil"
-	"path"
-
 	"code.cloudfoundry.org/cfdev/config"
 )
 
@@ -61,25 +58,6 @@ func Setup(config config.Config) error {
 
 	if err := os.MkdirAll(config.StateDir, 0755); err != nil {
 		return fmt.Errorf("failed to create state dir at path %s: %s", config.StateDir, err)
-	}
-
-	return nil
-}
-
-func SetupAnalytics(config config.Config) error {
-
-	if err := os.MkdirAll(config.AnalyticsDir, 0755); err != nil {
-		return fmt.Errorf("failed to create analytics dir at path %s: %s", config.AnalyticsDir, err)
-	}
-
-	analyticsFilePath := path.Join(config.AnalyticsDir, config.AnalyticsFile)
-
-	if _, err := os.Stat(analyticsFilePath); err == nil {
-		return nil
-	}
-
-	if err := ioutil.WriteFile(analyticsFilePath, []byte(""), 0755); err != nil {
-		return fmt.Errorf("failed to create analytics text file at path %s: %s", analyticsFilePath, err)
 	}
 
 	return nil
