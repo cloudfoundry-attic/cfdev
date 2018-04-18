@@ -149,6 +149,10 @@ func (p *Plugin) execute(args []string) {
 	}
 
 	err := command.Run(args[1:])
+	if err != nil {
+		cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, analyticsClient)
+	}
+	analyticsClient.Close()
 
 	select {
 	case <-p.Exit:

@@ -1,12 +1,8 @@
 package cfanalytics
 
 import (
-	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"path"
 	"runtime"
@@ -14,6 +10,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
+	"github.com/denisbrodbeck/machineid"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
 
@@ -22,14 +19,17 @@ const START_END = "start_end"
 const STOP = "stop"
 const ERROR = "error"
 
-func TrackEvent(event string, trackType string, client analytics.Client) error {
-	uuid, _ := GetUUID()
+func TrackEvent(event string, data map[string]interface{}, client analytics.Client) error {
+	uuid, err := machineid.ProtectedID("cfdev")
+	if err != nil {
+		uuid = "UNKNOWN_ID"
+	}
 
 	var analyticsEvent = &AnalyticsEvent{
 		SegClient: client,
 		Event:     event,
 		UserId:    uuid,
-		Type:      trackType,
+		Data:      data,
 		OS:        runtime.GOOS,
 		Version:   "0.0.2",
 	}
@@ -83,24 +83,4 @@ func SetTelemetryState(response string, conf config.Config) error {
 	}
 
 	return nil
-}
-
-func GetUUID() (string, error) {
-	var addr string
-	interfaces, err := net.Interfaces()
-	if err == nil {
-		for _, i := range interfaces {
-			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
-				addr = i.HardwareAddr.String()
-				break
-			}
-		}
-	} else {
-		return "UNKNOWN_ID", err
-	}
-
-	h := md5.New()
-	h.Write([]byte(addr))
-
-	return hex.EncodeToString(h.Sum(nil)), nil
 }

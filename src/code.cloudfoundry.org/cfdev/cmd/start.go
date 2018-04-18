@@ -43,7 +43,15 @@ type Start struct {
 }
 
 func (s *Start) Run(args []string) error {
-	cfanalytics.TrackEvent(cfanalytics.START_BEGIN, "cf", s.AnalyticsClient)
+	go func() {
+		<-s.Exit
+		process.SignalAndCleanup(s.Config.LinuxkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
+		process.SignalAndCleanup(s.Config.VpnkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
+		process.SignalAndCleanup(s.Config.HyperkitPidFile, s.Config.CFDevHome, syscall.SIGKILL)
+		os.Exit(128)
+	}()
+
+	cfanalytics.TrackEvent(cfanalytics.START_BEGIN, map[string]interface{}{"type": "cf"}, s.AnalyticsClient)
 
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	registriesFlag := startCmd.String("r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
@@ -57,13 +65,13 @@ func (s *Start) Run(args []string) error {
 
 	if isLinuxKitRunning(s.Config.LinuxkitPidFile) {
 		s.UI.Say("CF Dev is already running...")
+		cfanalytics.TrackEvent(cfanalytics.START_END, map[string]interface{}{"type": "cf", "alreadyrunning": true}, s.AnalyticsClient)
 		return nil
 	}
 
 	registries, err := s.parseDockerRegistriesFlag(*registriesFlag)
 	if err != nil {
-		fmt.Errorf("Unable to parse docker registries %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("Unable to parse docker registries %v\n", err)
 	}
 
 	vpnKit := process.VpnKit{
@@ -76,14 +84,6 @@ func (s *Start) Run(args []string) error {
 	}
 
 	lCmd := linuxkit.Command(*cpusFlag, *memFlag)
-
-	go func() {
-		<-s.Exit
-		process.SignalAndCleanup(s.Config.LinuxkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
-		process.SignalAndCleanup(s.Config.VpnkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
-		process.SignalAndCleanup(s.Config.HyperkitPidFile, s.Config.CFDevHome, syscall.SIGKILL)
-		os.Exit(128)
-	}()
 
 	if err = cleanupStateDir(s.Config.StateDir); err != nil {
 		return err
@@ -162,7 +162,7 @@ Admin user => Email: admin / Password: admin
 Regular user => Email: user / Password: pass
 `)
 
-	cfanalytics.TrackEvent(cfanalytics.START_END, "cf", s.AnalyticsClient)
+	cfanalytics.TrackEvent(cfanalytics.START_END, map[string]interface{}{"type": "cf"}, s.AnalyticsClient)
 
 	return nil
 }

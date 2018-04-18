@@ -3,7 +3,7 @@ package cfanalytics
 import (
 	"runtime"
 
-	"gopkg.in/segmentio/analytics-go.v3"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type ClientInterface interface {
@@ -14,16 +14,18 @@ type AnalyticsEvent struct {
 	SegClient ClientInterface
 	Event     string
 	UserId    string
-	Type      string
+	Data      map[string]interface{}
 	OS        string
 	Version   string
 }
 
 func (s *AnalyticsEvent) SendAnalytics() error {
 	properties := analytics.NewProperties()
-	properties.Set("type", s.Type)
 	properties.Set("os", runtime.GOOS)
 	properties.Set("version", s.Version)
+	for k, v := range s.Data {
+		properties.Set(k, v)
+	}
 
 	analyticsTrack := analytics.Track{
 		UserId:     s.UserId,

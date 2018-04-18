@@ -58,3 +58,6 @@
 [submodule "src/github.com/segmentio/backo-go"]
 	path = src/github.com/segmentio/backo-go
 	url = git@github.com:segmentio/backo-go.git
+[submodule "src/github.com/denisbrodbeck/machineid"]
+	path = src/github.com/denisbrodbeck/machineid
+	url = https://github.com/denisbrodbeck/machineid.git

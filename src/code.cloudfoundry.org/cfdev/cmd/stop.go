@@ -21,8 +21,7 @@ type Stop struct {
 
 func (s *Stop) Run(args []string) error {
 	if s.AnalyticsClient != nil {
-		cfanalytics.TrackEvent(cfanalytics.STOP, "cf", s.AnalyticsClient)
-		s.AnalyticsClient.Close()
+		cfanalytics.TrackEvent(cfanalytics.STOP, map[string]interface{}{"type": "cf"}, s.AnalyticsClient)
 	}
 
 	var reterr error

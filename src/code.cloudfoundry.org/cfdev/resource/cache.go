@@ -41,7 +41,7 @@ func (c *Cache) Sync(clog *Catalog) error {
 		case unknown:
 			os.Remove(filename)
 		default:
-			panic("unsupported sync state")
+			return fmt.Errorf("unsupported sync state")
 		}
 	}
 

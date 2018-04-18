@@ -6,7 +6,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/segmentio/analytics-go.v3"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type MockClient struct {
@@ -47,7 +47,7 @@ var _ = Describe("Startevent", func() {
 			SegClient: &mockClient,
 			Event:     "start",
 			UserId:    "my user id",
-			Type:      "cf",
+			Data:      map[string]interface{}{"type": "cf"},
 			OS:        runtime.GOOS,
 			Version:   "2.0",
 		}

@@ -6,9 +6,6 @@ import (
 
 	"path"
 
-	"bytes"
-	"net"
-
 	"encoding/json"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
@@ -167,34 +164,13 @@ var _ = Describe("Optin", func() {
 		})
 	})
 
-	Context("GetUUID", func() {
-		It("should return non-empty string", func() {
-			Expect(cfanalytics.GetUUID()).ToNot(BeEmpty())
-		})
-
-		It("should not return unhashed mac address", func() {
-			var addr string
-			interfaces, err := net.Interfaces()
-			if err == nil {
-				for _, i := range interfaces {
-					if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
-						addr = i.HardwareAddr.String()
-						break
-					}
-				}
-			}
-
-			Expect(cfanalytics.GetUUID()).ToNot(Equal(addr))
-		})
-	})
-
 	Context("TrackEvent", func() {
 		It("should track event", func() {
 			mockClient := MockClient{
 				WasCalledWith: analytics.Track{},
 			}
 
-			err := cfanalytics.TrackEvent("TEST EVENT", "cf", &mockClient)
+			err := cfanalytics.TrackEvent("TEST EVENT", map[string]interface{}{"type": "cf"}, &mockClient)
 			Expect(err).ToNot(HaveOccurred())
 
 			out, err := json.Marshal(mockClient.WasCalledWith)
