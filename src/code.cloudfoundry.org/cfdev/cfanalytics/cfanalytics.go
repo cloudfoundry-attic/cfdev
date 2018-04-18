@@ -18,6 +18,7 @@ const START_BEGIN = "start_begin"
 const START_END = "start_end"
 const STOP = "stop"
 const ERROR = "error"
+const UNINSTALL = "uninstall"
 
 func TrackEvent(event string, data map[string]interface{}, client analytics.Client) error {
 	uuid, err := machineid.ProtectedID("cfdev")

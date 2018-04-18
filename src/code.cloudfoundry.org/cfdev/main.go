@@ -15,8 +15,6 @@ import (
 	"gopkg.in/segmentio/analytics-go.v3"
 )
 
-var analyticsClient analytics.Client
-
 func main() {
 	exitChan := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
@@ -43,10 +41,12 @@ func main() {
 	}
 
 	cfdev := &Plugin{
-		Exit:   exitChan,
-		UI:     ui,
-		Config: conf,
+		Exit:            exitChan,
+		UI:              ui,
+		Config:          conf,
+		AnalyticsClient: analytics.New(conf.AnalyticsKey),
 	}
+	defer cfdev.AnalyticsClient.Close()
 
 	plugin.Start(cfdev)
 }
@@ -56,19 +56,22 @@ type Command interface {
 }
 
 type Plugin struct {
-	Exit   chan struct{}
-	UI     terminal.UI
-	Config config.Config
+	Exit            chan struct{}
+	UI              terminal.UI
+	Config          config.Config
+	AnalyticsClient analytics.Client
 }
 
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	if args[0] == "CLI-MESSAGE-UNINSTALL" {
+		cfanalytics.TrackEvent(cfanalytics.UNINSTALL, nil, p.AnalyticsClient)
 		stop := &cmd.Stop{
 			Config:          p.Config,
-			AnalyticsClient: analyticsClient,
+			AnalyticsClient: p.AnalyticsClient,
 		}
 		if err := stop.Run([]string{}); err != nil {
 			p.UI.Say("Error stopping cfdev: %s", err)
+			cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
 		}
 		return
 	}
@@ -105,7 +108,6 @@ func (p *Plugin) execute(args []string) {
 		p.usage()
 	}
 
-	analyticsClient = analytics.New(p.Config.AnalyticsKey)
 	cfanalytics.PromptOptIn(p.Config, p.UI)
 
 	var command Command
@@ -115,12 +117,12 @@ func (p *Plugin) execute(args []string) {
 			Exit:            p.Exit,
 			UI:              p.UI,
 			Config:          p.Config,
-			AnalyticsClient: analyticsClient,
+			AnalyticsClient: p.AnalyticsClient,
 		}
 	case "stop":
 		command = &cmd.Stop{
 			Config:          p.Config,
-			AnalyticsClient: analyticsClient,
+			AnalyticsClient: p.AnalyticsClient,
 		}
 	case "download":
 		command = &cmd.Download{
@@ -150,9 +152,8 @@ func (p *Plugin) execute(args []string) {
 
 	err := command.Run(args[1:])
 	if err != nil {
-		cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, analyticsClient)
+		cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
 	}
-	analyticsClient.Close()
 
 	select {
 	case <-p.Exit:
