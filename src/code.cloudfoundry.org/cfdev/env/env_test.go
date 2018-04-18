@@ -10,8 +10,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"path"
-
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
 )
@@ -93,33 +91,6 @@ var _ = Describe("env", func() {
 				Expect(err).NotTo(HaveOccurred())
 				_, err = os.Stat(stateDir)
 				Expect(err).NotTo(HaveOccurred())
-			})
-		})
-
-		Context("Setup Analytics when the paths are writable", func() {
-			BeforeEach(func() {
-				dir, err = ioutil.TempDir(os.TempDir(), "test-space")
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			AfterEach(func() {
-				os.RemoveAll(dir)
-			})
-
-			It("Creates analytics dir & file", func() {
-				analyticsDir := filepath.Join(dir, "some-analytics-dir")
-				analyticsFile := "some-file.txt"
-
-				conf := config.Config{
-					AnalyticsDir:  analyticsDir,
-					AnalyticsFile: analyticsFile,
-				}
-
-				Expect(env.SetupAnalytics(conf)).To(Succeed())
-				_, err = os.Stat(analyticsDir)
-				Expect(err).NotTo(HaveOccurred())
-				_, err = os.Stat(path.Join(analyticsDir, analyticsFile))
-				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 
