@@ -2,12 +2,11 @@ package garden
 
 import (
 	"fmt"
-	"io"
 
 	"code.cloudfoundry.org/garden"
 )
 
-func DeployBosh(client garden.Client, w io.Writer) error {
+func DeployBosh(client garden.Client) error {
 	containerSpec := garden.ContainerSpec{
 		Handle:     "deploy-bosh",
 		Privileged: true,
@@ -38,7 +37,7 @@ func DeployBosh(client garden.Client, w io.Writer) error {
 		ID:   "deploy-bosh",
 		Path: "/usr/bin/deploy-bosh",
 		User: "root",
-	}, garden.ProcessIO{Stdout: w, Stderr: w})
+	}, garden.ProcessIO{})
 
 	if err != nil {
 		return err

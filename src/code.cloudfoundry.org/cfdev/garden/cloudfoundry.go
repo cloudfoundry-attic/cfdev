@@ -2,13 +2,12 @@ package garden
 
 import (
 	"fmt"
-	"io"
 
 	"code.cloudfoundry.org/garden"
 	"gopkg.in/yaml.v2"
 )
 
-func DeployCloudFoundry(client garden.Client, dockerRegistries []string, w io.Writer) error {
+func DeployCloudFoundry(client garden.Client, dockerRegistries []string) error {
 	containerSpec := garden.ContainerSpec{
 		Handle:     "deploy-cf",
 		Privileged: true,
@@ -49,7 +48,7 @@ func DeployCloudFoundry(client garden.Client, dockerRegistries []string, w io.Wr
 		ID:   "deploy-cf",
 		Path: "/usr/bin/deploy-cf",
 		User: "root",
-	}, garden.ProcessIO{Stdout: w, Stderr: w})
+	}, garden.ProcessIO{})
 
 	if err != nil {
 		return err
