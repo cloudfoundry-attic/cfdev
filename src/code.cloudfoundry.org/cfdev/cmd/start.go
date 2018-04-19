@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -12,8 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"io"
-
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
@@ -23,26 +20,41 @@ import (
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
-	"gopkg.in/segmentio/analytics-go.v3"
+	"github.com/spf13/cobra"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type UI interface {
 	Say(message string, args ...interface{})
 }
 
-type ClientInterface interface {
-	io.Closer
-	Enqueue(analytics.Message) error
-}
-
-type Start struct {
+type start struct {
 	Exit            chan struct{}
 	UI              UI
 	Config          config.Config
 	AnalyticsClient analytics.Client
+	Registries      string
+	Cpus            int
+	Mem             int
 }
 
-func (s *Start) Run(args []string) error {
+func NewStart(Exit chan struct{}, UI UI, Config config.Config, AnalyticsClient analytics.Client) *cobra.Command {
+	s := start{Exit: Exit, UI: UI, Config: Config, AnalyticsClient: AnalyticsClient}
+	cmd := &cobra.Command{
+		Use: "start",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return s.RunE()
+		},
+	}
+	pf := cmd.PersistentFlags()
+	pf.StringVar(&s.Registries, "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
+	pf.IntVar(&s.Cpus, "c", 4, "cpus to allocate to vm")
+	pf.IntVar(&s.Mem, "m", 4096, "memory to allocate to vm in MB")
+
+	return cmd
+}
+
+func (s *start) RunE() error {
 	go func() {
 		<-s.Exit
 		process.SignalAndCleanup(s.Config.LinuxkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
@@ -52,12 +64,6 @@ func (s *Start) Run(args []string) error {
 	}()
 
 	cfanalytics.TrackEvent(cfanalytics.START_BEGIN, map[string]interface{}{"type": "cf"}, s.AnalyticsClient)
-
-	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
-	registriesFlag := startCmd.String("r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
-	cpusFlag := startCmd.Int("c", 4, "cpus to allocate to vm")
-	memFlag := startCmd.Int("m", 4096, "memory to allocate to vm in MB")
-	startCmd.Parse(args)
 
 	if err := env.Setup(s.Config); err != nil {
 		return err
@@ -69,7 +75,7 @@ func (s *Start) Run(args []string) error {
 		return nil
 	}
 
-	registries, err := s.parseDockerRegistriesFlag(*registriesFlag)
+	registries, err := s.parseDockerRegistriesFlag(s.Registries)
 	if err != nil {
 		return fmt.Errorf("Unable to parse docker registries %v\n", err)
 	}
@@ -83,7 +89,7 @@ func (s *Start) Run(args []string) error {
 		Config: s.Config,
 	}
 
-	lCmd := linuxkit.Command(*cpusFlag, *memFlag)
+	lCmd := linuxkit.Command(s.Cpus, s.Mem)
 
 	if err = cleanupStateDir(s.Config.StateDir); err != nil {
 		return err
@@ -208,7 +214,7 @@ func cleanupStateDir(stateDir string) error {
 	return nil
 }
 
-func (s *Start) setupNetworking() error {
+func (s *start) setupNetworking() error {
 	err := network.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP)
 
 	if err != nil {
@@ -218,7 +224,7 @@ func (s *Start) setupNetworking() error {
 	return nil
 }
 
-func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
+func (s *start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 	if flag == "" {
 		return nil, nil
 	}

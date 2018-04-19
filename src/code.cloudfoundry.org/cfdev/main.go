@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,8 +11,22 @@ import (
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
+	"github.com/spf13/cobra"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
+
+type Command interface {
+	Run(args []string) error
+}
+
+type Plugin struct {
+	Exit            chan struct{}
+	UI              terminal.UI
+	Config          config.Config
+	AnalyticsClient analytics.Client
+	Root            *cobra.Command
+	Version         plugin.VersionType
+}
 
 func main() {
 	exitChan := make(chan struct{})
@@ -40,128 +53,62 @@ func main() {
 		os.Exit(1)
 	}
 
+	analyticsClient := analytics.New(conf.AnalyticsKey)
 	cfdev := &Plugin{
 		Exit:            exitChan,
 		UI:              ui,
 		Config:          conf,
-		AnalyticsClient: analytics.New(conf.AnalyticsKey),
+		AnalyticsClient: analyticsClient,
+		Root:            cmd.NewRoot(exitChan, ui, conf, analyticsClient),
+		Version:         plugin.VersionType{Major: 0, Minor: 0, Build: 2},
 	}
 	defer cfdev.AnalyticsClient.Close()
 
 	plugin.Start(cfdev)
 }
 
-type Command interface {
-	Run(args []string) error
-}
-
-type Plugin struct {
-	Exit            chan struct{}
-	UI              terminal.UI
-	Config          config.Config
-	AnalyticsClient analytics.Client
-}
-
-func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
-	if args[0] == "CLI-MESSAGE-UNINSTALL" {
-		cfanalytics.TrackEvent(cfanalytics.UNINSTALL, nil, p.AnalyticsClient)
-		stop := &cmd.Stop{
-			Config:          p.Config,
-			AnalyticsClient: p.AnalyticsClient,
-		}
-		if err := stop.Run([]string{}); err != nil {
-			p.UI.Say("Error stopping cfdev: %s", err)
-			cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
-		}
-		return
-	}
-	p.execute(args[1:])
-}
-
 func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
-		Name: "cfdev",
-		Version: plugin.VersionType{
-			Major: 0,
-			Minor: 0,
-			Build: 2,
-		},
+		Name:    "cfdev",
+		Version: p.Version,
 		Commands: []plugin.Command{
 			{
 				Name:     "dev",
 				HelpText: "Start and stop a single vm CF deployment running on your workstation",
 				UsageDetails: plugin.Usage{
-					Usage: "cf dev [start|stop|bosh]",
+					Usage: p.Root.UsageString(),
 				},
 			},
 		},
 	}
 }
 
-func (p *Plugin) usage() {
-	p.UI.Say("cf dev [start|stop|bosh]")
-	os.Exit(1)
-}
-
-func (p *Plugin) execute(args []string) {
-	if len(args) == 0 {
-		p.usage()
+func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
+	if args[0] == "CLI-MESSAGE-UNINSTALL" {
+		cfanalytics.TrackEvent(cfanalytics.UNINSTALL, nil, p.AnalyticsClient)
+		stop := cmd.NewStop(&p.Config, p.AnalyticsClient)
+		if err := stop.RunE(nil, []string{}); err != nil {
+			p.UI.Say("Error stopping cfdev: %s", err)
+			cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
+		}
+		return
 	}
 
 	cfanalytics.PromptOptIn(p.Config, p.UI)
 
-	var command Command
-	switch args[0] {
-	case "start":
-		command = &cmd.Start{
-			Exit:            p.Exit,
-			UI:              p.UI,
-			Config:          p.Config,
-			AnalyticsClient: p.AnalyticsClient,
-		}
-	case "stop":
-		command = &cmd.Stop{
-			Config:          p.Config,
-			AnalyticsClient: p.AnalyticsClient,
-		}
-	case "download":
-		command = &cmd.Download{
-			Exit:   p.Exit,
-			UI:     p.UI,
-			Config: p.Config,
-		}
-	case "bosh":
-		command = &cmd.Bosh{
-			Exit:   p.Exit,
-			UI:     p.UI,
-			Config: p.Config,
-		}
-	case "catalog":
-		command = &cmd.Catalog{
-			UI:     p.UI,
-			Config: p.Config,
-		}
-	case "telemetry":
-		command = &cmd.Telemetry{
-			UI:     p.UI,
-			Config: p.Config,
-		}
-	default:
-		p.usage()
-	}
-
-	err := command.Run(args[1:])
-	if err != nil {
+	p.Root.SetArgs(args)
+	if err := p.Root.Execute(); err != nil {
 		cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
 	}
 
-	select {
-	case <-p.Exit:
-		os.Exit(128)
-	default:
-		if err != nil {
-			fmt.Printf("Error encountered running '%s' : %s", args[0], err)
-			os.Exit(2)
-		}
-	}
+	// TODO why is the below here?????
+	// select {
+	// case <-p.Exit:
+	// 	os.Exit(128)
+	// default:
+	// 	if err != nil {
+	// 		fmt.Printf("Error encountered running '%s' : %s", args[0], err)
+	// 		os.Exit(2)
+	// 	}
+	// }
 }

@@ -1,22 +1,23 @@
 package cmd_test
 
 import (
+	// . "code.cloudfoundry.org/cfdev/cmd"
+
 	"encoding/binary"
-	"net"
-
-	. "code.cloudfoundry.org/cfdev/cmd"
-
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 
+	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"gopkg.in/segmentio/analytics-go.v3"
+	"github.com/spf13/cobra"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type MockClient struct {
@@ -37,9 +38,12 @@ func (mc *MockClient) SendAnalytics() error {
 }
 
 var _ = Describe("Stop", func() {
-	var linuxkit, vpnkit, hyperkit *gexec.Session
-	var stop Stop
-	var state, linuxkitPidPath, hyperkitPidPath, vpnkitPidPath string
+	var (
+		linuxkit, vpnkit, hyperkit                             *gexec.Session
+		state, linuxkitPidPath, hyperkitPidPath, vpnkitPidPath string
+		cfg                                                    config.Config
+		stopCmd                                                *cobra.Command
+	)
 
 	BeforeEach(func() {
 		state, _ = ioutil.TempDir("", "pcfdev.stop.")
@@ -52,14 +56,13 @@ var _ = Describe("Stop", func() {
 			WasCalledWith: analytics.Track{},
 		}
 
-		stop = Stop{
-			Config: config.Config{
-				LinuxkitPidFile: linuxkitPidPath,
-				HyperkitPidFile: hyperkitPidPath,
-				VpnkitPidFile:   vpnkitPidPath,
-			},
-			AnalyticsClient: &mockClient,
+		cfg = config.Config{
+			LinuxkitPidFile: linuxkitPidPath,
+			HyperkitPidFile: hyperkitPidPath,
+			VpnkitPidFile:   vpnkitPidPath,
 		}
+		stopCmd = cmd.NewStop(&cfg, &mockClient)
+		stopCmd.SetArgs([]string{})
 	})
 	Context("all processes are running and pid files exist", func() {
 		BeforeEach(func() {
@@ -81,7 +84,7 @@ var _ = Describe("Stop", func() {
 		})
 
 		It("kill all Pids", func() {
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 
 			Eventually(linuxkit).Should(gexec.Exit())
 			Eventually(vpnkit).Should(gexec.Exit())
@@ -89,7 +92,7 @@ var _ = Describe("Stop", func() {
 		})
 
 		It("removes the pid files", func() {
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 
 			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
 			Expect(vpnkitPidPath).ToNot(BeAnExistingFile())
@@ -99,7 +102,7 @@ var _ = Describe("Stop", func() {
 
 	Context("all pidfiles are missing", func() {
 		It("does nothing and succeeds", func() {
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 		})
 	})
 
@@ -109,7 +112,7 @@ var _ = Describe("Stop", func() {
 		})
 
 		It("kills existing pids", func() {
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 
 			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
 			Expect(hyperkitPidPath).ToNot(BeAnExistingFile())
@@ -134,7 +137,7 @@ var _ = Describe("Stop", func() {
 		})
 
 		It("kills existing pids and returns error", func() {
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 
 			Expect(linuxkit).To(gexec.Exit())
 			Expect(hyperkit).To(gexec.Exit())
@@ -161,7 +164,7 @@ var _ = Describe("Stop", func() {
 		})
 
 		It("deletes all pid files and succeeds", func() {
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 
 			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
 			Expect(vpnkitPidPath).ToNot(BeAnExistingFile())
@@ -175,11 +178,11 @@ var _ = Describe("Stop", func() {
 		var uninstallErrorCode int
 		BeforeEach(func() {
 			tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
-			stop.Config.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
+			cfg.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
 			instructions = make(chan byte, 1)
-			ln, err := net.Listen("unix", stop.Config.CFDevDSocketPath)
+			ln, err := net.Listen("unix", cfg.CFDevDSocketPath)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(stop.Config.CFDevDSocketPath).To(BeAnExistingFile())
+			Expect(cfg.CFDevDSocketPath).To(BeAnExistingFile())
 			go func() {
 				conn, err := ln.Accept()
 				Expect(err).NotTo(HaveOccurred())
@@ -201,14 +204,14 @@ var _ = Describe("Stop", func() {
 		})
 		It("succeeds and sends the uninstall command to cfdevd", func() {
 			uninstallErrorCode = 0
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 
 			Eventually(instructions).Should(Receive(Equal(byte(1))))
 		})
 		Context("cfdevd stops after receiving uninstall command, thus closes connection before writing success code", func() {
 			It("succeeds", func() {
 				uninstallErrorCode = -1
-				Expect(stop.Run([]string{})).To(Succeed())
+				Expect(stopCmd.Execute()).To(Succeed())
 
 				Eventually(instructions).Should(Receive(Equal(byte(1))))
 			})
@@ -216,7 +219,7 @@ var _ = Describe("Stop", func() {
 		Context("cfdevd returns error to uninstall", func() {
 			It("returns the error", func() {
 				uninstallErrorCode = 1
-				Expect(stop.Run([]string{})).To(MatchError("failed to uninstall cfdevd: errorcode: 1"))
+				Expect(stopCmd.Execute()).To(MatchError("failed to uninstall cfdevd: errorcode: 1"))
 			})
 		})
 	})
@@ -224,13 +227,13 @@ var _ = Describe("Stop", func() {
 		var tmpDir string
 		BeforeEach(func() {
 			tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
-			stop.Config.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
+			cfg.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
 		})
 		AfterEach(func() {
 			os.RemoveAll(tmpDir)
 		})
 		It("succeeds", func() {
-			Expect(stop.Run([]string{})).To(Succeed())
+			Expect(stopCmd.Execute()).To(Succeed())
 		})
 	})
 })

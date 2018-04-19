@@ -61,3 +61,9 @@
 [submodule "src/github.com/denisbrodbeck/machineid"]
 	path = src/github.com/denisbrodbeck/machineid
 	url = https://github.com/denisbrodbeck/machineid.git
+[submodule "src/github.com/spf13/cobra"]
+	path = src/github.com/spf13/cobra
+	url = https://github.com/spf13/cobra.git
+[submodule "src/github.com/spf13/pflag"]
+	path = src/github.com/spf13/pflag
+	url = https://github.com/spf13/pflag.git

@@ -11,17 +11,23 @@ import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/process"
-	"gopkg.in/segmentio/analytics-go.v3"
+	"github.com/spf13/cobra"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
-type Stop struct {
-	Config          config.Config
-	AnalyticsClient analytics.Client
+func NewStop(Config *config.Config, AnalyticsClient analytics.Client) *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "stop",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStop(Config, AnalyticsClient)
+		},
+	}
+	return cmd
 }
 
-func (s *Stop) Run(args []string) error {
-	if s.AnalyticsClient != nil {
-		cfanalytics.TrackEvent(cfanalytics.STOP, map[string]interface{}{"type": "cf"}, s.AnalyticsClient)
+func runStop(Config *config.Config, AnalyticsClient analytics.Client) error {
+	if AnalyticsClient != nil {
+		cfanalytics.TrackEvent(cfanalytics.STOP, map[string]interface{}{"type": "cf"}, AnalyticsClient)
 	}
 
 	var reterr error
@@ -30,19 +36,19 @@ func (s *Stop) Run(args []string) error {
 
 	go func() {
 		defer all.Done()
-		if err := process.SignalAndCleanup(s.Config.LinuxkitPidFile, s.Config.CFDevHome, syscall.SIGTERM); err != nil {
+		if err := process.SignalAndCleanup(Config.LinuxkitPidFile, Config.CFDevHome, syscall.SIGTERM); err != nil {
 			reterr = fmt.Errorf("failed to terminate linuxkit: %s", err)
 		}
 	}()
 	go func() {
 		defer all.Done()
-		if err := process.SignalAndCleanup(s.Config.VpnkitPidFile, s.Config.CFDevHome, syscall.SIGTERM); err != nil {
+		if err := process.SignalAndCleanup(Config.VpnkitPidFile, Config.CFDevHome, syscall.SIGTERM); err != nil {
 			reterr = fmt.Errorf("failed to terminate vpnkit: %s", err)
 		}
 	}()
 	go func() {
 		defer all.Done()
-		if err := process.SignalAndCleanup(s.Config.HyperkitPidFile, s.Config.CFDevHome, syscall.SIGKILL); err != nil {
+		if err := process.SignalAndCleanup(Config.HyperkitPidFile, Config.CFDevHome, syscall.SIGKILL); err != nil {
 			reterr = fmt.Errorf("failed to terminate hyperkit: %s", err)
 		}
 	}()
@@ -50,7 +56,7 @@ func (s *Stop) Run(args []string) error {
 		defer all.Done()
 		command := []byte{uint8(1)}
 		handshake := append([]byte("CFD3V"), make([]byte, 44, 44)...)
-		conn, err := net.Dial("unix", s.Config.CFDevDSocketPath)
+		conn, err := net.Dial("unix", Config.CFDevDSocketPath)
 		if err != nil {
 			// cfdevd is not running-- do nothing
 			return

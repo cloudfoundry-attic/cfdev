@@ -11,26 +11,27 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/resource"
+	"github.com/spf13/cobra"
 )
 
-type Download struct {
-	Exit   chan struct{}
-	UI     UI
-	Config config.Config
-}
+func NewDownload(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "download",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			go func() {
+				<-Exit
+				os.Exit(128)
+			}()
 
-func (d *Download) Run(args []string) error {
-	go func() {
-		<-d.Exit
-		os.Exit(128)
-	}()
+			if err := env.Setup(Config); err != nil {
+				return nil
+			}
 
-	if err := env.Setup(d.Config); err != nil {
-		return nil
+			UI.Say("Downloading Resources...")
+			return download(Config.Dependencies, Config.CacheDir)
+		},
 	}
-
-	d.UI.Say("Downloading Resources...")
-	return download(d.Config.Dependencies, d.Config.CacheDir)
+	return cmd
 }
 
 func download(dependencies resource.Catalog, cacheDir string) error {
