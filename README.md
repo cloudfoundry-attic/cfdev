@@ -29,10 +29,11 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 
 * [CF CLI](https://github.com/cloudfoundry/cli)
 * Internet connection (or Dnsmasq or Acrylic) required for wildcard DNS resolution
+* Please note CF Dev only supports Mac OSX at this time
 
 ## Install 
-1. Download the CF Dev binary [here](https://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.1-darwin).
-1. _(if needed)_ Uninstall PCF Dev plugin if its installed `cf uninstall-plugin pcfdev`.
+1. Download the CF Dev binary [here](http://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.2-darwin).
+1. _(if needed)_ Uninstall your exsiting PCF Dev or CF Dev plugin if its installed `cf uninstall-plugin pcfdev` OR `cf uninstall-plugin cfdev`
 1. Install the CF Dev plugin `cf install-plugin <path to cfdev binary>`.
 
 ## Start
@@ -49,6 +50,14 @@ Run CF Dev `cf dev start`.
 To stop CF Dev run `cf dev stop`. This will completely stop and destory the CF Dev VM.
 
 To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
+
+## Telemetry
+
+Here on the CF Dev team, we use telemetry to help us understand how our tool is being used.  We value our users privacy, therefore all telemetry is completely anonymous. There is no way for anyone with the telemetry to identify who is using the CF Dev tool.  In an effort to make our data as transparent as possible, we will be publishing aggregated anonymous usage data to this page periodically to help our user community understand how the tool is being used. 
+
+In addition to making this data completely anonymous, we require users to opt-in to allowing us to collect telemetry from their tool. Upon running `$ cf dev start` for the first time, we will prompt the user to opt-in to capturing analytics.  Any time after that you can turn on/off telemetry by running `$ cf dev telemetry --on/off`
+
+You can learn more about what we do with telemetry [here](https://github.com/cloudfoundry-incubator/cfdev/wiki/Telemetry)
 
 ## Contributing
 
