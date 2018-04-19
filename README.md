@@ -29,7 +29,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 
 * [CF CLI](https://github.com/cloudfoundry/cli)
 * Internet connection (or Dnsmasq or Acrylic) required for wildcard DNS resolution
-* Please note CF Dev only supports Mac OSX at this time
+* Please note CF Dev only supports macOS at this time
 
 ## Install 
 1. Download the CF Dev binary [here](http://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.2-darwin).
