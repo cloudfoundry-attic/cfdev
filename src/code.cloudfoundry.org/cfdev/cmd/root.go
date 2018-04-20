@@ -11,6 +11,7 @@ func NewRoot(Exit chan struct{}, UI UI, Config config.Config, AnalyticsClient an
 	root := &cobra.Command{Use: "cf"}
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
+	root.SilenceUsage = true
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)

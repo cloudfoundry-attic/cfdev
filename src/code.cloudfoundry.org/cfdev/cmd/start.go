@@ -47,9 +47,9 @@ func NewStart(Exit chan struct{}, UI UI, Config config.Config, AnalyticsClient a
 		},
 	}
 	pf := cmd.PersistentFlags()
-	pf.StringVar(&s.Registries, "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
-	pf.IntVar(&s.Cpus, "c", 4, "cpus to allocate to vm")
-	pf.IntVar(&s.Mem, "m", 4096, "memory to allocate to vm in MB")
+	pf.StringVarP(&s.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
+	pf.IntVarP(&s.Cpus, "cpus","c", 4, "cpus to allocate to vm")
+	pf.IntVarP(&s.Mem, "memory","m", 4096, "memory to allocate to vm in MB")
 
 	return cmd
 }
