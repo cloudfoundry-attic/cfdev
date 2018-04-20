@@ -99,6 +99,7 @@ func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	p.Root.SetArgs(args)
 	if err := p.Root.Execute(); err != nil {
 		cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
+		os.Exit(1)
 	}
 
 	// TODO why is the below here?????
