@@ -12,7 +12,6 @@ import (
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/spf13/cobra"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type Command interface {
@@ -20,12 +19,11 @@ type Command interface {
 }
 
 type Plugin struct {
-	Exit            chan struct{}
-	UI              terminal.UI
-	Config          config.Config
-	AnalyticsClient analytics.Client
-	Root            *cobra.Command
-	Version         plugin.VersionType
+	Exit    chan struct{}
+	UI      terminal.UI
+	Config  config.Config
+	Root    *cobra.Command
+	Version plugin.VersionType
 }
 
 func main() {
@@ -52,17 +50,15 @@ func main() {
 		ui.Failed(err.Error())
 		os.Exit(1)
 	}
+	defer conf.Close()
 
-	analyticsClient := analytics.New(conf.AnalyticsKey)
 	cfdev := &Plugin{
-		Exit:            exitChan,
-		UI:              ui,
-		Config:          conf,
-		AnalyticsClient: analyticsClient,
-		Root:            cmd.NewRoot(exitChan, ui, conf, analyticsClient),
-		Version:         plugin.VersionType{Major: 0, Minor: 0, Build: 2},
+		Exit:    exitChan,
+		UI:      ui,
+		Config:  conf,
+		Root:    cmd.NewRoot(exitChan, ui, conf),
+		Version: plugin.VersionType{Major: 0, Minor: 0, Build: 2},
 	}
-	defer cfdev.AnalyticsClient.Close()
 
 	plugin.Start(cfdev)
 }
@@ -85,20 +81,20 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	if args[0] == "CLI-MESSAGE-UNINSTALL" {
-		cfanalytics.TrackEvent(cfanalytics.UNINSTALL, nil, p.AnalyticsClient)
-		stop := cmd.NewStop(&p.Config, p.AnalyticsClient)
+		p.Config.Analytics.Event(cfanalytics.UNINSTALL, nil)
+		stop := cmd.NewStop(p.Config)
 		if err := stop.RunE(nil, []string{}); err != nil {
 			p.UI.Say("Error stopping cfdev: %s", err)
-			cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
+			p.Config.Analytics.Event(cfanalytics.ERROR, map[string]interface{}{"error": err})
 		}
 		return
 	}
 
-	cfanalytics.PromptOptIn(p.Config, p.UI)
+	p.Config.Analytics.PromptOptIn(p.UI)
 
 	p.Root.SetArgs(args)
 	if err := p.Root.Execute(); err != nil {
-		cfanalytics.TrackEvent(cfanalytics.ERROR, map[string]interface{}{"error": err}, p.AnalyticsClient)
+		p.Config.Analytics.Event(cfanalytics.ERROR, map[string]interface{}{"error": err})
 		os.Exit(1)
 	}
 

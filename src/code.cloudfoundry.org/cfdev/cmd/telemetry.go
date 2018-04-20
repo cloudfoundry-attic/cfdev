@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
-	"path"
-
-	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"github.com/spf13/cobra"
 )
@@ -15,23 +11,17 @@ func NewTelemetry(UI UI, Config config.Config) *cobra.Command {
 		Use:   "telemetry",
 		Short: "Show status for collecting anonymous usage telemetry",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			analyticsPath := path.Join(Config.AnalyticsDir, Config.AnalyticsFile)
 			if flagOff {
-				if err := cfanalytics.SetTelemetryState("no", Config); err != nil {
+				if err := Config.AnalyticsToggle.Set(false); err != nil {
 					return err
 				}
 			} else if flagOn {
-				if err := cfanalytics.SetTelemetryState("yes", Config); err != nil {
+				if err := Config.AnalyticsToggle.Set(true); err != nil {
 					return err
 				}
 			}
 
-			contents, err := ioutil.ReadFile(analyticsPath)
-			if err != nil {
-				return err
-			}
-
-			if string(contents) == "optin" {
+			if Config.AnalyticsToggle.Get() {
 				UI.Say("Telemetry is turned ON")
 			} else {
 				UI.Say("Telemetry is turned OFF")

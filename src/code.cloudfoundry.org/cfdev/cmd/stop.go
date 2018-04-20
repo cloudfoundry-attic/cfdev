@@ -12,23 +12,20 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
-func NewStop(Config *config.Config, AnalyticsClient analytics.Client) *cobra.Command {
+func NewStop(Config config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "stop",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStop(Config, AnalyticsClient)
+			return runStop(Config)
 		},
 	}
 	return cmd
 }
 
-func runStop(Config *config.Config, AnalyticsClient analytics.Client) error {
-	if AnalyticsClient != nil {
-		cfanalytics.TrackEvent(cfanalytics.STOP, map[string]interface{}{"type": "cf"}, AnalyticsClient)
-	}
+func runStop(Config config.Config) error {
+	Config.Analytics.Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
 
 	var reterr error
 	var all sync.WaitGroup

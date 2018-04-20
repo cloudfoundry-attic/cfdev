@@ -6,7 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"code.cloudfoundry.org/cfdev/cfanalytics"
+	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
 	"code.cloudfoundry.org/cfdev/resource"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 var (
@@ -37,21 +40,31 @@ var (
 	analyticsKey string
 )
 
+type Analytics interface {
+	Event(string, map[string]interface{}) error
+	Close()
+	PromptOptIn(cfanalytics.UI) error
+}
+
+type Toggle interface {
+	Get() bool
+	Set(value bool) error
+}
+
 type Config struct {
 	BoshDirectorIP         string
 	CFRouterIP             string
 	CFDevHome              string
 	StateDir               string
 	CacheDir               string
-	AnalyticsDir           string
 	LinuxkitPidFile        string
 	VpnkitPidFile          string
 	HyperkitPidFile        string
-	AnalyticsFile          string
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
-	AnalyticsKey           string
+	Analytics              Analytics
+	AnalyticsToggle        Toggle
 }
 
 func NewConfig() (Config, error) {
@@ -65,22 +78,27 @@ func NewConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	analyticsToggle := toggle.New(filepath.Join(cfdevHome, "analytics", "analytics.txt"), "optin", "optout")
+
 	return Config{
 		BoshDirectorIP:         "10.245.0.2",
 		CFRouterIP:             "10.144.0.34",
 		CFDevHome:              cfdevHome,
 		StateDir:               filepath.Join(cfdevHome, "state"),
 		CacheDir:               filepath.Join(cfdevHome, "cache"),
-		AnalyticsDir:           filepath.Join(cfdevHome, "analytics"),
 		LinuxkitPidFile:        filepath.Join(cfdevHome, "state", "linuxkit.pid"),
 		VpnkitPidFile:          filepath.Join(cfdevHome, "state", "vpnkit.pid"),
 		HyperkitPidFile:        filepath.Join(cfdevHome, "state", "hyperkit.pid"),
-		AnalyticsFile:          "analytics.txt",
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
-		AnalyticsKey:           analyticsKey,
+		Analytics:              cfanalytics.New(analyticsToggle, analytics.New(analyticsKey)),
+		AnalyticsToggle:        analyticsToggle,
 	}, nil
+}
+
+func (c Config) Close() {
+	c.Analytics.Close()
 }
 
 func catalog() (resource.Catalog, error) {

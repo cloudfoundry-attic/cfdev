@@ -1,15 +1,11 @@
 package cfanalytics
 
 import (
-	"io/ioutil"
-	"os"
-	"path"
 	"runtime"
 	"strings"
 
-	"code.cloudfoundry.org/cfdev/config"
 	"github.com/denisbrodbeck/machineid"
-	"gopkg.in/segmentio/analytics-go.v3"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 const START_BEGIN = "start_begin"
@@ -18,55 +14,72 @@ const STOP = "stop"
 const ERROR = "error"
 const UNINSTALL = "uninstall"
 
-func TrackEvent(event string, data map[string]interface{}, client analytics.Client) error {
+type Toggle interface {
+	Defined() bool
+	Get() bool
+	Set(value bool) error
+}
+
+type Analytics struct {
+	client  analytics.Client
+	toggle  Toggle
+	userId  string
+	version string
+}
+
+func New(toggle Toggle, client analytics.Client) *Analytics {
 	uuid, err := machineid.ProtectedID("cfdev")
 	if err != nil {
 		uuid = "UNKNOWN_ID"
 	}
+	return &Analytics{
+		client:  client,
+		toggle:  toggle,
+		userId:  uuid,
+		version: "0.0.2",
+	}
+}
 
-	var analyticsEvent = &AnalyticsEvent{
-		SegClient: client,
-		Event:     event,
-		UserId:    uuid,
-		Data:      data,
-		OS:        runtime.GOOS,
-		Version:   "0.0.2",
+func (a *Analytics) Close() {
+	a.client.Close()
+}
+
+func (a *Analytics) Event(event string, data map[string]interface{}) error {
+	if !a.toggle.Get() {
+		return nil
+	}
+	properties := analytics.NewProperties()
+	properties.Set("os", runtime.GOOS)
+	properties.Set("version", a.version)
+	for k, v := range data {
+		properties.Set(k, v)
 	}
 
-	return analyticsEvent.SendAnalytics()
+	return a.client.Enqueue(analytics.Track{
+		UserId:     a.userId,
+		Event:      event,
+		Properties: properties,
+	})
 }
 
 type UI interface {
-	Say(message string, args ...interface{})
 	Ask(prompt string) (answer string)
 }
 
-func PromptOptIn(conf config.Config, ui UI) error {
-	contents, _ := ioutil.ReadFile(path.Join(conf.AnalyticsDir, conf.AnalyticsFile))
-	if string(contents) == "" {
+func (a *Analytics) PromptOptIn(ui UI) error {
+	if !a.toggle.Defined() {
 		response := ui.Ask(`
 CF Dev collects anonymous usage data to help us improve your user experience. We intend to share these anonymous usage analytics with user community by publishing quarterly reports at :
 
 https://github.com/pivotal-cf/cfdev/wiki/Telemetry
 
 Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?`)
-		if err := SetTelemetryState(response, conf); err != nil {
+
+		response = strings.ToLower(response)
+		enabled := response == "y" || response == "yes"
+		if err := a.toggle.Set(enabled); err != nil {
 			return err
 		}
 	}
-
 	return nil
-}
-
-func SetTelemetryState(response string, conf config.Config) error {
-	if err := os.MkdirAll(conf.AnalyticsDir, 0755); err != nil {
-		return err
-	}
-
-	fileContents := "optout"
-	if strings.ToLower(response) == "y" || strings.ToLower(response) == "yes" {
-		fileContents = "optin"
-	}
-
-	return ioutil.WriteFile(path.Join(conf.AnalyticsDir, conf.AnalyticsFile), []byte(fileContents), 0644)
 }

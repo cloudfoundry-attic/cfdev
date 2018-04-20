@@ -11,34 +11,24 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 	"github.com/spf13/cobra"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
-type MockClient struct {
-	WasCalledWith analytics.Message
-}
+type MockClient struct{}
 
-func (mc *MockClient) Enqueue(message analytics.Message) error {
-	mc.WasCalledWith = message
-	return nil
-}
-
-func (mc *MockClient) Close() error {
-	return nil
-}
-
-func (mc *MockClient) SendAnalytics() error {
-	return nil
-}
+func (mc *MockClient) Event(string, map[string]interface{}) error { return nil }
+func (mc *MockClient) Close()                                     {}
+func (mc *MockClient) PromptOptIn(cfanalytics.UI) error           { return nil }
 
 var _ = Describe("Stop", func() {
 	var (
+		tmpDir                                                 string
 		linuxkit, vpnkit, hyperkit                             *gexec.Session
 		state, linuxkitPidPath, hyperkitPidPath, vpnkitPidPath string
 		cfg                                                    config.Config
@@ -51,18 +41,21 @@ var _ = Describe("Stop", func() {
 		linuxkitPidPath = filepath.Join(state, "linuxkit.pid")
 		hyperkitPidPath = filepath.Join(state, "hyperkit.pid")
 		vpnkitPidPath = filepath.Join(state, "vpnkit.pid")
-
-		mockClient := MockClient{
-			WasCalledWith: analytics.Track{},
-		}
+		tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
 
 		cfg = config.Config{
-			LinuxkitPidFile: linuxkitPidPath,
-			HyperkitPidFile: hyperkitPidPath,
-			VpnkitPidFile:   vpnkitPidPath,
+			LinuxkitPidFile:  linuxkitPidPath,
+			HyperkitPidFile:  hyperkitPidPath,
+			VpnkitPidFile:    vpnkitPidPath,
+			Analytics:        &MockClient{},
+			CFDevDSocketPath: filepath.Join(tmpDir, "cfdevd.socket"),
 		}
-		stopCmd = cmd.NewStop(&cfg, &mockClient)
+		stopCmd = cmd.NewStop(cfg)
 		stopCmd.SetArgs([]string{})
+		stopCmd.SetOutput(GinkgoWriter)
+	})
+	AfterEach(func() {
+		os.RemoveAll(tmpDir)
 	})
 	Context("all processes are running and pid files exist", func() {
 		BeforeEach(func() {
@@ -173,12 +166,9 @@ var _ = Describe("Stop", func() {
 	})
 
 	Context("cfdevd socket exists", func() {
-		var tmpDir string
 		var instructions chan byte
 		var uninstallErrorCode int
 		BeforeEach(func() {
-			tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
-			cfg.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
 			instructions = make(chan byte, 1)
 			ln, err := net.Listen("unix", cfg.CFDevDSocketPath)
 			Expect(err).NotTo(HaveOccurred())
@@ -198,9 +188,6 @@ var _ = Describe("Stop", func() {
 					binary.Write(conn, binary.LittleEndian, []byte{byte(uninstallErrorCode)})
 				}
 			}()
-		})
-		AfterEach(func() {
-			os.RemoveAll(tmpDir)
 		})
 		It("succeeds and sends the uninstall command to cfdevd", func() {
 			uninstallErrorCode = 0
@@ -224,14 +211,6 @@ var _ = Describe("Stop", func() {
 		})
 	})
 	Context("cfdevd socket is specified but does not exist", func() {
-		var tmpDir string
-		BeforeEach(func() {
-			tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
-			cfg.CFDevDSocketPath = filepath.Join(tmpDir, "cfdevd.socket")
-		})
-		AfterEach(func() {
-			os.RemoveAll(tmpDir)
-		})
 		It("succeeds", func() {
 			Expect(stopCmd.Execute()).To(Succeed())
 		})

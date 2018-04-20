@@ -21,7 +21,6 @@ import (
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
 	"github.com/spf13/cobra"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type UI interface {
@@ -29,17 +28,16 @@ type UI interface {
 }
 
 type start struct {
-	Exit            chan struct{}
-	UI              UI
-	Config          config.Config
-	AnalyticsClient analytics.Client
-	Registries      string
-	Cpus            int
-	Mem             int
+	Exit       chan struct{}
+	UI         UI
+	Config     config.Config
+	Registries string
+	Cpus       int
+	Mem        int
 }
 
-func NewStart(Exit chan struct{}, UI UI, Config config.Config, AnalyticsClient analytics.Client) *cobra.Command {
-	s := start{Exit: Exit, UI: UI, Config: Config, AnalyticsClient: AnalyticsClient}
+func NewStart(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
+	s := start{Exit: Exit, UI: UI, Config: Config}
 	cmd := &cobra.Command{
 		Use: "start",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -48,8 +46,8 @@ func NewStart(Exit chan struct{}, UI UI, Config config.Config, AnalyticsClient a
 	}
 	pf := cmd.PersistentFlags()
 	pf.StringVarP(&s.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
-	pf.IntVarP(&s.Cpus, "cpus","c", 4, "cpus to allocate to vm")
-	pf.IntVarP(&s.Mem, "memory","m", 4096, "memory to allocate to vm in MB")
+	pf.IntVarP(&s.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
+	pf.IntVarP(&s.Mem, "memory", "m", 4096, "memory to allocate to vm in MB")
 
 	return cmd
 }
@@ -63,7 +61,7 @@ func (s *start) RunE() error {
 		os.Exit(128)
 	}()
 
-	cfanalytics.TrackEvent(cfanalytics.START_BEGIN, map[string]interface{}{"type": "cf"}, s.AnalyticsClient)
+	s.Config.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{"type": "cf"})
 
 	if err := env.Setup(s.Config); err != nil {
 		return err
@@ -71,7 +69,7 @@ func (s *start) RunE() error {
 
 	if isLinuxKitRunning(s.Config.LinuxkitPidFile) {
 		s.UI.Say("CF Dev is already running...")
-		cfanalytics.TrackEvent(cfanalytics.START_END, map[string]interface{}{"type": "cf", "alreadyrunning": true}, s.AnalyticsClient)
+		s.Config.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"type": "cf", "alreadyrunning": true})
 		return nil
 	}
 
@@ -168,7 +166,7 @@ Admin user => Email: admin / Password: admin
 Regular user => Email: user / Password: pass
 `)
 
-	cfanalytics.TrackEvent(cfanalytics.START_END, map[string]interface{}{"type": "cf"}, s.AnalyticsClient)
+	s.Config.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"type": "cf"})
 
 	return nil
 }

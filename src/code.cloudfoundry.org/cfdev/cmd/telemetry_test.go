@@ -1,10 +1,6 @@
 package cmd_test
 
 import (
-	"io/ioutil"
-	"os"
-	"path"
-
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
@@ -16,66 +12,62 @@ type MockUI struct {
 	WasCalledWith string
 }
 
-func (m *MockUI) Say(message string, args ...interface{}) {
-	m.WasCalledWith = message
+func (m *MockUI) Say(message string, args ...interface{}) { m.WasCalledWith = message }
+
+type MockToggle struct {
+	val bool
 }
+
+func (t *MockToggle) Get() bool        { return t.val }
+func (t *MockToggle) Set(v bool) error { t.val = v; return nil }
 
 var _ = Describe("Telemetry", func() {
 	var (
-		tmpDir            string
-		mockUI            MockUI
-		conf              config.Config
-		analyticsFilePath string
-		telCmd            *cobra.Command
+		mockUI     MockUI
+		mockToggle *MockToggle
+		conf       config.Config
+		telCmd     *cobra.Command
 	)
 
 	BeforeEach(func() {
 		mockUI = MockUI{
 			WasCalledWith: "",
 		}
+		mockToggle = &MockToggle{}
 
-		tmpDir, _ = ioutil.TempDir(os.TempDir(), "testdir")
 		conf = config.Config{
-			AnalyticsDir:  path.Join(tmpDir, "analytics"),
-			AnalyticsFile: "analytics-text.txt",
+			AnalyticsToggle: mockToggle,
 		}
-
-		os.MkdirAll(conf.AnalyticsDir, 0755)
-		analyticsFilePath = path.Join(conf.AnalyticsDir, conf.AnalyticsFile)
 
 		telCmd = cmd.NewTelemetry(&mockUI, conf)
 		telCmd.SetArgs([]string{})
 	})
 
-	AfterEach(func() {
-		os.RemoveAll(tmpDir)
-	})
-
 	Context("first arg", func() {
 		It("ON", func() {
-			ioutil.WriteFile(analyticsFilePath, []byte(""), 0755)
+			mockToggle.val = false
 
 			telCmd.SetArgs([]string{"--on"})
 			Expect(telCmd.Execute()).To(Succeed())
 
-			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optin")))
+			Expect(mockToggle.val).To(Equal(true))
 			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned ON"))
 		})
 
 		It("OFF", func() {
-			ioutil.WriteFile(analyticsFilePath, []byte(""), 0755)
+			mockToggle.val = true
 
 			telCmd.SetArgs([]string{"--off"})
 			Expect(telCmd.Execute()).To(Succeed())
 
-			Expect(ioutil.ReadFile(analyticsFilePath)).To(Equal([]byte("optout")))
+			Expect(mockToggle.val).To(Equal(false))
 			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned OFF"))
 		})
 	})
 
 	Context("No args displays status", func() {
 		It("ON", func() {
-			ioutil.WriteFile(analyticsFilePath, []byte("optin"), 0755)
+			mockToggle.val = true
 
 			Expect(telCmd.Execute()).To(Succeed())
 
@@ -83,7 +75,7 @@ var _ = Describe("Telemetry", func() {
 		})
 
 		It("OFF", func() {
-			ioutil.WriteFile(analyticsFilePath, []byte("optout"), 0755)
+			mockToggle.val = false
 
 			Expect(telCmd.Execute()).To(Succeed())
 
