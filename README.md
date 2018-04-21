@@ -53,6 +53,8 @@ To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
 
 ## Telemetry
 
+**Please Note : Some users who opted-out of telemetry have reported seeing telemetry calls being made. We have stopped all collection of telemetery until this bug is resolved and have also deleted all telemetry data that was collected. We are actively working to address this bug and recommend updating your version of CF Dev once v 0.0.3 is available.**
+
 Here on the CF Dev team, we use telemetry to help us understand how our tool is being used.  We value our users privacy, therefore all telemetry is completely anonymous. There is no way for anyone with the telemetry to identify who is using the CF Dev tool.  In an effort to make our data as transparent as possible, we will be publishing aggregated anonymous usage data to this page periodically to help our user community understand how the tool is being used. 
 
 In addition to making this data completely anonymous, we require users to opt-in to allowing us to collect telemetry from their tool. Upon running `$ cf dev start` for the first time, we will prompt the user to opt-in to capturing analytics.  Any time after that you can turn on/off telemetry by running `$ cf dev telemetry --on/off`
