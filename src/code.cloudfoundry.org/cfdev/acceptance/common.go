@@ -20,12 +20,6 @@ const (
 	CFRouterIP     = "10.144.0.34"
 )
 
-func CreateTempCFDevHomeDir() string {
-	path, err := ioutil.TempDir("", "cfdev-home")
-	Expect(err).ToNot(HaveOccurred())
-	return path
-}
-
 func SetupDependencies(cacheDir string) {
 	gopaths := strings.Split(os.Getenv("GOPATH"), ":")
 
@@ -43,11 +37,14 @@ func SetupDependencies(cacheDir string) {
 	Expect(err).ToNot(HaveOccurred())
 
 	for _, asset := range assets {
-		origin := filepath.Join(gopaths[0], "linuxkit", asset)
 		target := filepath.Join(cacheDir, asset)
-
-		Expect(origin).To(BeAnExistingFile())
-		Expect(os.Symlink(origin, target)).ToNot(HaveOccurred())
+		for _, origin := range []string{filepath.Join(gopaths[0], "output", asset), filepath.Join(gopaths[0], "linuxkit", asset), filepath.Join(os.Getenv("HOME"), ".cfdev", "cache", asset)} {
+			if exists, _ := FileExists(origin); exists {
+				Expect(os.Symlink(origin, target)).To(Succeed())
+				break
+			}
+		}
+		Expect(target).To(BeAnExistingFile())
 	}
 }
 
@@ -114,4 +111,17 @@ func HasSudoPrivilege() bool {
 	default:
 		panic(err)
 	}
+}
+
+func FileExists(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }

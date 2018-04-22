@@ -16,12 +16,21 @@ export GOARCH=amd64
 go build code.cloudfoundry.org/cfdevd
 cfdevd="$PWD"/cfdevd
 
+cfdepsUrl="$cfdev/output/cf-oss-deps.iso"
+if [ ! -f "$cfdepsUrl" ]; then
+  cfdepsUrl="$cache_dir/cf-oss-deps.iso"
+fi
+cfdevefiUrl="$cfdev/output/cfdev-efi.iso"
+if [ ! -f "$cfdevefiUrl" ]; then
+  cfdevefiUrl="$cache_dir/cfdev-efi.iso"
+fi
+
 go build \
   -ldflags \
-    "-X $pkg.cfdepsUrl=file://$cfdev/output/cf-oss-deps.iso
-     -X $pkg.cfdepsMd5=$(md5 $cfdev/output/cf-oss-deps.iso | awk '{ print $4 }')
-     -X $pkg.cfdevefiUrl=file://$cfdev/output/cfdev-efi.iso
-     -X $pkg.cfdevefiMd5=$(md5 $cfdev/output/cfdev-efi.iso | awk '{ print $4 }')
+    "-X $pkg.cfdepsUrl=file://$cfdepsUrl
+     -X $pkg.cfdepsMd5=$(md5 $cfdepsUrl | awk '{ print $4 }')
+     -X $pkg.cfdevefiUrl=file://$cfdevefiUrl
+     -X $pkg.cfdevefiMd5=$(md5 $cfdevefiUrl | awk '{ print $4 }')
      -X $pkg.vpnkitUrl=file://$cache_dir/vpnkit
      -X $pkg.vpnkitMd5=$(md5 "$cache_dir"/vpnkit | awk '{ print $4 }')
      -X $pkg.hyperkitUrl=file://$cache_dir/hyperkit

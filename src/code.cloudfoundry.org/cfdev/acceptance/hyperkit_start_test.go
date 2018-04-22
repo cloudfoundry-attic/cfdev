@@ -19,26 +19,13 @@ import (
 )
 
 var _ = Describe("hyperkit start", func() {
-
 	var (
-		cfdevHome       string
 		linuxkitPidPath string
 		stateDir        string
 		cacheDir        string
 	)
 
 	BeforeEach(func() {
-		cfHome, err := ioutil.TempDir("", "cf-home")
-		Expect(err).ToNot(HaveOccurred())
-		cfdevHome = CreateTempCFDevHomeDir()
-		os.Setenv("CF_HOME", cfHome)
-		os.Setenv("CFDEV_HOME", cfdevHome)
-		session := cf.Cf("install-plugin", pluginPath, "-f")
-		Eventually(session).Should(gexec.Exit(0))
-		session = cf.Cf("plugins")
-		Eventually(session).Should(gbytes.Say("cfdev"))
-		Eventually(session).Should(gexec.Exit(0))
-
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
@@ -57,12 +44,6 @@ var _ = Describe("hyperkit start", func() {
 			syscall.Kill(int(-pid), syscall.SIGKILL)
 		}
 
-		os.RemoveAll(cfdevHome)
-		session := cf.Cf("uninstall-plugin", "cfdev")
-		Eventually(session).Should(gexec.Exit(0))
-
-		os.Unsetenv("CF_HOME")
-		os.Unsetenv("CFDEV_HOME")
 		os.Unsetenv("CFDEV_SKIP_ASSET_CHECK")
 	})
 

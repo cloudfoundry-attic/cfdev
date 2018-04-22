@@ -55,6 +55,7 @@ var _ = Describe("Stop", func() {
 		stopCmd.SetOutput(GinkgoWriter)
 	})
 	AfterEach(func() {
+		os.RemoveAll(state)
 		os.RemoveAll(tmpDir)
 	})
 	Context("all processes are running and pid files exist", func() {
@@ -69,8 +70,6 @@ var _ = Describe("Stop", func() {
 		})
 
 		AfterEach(func() {
-			os.RemoveAll(state)
-
 			linuxkit.Terminate()
 			vpnkit.Terminate()
 			hyperkit.Terminate()
@@ -118,22 +117,19 @@ var _ = Describe("Stop", func() {
 			vpnkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
 			hyperkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
 
+			Expect(ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(linuxkit.Command.Process.Pid)), 0644)).To(Succeed())
+			Expect(ioutil.WriteFile(vpnkitPidPath, []byte(strconv.Itoa(vpnkit.Command.Process.Pid)), 0644)).To(Succeed())
+			Expect(ioutil.WriteFile(hyperkitPidPath, []byte(strconv.Itoa(hyperkit.Command.Process.Pid)), 0644)).To(Succeed())
+
 			vpnkit.Kill()
-
-			ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(linuxkit.Command.Process.Pid)), 0644)
-			ioutil.WriteFile(vpnkitPidPath, []byte(strconv.Itoa(vpnkit.Command.Process.Pid)), 0644)
-			ioutil.WriteFile(hyperkitPidPath, []byte(strconv.Itoa(hyperkit.Command.Process.Pid)), 0644)
-		})
-
-		AfterEach(func() {
-			os.RemoveAll(state)
+			Eventually(vpnkit).Should(gexec.Exit())
 		})
 
 		It("kills existing pids and returns error", func() {
 			Expect(stopCmd.Execute()).To(Succeed())
 
-			Expect(linuxkit).To(gexec.Exit())
-			Expect(hyperkit).To(gexec.Exit())
+			Eventually(linuxkit).Should(gexec.Exit())
+			Eventually(hyperkit).Should(gexec.Exit())
 
 			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
 			Expect(vpnkitPidPath).ToNot(BeAnExistingFile())
@@ -150,10 +146,6 @@ var _ = Describe("Stop", func() {
 			ioutil.WriteFile(linuxkitPidPath, pid, 0644)
 			ioutil.WriteFile(vpnkitPidPath, pid, 0644)
 			ioutil.WriteFile(hyperkitPidPath, pid, 0644)
-		})
-
-		AfterEach(func() {
-			os.RemoveAll(state)
 		})
 
 		It("deletes all pid files and succeeds", func() {

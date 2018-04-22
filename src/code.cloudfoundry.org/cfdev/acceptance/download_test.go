@@ -14,56 +14,34 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"code.cloudfoundry.org/cfdev/resource"
-	"github.com/onsi/gomega/gbytes"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 )
 
 var _ = Describe("download", func() {
 	var (
-		cfdevHome string
-		cacheDir  string
-		server    *httptest.Server
+		cacheDir string
+		server   *httptest.Server
 	)
 
 	BeforeEach(func() {
-		cfHome, err := ioutil.TempDir("", "cf-home")
-		Expect(err).ToNot(HaveOccurred())
-		cfdevHome = CreateTempCFDevHomeDir()
-
-		os.Setenv("CF_HOME", cfHome)
-		os.Setenv("CFDEV_HOME", cfdevHome)
-
 		cacheDir = filepath.Join(cfdevHome, "cache")
 
 		serverAssetsDir := stageServerAssets()
 		fileHandler := http.FileServer(http.Dir(serverAssetsDir))
 		server = httptest.NewServer(fileHandler)
-
-		session := cf.Cf("install-plugin", pluginPath, "-f")
-		Eventually(session).Should(gexec.Exit(0))
-		session = cf.Cf("plugins")
-		Eventually(session).Should(gbytes.Say("cfdev"))
-		Eventually(session).Should(gexec.Exit(0))
 	})
 
 	AfterEach(func() {
 		gexec.Kill()
-		os.RemoveAll(cfdevHome)
 		server.Close()
-
-		session := cf.Cf("uninstall-plugin", "cfdev")
-		Eventually(session).Should(gexec.Exit(0))
-
-		os.Unsetenv("CF_HOME")
-		os.Unsetenv("CFDEV_HOME")
 	})
 
-	Context("when the catalog is valid", func(){
-		BeforeEach(func(){
+	Context("when the catalog is valid", func() {
+		BeforeEach(func() {
 			os.Setenv("CFDEV_CATALOG", localCatalog(server.URL))
 		})
 
-		AfterEach(func(){
+		AfterEach(func() {
 			os.Unsetenv("CFDEV_CATALOG")
 		})
 
@@ -79,17 +57,12 @@ var _ = Describe("download", func() {
 	})
 
 	Context("downloaded asset has incorrect checksum", func() {
-		BeforeEach(func(){
-			os.Setenv("CFDEV_CATALOG", badCatalog(server.URL))
-		})
-
-		AfterEach(func(){
-			os.Unsetenv("CFDEV_CATALOG")
-		})
+		BeforeEach(func() { os.Setenv("CFDEV_CATALOG", badCatalog(server.URL)) })
+		AfterEach(func() { os.Unsetenv("CFDEV_CATALOG") })
 
 		It("should exit", func() {
 			session := cf.Cf("dev", "download")
-			Eventually(session, 10, 1).Should(gexec.Exit(1))
+			Eventually(session, 10).Should(gexec.Exit(1))
 		})
 	})
 })

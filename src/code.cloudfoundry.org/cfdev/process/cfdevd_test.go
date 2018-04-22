@@ -81,6 +81,7 @@ func listen(sockPath string) *net.UnixListener {
 func accept(listener *net.UnixListener) {
 	defer GinkgoRecover()
 	conn, err := listener.Accept()
-	Expect(err).NotTo(HaveOccurred())
-	defer conn.Close()
+	if err == nil {
+		conn.Close()
+	}
 }

@@ -14,27 +14,23 @@ import (
 
 	"path"
 
+	"time"
+
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"time"
 )
 
 var _ = Describe("hyperkit starts and telemetry", func() {
 	var (
-		cfdevHome       string
 		linuxkitPidPath string
 		vpnkitPidPath   string
 		stateDir        string
 		cacheDir        string
-		session *gexec.Session
-		err error
+		session         *gexec.Session
+		err             error
 	)
 
 	BeforeEach(func() {
-		cfHome, err := ioutil.TempDir("", "cf-home")
-		Expect(err).ToNot(HaveOccurred())
-
-		cfdevHome = CreateTempCFDevHomeDir()
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
@@ -44,19 +40,11 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 			SetupDependencies(cacheDir)
 			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
 		}
-		os.Setenv("CF_HOME", cfHome)
-		os.Setenv("CFDEV_HOME", cfdevHome)
 
 		os.RemoveAll(path.Join(cfdevHome, "analytics"))
-
-		cmd := exec.Command("/usr/local/bin/cf", "install-plugin", os.Getenv("CFDEV_PLUGIN_PATH"), "-f")
-		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit())
 	})
 
 	AfterEach(func() {
-		os.RemoveAll(path.Join(cfdevHome, "analytics"))
 		session.Kill()
 	})
 
