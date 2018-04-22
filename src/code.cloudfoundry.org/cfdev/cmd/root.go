@@ -8,17 +8,18 @@ import (
 )
 
 func NewRoot(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
-	root := &cobra.Command{Use: "cf"}
+	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
-	root.SilenceUsage = true
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)
 
 	dev := &cobra.Command{
-		Use:   "dev",
-		Short: "Start and stop a single vm CF deployment running on your workstation",
+		Use:           "dev",
+		Short:         "Start and stop a single vm CF deployment running on your workstation",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 	root.AddCommand(dev)
 
