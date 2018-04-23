@@ -94,7 +94,9 @@ func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 
 	p.Root.SetArgs(args)
 	if err := p.Root.Execute(); err != nil {
-		p.Config.Analytics.Event(cfanalytics.ERROR, map[string]interface{}{"error": err})
+		p.UI.Failed(err.Error())
+		p.Config.Analytics.Event(cfanalytics.ERROR, map[string]interface{}{"error": err.Error()})
+		p.Config.Close()
 		os.Exit(1)
 	}
 

@@ -3,6 +3,7 @@ package cfanalytics
 import (
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/denisbrodbeck/machineid"
 	analytics "gopkg.in/segmentio/analytics-go.v3"
@@ -51,6 +52,7 @@ func (a *Analytics) Event(event string, data map[string]interface{}) error {
 	properties := analytics.NewProperties()
 	properties.Set("os", runtime.GOOS)
 	properties.Set("version", a.version)
+	properties.Set("localtime", time.Now())
 	for k, v := range data {
 		properties.Set(k, v)
 	}
