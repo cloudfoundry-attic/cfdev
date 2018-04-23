@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -79,6 +81,9 @@ func NewConfig() (Config, error) {
 	}
 
 	analyticsToggle := toggle.New(filepath.Join(cfdevHome, "analytics", "analytics.txt"), "optin", "optout")
+	analyticsClient, _ := analytics.NewWithConfig(analyticsKey, analytics.Config{
+		Logger: analytics.StdLogger(log.New(ioutil.Discard, "", 0)),
+	})
 
 	return Config{
 		BoshDirectorIP:         "10.245.0.2",
@@ -92,7 +97,7 @@ func NewConfig() (Config, error) {
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
-		Analytics:              cfanalytics.New(analyticsToggle, analytics.New(analyticsKey)),
+		Analytics:              cfanalytics.New(analyticsToggle, analyticsClient),
 		AnalyticsToggle:        analyticsToggle,
 	}, nil
 }
