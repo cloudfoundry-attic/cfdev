@@ -52,7 +52,6 @@ func (a *Analytics) Event(event string, data map[string]interface{}) error {
 	properties := analytics.NewProperties()
 	properties.Set("os", runtime.GOOS)
 	properties.Set("version", a.version)
-	properties.Set("localtime", time.Now())
 	for k, v := range data {
 		properties.Set(k, v)
 	}
@@ -60,6 +59,7 @@ func (a *Analytics) Event(event string, data map[string]interface{}) error {
 	return a.client.Enqueue(analytics.Track{
 		UserId:     a.userId,
 		Event:      event,
+		Timestamp:  time.Now().UTC(),
 		Properties: properties,
 	})
 }

@@ -2,11 +2,13 @@ package cfanalytics_test
 
 import (
 	"runtime"
+	"time"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"github.com/denisbrodbeck/machineid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gstruct"
 	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
@@ -105,19 +107,17 @@ var _ = Describe("Analytics", func() {
 			It("sends event to segmentio", func() {
 				Expect(subject.Event("anevent", map[string]interface{}{"mykey": "myval"})).To(Succeed())
 
-				expectProperties := analytics.NewProperties()
-				expectProperties.Set("os", runtime.GOOS)
-				expectProperties.Set("version", "0.0.2")
-				expectProperties.Set("mykey", "myval")
-
 				uuid, _ := machineid.ProtectedID("cfdev")
-				expected := analytics.Track{
-					UserId:     uuid,
-					Event:      "anevent",
-					Properties: expectProperties,
-				}
-
-				Expect(mockClient.EnqueueCalledWith).To(Equal(expected))
+				Expect(mockClient.EnqueueCalledWith).To(gstruct.MatchFields(gstruct.IgnoreExtras, gstruct.Fields{
+					"UserId":    Equal(uuid),
+					"Event":     Equal("anevent"),
+					"Timestamp": BeTemporally(">=", time.Now().Add(-1*time.Minute)),
+					"Properties": BeEquivalentTo(map[string]interface{}{
+						"os":      runtime.GOOS,
+						"version": "0.0.2",
+						"mykey":   "myval",
+					}),
+				}))
 			})
 		})
 	})
