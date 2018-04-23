@@ -30,7 +30,7 @@ func NewTelemetry(UI UI, Config config.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().BoolVar(&flagOff, "off", false, "Disable the collection of anonymous usage telemetryDisable the collection of anonymous usage telemetry")
-	cmd.PersistentFlags().BoolVar(&flagOn, "on", false, "Enable the collection of anonymous usage telemetryDisable the collection of anonymous usage telemetry")
+	cmd.PersistentFlags().BoolVar(&flagOff, "off", false, "Disable the collection of anonymous usage telemetry")
+	cmd.PersistentFlags().BoolVar(&flagOn, "on", false, "Enable the collection of anonymous usage telemetry")
 	return cmd
 }
