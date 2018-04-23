@@ -90,7 +90,11 @@ func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 		return
 	}
 
-	p.Config.Analytics.PromptOptIn(p.UI)
+	if err := p.Config.Analytics.PromptOptIn(p.Exit, p.UI); err != nil {
+		p.UI.Failed(err.Error())
+		p.Config.Close()
+		os.Exit(1)
+	}
 
 	p.Root.SetArgs(args)
 	if err := p.Root.Execute(); err != nil {

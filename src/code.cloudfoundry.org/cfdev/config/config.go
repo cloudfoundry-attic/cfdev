@@ -45,7 +45,7 @@ var (
 type Analytics interface {
 	Event(string, map[string]interface{}) error
 	Close()
-	PromptOptIn(cfanalytics.UI) error
+	PromptOptIn(chan struct{}, cfanalytics.UI) error
 }
 
 type Toggle interface {

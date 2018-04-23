@@ -61,22 +61,25 @@ var _ = Describe("Analytics", func() {
 	})
 
 	Describe("PromptOptIn", func() {
+		var exitChan chan struct{}
 		var mockUI MockUI
 		BeforeEach(func() {
+			exitChan = make(chan struct{}, 1)
 			mockUI = MockUI{
 				WasCalled: false,
 			}
 		})
-		Context("When user has not yet answered optin prompt", func() {
+		Context("When user has NOT yet answered optin prompt", func() {
+			BeforeEach(func() { mockToggle.defined = false })
 			It("prompts user", func() {
-				Expect(subject.PromptOptIn(&mockUI)).To(Succeed())
+				Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
 				Expect(mockUI.WasCalled).To(Equal(true))
 			})
 			for _, answer := range []string{"yes", "y", "yEs"} {
 				Context("user answers "+answer, func() {
 					BeforeEach(func() { mockUI.Return = answer })
 					It("saves optin", func() {
-						Expect(subject.PromptOptIn(&mockUI)).To(Succeed())
+						Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
 						Expect(mockToggle.SetCalled).To(Equal(true))
 						Expect(mockToggle.val).To(Equal(true))
 					})
@@ -86,12 +89,30 @@ var _ = Describe("Analytics", func() {
 				Context("user answers "+answer, func() {
 					BeforeEach(func() { mockUI.Return = answer })
 					It("saves optout", func() {
-						Expect(subject.PromptOptIn(&mockUI)).To(Succeed())
+						Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
 						Expect(mockToggle.SetCalled).To(Equal(true))
 						Expect(mockToggle.val).To(Equal(false))
 					})
 				})
 			}
+			Context("user hits ctrl-c", func() {
+				BeforeEach(func() {
+					mockUI.Return = ""
+					exitChan <- struct{}{}
+				})
+				It("does not write set a value on toggle", func() {
+					Expect(subject.PromptOptIn(exitChan, &mockUI)).To(MatchError("Exit while waiting for telemetry prompt"))
+					Expect(mockToggle.SetCalled).To(Equal(false))
+				})
+			})
+		})
+		Context("When user has answered optin prompt", func() {
+			BeforeEach(func() { mockToggle.defined = true })
+			It("does not ask again", func() {
+				Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
+				Expect(mockUI.WasCalled).To(Equal(false))
+				Expect(mockToggle.SetCalled).To(Equal(false))
+			})
 		})
 	})
 	Describe("Event", func() {

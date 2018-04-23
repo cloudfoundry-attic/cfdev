@@ -22,9 +22,9 @@ import (
 
 type MockClient struct{}
 
-func (mc *MockClient) Event(string, map[string]interface{}) error { return nil }
-func (mc *MockClient) Close()                                     {}
-func (mc *MockClient) PromptOptIn(cfanalytics.UI) error           { return nil }
+func (mc *MockClient) Event(string, map[string]interface{}) error      { return nil }
+func (mc *MockClient) Close()                                          {}
+func (mc *MockClient) PromptOptIn(chan struct{}, cfanalytics.UI) error { return nil }
 
 var _ = Describe("Stop", func() {
 	var (

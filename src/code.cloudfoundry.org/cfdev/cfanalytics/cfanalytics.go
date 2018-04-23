@@ -1,6 +1,7 @@
 package cfanalytics
 
 import (
+	"fmt"
 	"runtime"
 	"strings"
 	"time"
@@ -68,7 +69,7 @@ type UI interface {
 	Ask(prompt string) (answer string)
 }
 
-func (a *Analytics) PromptOptIn(ui UI) error {
+func (a *Analytics) PromptOptIn(Exit chan struct{}, ui UI) error {
 	if !a.toggle.Defined() {
 		response := ui.Ask(`
 CF Dev collects anonymous usage data to help us improve your user experience. We intend to share these anonymous usage analytics with user community by publishing quarterly reports at :
@@ -76,6 +77,12 @@ CF Dev collects anonymous usage data to help us improve your user experience. We
 https://github.com/pivotal-cf/cfdev/wiki/Telemetry
 
 Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?`)
+
+		select {
+		case <-Exit:
+			return fmt.Errorf("Exit while waiting for telemetry prompt")
+		case <-time.After(time.Millisecond):
+		}
 
 		response = strings.ToLower(response)
 		enabled := response == "y" || response == "yes"
