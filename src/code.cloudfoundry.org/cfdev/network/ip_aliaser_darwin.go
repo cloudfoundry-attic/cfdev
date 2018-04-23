@@ -24,7 +24,7 @@ func AddLoopbackAliases(addrs ...string) error {
 			prompted = true
 		}
 
-		cmd := exec.Command("sudo", "--stdin", "ifconfig", "lo0", "add", addr+"/32")
+		cmd := exec.Command("sudo", "-S", "ifconfig", "lo0", "add", addr+"/32")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
