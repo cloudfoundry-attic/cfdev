@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
@@ -15,29 +17,37 @@ import (
 )
 
 var (
-	cfdepsUrl string
-	cfdepsMd5 string
+	cfdepsUrl  string
+	cfdepsMd5  string
+	cfdepsSize string
 
-	cfdevefiUrl string
-	cfdevefiMd5 string
+	cfdevefiUrl  string
+	cfdevefiMd5  string
+	cfdevefiSize string
 
-	vpnkitUrl string
-	vpnkitMd5 string
+	vpnkitUrl  string
+	vpnkitMd5  string
+	vpnkitSize string
 
-	hyperkitUrl string
-	hyperkitMd5 string
+	hyperkitUrl  string
+	hyperkitMd5  string
+	hyperkitSize string
 
-	linuxkitUrl string
-	linuxkitMd5 string
+	linuxkitUrl  string
+	linuxkitMd5  string
+	linuxkitSize string
 
-	qcowtoolUrl string
-	qcowtoolMd5 string
+	qcowtoolUrl  string
+	qcowtoolMd5  string
+	qcowtoolSize string
 
-	uefiUrl string
-	uefiMd5 string
+	uefiUrl  string
+	uefiMd5  string
+	uefiSize string
 
-	cfdevdUrl string
-	cfdevdMd5 string
+	cfdevdUrl  string
+	cfdevdMd5  string
+	cfdevdSize string
 
 	analyticsKey string
 )
@@ -106,6 +116,14 @@ func (c Config) Close() {
 	c.Analytics.Close()
 }
 
+func aToUint64(a string) uint64 {
+	i, err := strconv.ParseUint(a, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return i
+}
+
 func catalog() (resource.Catalog, error) {
 	override := os.Getenv("CFDEV_CATALOG")
 
@@ -117,48 +135,60 @@ func catalog() (resource.Catalog, error) {
 		return c, nil
 	}
 
-	return resource.Catalog{
+	catalog := resource.Catalog{
 		Items: []resource.Item{
 			{
 				URL:  cfdepsUrl,
 				Name: "cf-oss-deps.iso",
 				MD5:  cfdepsMd5,
+				Size: aToUint64(cfdepsSize),
 			},
 			{
 				URL:  cfdevefiUrl,
 				Name: "cfdev-efi.iso",
 				MD5:  cfdevefiMd5,
+				Size: aToUint64(cfdevefiSize),
 			},
 			{
 				URL:  vpnkitUrl,
 				Name: "vpnkit",
 				MD5:  vpnkitMd5,
+				Size: aToUint64(vpnkitSize),
 			},
 			{
 				URL:  hyperkitUrl,
 				Name: "hyperkit",
 				MD5:  hyperkitMd5,
+				Size: aToUint64(hyperkitSize),
 			},
 			{
 				URL:  linuxkitUrl,
 				Name: "linuxkit",
 				MD5:  linuxkitMd5,
+				Size: aToUint64(linuxkitSize),
 			},
 			{
 				URL:  qcowtoolUrl,
 				Name: "qcow-tool",
 				MD5:  qcowtoolMd5,
+				Size: aToUint64(qcowtoolSize),
 			},
 			{
 				URL:  uefiUrl,
 				Name: "UEFI.fd",
 				MD5:  uefiMd5,
+				Size: aToUint64(uefiSize),
 			},
 			{
 				URL:  cfdevdUrl,
 				Name: "cfdevd",
 				MD5:  cfdevdMd5,
+				Size: aToUint64(cfdevdSize),
 			},
 		},
-	}, nil
+	}
+	sort.Slice(catalog.Items, func(i, j int) bool {
+		return catalog.Items[i].Size < catalog.Items[j].Size
+	})
+	return catalog, nil
 }

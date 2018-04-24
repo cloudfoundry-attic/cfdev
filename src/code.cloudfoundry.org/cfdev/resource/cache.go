@@ -5,131 +5,142 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+type Progress interface {
+	io.Writer
+	Start(total uint64)
+	Add(add uint64)
+	End()
+}
 
 type Cache struct {
 	Dir                   string
-	DownloadFunc          func(url, path string) error
+	HttpDo                func(req *http.Request) (*http.Response, error)
+	Progress              Progress
 	SkipAssetVerification bool
 }
 
 func (c *Cache) Sync(clog *Catalog) error {
-	results, err := c.scan(c.Dir, clog)
-
-	if err != nil {
-		return err
-	}
-
-	for _, result := range results {
-		filename := filepath.Join(c.Dir, result.item.Name)
-
-		switch result.state {
-		case missing:
-			if err := c.downloadAndVerify(result, filename); err != nil {
-				return err
-			}
-		case corrupt:
-			if err := os.Remove(filename); err != nil {
-				return err
-			}
-			if err := c.downloadAndVerify(result, filename); err != nil {
-				return err
-			}
-		case valid:
-		case unknown:
-			os.Remove(filename)
-		default:
-			return fmt.Errorf("unsupported sync state")
-		}
-	}
-
-	return nil
-}
-
-func (c *Cache) downloadAndVerify(res result, filename string) error {
-	if err := c.DownloadFunc(res.item.URL, filename); err != nil {
-		return err
-	}
-
-	state, err := c.verifyFile(filename, res.item.MD5)
-
-	if err != nil {
-		return err
-	}
-
-	if state == corrupt {
-		return fmt.Errorf("download file does not match checksum: %s %s",
-			res.item.Name, res.item.MD5)
-	}
-
-	return nil
-}
-
-func (c *Cache) scan(dir string, clog *Catalog) ([]result, error) {
-	var results []result
-
+	c.Progress.Start(c.total(clog))
 	for _, item := range clog.Items {
-		itemPath := filepath.Join(dir, item.Name)
-		_, err := os.Stat(itemPath)
-
-		fileMissing := os.IsNotExist(err)
-
-		if err != nil && !fileMissing {
-			return nil, err
+		if err := c.download(&item); err != nil {
+			return err
 		}
+	}
+	c.Progress.End()
+	return c.removeUnknown(clog)
+}
 
-		result := result{
-			item: item,
-		}
+func (c *Cache) total(clog *Catalog) uint64 {
+	var total uint64 = 0
+	for _, item := range clog.Items {
+		total += item.Size
+	}
+	return total
+}
 
-		if fileMissing {
-			result.state = missing
-		} else if result.state, err = c.verifyFile(itemPath, item.MD5); err != nil {
-			return nil, err
-		}
-
-		results = append(results, result)
+func (c *Cache) download(item *Item) error {
+	if match, err := c.checksumMatches(filepath.Join(c.Dir, item.Name), item.MD5); err != nil {
+		return err
+	} else if match {
+		c.Progress.Add(item.Size)
+		return nil
+	}
+	if strings.HasPrefix(item.URL, "file://") {
+		return c.copyFile(item)
 	}
 
+	req, err := http.NewRequest("GET", item.URL, nil)
+	if err != nil {
+		return err
+	}
+	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)
+	if fi, err := os.Stat(tmpPath); err == nil {
+		c.Progress.Add(uint64(fi.Size()))
+		req.Header.Add("Range", fmt.Sprintf("bytes=%d-", fi.Size()))
+	}
+	out, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := c.HttpDo(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		if _, err = io.Copy(out, io.TeeReader(resp.Body, c.Progress)); err != nil {
+			return err
+		}
+	} else if resp.StatusCode == 416 {
+		// Possibly full file already downloaded
+	} else {
+		return fmt.Errorf("http: %s", resp.Status)
+	}
+
+	if m, err := MD5(tmpPath); err != nil {
+		return err
+	} else if m != item.MD5 {
+		os.Remove(tmpPath)
+		return fmt.Errorf("md5 did not match: %s: %s != %s", item.Name, m, item.MD5)
+	}
+
+	return os.Rename(tmpPath, filepath.Join(c.Dir, item.Name))
+}
+
+func (c *Cache) removeUnknown(clog *Catalog) error {
+	known := make(map[string]bool, 0)
+	for _, item := range clog.Items {
+		known[item.Name] = true
+	}
 	files, err := ioutil.ReadDir(c.Dir)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-DirIteration:
-	for _, f := range files {
-		for _, item := range clog.Items {
-			if item.Name == f.Name() {
-				continue DirIteration
+	for _, fi := range files {
+		if !known[fi.Name()] {
+			if err := os.Remove(filepath.Join(c.Dir, fi.Name())); err != nil {
+				return err
 			}
 		}
-
-		results = append(results, result{
-			item:  Item{Name: f.Name()},
-			state: unknown,
-		})
-
 	}
-
-	return results, nil
+	return nil
 }
 
-func (c *Cache) verifyFile(file string, expectedMD5 string) (state, error) {
+func (c *Cache) checksumMatches(path, md5 string) (bool, error) {
 	if c.SkipAssetVerification {
-		return valid, nil
+		return fileExists(path)
 	}
+	m, err := MD5(path)
+	if os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return m == md5, nil
+}
 
-	md5Hash, err := MD5(file)
+func (c *Cache) copyFile(item *Item) error {
+	source, err := os.Open(strings.Replace(item.URL, "file://", "", 1))
 	if err != nil {
-		return corrupt, err
+		return err
 	}
-	if md5Hash != expectedMD5 {
-		return corrupt, nil
+	defer source.Close()
+	out, err := os.Create(filepath.Join(c.Dir, item.Name))
+	if err != nil {
+		return err
 	}
-
-	return valid, nil
+	defer out.Close()
+	_, err = io.Copy(out, io.TeeReader(source, c.Progress))
+	return err
 }
 
 func MD5(file string) (string, error) {
@@ -147,16 +158,14 @@ func MD5(file string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-type state int
-
-const (
-	unknown state = iota
-	missing
-	corrupt
-	valid
-)
-
-type result struct {
-	item  Item
-	state state
+func fileExists(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+	return true, nil
 }

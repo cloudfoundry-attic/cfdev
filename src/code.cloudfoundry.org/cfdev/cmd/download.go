@@ -2,15 +2,19 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"io/ioutil"
 	"path/filepath"
 
+	"net/http"
+
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/resource"
+	"code.cloudfoundry.org/cfdev/resource/progress"
 	"github.com/spf13/cobra"
 )
 
@@ -28,21 +32,21 @@ func NewDownload(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command
 			}
 
 			UI.Say("Downloading Resources...")
-			return download(Config.Dependencies, Config.CacheDir)
+			return download(Config.Dependencies, Config.CacheDir, UI.Writer())
 		},
 	}
 	return cmd
 }
 
-func download(dependencies resource.Catalog, cacheDir string) error {
+func download(dependencies resource.Catalog, cacheDir string, writer io.Writer) error {
 	logCatalog(dependencies, cacheDir)
-	downloader := resource.Downloader{}
 	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
 
 	cache := resource.Cache{
 		Dir:                   cacheDir,
-		DownloadFunc:          downloader.Start,
+		HttpDo:                http.DefaultClient.Do,
 		SkipAssetVerification: skipVerify == "true",
+		Progress:              progress.New(writer),
 	}
 
 	if err := cache.Sync(&dependencies); err != nil {

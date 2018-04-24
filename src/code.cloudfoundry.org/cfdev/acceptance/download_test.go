@@ -95,6 +95,7 @@ func badCatalog(serverAddr string) string {
 				URL:  fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
 				Name: "some-asset",
 				MD5:  "incorrect-md5",
+				Size: uint64(len("some-content")),
 			},
 		},
 	}
@@ -112,6 +113,7 @@ func localCatalog(serverAddr string) string {
 				URL:  fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
 				Name: "some-asset",
 				MD5:  "ad60407c083b4ecc372614b8fcd9f305",
+				Size: uint64(len("some-content")),
 			},
 		},
 	}

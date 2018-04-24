@@ -1,6 +1,9 @@
 package cmd_test
 
 import (
+	"io"
+	"io/ioutil"
+
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
@@ -13,6 +16,7 @@ type MockUI struct {
 }
 
 func (m *MockUI) Say(message string, args ...interface{}) { m.WasCalledWith = message }
+func (m *MockUI) Writer() io.Writer                       { return ioutil.Discard }
 
 type MockToggle struct {
 	val bool

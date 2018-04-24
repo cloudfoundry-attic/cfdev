@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -25,6 +26,7 @@ import (
 
 type UI interface {
 	Say(message string, args ...interface{})
+	Writer() io.Writer
 }
 
 type start struct {
@@ -98,7 +100,7 @@ func (s *start) RunE() error {
 	}
 
 	s.UI.Say("Downloading Resources...")
-	if err = download(s.Config.Dependencies, s.Config.CacheDir); err != nil {
+	if err = download(s.Config.Dependencies, s.Config.CacheDir, s.UI.Writer()); err != nil {
 		return err
 	}
 
