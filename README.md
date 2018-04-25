@@ -32,7 +32,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 * Please note CF Dev only supports macOS at this time
 
 ## Install 
-1. Download the CF Dev binary [here](http://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.2-darwin).
+1. Download latest binary [here](http://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.3-darwin) .
 1. _(if needed)_ Uninstall your exsiting PCF Dev or CF Dev plugin if its installed `cf uninstall-plugin pcfdev` OR `cf uninstall-plugin cfdev`
 1. Install the CF Dev plugin `cf install-plugin <path to cfdev binary>`.
 
@@ -52,8 +52,6 @@ To stop CF Dev run `cf dev stop`. This will completely stop and destory the CF D
 To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
 
 ## Telemetry
-
-**Please Note : Some users who opted-out of telemetry have reported seeing telemetry calls being made. We have stopped all collection of telemetery until this bug is resolved and have also deleted all telemetry data that was collected. We are actively working to address this bug and recommend updating your version of CF Dev once v 0.0.3 is available.**
 
 Here on the CF Dev team, we use telemetry to help us understand how our tool is being used.  We value our users privacy, therefore all telemetry is completely anonymous. There is no way for anyone with the telemetry to identify who is using the CF Dev tool.  In an effort to make our data as transparent as possible, we will be publishing aggregated anonymous usage data to this page periodically to help our user community understand how the tool is being used. 
 
