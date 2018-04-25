@@ -29,6 +29,10 @@ func New() *Launchd {
 }
 
 func (l *Launchd) AddDaemon(spec DaemonSpec, executable string) error {
+	if _, err := os.Stat(filepath.Dir(spec.Program)); err != nil {
+		os.MkdirAll(filepath.Dir(spec.Program), 0666)
+	}
+
 	if err := l.copyExecutable(executable, spec.Program); err != nil {
 		return err
 	}
