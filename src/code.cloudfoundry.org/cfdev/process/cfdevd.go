@@ -32,7 +32,7 @@ func IsCFDevDInstalled(sockPath string, binPath string, expectedMD5 string) bool
 func InstallCFDevD(cacheDir string) error {
 	cfdevdPath := filepath.Join(cacheDir, "cfdevd")
 	fmt.Println("Installing networking components (requires root privileges)")
-	cmd := exec.Command("sudo", "--stdin", cfdevdPath, "install")
+	cmd := exec.Command("sudo", "-S", cfdevdPath, "install")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
