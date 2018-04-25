@@ -52,12 +52,13 @@ func main() {
 	}
 	defer conf.Close()
 
+	v := conf.CliVersion
 	cfdev := &Plugin{
 		Exit:    exitChan,
 		UI:      ui,
 		Config:  conf,
 		Root:    cmd.NewRoot(exitChan, ui, conf),
-		Version: plugin.VersionType{Major: 0, Minor: 0, Build: 2},
+		Version: plugin.VersionType{Major: v.Major, Minor: v.Minor, Build: v.Build},
 	}
 
 	plugin.Start(cfdev)

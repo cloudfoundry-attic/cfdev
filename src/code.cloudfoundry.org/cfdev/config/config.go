@@ -13,6 +13,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
 	"code.cloudfoundry.org/cfdev/resource"
+	"code.cloudfoundry.org/cfdev/semver"
 	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
@@ -49,6 +50,7 @@ var (
 	cfdevdMd5  string
 	cfdevdSize string
 
+	cliVersion   string
 	analyticsKey string
 )
 
@@ -75,6 +77,7 @@ type Config struct {
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
+	CliVersion             *semver.Version
 	Analytics              Analytics
 	AnalyticsToggle        Toggle
 }
@@ -107,7 +110,8 @@ func NewConfig() (Config, error) {
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
-		Analytics:              cfanalytics.New(analyticsToggle, analyticsClient),
+		CliVersion:             semver.Must(semver.New(cliVersion)),
+		Analytics:              cfanalytics.New(analyticsToggle, analyticsClient, cliVersion),
 		AnalyticsToggle:        analyticsToggle,
 	}, nil
 }

@@ -57,7 +57,7 @@ var _ = Describe("Analytics", func() {
 	BeforeEach(func() {
 		mockToggle = &MockToggle{}
 		mockClient = &MockClient{}
-		subject = cfanalytics.New(mockToggle, mockClient)
+		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test")
 	})
 
 	Describe("PromptOptIn", func() {
@@ -135,7 +135,7 @@ var _ = Describe("Analytics", func() {
 					"Timestamp": BeTemporally(">=", time.Now().Add(-1*time.Minute)),
 					"Properties": BeEquivalentTo(map[string]interface{}{
 						"os":      runtime.GOOS,
-						"version": "0.0.2",
+						"version": "4.5.6-unit-test",
 						"mykey":   "myval",
 					}),
 				}))

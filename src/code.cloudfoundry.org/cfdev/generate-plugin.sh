@@ -59,6 +59,7 @@ go build \
      -X $pkg.cfdevdMd5=$(md5 "$cfdevd" | awk '{ print $4 }')
      -X $pkg.cfdevdSize=$(wc -c < "$cfdevd" | tr -d '[:space:]')
 
+     -X $pkg.cliVersion=0.0.$(date +%Y%m%d-%H%M%S)
      -X $pkg.analyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" \
      code.cloudfoundry.org/cfdev
 

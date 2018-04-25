@@ -29,7 +29,7 @@ type Analytics struct {
 	version string
 }
 
-func New(toggle Toggle, client analytics.Client) *Analytics {
+func New(toggle Toggle, client analytics.Client, version string) *Analytics {
 	uuid, err := machineid.ProtectedID("cfdev")
 	if err != nil {
 		uuid = "UNKNOWN_ID"
@@ -38,7 +38,7 @@ func New(toggle Toggle, client analytics.Client) *Analytics {
 		client:  client,
 		toggle:  toggle,
 		userId:  uuid,
-		version: "0.0.2",
+		version: version,
 	}
 }
 
