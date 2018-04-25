@@ -115,6 +115,18 @@ var _ = Describe("Cache Sync", func() {
 		Expect(mockProgress.Current).To(Equal(uint64(21)))
 	})
 
+	It("downloads files as executable", func() {
+		Expect(cache.Sync(catalog)).To(Succeed())
+
+		fi, err := os.Stat(filepath.Join(tmpDir, "first-resource"))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(fi.Mode()).To(BeEquivalentTo(0755))
+
+		fi, err = os.Stat(filepath.Join(tmpDir, "second-resource"))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(fi.Mode()).To(BeEquivalentTo(0755))
+	})
+
 	It("resumes partially downloaded files to the target directory", func() {
 		catalog.Items = catalog.Items[:1]
 		createFile(tmpDir, "first-resource.tmp.9a0364b9e99bb480dd25e1f0284c8555", "cont")

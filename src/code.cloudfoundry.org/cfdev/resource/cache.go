@@ -64,7 +64,7 @@ func (c *Cache) download(item *Item) error {
 		c.Progress.Add(uint64(fi.Size()))
 		req.Header.Add("Range", fmt.Sprintf("bytes=%d-", fi.Size()))
 	}
-	out, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	out, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (c *Cache) copyFile(item *Item) error {
 		return err
 	}
 	defer source.Close()
-	out, err := os.Create(filepath.Join(c.Dir, item.Name))
+	out, err := os.OpenFile(filepath.Join(c.Dir, item.Name), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}
