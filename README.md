@@ -45,6 +45,10 @@ Run CF Dev `cf dev start`.
 1. Set environment variables to point BOSH to your CF Dev instance `eval "$(cf dev bosh env)"`.
 1. Run BOSH `bosh <command you want to run>`.
 
+## Project Backlog
+
+Follow the CF Dev team's progress [here](https://github.com/cloudfoundry-incubator/cfdev/projects/1).  This backlog contains a prioritized list of features and bugs the CF Dev team is working on.  Check the project board for latest updates on features and when they will be released.
+
 ## Uninstall
 
 To stop CF Dev run `cf dev stop`. This will completely stop and destory the CF Dev VM.
