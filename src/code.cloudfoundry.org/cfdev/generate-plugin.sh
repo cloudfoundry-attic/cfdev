@@ -16,9 +16,9 @@ export GOARCH=amd64
 go build code.cloudfoundry.org/cfdevd
 cfdevd="$PWD"/cfdevd
 
-cfdepsUrl="$cfdev/output/cf-oss-deps.iso"
+cfdepsUrl="$cfdev/output/cf-deps.iso"
 if [ ! -f "$cfdepsUrl" ]; then
-  cfdepsUrl="$cache_dir/cf-oss-deps.iso"
+  cfdepsUrl="$cache_dir/cf-deps.iso"
 fi
 cfdevefiUrl="$cfdev/output/cfdev-efi.iso"
 if [ ! -f "$cfdevefiUrl" ]; then

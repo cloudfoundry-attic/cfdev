@@ -25,7 +25,7 @@ bosh_deployment="$(cd "$(dirname "$bosh_deployment")"; pwd)/$(basename "$bosh_de
 
 scripts_dir="$(cd "$(dirname "$0")" && pwd)"
 output_dir="$scripts_dir"/../output
-ops_dir="$scripts_dir"/../images/cf-oss/bosh-operations
+ops_dir="$scripts_dir"/../images/cf/bosh-operations
 
 mkdir -p "$output_dir"
 ops=( \

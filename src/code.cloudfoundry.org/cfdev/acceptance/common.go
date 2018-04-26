@@ -25,7 +25,7 @@ func SetupDependencies(cacheDir string) {
 
 	assets := []string{
 		"cfdev-efi.iso",
-		"cf-oss-deps.iso",
+		"cf-deps.iso",
 		"vpnkit",
 		"hyperkit",
 		"linuxkit",

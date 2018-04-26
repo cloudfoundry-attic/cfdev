@@ -21,7 +21,7 @@ func (s *LinuxKit) Command(cpus, mem int) *exec.Cmd {
 	qcowtool := filepath.Join(s.Config.CacheDir, "qcow-tool")
 	vpnkitEthSock := filepath.Join(s.Config.CFDevHome, "vpnkit_eth.sock")
 	vpnkitPortSock := filepath.Join(s.Config.CFDevHome, "vpnkit_port.sock")
-	dependencyImagePath := filepath.Join(s.Config.CacheDir, "cf-oss-deps.iso")
+	dependencyImagePath := filepath.Join(s.Config.CacheDir, "cf-deps.iso")
 	osImagePath := filepath.Join(s.Config.CacheDir, "cfdev-efi.iso")
 
 	diskArgs := []string{

@@ -23,7 +23,7 @@ bosh_deps="$(cd "$(dirname "$bosh_deps")"; pwd)/$(basename "$bosh_deps")"
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 output_dir="$script_dir/../output"
-iso_file="$output_dir"/cf-oss-deps.iso
+iso_file="$output_dir"/cf-deps.iso
 
 rm -rf "$iso_file"
 mkdir -p "$output_dir"
@@ -36,13 +36,13 @@ cleanup() {
 }
 
 build() {
-  "$script_dir"/../images/cf-oss/build.sh
+  "$script_dir"/../images/cf/build.sh
 }
 
 
 export() {
   # Place the 'workspace' container image
-  cid=$(docker run -d pivotal/cf-oss sleep infinity)
+  cid=$(docker run -d pivotal/cf sleep infinity)
   docker export "$cid" > "${iso_dir}/workspace.tar"
   docker kill "$cid"
   docker rm "$cid"
@@ -54,7 +54,7 @@ add_deps(){
 }
 
 make_iso() {
-  mkisofs -V cf-oss-deps -R -o "$iso_file" "$iso_dir"
+  mkisofs -V cf-deps -R -o "$iso_file" "$iso_dir"
 }
 
 main () {

@@ -21,7 +21,7 @@ cf_deployment="$(cd "$(dirname "$cf_deployment")"; pwd)/$(basename "$cf_deployme
 
 scripts_dir="$(cd "$(dirname "$0")" && pwd)"
 output_dir="$scripts_dir"/../output
-ops_dir="$scripts_dir"/../images/cf-oss/cf-operations
+ops_dir="$scripts_dir"/../images/cf/cf-operations
 
 mkdir -p "$output_dir"
 

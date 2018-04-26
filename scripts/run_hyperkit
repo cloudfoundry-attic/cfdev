@@ -8,7 +8,7 @@ while getopts "c:i:l:" arg; do
   case $arg in
     i) cfdev_efi="$OPTARG"
       ;;
-    c) cf_oss_deps_iso="$OPTARG"
+    c) cf_deps_iso="$OPTARG"
       ;;
     l) linuxkit_bin="$OPTARG"
       ;;
@@ -18,8 +18,8 @@ done
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cache_dir="$HOME"/.cfdev/cache
 
-if [[ -z $cf_oss_deps_iso ]]; then
-  cf_oss_deps_iso="$script_dir"/../output/cf-oss-deps.iso
+if [[ -z $cf_deps_iso ]]; then
+  cf_deps_iso="$script_dir"/../output/cf-deps.iso
 fi
 
 if [[ -z $cfdev_efi ]]; then
@@ -57,7 +57,7 @@ start_linuxkit () {
 	  -networking "vpnkit" \
 	  -vpnkit "$vpnkit_bin" \
 	  -disk type="qcow,size=50G,trim=true,qcow-tool=$qcowtool_bin,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144" \
-	  -disk file="$cf_oss_deps_iso" \
+	  -disk file="$cf_deps_iso" \
 	  --uefi "$cfdev_efi"
 }
 

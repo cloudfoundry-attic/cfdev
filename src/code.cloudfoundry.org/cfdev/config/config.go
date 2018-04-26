@@ -143,7 +143,7 @@ func catalog() (resource.Catalog, error) {
 		Items: []resource.Item{
 			{
 				URL:  cfdepsUrl,
-				Name: "cf-oss-deps.iso",
+				Name: "cf-deps.iso",
 				MD5:  cfdepsMd5,
 				Size: aToUint64(cfdepsSize),
 			},
