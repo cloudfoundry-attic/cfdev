@@ -33,7 +33,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 
 ## Install 
 1. Download latest binary [here](http://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.3-darwin) .
-1. _(if needed)_ Uninstall your exsiting PCF Dev or CF Dev plugin if its installed `cf uninstall-plugin pcfdev` OR `cf uninstall-plugin cfdev`
+1. _(if needed)_ Uninstall your existing PCF Dev or CF Dev plugin if its installed `cf uninstall-plugin pcfdev` OR `cf uninstall-plugin cfdev`
 1. Install the CF Dev plugin `cf install-plugin <path to cfdev binary>`.
 
 ## Start
@@ -47,7 +47,7 @@ Run CF Dev `cf dev start`.
 
 ## Project Backlog
 
-Follow the CF Dev team's progress [here](https://github.com/cloudfoundry-incubator/cfdev/projects/1).  This backlog contains a prioritized list of features and bugs the CF Dev team is working on.  Check the project board for latest updates on features and when they will be released.
+Follow the CF Dev team's progress [here](https://github.com/cloudfoundry-incubator/cfdev/projects/1).  This backlog contains a prioritized list of features and bugs the CF Dev team is working on.  Check the project board for the latest updates on features and when they will be released.
 
 ## Uninstall
 
