@@ -42,11 +42,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
 		vpnkitPidPath = filepath.Join(stateDir, "vpnkit.pid")
 
-		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
-			SetupDependencies(cacheDir)
-			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
-		}
-
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))
 		session = cf.Cf("plugins")
