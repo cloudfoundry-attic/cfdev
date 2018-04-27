@@ -34,6 +34,7 @@ type start struct {
 	UI         UI
 	Config     config.Config
 	Registries string
+	DepsIsoPath    string
 	Cpus       int
 	Mem        int
 }
@@ -47,10 +48,11 @@ func NewStart(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
 		},
 	}
 	pf := cmd.PersistentFlags()
+	pf.StringVarP(&s.DepsIsoPath, "file", "f", "", "path to .dev file containing bosh & cf bits")
 	pf.StringVarP(&s.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 	pf.IntVarP(&s.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
 	pf.IntVarP(&s.Mem, "memory", "m", 4096, "memory to allocate to vm in MB")
-
+	
 	return cmd
 }
 
@@ -87,20 +89,24 @@ func (s *start) RunE() error {
 
 	linuxkit := process.LinuxKit{
 		Config: s.Config,
+		DepsIsoPath: s.DepsIsoPath,
 	}
 
-	lCmd := linuxkit.Command(s.Cpus, s.Mem)
+	UpdateCatalog(map[string]string {"file": s.DepsIsoPath,}, s.Config.Dependencies.Items)
+	if err = download(s.Config.Dependencies, s.Config.CacheDir, s.UI.Writer()); err != nil {
+		return err
+	}
+
+	lCmd, err := linuxkit.Command(s.Cpus, s.Mem)
+	if err != nil {
+		return fmt.Errorf("Unable to find .dev file %v\n", err)
+	}
 
 	if err = cleanupStateDir(s.Config.StateDir); err != nil {
 		return err
 	}
 
 	if err = s.setupNetworking(); err != nil {
-		return err
-	}
-
-	s.UI.Say("Downloading Resources...")
-	if err = download(s.Config.Dependencies, s.Config.CacheDir, s.UI.Writer()); err != nil {
 		return err
 	}
 

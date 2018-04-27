@@ -53,18 +53,35 @@ var _ = Describe("Cache Sync", func() {
 					URL:  "first-resource-url",
 					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
 					Size: 7,
+					InUse: true,
 				},
 				{
 					Name: "second-resource",
 					URL:  "second-resource-url",
 					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
 					Size: 7,
+					InUse: true,
 				},
 				{
 					Name: "third-resource",
 					URL:  "third-resource-url",
 					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
 					Size: 7,
+					InUse: true,
+				},
+				{
+					Name: "fourth-resource",
+					URL:  "fourth-resource-url",
+					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+					Size: 7,
+					InUse: true,
+				},
+				{
+					Name: "fifth-resource",
+					URL:  "fifth-resource-url",
+					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+					Size: 7,
+					InUse: false,
 				},
 			},
 		}
@@ -91,7 +108,7 @@ var _ = Describe("Cache Sync", func() {
 		Expect(downloads).To(ContainElement("first-resource-url"))
 		Expect(ioutil.ReadFile(filepath.Join(tmpDir, "first-resource"))).To(Equal([]byte("content")))
 
-		Expect(mockProgress.Total).To(Equal(uint64(21)))
+		Expect(mockProgress.Total).To(Equal(uint64(28)))
 	})
 
 	It("re-downloads corrupt files to the target directory", func() {
@@ -111,8 +128,8 @@ var _ = Describe("Cache Sync", func() {
 
 	It("informs progress", func() {
 		Expect(cache.Sync(catalog)).To(Succeed())
-		Expect(mockProgress.Total).To(Equal(uint64(21)))
-		Expect(mockProgress.Current).To(Equal(uint64(21)))
+		Expect(mockProgress.Total).To(Equal(uint64(28)))
+		Expect(mockProgress.Current).To(Equal(uint64(28)))
 	})
 
 	It("downloads files as executable", func() {
@@ -155,6 +172,7 @@ var _ = Describe("Cache Sync", func() {
 			URL:  fmt.Sprintf("file://%s/other-file", tmpDir),
 			MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
 			Size: 7,
+			InUse: true,
 		}}}
 		Expect(ioutil.WriteFile(filepath.Join(tmpDir, "other-file"), []byte("content"), 0666)).To(Succeed())
 
@@ -276,6 +294,18 @@ var _ = Describe("Cache Sync", func() {
 		It("doesn't re-download files with different checksums", func() {
 			Expect(cache.Sync(catalog)).To(Succeed())
 			Expect(downloads).ToNot(ContainElement("second-resource-url"))
+		})
+	})
+
+	Context("when asset InUse", func() {
+		It("true", func() {
+			Expect(cache.Sync(catalog)).To(Succeed())
+			Expect(filepath.Join(tmpDir, "fourth-resource")).Should(BeAnExistingFile())
+		})
+
+		It("false", func() {
+			Expect(cache.Sync(catalog)).To(Succeed())
+			Expect(filepath.Join(tmpDir, "fifth-resource")).ShouldNot(BeAnExistingFile())
 		})
 	})
 })

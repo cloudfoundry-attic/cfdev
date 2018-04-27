@@ -10,13 +10,16 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"syscall"
-
 	"time"
 
 	. "code.cloudfoundry.org/cfdev/acceptance"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
+	"syscall"
+	"bytes"
+	"net/http"
+	"io"
+	"io/ioutil"
 )
 
 var _ = Describe("hyperkit lifecycle", func() {
@@ -41,6 +44,11 @@ var _ = Describe("hyperkit lifecycle", func() {
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
 		vpnkitPidPath = filepath.Join(stateDir, "vpnkit.pid")
+
+		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
+			SetupDependencies(cacheDir)
+			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
+		}
 
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))
@@ -105,6 +113,53 @@ var _ = Describe("hyperkit lifecycle", func() {
 		EventuallyProcessStops(hyperkitPid, 5)
 		EventuallyProcessStops(vpnkitPid, 5)
 	})
+
+	Context("Run with",func(){
+		var assetUrl = "https://s3.amazonaws.com/cfdev-test-assets/test-deps.dev"
+		var assetDir string
+
+		BeforeEach(func(){
+			var err error
+			assetDir, err = ioutil.TempDir(os.TempDir(), "asset")
+			Expect(err).ToNot(HaveOccurred())
+
+			downloadTestAsset(assetDir, assetUrl)
+		})
+
+		AfterEach(func() {
+			err := os.RemoveAll(assetDir)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("Custom ISO", func(){
+			session := cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
+			Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
+
+			By("settingup VPNKit dependencies")
+			Eventually(filepath.Join(cfdevHome, "http_proxy.json"), 10, 1).Should(BeAnExistingFile())
+
+			Eventually(vpnkitPidPath, 10, 1).Should(BeAnExistingFile())
+			Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
+
+			hyperkitPidPath := filepath.Join(stateDir, "hyperkit.pid")
+			Eventually(hyperkitPidPath, 120, 1).Should(BeAnExistingFile())
+
+			By("waiting for garden to listen")
+			EventuallyShouldListenAt("http://"+GardenIP+":8888", 360)
+
+			getContentsCmd := exec.Command("gaol", "-t", "127.0.0.1:8888", "run", "deploy-bosh", "--attach",
+				"--command", "cat /var/vcap/cache/test-file-one.txt")
+
+			session, err := gexec.Start(getContentsCmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+
+			Eventually(func() bool {
+				out, _ := exec.Command("gaol", "-t", "127.0.0.1:8888", "run", "deploy-bosh", "--attach",
+					"--command", "cat /var/vcap/cache/test-file-one.txt").Output()
+					return bytes.Equal(out, []byte("testfileone"))
+				}).Should(BeTrue())
+		})
+	})
 })
 
 func EventuallyWeCanTargetTheBOSHDirector() {
@@ -136,4 +191,25 @@ func RemoveIPAliases(aliases ...string) {
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(session).Should(gexec.Exit())
 	}
+}
+
+func downloadTestAsset(targetDir string, resourceUrl string) error {
+	out, err := os.Create(filepath.Join(targetDir, "test-deps.dev"))
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := http.Get(resourceUrl)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

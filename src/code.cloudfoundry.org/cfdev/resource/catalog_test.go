@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"code.cloudfoundry.org/cfdev/resource"
+	"code.cloudfoundry.org/cfdev/cmd"
 )
 
 var _ = Describe("Catalog", func() {
@@ -44,6 +45,56 @@ var _ = Describe("Catalog", func() {
 				item := catalog.Lookup("missing-resource")
 				Expect(item).To(BeNil())
 			})
+		})
+	})
+
+	Describe("UpdateCatalog", func(){
+		originalCatalog := resource.Catalog{
+			Items: []resource.Item{
+				{
+					Name: "original-iso-path",
+					URL:  "url",
+					MD5:  "md5",
+					Type: "deps-iso",
+					InUse: true,
+				},
+				{
+					Name: "path to something",
+					URL:  "url",
+					MD5:  "md5",
+					Type: "something",
+					InUse: true,
+				},
+			},
+		}
+
+		expectedCatalog := resource.Catalog{
+			Items: []resource.Item{
+				{
+					Name: "original-iso-path",
+					URL:  "url",
+					MD5:  "md5",
+					Type: "deps-iso",
+					InUse: false,
+				},
+				{
+					Name: "path to something",
+					URL:  "url",
+					MD5:  "md5",
+					Type: "something",
+					InUse: true,
+				},
+			},
+		}
+
+		It("updates InUse flags", func(){
+			args := map[string]string{
+				"file": "new iso path URL",
+			}
+
+			cmd.UpdateCatalog(args, originalCatalog.Items)
+
+			Expect(originalCatalog).Should(Equal(expectedCatalog))
 		})
 	})
 })

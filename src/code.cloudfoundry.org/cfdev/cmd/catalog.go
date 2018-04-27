@@ -6,6 +6,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/config"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/resource"
 )
 
 func NewCatalog(UI UI, Config config.Config) *cobra.Command {
@@ -21,4 +22,15 @@ func NewCatalog(UI UI, Config config.Config) *cobra.Command {
 		},
 	}
 	return cmd
+}
+
+func UpdateCatalog(args map[string]string, items []resource.Item) {
+	file := args["file"]
+	for i := range items {
+		if items[i].Type == "deps-iso" {
+			if file != "" && items[i].Name != file {
+				items[i].InUse = false
+			}
+		}
+	}
 }

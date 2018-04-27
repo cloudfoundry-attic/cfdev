@@ -8,21 +8,38 @@ import (
 	"syscall"
 
 	"code.cloudfoundry.org/cfdev/config"
+	"io"
+	"os"
 )
+
+type UI interface {
+	Say(message string, args ...interface{})
+	Writer() io.Writer
+}
 
 type LinuxKit struct {
 	Config config.Config
+	DepsIsoPath string
 }
 
-func (s *LinuxKit) Command(cpus, mem int) *exec.Cmd {
-	linuxkit := filepath.Join(s.Config.CacheDir, "linuxkit")
-	hyperkit := filepath.Join(s.Config.CacheDir, "hyperkit")
-	uefi := filepath.Join(s.Config.CacheDir, "UEFI.fd")
-	qcowtool := filepath.Join(s.Config.CacheDir, "qcow-tool")
-	vpnkitEthSock := filepath.Join(s.Config.CFDevHome, "vpnkit_eth.sock")
-	vpnkitPortSock := filepath.Join(s.Config.CFDevHome, "vpnkit_port.sock")
-	dependencyImagePath := filepath.Join(s.Config.CacheDir, "cf-deps.iso")
-	osImagePath := filepath.Join(s.Config.CacheDir, "cfdev-efi.iso")
+func (l *LinuxKit) Command(cpus, mem int) (*exec.Cmd, error) {
+	linuxkit := filepath.Join(l.Config.CacheDir, "linuxkit")
+	hyperkit := filepath.Join(l.Config.CacheDir, "hyperkit")
+	uefi := filepath.Join(l.Config.CacheDir, "UEFI.fd")
+	qcowtool := filepath.Join(l.Config.CacheDir, "qcow-tool")
+	vpnkitEthSock := filepath.Join(l.Config.CFDevHome, "vpnkit_eth.sock")
+	vpnkitPortSock := filepath.Join(l.Config.CFDevHome, "vpnkit_port.sock")
+
+	if l.DepsIsoPath == "" {
+		l.DepsIsoPath = filepath.Join(l.Config.CacheDir, "cf-deps.iso")
+	}
+
+	if _, err := os.Stat(l.DepsIsoPath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	dependencyImagePath := l.DepsIsoPath
+	osImagePath := filepath.Join(l.Config.CacheDir, "cfdev-efi.iso")
 
 	diskArgs := []string{
 		"type=qcow",
@@ -43,7 +60,7 @@ func (s *LinuxKit) Command(cpus, mem int) *exec.Cmd {
 		"-fw", uefi,
 		"-disk", strings.Join(diskArgs, ","),
 		"-disk", "file="+dependencyImagePath,
-		"-state", s.Config.StateDir,
+		"-state", l.Config.StateDir,
 		"--uefi",
 		osImagePath)
 
@@ -51,5 +68,5 @@ func (s *LinuxKit) Command(cpus, mem int) *exec.Cmd {
 		Setpgid: true,
 	}
 
-	return cmd
+	return cmd, nil
 }

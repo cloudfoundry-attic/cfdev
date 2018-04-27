@@ -39,12 +39,18 @@ func (c *Cache) Sync(clog *Catalog) error {
 func (c *Cache) total(clog *Catalog) uint64 {
 	var total uint64 = 0
 	for _, item := range clog.Items {
-		total += item.Size
+		if item.InUse {
+			total += item.Size
+		}
 	}
 	return total
 }
 
 func (c *Cache) download(item *Item) error {
+	if !item.InUse {
+		return nil
+	}
+
 	if match, err := c.checksumMatches(filepath.Join(c.Dir, item.Name), item.MD5); err != nil {
 		return err
 	} else if match {
