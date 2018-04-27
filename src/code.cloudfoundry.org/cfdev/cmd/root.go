@@ -29,6 +29,7 @@ func NewRoot(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
 	dev.AddCommand(NewStart(Exit, UI, Config))
 	dev.AddCommand(NewStop(Config))
 	dev.AddCommand(NewTelemetry(UI, Config))
+	dev.AddCommand(NewVersion(UI, Config))
 	dev.AddCommand(&cobra.Command{
 		Use:   "help [command]",
 		Short: "Help about any command",
