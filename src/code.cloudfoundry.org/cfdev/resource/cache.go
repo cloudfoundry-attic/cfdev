@@ -55,11 +55,24 @@ func (c *Cache) download(item *Item) error {
 		return c.copyFile(item)
 	}
 
-	req, err := http.NewRequest("GET", item.URL, nil)
+	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)
+	if err := c.downloadHTTP(item.URL, tmpPath); err != nil {
+		return err
+	}
+	if m, err := MD5(tmpPath); err != nil {
+		return err
+	} else if m != item.MD5 {
+		os.Remove(tmpPath)
+		return fmt.Errorf("md5 did not match: %s: %s != %s", item.Name, m, item.MD5)
+	}
+	return os.Rename(tmpPath, filepath.Join(c.Dir, item.Name))
+}
+
+func (c *Cache) downloadHTTP(url, tmpPath string) error {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
 	}
-	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)
 	if fi, err := os.Stat(tmpPath); err == nil {
 		c.Progress.Add(uint64(fi.Size()))
 		req.Header.Add("Range", fmt.Sprintf("bytes=%d-", fi.Size()))
@@ -85,15 +98,7 @@ func (c *Cache) download(item *Item) error {
 	} else {
 		return fmt.Errorf("http: %s", resp.Status)
 	}
-
-	if m, err := MD5(tmpPath); err != nil {
-		return err
-	} else if m != item.MD5 {
-		os.Remove(tmpPath)
-		return fmt.Errorf("md5 did not match: %s: %s != %s", item.Name, m, item.MD5)
-	}
-
-	return os.Rename(tmpPath, filepath.Join(c.Dir, item.Name))
+	return nil
 }
 
 func (c *Cache) removeUnknown(clog *Catalog) error {
