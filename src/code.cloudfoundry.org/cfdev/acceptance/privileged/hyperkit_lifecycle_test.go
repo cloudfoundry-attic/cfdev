@@ -12,14 +12,16 @@ import (
 
 	"time"
 
-	. "code.cloudfoundry.org/cfdev/acceptance"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
-	"github.com/onsi/gomega/gbytes"
-	"syscall"
-	"bytes"
-	"net/http"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"syscall"
+
+	. "code.cloudfoundry.org/cfdev/acceptance"
+	"code.cloudfoundry.org/garden/client"
+	"code.cloudfoundry.org/garden/client/connection"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("hyperkit lifecycle", func() {
@@ -44,11 +46,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 		stateDir = filepath.Join(cfdevHome, "state")
 		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
 		vpnkitPidPath = filepath.Join(stateDir, "vpnkit.pid")
-
-		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
-			SetupDependencies(cacheDir)
-			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
-		}
 
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))
@@ -114,15 +111,14 @@ var _ = Describe("hyperkit lifecycle", func() {
 		EventuallyProcessStops(vpnkitPid, 5)
 	})
 
-	Context("Run with",func(){
+	Context("Run with", func() {
 		var assetUrl = "https://s3.amazonaws.com/cfdev-test-assets/test-deps.dev"
 		var assetDir string
 
-		BeforeEach(func(){
+		BeforeEach(func() {
 			var err error
 			assetDir, err = ioutil.TempDir(os.TempDir(), "asset")
 			Expect(err).ToNot(HaveOccurred())
-
 			downloadTestAsset(assetDir, assetUrl)
 		})
 
@@ -131,13 +127,12 @@ var _ = Describe("hyperkit lifecycle", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("Custom ISO", func(){
+		It("Custom ISO", func() {
 			session := cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
 			Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 			By("settingup VPNKit dependencies")
 			Eventually(filepath.Join(cfdevHome, "http_proxy.json"), 10, 1).Should(BeAnExistingFile())
-
 			Eventually(vpnkitPidPath, 10, 1).Should(BeAnExistingFile())
 			Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
 
@@ -147,17 +142,10 @@ var _ = Describe("hyperkit lifecycle", func() {
 			By("waiting for garden to listen")
 			EventuallyShouldListenAt("http://"+GardenIP+":8888", 360)
 
-			getContentsCmd := exec.Command("gaol", "-t", "127.0.0.1:8888", "run", "deploy-bosh", "--attach",
-				"--command", "cat /var/vcap/cache/test-file-one.txt")
-
-			session, err := gexec.Start(getContentsCmd, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-
-			Eventually(func() bool {
-				out, _ := exec.Command("gaol", "-t", "127.0.0.1:8888", "run", "deploy-bosh", "--attach",
-					"--command", "cat /var/vcap/cache/test-file-one.txt").Output()
-					return bytes.Equal(out, []byte("testfileone"))
-				}).Should(BeTrue())
+			client := client.New(connection.New("tcp", "localhost:8888"))
+			Eventually(func() (string, error) {
+				return GetFile(client, "deploy-bosh", "/var/vcap/cache/test-file-one.txt")
+			}).Should(Equal("testfileone\n"))
 		})
 	})
 })

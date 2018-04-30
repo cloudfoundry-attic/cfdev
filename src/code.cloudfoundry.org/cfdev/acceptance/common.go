@@ -1,7 +1,10 @@
 package acceptance
 
 import (
+	"archive/tar"
 	"crypto/tls"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -11,6 +14,8 @@ import (
 	"strings"
 	"syscall"
 
+	"code.cloudfoundry.org/garden"
+	"code.cloudfoundry.org/garden/client"
 	. "github.com/onsi/gomega"
 )
 
@@ -126,4 +131,27 @@ func FileExists(file string) (bool, error) {
 	return true, nil
 }
 
+func GetFile(client client.Client, handle, path string) (string, error) {
+	c, err := client.Lookup(handle)
+	if err != nil {
+		return "", err
+	}
+	fh, err := c.StreamOut(garden.StreamOutSpec{
+		Path: path,
+	})
+	if err != nil {
+		return "", err
+	}
+	tr := tar.NewReader(fh)
 
+	_, err = tr.Next()
+	if err == io.EOF {
+		return "", fmt.Errorf("file not found")
+	}
+	if err != nil {
+		return "", err
+	}
+	b, err := ioutil.ReadAll(tr)
+	return string(b), err
+
+}
