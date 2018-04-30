@@ -1,6 +1,13 @@
 package process_test
 
 import (
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -9,16 +16,20 @@ import (
 )
 
 var _ = Describe("LinuxKit process", func() {
-	It("builds a command", func() {
-		linuxkit := process.LinuxKit{
+	var linuxkit process.LinuxKit
+	BeforeEach(func() {
+		linuxkit = process.LinuxKit{
 			Config: config.Config{
 				CFDevHome: "/home-dir/.cfdev",
 				StateDir:  "/home-dir/.cfdev/state",
 				CacheDir:  "/home-dir/.cfdev/cache",
 			},
 		}
+	})
 
-		start := linuxkit.Command(4, 4096)
+	It("builds a command", func() {
+		start, err := linuxkit.Command(4, 4096)
+		Expect(err).ToNot(HaveOccurred())
 
 		linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
 		Expect(start.Path).To(Equal(linuxkitExecPath))
@@ -39,4 +50,73 @@ var _ = Describe("LinuxKit process", func() {
 		))
 		Expect(start.SysProcAttr.Setpgid).To(BeTrue())
 	})
+
+	Context("DepsIsoPath is set", func() {
+		Context("DepsIsoPath exists", func() {
+			var assetDir string
+			var err error
+			assetDir, err = ioutil.TempDir(os.TempDir(), "asset")
+			var assetUrl = "https://s3.amazonaws.com/cfdev-test-assets/test-deps.dev"
+
+			BeforeEach(func() {
+				linuxkit.DepsIsoPath = path.Join(assetDir, "test-deps.dev")
+				Expect(err).ToNot(HaveOccurred())
+				downloadTestAsset(assetDir, assetUrl)
+			})
+
+			It("sets linuxkit to use provided iso", func() {
+				start, err := linuxkit.Command(4, 4096)
+				Expect(err).ToNot(HaveOccurred())
+
+				linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
+				Expect(start.Path).To(Equal(linuxkitExecPath))
+				Expect(start.Args).To(ConsistOf(
+					linuxkitExecPath,
+					"run", "hyperkit",
+					"-console-file",
+					"-cpus", "4",
+					"-mem", "4096",
+					"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
+					"-networking",
+					"vpnkit,/home-dir/.cfdev/vpnkit_eth.sock,/home-dir/.cfdev/vpnkit_port.sock",
+					"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
+					"-disk", "type=qcow,size=50G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
+					"-disk", "file="+path.Join(assetDir, "test-deps.dev"),
+					"-state", "/home-dir/.cfdev/state",
+					"--uefi", "/home-dir/.cfdev/cache/cfdev-efi.iso",
+				))
+			})
+		})
+		Context("DepsIsoPath does not exist", func() {
+			BeforeEach(func() {
+				linuxkit.DepsIsoPath = "/some/path/that/does/not/exist"
+			})
+
+			It("returns file not found error", func() {
+				_, err := linuxkit.Command(4, 4096)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
 })
+
+func downloadTestAsset(targetDir string, resourceUrl string) error {
+	out, err := os.Create(filepath.Join(targetDir, "test-deps.dev"))
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := http.Get(resourceUrl)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

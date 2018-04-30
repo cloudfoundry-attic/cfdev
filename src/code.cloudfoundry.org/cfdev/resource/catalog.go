@@ -5,11 +5,10 @@ type Catalog struct {
 }
 
 type Item struct {
-	URL  string
-	Name string
-	MD5  string
-	Size uint64
-	Type string
+	URL   string
+	Name  string
+	MD5   string
+	Size  uint64
 	InUse bool
 }
 

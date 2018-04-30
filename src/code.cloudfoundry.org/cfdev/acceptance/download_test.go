@@ -92,10 +92,11 @@ func badCatalog(serverAddr string) string {
 	c := &resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
-				Name: "some-asset",
-				MD5:  "incorrect-md5",
-				Size: uint64(len("some-content")),
+				URL:   fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
+				Name:  "some-asset",
+				MD5:   "incorrect-md5",
+				Size:  uint64(len("some-content")),
+				InUse: true,
 			},
 		},
 	}
@@ -110,10 +111,11 @@ func localCatalog(serverAddr string) string {
 	c := &resource.Catalog{
 		Items: []resource.Item{
 			{
-				URL:  fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
-				Name: "some-asset",
-				MD5:  "ad60407c083b4ecc372614b8fcd9f305",
-				Size: uint64(len("some-content")),
+				URL:   fmt.Sprintf("%s/%s", serverAddr, "some-asset"),
+				Name:  "some-asset",
+				MD5:   "ad60407c083b4ecc372614b8fcd9f305",
+				Size:  uint64(len("some-content")),
+				InUse: true,
 			},
 		},
 	}

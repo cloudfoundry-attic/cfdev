@@ -7,9 +7,10 @@ import (
 	"strings"
 	"syscall"
 
-	"code.cloudfoundry.org/cfdev/config"
 	"io"
 	"os"
+
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 type UI interface {
@@ -18,7 +19,7 @@ type UI interface {
 }
 
 type LinuxKit struct {
-	Config config.Config
+	Config      config.Config
 	DepsIsoPath string
 }
 
@@ -32,10 +33,10 @@ func (l *LinuxKit) Command(cpus, mem int) (*exec.Cmd, error) {
 
 	if l.DepsIsoPath == "" {
 		l.DepsIsoPath = filepath.Join(l.Config.CacheDir, "cf-deps.iso")
-	}
-
-	if _, err := os.Stat(l.DepsIsoPath); os.IsNotExist(err) {
-		return nil, err
+	} else {
+		if _, err := os.Stat(l.DepsIsoPath); os.IsNotExist(err) {
+			return nil, err
+		}
 	}
 
 	dependencyImagePath := l.DepsIsoPath
