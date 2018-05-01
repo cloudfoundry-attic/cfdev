@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,6 +38,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 	BeforeEach(func() {
 		Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
+		FullCleanup()
 
 		cfdevHome = os.Getenv("CFDEV_HOME")
 		if cfdevHome == "" {
@@ -55,17 +58,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 	AfterEach(func() {
 		gexec.KillAndWait()
-		vmPid := PidFromFile(linuxkitPidPath)
-		vpnPid := PidFromFile(vpnkitPidPath)
-
-		if vmPid != 0 {
-			syscall.Kill(int(-vmPid), syscall.SIGKILL)
-		}
-
-		if vpnPid != 0 {
-			syscall.Kill(int(-vpnPid), syscall.SIGKILL)
-		}
-
+		FullCleanup()
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 
 		session := cf.Cf("dev", "stop")
@@ -216,4 +209,25 @@ func downloadTestAsset(targetDir string, resourceUrl string) error {
 	}
 
 	return nil
+}
+
+func FullCleanup() {
+	out, err := exec.Command("ps", "aux").Output()
+	Expect(err).NotTo(HaveOccurred())
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.Contains(line, "linuxkit") || strings.Contains(line, "hyperkit") || strings.Contains(line, "vpnkit") {
+			cols := strings.Fields(line)
+			pid, err := strconv.Atoi(cols[1])
+			if err == nil && pid > 0 {
+				syscall.Kill(pid, syscall.SIGKILL)
+			}
+		}
+	}
+	out, err = exec.Command("ps", "aux").Output()
+	Expect(err).NotTo(HaveOccurred())
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.Contains(line, "linuxkit") || strings.Contains(line, "hyperkit") || strings.Contains(line, "vpnkit") {
+			Fail(fmt.Sprintf("one of the 'kits' was still running: %s", line))
+		}
+	}
 }
