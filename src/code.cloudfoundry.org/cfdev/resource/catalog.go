@@ -13,9 +13,10 @@ type Item struct {
 }
 
 func (c Catalog) Lookup(name string) *Item {
-	for _, item := range c.Items {
+	for index := range c.Items {
+		item := &c.Items[index]
 		if item.Name == name {
-			return &item
+			return item
 		}
 	}
 	return nil

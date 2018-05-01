@@ -38,6 +38,11 @@ var _ = Describe("Catalog", func() {
 				Expect(item).ToNot(BeNil())
 				Expect(item.MD5).To(Equal("5678"))
 			})
+			It("returns an item that can be edited", func() {
+				item := catalog.Lookup("second-resource")
+				item.MD5 = "beef"
+				Expect(catalog.Lookup("second-resource").MD5).To(Equal("beef"))
+			})
 		})
 		Context("when the name is missing", func() {
 			It("returns nil", func() {

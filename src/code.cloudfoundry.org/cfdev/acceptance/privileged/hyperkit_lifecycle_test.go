@@ -34,7 +34,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 	)
 
 	BeforeEach(func() {
-		Expect(HasSudoPrivilege()).To(BeTrue())
+		Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 
 		cfdevHome = os.Getenv("CFDEV_HOME")
@@ -74,6 +74,10 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 	It("runs the entire vm lifecycle", func() {
 		session := cf.Cf("dev", "start")
+		go func() {
+			session.Wait()
+			fmt.Fprintln(GinkgoWriter, "Exited:", session.ExitCode)
+		}()
 		Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 		By("settingup VPNKit dependencies")
@@ -129,6 +133,11 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 		It("Custom ISO", func() {
 			session := cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
+			go func() {
+				defer GinkgoRecover()
+				session.Wait(10 * time.Minute)
+				fmt.Fprintln(GinkgoWriter, "Exited:", session.ExitCode)
+			}()
 			Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 			By("settingup VPNKit dependencies")
@@ -146,6 +155,13 @@ var _ = Describe("hyperkit lifecycle", func() {
 			Eventually(func() (string, error) {
 				return GetFile(client, "deploy-bosh", "/var/vcap/cache/test-file-one.txt")
 			}).Should(Equal("testfileone\n"))
+
+			session.Terminate()
+			Eventually(session).Should(gexec.Exit())
+
+			By("deploy finished - stopping...")
+			session = cf.Cf("dev", "stop")
+			Eventually(session).Should(gexec.Exit(0))
 		})
 	})
 })
