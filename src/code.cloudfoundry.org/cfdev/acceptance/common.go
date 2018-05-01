@@ -3,7 +3,6 @@ package acceptance
 import (
 	"archive/tar"
 	"crypto/tls"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
 	. "github.com/onsi/gomega"
@@ -146,7 +146,7 @@ func GetFile(client client.Client, handle, path string) (string, error) {
 
 	_, err = tr.Next()
 	if err == io.EOF {
-		return "", fmt.Errorf("file not found")
+		return "", errors.SafeWrap(nil, "file not found")
 	}
 	if err != nil {
 		return "", err

@@ -15,6 +15,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
+	"code.cloudfoundry.org/cfdev/errors"
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
@@ -44,7 +45,7 @@ func NewStart(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "start",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return s.RunE()
+			return errors.SafeWrap(s.RunE(), "cf dev start")
 		},
 	}
 	pf := cmd.PersistentFlags()
@@ -68,7 +69,7 @@ func (s *start) RunE() error {
 	s.Config.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{"type": "cf"})
 
 	if err := env.Setup(s.Config); err != nil {
-		return err
+		return errors.SafeWrap(err, "environment setup")
 	}
 
 	if isLinuxKitRunning(s.Config.LinuxkitPidFile) {
@@ -78,16 +79,16 @@ func (s *start) RunE() error {
 	}
 
 	if err := cleanupStateDir(s.Config.StateDir); err != nil {
-		return err
+		return errors.SafeWrap(err, "cleaning state directory")
 	}
 
 	if err := s.setupNetworking(); err != nil {
-		return err
+		return errors.SafeWrap(err, "setting up network")
 	}
 
 	registries, err := s.parseDockerRegistriesFlag(s.Registries)
 	if err != nil {
-		return fmt.Errorf("Unable to parse docker registries %v\n", err)
+		return errors.SafeWrap(err, "Unable to parse docker registries")
 	}
 
 	vpnKit := process.VpnKit{
@@ -106,47 +107,47 @@ func (s *start) RunE() error {
 	}
 
 	if err = download(s.Config.Dependencies, s.Config.CacheDir, s.UI.Writer()); err != nil {
-		return err
+		return errors.SafeWrap(err, "downloading")
 	}
 
 	lCmd, err := linuxkit.Command(s.Cpus, s.Mem)
 	if err != nil {
-		return fmt.Errorf("Unable to find .dev file %v\n", err)
+		return errors.SafeWrap(err, "Unable to find .dev file")
 	}
 
 	if !process.IsCFDevDInstalled(s.Config.CFDevDSocketPath, s.Config.CFDevDInstallationPath, s.Config.Dependencies.Lookup("cfdevd").MD5) {
 		if err := process.InstallCFDevD(s.Config.CacheDir); err != nil {
-			return err
+			return errors.SafeWrap(err, "installing cfdevd")
 		}
 	}
 
 	if err = vpnKit.SetupVPNKit(); err != nil {
-		return err
+		return errors.SafeWrap(err, "setting up vpnkit")
 	}
 
 	s.UI.Say("Starting VPNKit ...")
 	if err := vCmd.Start(); err != nil {
-		return fmt.Errorf("Failed to start VPNKit process: %v\n", err)
+		return errors.SafeWrap(err, "Failed to start VPNKit process")
 	}
 
 	err = ioutil.WriteFile(s.Config.VpnkitPidFile, []byte(strconv.Itoa(vCmd.Process.Pid)), 0777)
 	if err != nil {
-		return fmt.Errorf("Failed to write vpnKit pid file: %v\n", err)
+		return errors.SafeWrap(err, "Failed to write vpnKit pid file")
 	}
 
 	s.UI.Say("Starting the VM...")
 	lCmd.Stdout, err = os.Create(filepath.Join(s.Config.CFDevHome, "linuxkit.log"))
 	if err != nil {
-		return fmt.Errorf("Failed to open logfile: %v\n", err)
+		return errors.SafeWrap(err, "Failed to open logfile")
 	}
 	lCmd.Stderr = lCmd.Stdout
 	if err := lCmd.Start(); err != nil {
-		return fmt.Errorf("Failed to start VM process: %v\n", err)
+		return errors.SafeWrap(err, "Failed to start VM process")
 	}
 
 	err = ioutil.WriteFile(s.Config.LinuxkitPidFile, []byte(strconv.Itoa(lCmd.Process.Pid)), 0777)
 	if err != nil {
-		return fmt.Errorf("Failed to write VM pid file: %v\n", err)
+		return errors.SafeWrap(err, "Failed to write VM pid file")
 	}
 
 	garden := client.New(connection.New("tcp", "localhost:8888"))
@@ -154,12 +155,12 @@ func (s *start) RunE() error {
 
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := gdn.DeployBosh(garden); err != nil {
-		return fmt.Errorf("Failed to deploy the BOSH Director: %v\n", err)
+		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
 	}
 
 	s.UI.Say("Deploying CF...")
 	if err := gdn.DeployCloudFoundry(garden, registries); err != nil {
-		return fmt.Errorf("Failed to deploy the Cloud Foundry: %v\n", err)
+		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
 	s.UI.Say(`
@@ -214,11 +215,11 @@ func isLinuxKitRunning(pidFile string) bool {
 
 func cleanupStateDir(stateDir string) error {
 	if err := os.RemoveAll(stateDir); err != nil {
-		return fmt.Errorf("Unable to clean up .cfdev state directory: %v\n", err)
+		return errors.SafeWrap(err, "Unable to clean up .cfdev state directory")
 	}
 
 	if err := os.MkdirAll(stateDir, 0755); err != nil {
-		return fmt.Errorf("Unable to create .cfdev state directory: %v\n", err)
+		return errors.SafeWrap(err, "Unable to create .cfdev state directory")
 	}
 
 	return nil
@@ -228,7 +229,7 @@ func (s *start) setupNetworking() error {
 	err := network.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP)
 
 	if err != nil {
-		return fmt.Errorf("Unable to alias BOSH Director/CF Router IP: %v\n", err)
+		return errors.SafeWrap(err, "Unable to alias BOSH Director/CF Router IP")
 	}
 
 	return nil

@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/shell"
 	"code.cloudfoundry.org/garden/client"
@@ -30,13 +30,13 @@ func NewBosh(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
 			gClient := client.New(connection.New("tcp", "localhost:8888"))
 			config, err := gdn.FetchBOSHConfig(gClient)
 			if err != nil {
-				return fmt.Errorf("failed to fetch bosh configuration: %v\n", err)
+				return errors.SafeWrap(err, "failed to fetch bosh configuration")
 			}
 
 			env := shell.Environment{StateDir: Config.StateDir}
 			shellScript, err := env.Prepare(config)
 			if err != nil {
-				return fmt.Errorf("failed to prepare bosh configuration: %v\n", err)
+				return errors.SafeWrap(err, "failed to prepare bosh configuration")
 			}
 
 			UI.Say(shellScript)

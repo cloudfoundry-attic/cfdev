@@ -69,7 +69,7 @@ func waitForPidTermination(pid int) error {
 	for {
 		select {
 		case <-timeout:
-			return fmt.Errorf("timed out waiting for process to exit")
+			return errors.SafeWrap(nil, "timed out waiting for process to exit")
 		case <-tick.C:
 			err := syscall.Kill(pid, syscall.Signal(0))
 			if err != nil {

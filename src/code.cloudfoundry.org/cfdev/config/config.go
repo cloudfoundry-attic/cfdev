@@ -2,13 +2,14 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
+
+	"code.cloudfoundry.org/cfdev/errors"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
@@ -134,7 +135,7 @@ func catalog() (resource.Catalog, error) {
 	if override != "" {
 		var c resource.Catalog
 		if err := json.Unmarshal([]byte(override), &c); err != nil {
-			return resource.Catalog{}, fmt.Errorf("Unable to parse CFDEV_CATALOG env variable: %v\n", err)
+			return resource.Catalog{}, errors.SafeWrap(err, "Unable to parse CFDEV_CATALOG env variable")
 		}
 		return c, nil
 	}

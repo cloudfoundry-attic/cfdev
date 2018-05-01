@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -13,11 +14,11 @@ func NewTelemetry(UI UI, Config config.Config) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if flagOff {
 				if err := Config.AnalyticsToggle.Set(false); err != nil {
-					return err
+					return errors.SafeWrap(err, "turning off telemetry")
 				}
 			} else if flagOn {
 				if err := Config.AnalyticsToggle.Set(true); err != nil {
-					return err
+					return errors.SafeWrap(err, "turning on telemetry")
 				}
 			}
 

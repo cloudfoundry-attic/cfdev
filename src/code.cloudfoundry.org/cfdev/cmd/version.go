@@ -8,9 +8,8 @@ import (
 func NewVersion(UI UI, Config config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "version",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			UI.Say("Version: %s", Config.CliVersion.Original)
-			return nil
 		},
 	}
 	return cmd

@@ -1,11 +1,11 @@
 package cfanalytics
 
 import (
-	"fmt"
 	"runtime"
 	"strings"
 	"time"
 
+	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/denisbrodbeck/machineid"
 	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
@@ -80,7 +80,7 @@ Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?`)
 
 		select {
 		case <-Exit:
-			return fmt.Errorf("Exit while waiting for telemetry prompt")
+			return errors.SafeWrap(nil, "Exit while waiting for telemetry prompt")
 		case <-time.After(time.Millisecond):
 		}
 

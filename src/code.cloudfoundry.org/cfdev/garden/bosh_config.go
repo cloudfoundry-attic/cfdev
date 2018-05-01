@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"code.cloudfoundry.org/cli/cf/errors"
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"gopkg.in/yaml.v2"
 )
@@ -51,14 +51,14 @@ func FetchBOSHConfig(client garden.Client) (BOSHConfiguration, error) {
 	}
 
 	if exitCode != 0 {
-		return BOSHConfiguration{}, fmt.Errorf("process exited with status %v", exitCode)
+		return BOSHConfiguration{}, errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
 	}
 
 	client.Destroy("fetch-bosh-config")
 
 	var resp yamlResponse
 	if err := yaml.Unmarshal(buffer.Bytes(), &resp); err != nil {
-		return BOSHConfiguration{}, fmt.Errorf("unable to parse bosh config: %v", err)
+		return BOSHConfiguration{}, errors.SafeWrap(err, "unable to parse bosh config")
 	}
 
 	return resp.convert()
@@ -89,15 +89,15 @@ func (r *yamlResponse) convert() (BOSHConfiguration, error) {
 	conf := BOSHConfiguration{}
 
 	if r.AdminPassword == "" {
-		return conf, errors.New("admin password was not returned")
+		return conf, errors.SafeWrap(nil, "admin password was not returned")
 	}
 
 	if r.DirectorSSL.CACertificate == "" {
-		return conf, errors.New("ca certificate was not returned")
+		return conf, errors.SafeWrap(nil, "ca certificate was not returned")
 	}
 
 	if r.JumpboxSSH.PrivateKey == "" {
-		return conf, errors.New("jumpbox ssh key was not returned")
+		return conf, errors.SafeWrap(nil, "jumpbox ssh key was not returned")
 	}
 
 	conf.DirectorAddress = "10.245.0.2"

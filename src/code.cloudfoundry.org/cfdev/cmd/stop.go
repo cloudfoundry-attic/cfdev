@@ -10,6 +10,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ func NewStop(Config config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "stop",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStop(Config)
+			return errors.SafeWrap(runStop(Config), "cf dev stop")
 		},
 	}
 	return cmd
@@ -34,19 +35,19 @@ func runStop(Config config.Config) error {
 	go func() {
 		defer all.Done()
 		if err := process.SignalAndCleanup(Config.LinuxkitPidFile, Config.CFDevHome, syscall.SIGTERM); err != nil {
-			reterr = fmt.Errorf("failed to terminate linuxkit: %s", err)
+			reterr = errors.SafeWrap(err, "failed to terminate linuxkit")
 		}
 	}()
 	go func() {
 		defer all.Done()
 		if err := process.SignalAndCleanup(Config.VpnkitPidFile, Config.CFDevHome, syscall.SIGTERM); err != nil {
-			reterr = fmt.Errorf("failed to terminate vpnkit: %s", err)
+			reterr = errors.SafeWrap(err, "failed to terminate vpnkit")
 		}
 	}()
 	go func() {
 		defer all.Done()
 		if err := process.SignalAndCleanup(Config.HyperkitPidFile, Config.CFDevHome, syscall.SIGKILL); err != nil {
-			reterr = fmt.Errorf("failed to terminate hyperkit: %s", err)
+			reterr = errors.SafeWrap(err, "failed to terminate hyperkit")
 		}
 	}()
 	go func() {
@@ -77,7 +78,7 @@ func runStop(Config config.Config) error {
 				return
 			}
 		} else if errorCode[0] != 0 {
-			reterr = fmt.Errorf("failed to uninstall cfdevd: errorcode: %d", errorCode[0])
+			reterr = errors.SafeWrap(nil, fmt.Sprintf("failed to uninstall cfdevd: errorcode: %d", errorCode[0]))
 		}
 	}()
 

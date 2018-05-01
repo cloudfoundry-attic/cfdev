@@ -3,6 +3,7 @@ package garden
 import (
 	"fmt"
 
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"gopkg.in/yaml.v2"
 )
@@ -60,7 +61,7 @@ func DeployCloudFoundry(client garden.Client, dockerRegistries []string) error {
 	}
 
 	if exitCode != 0 {
-		return fmt.Errorf("process exited with status %v", exitCode)
+		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %d", exitCode))
 	}
 
 	client.Destroy("deploy-cf")

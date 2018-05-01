@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/resource/retry"
 )
 
@@ -75,7 +76,7 @@ func (c *Cache) download(item *Item) error {
 		return err
 	} else if m != item.MD5 {
 		os.Remove(tmpPath)
-		return fmt.Errorf("md5 did not match: %s: %s != %s", item.Name, m, item.MD5)
+		return errors.SafeWrap(fmt.Errorf("%s: %s != %s", item.Name, m, item.MD5), "md5 did not match")
 	}
 	return os.Rename(tmpPath, filepath.Join(c.Dir, item.Name))
 }
@@ -108,7 +109,7 @@ func (c *Cache) downloadHTTP(url, tmpPath string) error {
 	} else if resp.StatusCode == 416 {
 		// Possibly full file already downloaded
 	} else {
-		return fmt.Errorf("http: %s", resp.Status)
+		return errors.SafeWrap(fmt.Errorf(resp.Status), "http status")
 	}
 	return nil
 }

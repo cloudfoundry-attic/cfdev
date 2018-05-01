@@ -3,6 +3,7 @@ package garden
 import (
 	"fmt"
 
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 )
 
@@ -49,7 +50,7 @@ func DeployBosh(client garden.Client) error {
 	}
 
 	if exitCode != 0 {
-		return fmt.Errorf("process exited with status %v", exitCode)
+		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
 	}
 
 	client.Destroy("deploy-bosh")

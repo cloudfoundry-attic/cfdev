@@ -8,6 +8,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
@@ -100,19 +101,9 @@ func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	p.Root.SetArgs(args)
 	if err := p.Root.Execute(); err != nil {
 		p.UI.Failed(err.Error())
-		p.Config.Analytics.Event(cfanalytics.ERROR, map[string]interface{}{"error": err.Error()})
+		extraData := map[string]interface{}{"errors": errors.SafeError(err)}
+		p.Config.Analytics.Event(cfanalytics.ERROR, extraData)
 		p.Config.Close()
 		os.Exit(1)
 	}
-
-	// TODO why is the below here?????
-	// select {
-	// case <-p.Exit:
-	// 	os.Exit(128)
-	// default:
-	// 	if err != nil {
-	// 		fmt.Printf("Error encountered running '%s' : %s", args[0], err)
-	// 		os.Exit(2)
-	// 	}
-	// }
 }

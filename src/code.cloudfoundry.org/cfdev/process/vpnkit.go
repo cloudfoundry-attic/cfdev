@@ -1,16 +1,18 @@
 package process
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
-	"syscall"
 	"path/filepath"
-	"code.cloudfoundry.org/cfdev/env"
-	"encoding/json"
+	"syscall"
+
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/env"
+	"code.cloudfoundry.org/cfdev/errors"
 )
 
 type VpnKit struct {
@@ -41,13 +43,13 @@ func (v *VpnKit) SetupVPNKit() error {
 	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP)
 	proxyContents, err := json.Marshal(proxyConfig)
 	if err != nil {
-		return fmt.Errorf("Unable to create proxy config: %v\n", err)
+		return errors.SafeWrap(err, "Unable to create proxy config")
 	}
 
 	if _, err := os.Stat(httpProxyPath); !os.IsNotExist(err) {
 		err = os.Remove(httpProxyPath)
 		if err != nil {
-			return fmt.Errorf("Unable to remove 'http_proxy.json' %v\n", err)
+			return errors.SafeWrap(err, "Unable to remove 'http_proxy.json'")
 		}
 	}
 

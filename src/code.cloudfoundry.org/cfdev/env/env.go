@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
 )
 
 type ProxyConfig struct {
@@ -49,15 +50,17 @@ func BuildProxyConfig(boshDirectorIp string, cfRouterIp string) ProxyConfig {
 
 func Setup(config config.Config) error {
 	if err := os.MkdirAll(config.CFDevHome, 0755); err != nil {
-		return fmt.Errorf("failed to create home dir at path %s: %s", config.CFDevHome, err)
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CFDevHome, err), "failed to create cfdevhome dir")
 	}
 
 	if err := os.MkdirAll(config.CacheDir, 0755); err != nil {
-		return fmt.Errorf("failed to create cache dir at path %s: %s", config.CacheDir, err)
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CacheDir, err), "failed to create cache dir")
+
 	}
 
 	if err := os.MkdirAll(config.StateDir, 0755); err != nil {
-		return fmt.Errorf("failed to create state dir at path %s: %s", config.StateDir, err)
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.StateDir, err), "failed to create state dir")
+
 	}
 
 	return nil

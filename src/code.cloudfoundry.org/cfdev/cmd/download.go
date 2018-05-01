@@ -14,6 +14,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	"github.com/spf13/cobra"
@@ -29,7 +30,7 @@ func NewDownload(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command
 			}()
 
 			if err := env.Setup(Config); err != nil {
-				return nil
+				return errors.SafeWrap(err, "setup for download")
 			}
 
 			UI.Say("Downloading Resources...")
@@ -53,7 +54,7 @@ func download(dependencies resource.Catalog, cacheDir string, writer io.Writer) 
 	}
 
 	if err := cache.Sync(&dependencies); err != nil {
-		return fmt.Errorf("Unable to sync assets: %v\n", err)
+		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 	return nil
 }
