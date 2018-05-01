@@ -68,6 +68,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 	It("runs the entire vm lifecycle", func() {
 		session := cf.Cf("dev", "start")
 		go func() {
+			defer GinkgoRecover()
 			session.Wait()
 			fmt.Fprintln(GinkgoWriter, "Exited:", session.ExitCode)
 		}()
