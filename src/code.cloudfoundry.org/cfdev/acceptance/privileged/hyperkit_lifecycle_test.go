@@ -67,11 +67,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 	It("runs the entire vm lifecycle", func() {
 		session := cf.Cf("dev", "start")
-		go func() {
-			defer GinkgoRecover()
-			session.Wait()
-			fmt.Fprintln(GinkgoWriter, "Exited:", session.ExitCode)
-		}()
 		Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 		By("settingup VPNKit dependencies")
@@ -127,11 +122,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 		It("Custom ISO", func() {
 			session := cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
-			go func() {
-				defer GinkgoRecover()
-				session.Wait(10 * time.Minute)
-				fmt.Fprintln(GinkgoWriter, "Exited:", session.ExitCode)
-			}()
 			Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 			By("settingup VPNKit dependencies")
