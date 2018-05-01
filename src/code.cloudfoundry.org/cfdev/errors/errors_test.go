@@ -31,4 +31,12 @@ var _ = Describe("SafeWrap", func() {
 			Expect(errors.SafeError(err)).To(Equal(""))
 		})
 	})
+
+	Context("causing error is nil", func() {
+		It("uses just the message", func() {
+			err := errors.SafeWrap(nil, "safe text")
+			Expect(err.Error()).To(Equal("safe text"))
+			Expect(errors.SafeError(err)).To(Equal("safe text"))
+		})
+	})
 })

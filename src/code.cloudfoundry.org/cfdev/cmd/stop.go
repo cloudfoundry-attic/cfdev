@@ -19,7 +19,11 @@ func NewStop(Config config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "stop",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.SafeWrap(runStop(Config), "cf dev stop")
+			err := runStop(Config)
+			if err != nil {
+				return errors.SafeWrap(err, "cf dev stop")
+			}
+			return nil
 		},
 	}
 	return cmd

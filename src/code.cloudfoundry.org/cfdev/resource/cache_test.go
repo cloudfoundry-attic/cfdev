@@ -246,7 +246,7 @@ var _ = Describe("Cache Sync", func() {
 		})
 
 		It("returns an error", func() {
-			Expect(cache.Sync(catalog)).To(MatchError("http: File Not Found"))
+			Expect(cache.Sync(catalog)).To(MatchError("http status: File Not Found"))
 		})
 	})
 

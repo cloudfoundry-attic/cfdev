@@ -10,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"code.cloudfoundry.org/cfdev/errors"
 )
 
 func SignalAndCleanup(pidfile, match string, signal syscall.Signal) error {

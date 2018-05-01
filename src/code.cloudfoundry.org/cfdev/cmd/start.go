@@ -45,7 +45,11 @@ func NewStart(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "start",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.SafeWrap(s.RunE(), "cf dev start")
+			err := s.RunE()
+			if err != nil {
+				return errors.SafeWrap(err, "cf dev start")
+			}
+			return nil
 		},
 	}
 	pf := cmd.PersistentFlags()

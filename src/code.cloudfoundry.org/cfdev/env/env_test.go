@@ -132,7 +132,7 @@ var _ = Describe("env", func() {
 
 					err := env.Setup(conf)
 					Expect(err.Error()).
-						To(ContainSubstring(fmt.Sprintf("failed to create home dir at path %s", homeDir)))
+						To(ContainSubstring(fmt.Sprintf("failed to create cfdevhome dir: path %s", homeDir)))
 				})
 			})
 
@@ -154,7 +154,7 @@ var _ = Describe("env", func() {
 
 					err := env.Setup(conf)
 					Expect(err.Error()).
-						To(ContainSubstring(fmt.Sprintf("failed to create cache dir at path %s", cacheDir)))
+						To(ContainSubstring(fmt.Sprintf("failed to create cache dir: path %s", cacheDir)))
 				})
 			})
 
@@ -176,7 +176,7 @@ var _ = Describe("env", func() {
 
 					err := env.Setup(conf)
 					Expect(err.Error()).
-						To(ContainSubstring(fmt.Sprintf("failed to create state dir at path %s", stateDir)))
+						To(ContainSubstring(fmt.Sprintf("failed to create state dir: path %s", stateDir)))
 				})
 			})
 		})

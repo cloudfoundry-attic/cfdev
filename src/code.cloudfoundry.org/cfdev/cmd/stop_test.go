@@ -198,7 +198,7 @@ var _ = Describe("Stop", func() {
 		Context("cfdevd returns error to uninstall", func() {
 			It("returns the error", func() {
 				uninstallErrorCode = 1
-				Expect(stopCmd.Execute()).To(MatchError("failed to uninstall cfdevd: errorcode: 1"))
+				Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to uninstall cfdevd: errorcode: 1"))
 			})
 		})
 	})

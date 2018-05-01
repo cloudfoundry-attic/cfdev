@@ -6,9 +6,6 @@ type safeError struct {
 }
 
 func SafeWrap(err error, msg string) error {
-	if err == nil {
-		return nil
-	}
 	return &safeError{
 		err: err,
 		msg: msg,
@@ -16,6 +13,9 @@ func SafeWrap(err error, msg string) error {
 }
 
 func (se *safeError) Error() string {
+	if se.err == nil {
+		return se.msg
+	}
 	return se.msg + ": " + se.err.Error()
 }
 
