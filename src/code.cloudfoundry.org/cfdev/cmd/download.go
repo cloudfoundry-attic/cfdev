@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"io/ioutil"
 	"path/filepath"
@@ -47,6 +48,8 @@ func download(dependencies resource.Catalog, cacheDir string, writer io.Writer) 
 		HttpDo:                http.DefaultClient.Do,
 		SkipAssetVerification: skipVerify == "true",
 		Progress:              progress.New(writer),
+		RetryWait:             time.Second,
+		Writer:                writer,
 	}
 
 	if err := cache.Sync(&dependencies); err != nil {

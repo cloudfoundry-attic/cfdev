@@ -9,6 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"code.cloudfoundry.org/cfdev/resource/retry"
 )
 
 type Progress interface {
@@ -23,6 +26,8 @@ type Cache struct {
 	HttpDo                func(req *http.Request) (*http.Response, error)
 	Progress              Progress
 	SkipAssetVerification bool
+	RetryWait             time.Duration
+	Writer                io.Writer
 }
 
 func (c *Cache) Sync(clog *Catalog) error {
@@ -62,7 +67,8 @@ func (c *Cache) download(item *Item) error {
 	}
 
 	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)
-	if err := c.downloadHTTP(item.URL, tmpPath); err != nil {
+	downloadFn := func() error { return c.downloadHTTP(item.URL, tmpPath) }
+	if err := retry.Retry(downloadFn, retry.Retryable(10, c.RetryWait, c.Writer)); err != nil {
 		return err
 	}
 	if m, err := MD5(tmpPath); err != nil {
@@ -91,13 +97,13 @@ func (c *Cache) downloadHTTP(url, tmpPath string) error {
 
 	resp, err := c.HttpDo(req)
 	if err != nil {
-		return err
+		return retry.WrapAsRetryable(err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if _, err = io.Copy(out, io.TeeReader(resp.Body, c.Progress)); err != nil {
-			return err
+			return retry.WrapAsRetryable(err)
 		}
 	} else if resp.StatusCode == 416 {
 		// Possibly full file already downloaded

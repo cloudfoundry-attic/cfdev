@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -49,38 +50,38 @@ var _ = Describe("Cache Sync", func() {
 		catalog = &resource.Catalog{
 			Items: []resource.Item{
 				{
-					Name: "first-resource",
-					URL:  "first-resource-url",
-					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
-					Size: 7,
+					Name:  "first-resource",
+					URL:   "first-resource-url",
+					MD5:   "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+					Size:  7,
 					InUse: true,
 				},
 				{
-					Name: "second-resource",
-					URL:  "second-resource-url",
-					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
-					Size: 7,
+					Name:  "second-resource",
+					URL:   "second-resource-url",
+					MD5:   "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+					Size:  7,
 					InUse: true,
 				},
 				{
-					Name: "third-resource",
-					URL:  "third-resource-url",
-					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
-					Size: 7,
+					Name:  "third-resource",
+					URL:   "third-resource-url",
+					MD5:   "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+					Size:  7,
 					InUse: true,
 				},
 				{
-					Name: "fourth-resource",
-					URL:  "fourth-resource-url",
-					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
-					Size: 7,
+					Name:  "fourth-resource",
+					URL:   "fourth-resource-url",
+					MD5:   "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+					Size:  7,
 					InUse: true,
 				},
 				{
-					Name: "fifth-resource",
-					URL:  "fifth-resource-url",
-					MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
-					Size: 7,
+					Name:  "fifth-resource",
+					URL:   "fifth-resource-url",
+					MD5:   "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+					Size:  7,
 					InUse: false,
 				},
 			},
@@ -98,7 +99,8 @@ var _ = Describe("Cache Sync", func() {
 					Body:       ioutil.NopCloser(strings.NewReader("content")),
 				}, nil
 			},
-			Progress: mockProgress,
+			Progress:  mockProgress,
+			RetryWait: time.Nanosecond,
 		}
 	})
 
@@ -168,10 +170,10 @@ var _ = Describe("Cache Sync", func() {
 
 	It("handles file:// schema", func() {
 		catalog = &resource.Catalog{Items: []resource.Item{{
-			Name: "file-resource",
-			URL:  fmt.Sprintf("file://%s/other-file", tmpDir),
-			MD5:  "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
-			Size: 7,
+			Name:  "file-resource",
+			URL:   fmt.Sprintf("file://%s/other-file", tmpDir),
+			MD5:   "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content
+			Size:  7,
 			InUse: true,
 		}}}
 		Expect(ioutil.WriteFile(filepath.Join(tmpDir, "other-file"), []byte("content"), 0666)).To(Succeed())
@@ -248,6 +250,24 @@ var _ = Describe("Cache Sync", func() {
 		})
 	})
 
+	Context("downloading fails during transmission", func() {
+		var counter int
+		BeforeEach(func() {
+			counter = 0
+			cache.HttpDo = func(req *http.Request) (*http.Response, error) {
+				counter++
+				return &http.Response{
+					StatusCode: 200,
+					Body:       ioutil.NopCloser(&failingReader{}),
+				}, nil
+			}
+		})
+		It("retries 10 times", func() {
+			Expect(cache.Sync(catalog)).To(MatchError("fake error during file transmission"))
+			Expect(counter).To(Equal(10))
+		})
+	})
+
 	Context("downloaded file contains incorrect checksum", func() {
 		BeforeEach(func() {
 			cache.HttpDo = func(req *http.Request) (*http.Response, error) {
@@ -319,4 +339,10 @@ func createFile(dir, name, contents string) {
 type download struct {
 	url  string
 	path string
+}
+
+type failingReader struct{}
+
+func (r *failingReader) Read([]byte) (int, error) {
+	return 0, fmt.Errorf("fake error during file transmission")
 }
