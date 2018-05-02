@@ -4,36 +4,40 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-	"syscall"
 
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
+	launchd "code.cloudfoundry.org/cfdevd/launchd/models"
 )
 
 type VpnKit struct {
 	Config config.Config
 }
 
-func (v *VpnKit) Command() *exec.Cmd {
-	cmd := exec.Command(path.Join(v.Config.CacheDir, "vpnkit"),
-		"--ethernet",
-		path.Join(v.Config.CFDevHome, "vpnkit_eth.sock"),
-		"--port",
-		path.Join(v.Config.CFDevHome, "vpnkit_port.sock"),
-		"--vsock-path",
-		path.Join(v.Config.StateDir, "connect"),
-		"--http",
-		path.Join(v.Config.CFDevHome, "http_proxy.json"))
+const VpnKitLabel = "org.cloudfoundry.cfdev.vpnkit"
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
+func (v *VpnKit) DaemonSpec() launchd.DaemonSpec {
+	return launchd.DaemonSpec{
+		Label:   VpnKitLabel,
+		Program: path.Join(v.Config.CacheDir, "vpnkit"),
+		ProgramArguments: []string{
+			path.Join(v.Config.CacheDir, "vpnkit"),
+			"--ethernet",
+			path.Join(v.Config.CFDevHome, "vpnkit_eth.sock"),
+			"--port",
+			path.Join(v.Config.CFDevHome, "vpnkit_port.sock"),
+			"--vsock-path",
+			path.Join(v.Config.StateDir, "connect"),
+			"--http",
+			path.Join(v.Config.CFDevHome, "http_proxy.json"),
+		},
+		RunAtLoad:  false,
+		StdoutPath: path.Join(v.Config.CFDevHome, "vpnkit.stdout.log"),
+		StderrPath: path.Join(v.Config.CFDevHome, "vpnkit.stderr.log"),
 	}
-
-	return cmd
 }
 
 func (v *VpnKit) SetupVPNKit() error {

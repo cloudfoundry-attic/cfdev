@@ -109,6 +109,7 @@ var _ = Describe("Cache Sync", func() {
 
 		Expect(downloads).To(ContainElement("first-resource-url"))
 		Expect(ioutil.ReadFile(filepath.Join(tmpDir, "first-resource"))).To(Equal([]byte("content")))
+		Expect(fileMode(filepath.Join(tmpDir, "first-resource"))).To(BeEquivalentTo(0755))
 
 		Expect(mockProgress.Total).To(Equal(uint64(28)))
 	})
@@ -118,7 +119,7 @@ var _ = Describe("Cache Sync", func() {
 
 		Expect(downloads).To(ContainElement("second-resource-url"))
 		Expect(ioutil.ReadFile(filepath.Join(tmpDir, "second-resource"))).To(Equal([]byte("content")))
-
+		Expect(fileMode(filepath.Join(tmpDir, "second-resource"))).To(BeEquivalentTo(0755))
 	})
 
 	It("does not re-download valid files and leaves file untouched", func() {
@@ -126,6 +127,7 @@ var _ = Describe("Cache Sync", func() {
 
 		Expect(downloads).NotTo(ContainElement("third-resource-url"))
 		Expect(ioutil.ReadFile(filepath.Join(tmpDir, "third-resource"))).To(Equal([]byte("content")))
+		Expect(fileMode(filepath.Join(tmpDir, "third-resource"))).To(BeEquivalentTo(0755))
 	})
 
 	It("informs progress", func() {
@@ -137,13 +139,8 @@ var _ = Describe("Cache Sync", func() {
 	It("downloads files as executable", func() {
 		Expect(cache.Sync(catalog)).To(Succeed())
 
-		fi, err := os.Stat(filepath.Join(tmpDir, "first-resource"))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(fi.Mode()).To(BeEquivalentTo(0755))
-
-		fi, err = os.Stat(filepath.Join(tmpDir, "second-resource"))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(fi.Mode()).To(BeEquivalentTo(0755))
+		Expect(fileMode(filepath.Join(tmpDir, "first-resource"))).To(BeEquivalentTo(0755))
+		Expect(fileMode(filepath.Join(tmpDir, "second-resource"))).To(BeEquivalentTo(0755))
 	})
 
 	It("resumes partially downloaded files to the target directory", func() {
@@ -345,4 +342,12 @@ type failingReader struct{}
 
 func (r *failingReader) Read([]byte) (int, error) {
 	return 0, fmt.Errorf("fake error during file transmission")
+}
+
+func fileMode(path string) (os.FileMode, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return 0, err
+	}
+	return fi.Mode(), nil
 }

@@ -9,6 +9,8 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
+	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
+	"code.cloudfoundry.org/cfdevd/launchd"
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
@@ -53,12 +55,14 @@ func main() {
 	}
 	defer conf.Close()
 
+	lctl := launchd.New(conf.CFDevHome)
+
 	v := conf.CliVersion
 	cfdev := &Plugin{
 		Exit:    exitChan,
 		UI:      ui,
 		Config:  conf,
-		Root:    cmd.NewRoot(exitChan, ui, conf),
+		Root:    cmd.NewRoot(exitChan, ui, conf, lctl),
 		Version: plugin.VersionType{Major: v.Major, Minor: v.Minor, Build: v.Build},
 	}
 
@@ -84,7 +88,7 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	if args[0] == "CLI-MESSAGE-UNINSTALL" {
 		p.Config.Analytics.Event(cfanalytics.UNINSTALL, nil)
-		stop := cmd.NewStop(p.Config)
+		stop := cmd.NewStop(p.Config, launchd.New(p.Config.CFDevHome), cfdevdClient.New("CFD3V", p.Config.CFDevDSocketPath))
 		if err := stop.RunE(nil, []string{}); err != nil {
 			p.UI.Say("Error stopping cfdev: %s", err)
 			p.Config.Analytics.Event(cfanalytics.ERROR, map[string]interface{}{"error": err})

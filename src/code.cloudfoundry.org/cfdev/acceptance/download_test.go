@@ -37,13 +37,8 @@ var _ = Describe("download", func() {
 	})
 
 	Context("when the catalog is valid", func() {
-		BeforeEach(func() {
-			os.Setenv("CFDEV_CATALOG", localCatalog(server.URL))
-		})
-
-		AfterEach(func() {
-			os.Unsetenv("CFDEV_CATALOG")
-		})
+		BeforeEach(func() { os.Setenv("CFDEV_CATALOG", localCatalog(server.URL)) })
+		AfterEach(func() { os.Unsetenv("CFDEV_CATALOG") })
 
 		It("downloads assets", func() {
 			session := cf.Cf("dev", "download")

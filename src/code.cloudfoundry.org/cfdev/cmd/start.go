@@ -3,13 +3,9 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
@@ -19,6 +15,7 @@ import (
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
+	launchdModels "code.cloudfoundry.org/cfdevd/launchd/models"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
@@ -29,19 +26,27 @@ type UI interface {
 	Say(message string, args ...interface{})
 	Writer() io.Writer
 }
+type Launchd interface {
+	AddDaemon(launchdModels.DaemonSpec) error
+	RemoveDaemon(label string) error
+	Start(label string) error
+	Stop(label string) error
+	IsRunning(label string) (bool, error)
+}
 
 type start struct {
 	Exit        chan struct{}
 	UI          UI
 	Config      config.Config
+	Launchd     Launchd
 	Registries  string
 	DepsIsoPath string
 	Cpus        int
 	Mem         int
 }
 
-func NewStart(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
-	s := start{Exit: Exit, UI: UI, Config: Config}
+func NewStart(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd) *cobra.Command {
+	s := start{Exit: Exit, UI: UI, Config: Config, Launchd: Launchd}
 	cmd := &cobra.Command{
 		Use: "start",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -64,22 +69,23 @@ func NewStart(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
 func (s *start) RunE() error {
 	go func() {
 		<-s.Exit
-		process.SignalAndCleanup(s.Config.LinuxkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
-		process.SignalAndCleanup(s.Config.VpnkitPidFile, s.Config.CFDevHome, syscall.SIGTERM)
-		process.SignalAndCleanup(s.Config.HyperkitPidFile, s.Config.CFDevHome, syscall.SIGKILL)
+		s.Launchd.Stop(process.LinuxKitLabel)
+		s.Launchd.Stop(process.VpnKitLabel)
 		os.Exit(128)
 	}()
 
 	s.Config.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{"type": "cf"})
 
-	if err := env.Setup(s.Config); err != nil {
-		return errors.SafeWrap(err, "environment setup")
-	}
-
-	if isLinuxKitRunning(s.Config.LinuxkitPidFile) {
+	if running, err := s.Launchd.IsRunning(process.LinuxKitLabel); err != nil {
+		return errors.SafeWrap(err, "is linuxkit running")
+	} else if running {
 		s.UI.Say("CF Dev is already running...")
 		s.Config.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"type": "cf", "alreadyrunning": true})
 		return nil
+	}
+
+	if err := env.Setup(s.Config); err != nil {
+		return errors.SafeWrap(err, "environment setup")
 	}
 
 	if err := cleanupStateDir(s.Config.StateDir); err != nil {
@@ -95,16 +101,6 @@ func (s *start) RunE() error {
 		return errors.SafeWrap(err, "Unable to parse docker registries")
 	}
 
-	vpnKit := process.VpnKit{
-		Config: s.Config,
-	}
-	vCmd := vpnKit.Command()
-
-	linuxkit := process.LinuxKit{
-		Config:      s.Config,
-		DepsIsoPath: s.DepsIsoPath,
-	}
-
 	if s.DepsIsoPath != "" {
 		item := s.Config.Dependencies.Lookup("cf-deps.iso")
 		item.InUse = false
@@ -114,46 +110,45 @@ func (s *start) RunE() error {
 		return errors.SafeWrap(err, "downloading")
 	}
 
-	lCmd, err := linuxkit.Command(s.Cpus, s.Mem)
-	if err != nil {
-		return errors.SafeWrap(err, "Unable to find .dev file")
-	}
-
 	if !process.IsCFDevDInstalled(s.Config.CFDevDSocketPath, s.Config.CFDevDInstallationPath, s.Config.Dependencies.Lookup("cfdevd").MD5) {
 		if err := process.InstallCFDevD(s.Config.CacheDir); err != nil {
 			return errors.SafeWrap(err, "installing cfdevd")
 		}
 	}
 
-	if err = vpnKit.SetupVPNKit(); err != nil {
-		return errors.SafeWrap(err, "setting up vpnkit")
-	}
-
 	s.UI.Say("Starting VPNKit ...")
-	if err := vCmd.Start(); err != nil {
-		return errors.SafeWrap(err, "Failed to start VPNKit process")
+	vpnKit := process.VpnKit{
+		Config: s.Config,
 	}
-
-	err = ioutil.WriteFile(s.Config.VpnkitPidFile, []byte(strconv.Itoa(vCmd.Process.Pid)), 0777)
-	if err != nil {
-		return errors.SafeWrap(err, "Failed to write vpnKit pid file")
+	if err := vpnKit.SetupVPNKit(); err != nil {
+		return errors.SafeWrap(err, "Failed to setup VPNKit")
 	}
+	if err := s.Launchd.AddDaemon(vpnKit.DaemonSpec()); err != nil {
+		return errors.SafeWrap(err, "install vpnkit")
+	}
+	if err := s.Launchd.Start(process.VpnKitLabel); err != nil {
+		return errors.SafeWrap(err, "start vpnkit")
+	}
+	s.watchLaunchd(process.VpnKitLabel)
 
 	s.UI.Say("Starting the VM...")
-	lCmd.Stdout, err = os.Create(filepath.Join(s.Config.CFDevHome, "linuxkit.log"))
+	linuxKit := process.LinuxKit{
+		Config:      s.Config,
+		DepsIsoPath: s.DepsIsoPath,
+	}
+	daemonSpec, err := linuxKit.DaemonSpec(s.Cpus, s.Mem)
 	if err != nil {
-		return errors.SafeWrap(err, "Failed to open logfile")
+		return err
 	}
-	lCmd.Stderr = lCmd.Stdout
-	if err := lCmd.Start(); err != nil {
-		return errors.SafeWrap(err, "Failed to start VM process")
+	if err := s.Launchd.AddDaemon(daemonSpec); err != nil {
+		return errors.SafeWrap(err, "install linuxkit")
 	}
+	if err := s.Launchd.Start(process.LinuxKitLabel); err != nil {
+		return errors.SafeWrap(err, "start linuxkit")
+	}
+	s.watchLaunchd(process.LinuxKitLabel)
 
-	err = ioutil.WriteFile(s.Config.LinuxkitPidFile, []byte(strconv.Itoa(lCmd.Process.Pid)), 0777)
-	if err != nil {
-		return errors.SafeWrap(err, "Failed to write VM pid file")
-	}
-
+	s.UI.Say("Waiting for Garden...")
 	garden := client.New(connection.New("tcp", "localhost:8888"))
 	waitForGarden(garden)
 
@@ -196,25 +191,6 @@ func waitForGarden(client garden.Client) {
 
 		time.Sleep(time.Second)
 	}
-}
-
-func isLinuxKitRunning(pidFile string) bool {
-	fileBytes, err := ioutil.ReadFile(pidFile)
-	if err != nil {
-		return false
-	}
-
-	pid, err := strconv.ParseInt(string(fileBytes), 10, 64)
-	if err != nil {
-		return false
-	}
-
-	if process, err := os.FindProcess(int(pid)); err == nil {
-		err = process.Signal(syscall.Signal(0))
-		return err == nil
-	}
-
-	return false
 }
 
 func cleanupStateDir(stateDir string) error {
@@ -262,4 +238,18 @@ func (s *start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 		registries = append(registries, u.Host)
 	}
 	return registries, nil
+}
+
+func (s *start) watchLaunchd(label string) {
+	go func() {
+		for {
+			running, err := s.Launchd.IsRunning(label)
+			if !running && err == nil {
+				s.UI.Say("ERROR: %s has stopped", label)
+				close(s.Exit)
+				return
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}()
 }

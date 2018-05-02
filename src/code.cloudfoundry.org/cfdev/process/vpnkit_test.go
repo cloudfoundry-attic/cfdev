@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/process"
 )
 
 var _ = Describe("VPNKit", func() {
@@ -16,15 +16,16 @@ var _ = Describe("VPNKit", func() {
 
 		vpnKit := process.VpnKit{
 			Config: config.Config{
-				CFDevHome:  homeDir,
-				CacheDir: cacheDir,
-				StateDir: stateDir,
+				CFDevHome: homeDir,
+				CacheDir:  cacheDir,
+				StateDir:  stateDir,
 			},
 		}
 
-		cmd := vpnKit.Command()
+		cmd := vpnKit.DaemonSpec()
 
-		Expect(cmd.Args).To(ConsistOf(
+		Expect(cmd.Program).To(Equal("/home/cache/vpnkit"))
+		Expect(cmd.ProgramArguments).To(ConsistOf(
 			"/home/cache/vpnkit",
 			"--ethernet",
 			"/home/vpnkit_eth.sock",

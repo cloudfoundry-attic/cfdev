@@ -1,14 +1,14 @@
 package cmd_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"bytes"
 	"code.cloudfoundry.org/cfdevd/cmd"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("cmd", func() {
-	It("return an UnimplementedCommand when given a 1", func() {
+	It("return an UnimplementedCommand when given a 7", func() {
 		badMessage := bytes.NewReader([]byte{uint8(7)})
 
 		badCommand, err := cmd.UnmarshalCommand(badMessage)
@@ -17,6 +17,7 @@ var _ = Describe("cmd", func() {
 		switch v := badCommand.(type) {
 		case *cmd.UnimplementedCommand:
 			Expect(v.Instruction).To(Equal(uint8(7)))
+			Expect(v.Logger).ToNot(BeNil())
 		default:
 			Fail("wrong type!")
 		}

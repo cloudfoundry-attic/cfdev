@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"code.cloudfoundry.org/cfdevd/launchd"
+	"os"
 )
 
 type Command interface {
@@ -24,11 +25,12 @@ func UnmarshalCommand(conn io.Reader) (Command, error) {
 		return UnmarshalBindCommand(conn)
 	case UninstallType:
 		return &UninstallCommand{
-			Launchd: launchd.New(),
+			Launchd: launchd.New(""),
 		}, nil
 	default:
 		return &UnimplementedCommand{
 			Instruction: instr,
+			Logger: os.Stdout,
 		}, nil
 	}
 }

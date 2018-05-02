@@ -9,7 +9,6 @@ import (
 
 	"code.cloudfoundry.org/cfdevd/cmd"
 	"code.cloudfoundry.org/cfdevd/cmd/mocks"
-	"code.cloudfoundry.org/cfdevd/launchd"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -62,10 +61,7 @@ var _ bool = Describe("UninstallCommand", func() {
 			controller.Finish()
 		})
 		It("removes the correct daemon", func() {
-			mockLaunchd.EXPECT().RemoveDaemon(launchd.DaemonSpec{
-				Label:   "org.cloudfoundry.cfdevd",
-				Program: "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd",
-			})
+			mockLaunchd.EXPECT().RemoveDaemon("org.cloudfoundry.cfdevd")
 			Expect(uninstall.Execute(conn)).To(Succeed())
 		})
 		It("sends 0 (success) over the communication socket", func() {

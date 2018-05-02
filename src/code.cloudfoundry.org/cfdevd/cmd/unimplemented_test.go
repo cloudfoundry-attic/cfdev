@@ -1,11 +1,11 @@
 package cmd_test
 
 import (
+	"code.cloudfoundry.org/cfdevd/cmd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdevd/cmd"
-	"net"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 )
@@ -34,7 +34,9 @@ var _ = Describe("UnimplementedCommand", func() {
 		})
 
 		It("returns error code 33", func(done Done) {
-			unimplemented := &cmd.UnimplementedCommand{}
+			unimplemented := &cmd.UnimplementedCommand{
+				Logger: GinkgoWriter,
+			}
 			go func() {
 				defer GinkgoRecover()
 				conn, err := ln.Accept()
@@ -53,7 +55,9 @@ var _ = Describe("UnimplementedCommand", func() {
 		})
 
 		It("returns an error when it cannot write message", func() {
-			unimplemented := &cmd.UnimplementedCommand{}
+			unimplemented := &cmd.UnimplementedCommand{
+				Logger: GinkgoWriter,
+			}
 			conn, err := net.DialUnix("unix", nil, addr)
 			Expect(err).NotTo(HaveOccurred())
 			conn.Close()

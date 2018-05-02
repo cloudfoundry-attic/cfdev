@@ -22,19 +22,15 @@ import (
 
 var _ = Describe("hyperkit starts and telemetry", func() {
 	var (
-		linuxkitPidPath string
-		vpnkitPidPath   string
-		stateDir        string
-		cacheDir        string
-		session         *gexec.Session
-		err             error
+		stateDir string
+		cacheDir string
+		session  *gexec.Session
+		err      error
 	)
 
 	BeforeEach(func() {
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
-		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
-		vpnkitPidPath = filepath.Join(stateDir, "vpnkit.pid")
 
 		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
 			SetupDependencies(cacheDir)

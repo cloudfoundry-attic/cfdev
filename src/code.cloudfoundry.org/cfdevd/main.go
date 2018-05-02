@@ -6,10 +6,14 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
+
+	"io"
 
 	"code.cloudfoundry.org/cfdevd/cmd"
 	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdevd/launchd/models"
 )
 
 const SockName = "ListenSocket"
@@ -38,9 +42,9 @@ func registerSignalHandler() {
 }
 
 func install(programSrc string) {
-	lctl := launchd.New()
+	lctl := launchd.New("")
 	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
-	cfdevdSpec := launchd.DaemonSpec{
+	cfdevdSpec := models.DaemonSpec{
 		Label:   "org.cloudfoundry.cfdevd",
 		Program: program,
 		ProgramArguments: []string{
@@ -53,19 +57,45 @@ func install(programSrc string) {
 		StdoutPath: "/var/tmp/cfdevd.stdout.log",
 		StderrPath: "/var/tmp/cfdevd.stderr.log",
 	}
-	if err := lctl.AddDaemon(cfdevdSpec, programSrc); err != nil {
+	if err := copyExecutable(programSrc, program); err != nil {
+		fmt.Println("Failed to copy cfdevd: ", err)
+	}
+	if err := lctl.AddDaemon(cfdevdSpec); err != nil {
 		fmt.Println("Failed to install cfdevd: ", err)
 	}
 }
 
-func uninstall(prog string) {
-	lctl := launchd.New()
-	cfdevdSpec := launchd.DaemonSpec{
-		Label:   "org.cloudfoundry.cfdevd",
-		Program: "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd",
+func copyExecutable(src string, dest string) error {
+	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+		return err
 	}
-	if err := lctl.RemoveDaemon(cfdevdSpec); err != nil {
+
+	target, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+
+	if err = os.Chmod(dest, 0744); err != nil {
+		return err
+	}
+
+	binData, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(target, binData)
+	return err
+}
+
+func uninstall(prog string) {
+	lctl := launchd.New("")
+	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
+	if err := lctl.RemoveDaemon("org.cloudfoundry.cfdevd"); err != nil {
 		fmt.Println("Failed to uninstall cfdevd: ", err)
+	}
+	if err := os.Remove(program); err != nil {
+		fmt.Println("Failed to delete installed cfdevd:", err)
 	}
 }
 

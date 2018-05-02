@@ -153,5 +153,4 @@ func GetFile(client client.Client, handle, path string) (string, error) {
 	}
 	b, err := ioutil.ReadAll(tr)
 	return string(b), err
-
 }

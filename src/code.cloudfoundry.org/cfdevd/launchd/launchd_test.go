@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdevd/launchd/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -38,24 +39,19 @@ var _ = Describe("launchd", func() {
 			Expect(os.RemoveAll(binDir)).To(Succeed())
 		})
 
-		It("should write the plist, install the binary, and load the daemon", func() {
-			installationPath := filepath.Join(binDir, "org.some-org.some-daemon-executable")
-			spec := launchd.DaemonSpec{
+		It("should write the plist and load the daemon", func() {
+			executableToInstall := filepath.Join(binDir, "some-executable")
+			spec := models.DaemonSpec{
 				Label:            "org.some-org.some-daemon-name",
-				Program:          installationPath,
-				ProgramArguments: []string{installationPath, "some-arg"},
+				Program:          executableToInstall,
+				ProgramArguments: []string{executableToInstall, "some-arg"},
 				RunAtLoad:        true,
 			}
 
-			executableToInstall := filepath.Join(binDir, "some-executable")
-			Expect(lnchd.AddDaemon(spec, executableToInstall)).To(Succeed())
+			Expect(lnchd.AddDaemon(spec)).To(Succeed())
 
 			Expect(plistPath).To(BeAnExistingFile())
-			plistFile, err := os.Open(plistPath)
-			Expect(err).NotTo(HaveOccurred())
-			plistData, err := ioutil.ReadAll(plistFile)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(plistData)).To(MatchXML(fmt.Sprintf(
+			Expect(ioutil.ReadFile(plistPath)).To(MatchXML(fmt.Sprintf(
 				`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -73,41 +69,29 @@ var _ = Describe("launchd", func() {
   <true/>
 </dict>
 </plist>
-`, installationPath, installationPath)))
-			plistFileInfo, err := plistFile.Stat()
+`, executableToInstall, executableToInstall)))
+			plistFileInfo, err := os.Stat(plistPath)
 			Expect(err).ToNot(HaveOccurred())
-			var expectedPlistMode os.FileMode = 0644
-			Expect(plistFileInfo.Mode()).To(Equal(expectedPlistMode))
+			Expect(plistFileInfo.Mode()).To(BeEquivalentTo(0644))
 
-			Expect(installationPath).To(BeAnExistingFile())
-			installedBinary, err := os.Open(installationPath)
-			Expect(err).NotTo(HaveOccurred())
-			binFileInfo, err := installedBinary.Stat()
-			var expectedBinMode os.FileMode = 0744
-			Expect(binFileInfo.Mode()).To(Equal(expectedBinMode))
-			contents, err := ioutil.ReadAll(installedBinary)
-			Expect(string(contents)).To(Equal("some-content"))
 			Expect(loadedDaemons()).Should(ContainSubstring("org.some-org.some-daemon-name"))
 		})
 
 		It("sets unix socket listeners on plist", func() {
-			installationPath := filepath.Join(binDir, "org.some-org.some-daemon-executable")
-			spec := launchd.DaemonSpec{
+			executableToInstall := filepath.Join(binDir, "some-executable")
+			spec := models.DaemonSpec{
 				Label:            "org.some-org.some-daemon-name",
-				Program:          installationPath,
-				ProgramArguments: []string{installationPath, "some-arg"},
+				Program:          executableToInstall,
+				ProgramArguments: []string{executableToInstall, "some-arg"},
 				RunAtLoad:        true,
 				Sockets: map[string]string{
 					"CoolSocket": "/var/tmp/my.cool.socket",
 				},
 			}
 
-			executableToInstall := filepath.Join(binDir, "some-executable")
-			Expect(lnchd.AddDaemon(spec, executableToInstall)).To(Succeed())
+			Expect(lnchd.AddDaemon(spec)).To(Succeed())
 
-			plistData, err := ioutil.ReadFile(plistPath)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(plistData)).To(MatchXML(fmt.Sprintf(
+			Expect(ioutil.ReadFile(plistPath)).To(MatchXML(fmt.Sprintf(
 				`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -135,7 +119,7 @@ var _ = Describe("launchd", func() {
   </dict>
 </dict>
 </plist>
-`, installationPath, installationPath)))
+`, executableToInstall, executableToInstall)))
 		})
 	})
 
@@ -182,17 +166,71 @@ var _ = Describe("launchd", func() {
 		})
 
 		It("should unload the daemon and remove the files", func() {
-			spec := launchd.DaemonSpec{
-				Label:            "org.some-org.some-daemon-to-remove",
-				Program:          binPath,
-				ProgramArguments: []string{binPath},
-				RunAtLoad:        true,
-			}
-
-			Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
+			Expect(lnchd.RemoveDaemon("org.some-org.some-daemon-to-remove")).To(Succeed())
 			Expect(loadedDaemons()).ShouldNot(ContainSubstring("org.some-org.some-daemon-to-remove"))
 			Expect(plistPath).NotTo(BeAnExistingFile())
-			Expect(binPath).NotTo(BeAnExistingFile())
+		})
+	})
+
+	Describe("IsRunning", func() {
+		var tmpDir string
+		var lnchd launchd.Launchd
+		BeforeEach(func() {
+			tmpDir, _ = ioutil.TempDir("", "plist")
+			lnchd = launchd.Launchd{
+				PListDir: tmpDir,
+			}
+		})
+		AfterEach(func() { Expect(os.RemoveAll(tmpDir)).To(Succeed()) })
+
+		Context("label not loaded", func() {
+			It("returns false", func() {
+				Expect(lnchd.IsRunning("some-service-that-doesnt-exist")).To(BeFalse())
+			})
+		})
+
+		Context("label has been loaded", func() {
+			BeforeEach(func() {
+				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "exe"), []byte("#!/usr/bin/env bash\nsleep 60"), 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "some.plist"), []byte(fmt.Sprintf(`
+	<?xml version="1.0" encoding="UTF-8"?>
+	<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+	<plist version="1.0">
+	<dict>
+		<key>Label</key>
+		<string>org.some-org.some-daemon</string>
+		<key>RunAtLoad</key>
+		<false/>
+		<key>Program</key>
+		<string>%s/exe</string>
+		<key>ProgramArguments</key>
+		<array>
+			<string>%s/exe</string>
+		</array>
+	</dict>
+	</plist>`, tmpDir, tmpDir)), 0644)).To(Succeed())
+				lnchd = launchd.Launchd{
+					PListDir: tmpDir,
+				}
+				Expect(exec.Command("launchctl", "load", filepath.Join(tmpDir, "some.plist")).Run()).To(Succeed())
+				Expect(loadedDaemons()).Should(ContainSubstring("org.some-org.some-daemon"))
+			})
+			AfterEach(func() {
+				exec.Command("launchctl", "remove", "org.some-org.some-daemon").Output()
+			})
+			Context("but not started", func() {
+				It("returns false", func() {
+					Expect(lnchd.IsRunning("org.some-org.some-daemon")).To(BeFalse())
+				})
+			})
+			Context("and started", func() {
+				BeforeEach(func() {
+					Expect(exec.Command("launchctl", "start", "org.some-org.some-daemon").Run()).To(Succeed())
+				})
+				It("returns true", func() {
+					Expect(lnchd.IsRunning("org.some-org.some-daemon")).To(BeTrue())
+				})
+			})
 		})
 	})
 })

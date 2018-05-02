@@ -3,10 +3,10 @@ package cmd
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"syscall"
-	"io"
 )
 
 const BOSH_IP = "10.245.0.2"

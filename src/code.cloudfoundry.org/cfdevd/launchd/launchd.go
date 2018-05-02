@@ -1,93 +1,91 @@
 package launchd
 
 import (
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"text/template"
-)
 
-type DaemonSpec struct {
-	Label            string
-	Program          string
-	ProgramArguments []string
-	RunAtLoad        bool
-	Sockets          map[string]string
-	StdoutPath       string
-	StderrPath       string
-}
+	"code.cloudfoundry.org/cfdevd/launchd/models"
+)
 
 type Launchd struct {
 	PListDir string
 }
 
-func New() *Launchd {
+func New(pListDir string) *Launchd {
+	if pListDir == "" {
+		pListDir = "/Library/LaunchDaemons"
+	}
 	return &Launchd{
-		PListDir: "/Library/LaunchDaemons",
+		PListDir: pListDir,
 	}
 }
 
-func (l *Launchd) AddDaemon(spec DaemonSpec, executable string) error {
-	if _, err := os.Stat(filepath.Dir(spec.Program)); err != nil {
-		os.MkdirAll(filepath.Dir(spec.Program), 0666)
-	}
-
-	if err := l.copyExecutable(executable, spec.Program); err != nil {
-		return err
-	}
+func (l *Launchd) AddDaemon(spec models.DaemonSpec) error {
 	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
+	exec.Command("launchctl", "unload", "-w", plistPath).Run()
 	if err := l.writePlist(spec, plistPath); err != nil {
 		return err
 	}
 	return l.load(plistPath)
 }
 
-func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
-	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
+func (l *Launchd) RemoveDaemon(label string) error {
+	plistPath := filepath.Join(l.PListDir, label+".plist")
 	if err := l.unload(plistPath); err != nil {
 		return err
 	}
-	if err := os.Remove(plistPath); err != nil {
-		return err
+	return os.Remove(plistPath)
+}
+
+func (l *Launchd) Start(label string) error {
+	cmd := exec.Command("launchctl", "start", label)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func (l *Launchd) Stop(label string) error {
+	if running, _ := l.IsRunning(label); !running {
+		return nil
 	}
-	return os.Remove(spec.Program)
+	cmd := exec.Command("launchctl", "stop", label)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func (l *Launchd) IsRunning(label string) (bool, error) {
+	out, err := exec.Command("launchctl", "list").Output()
+	if err != nil {
+		return false, err
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		cols := strings.Fields(line)
+		if len(cols) >= 3 && cols[2] == label {
+			return cols[0] != "-", nil
+		}
+	}
+	return false, nil
 }
 
 func (l *Launchd) load(plistPath string) error {
-	cmd := exec.Command("launchctl", "load", plistPath)
+	cmd := exec.Command("launchctl", "load", "-w", plistPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 func (l *Launchd) unload(plistPath string) error {
-	cmd := exec.Command("launchctl", "unload", plistPath)
+	cmd := exec.Command("launchctl", "unload", "-w", plistPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func (l *Launchd) copyExecutable(src string, dest string) error {
-	target, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-
-	if err = os.Chmod(dest, 0744); err != nil {
-		return err
-	}
-
-	binData, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(target, binData)
-	return err
-}
-
-func (l *Launchd) writePlist(spec DaemonSpec, dest string) error {
+func (l *Launchd) writePlist(spec models.DaemonSpec, dest string) error {
 	tmplt := template.Must(template.New("plist").Parse(plistTemplate))
 	plist, err := os.Create(dest)
 	if err != nil {

@@ -4,10 +4,11 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
+	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
 	"github.com/spf13/cobra"
 )
 
-func NewRoot(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
+func NewRoot(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd) *cobra.Command {
 	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
@@ -26,8 +27,8 @@ func NewRoot(Exit chan struct{}, UI UI, Config config.Config) *cobra.Command {
 	dev.AddCommand(NewBosh(Exit, UI, Config))
 	dev.AddCommand(NewCatalog(UI, Config))
 	dev.AddCommand(NewDownload(Exit, UI, Config))
-	dev.AddCommand(NewStart(Exit, UI, Config))
-	dev.AddCommand(NewStop(Config))
+	dev.AddCommand(NewStart(Exit, UI, Config, Launchd))
+	dev.AddCommand(NewStop(Config, Launchd, cfdevdClient.New("CFD3V", Config.CFDevDSocketPath)))
 	dev.AddCommand(NewTelemetry(UI, Config))
 	dev.AddCommand(NewVersion(UI, Config))
 	dev.AddCommand(&cobra.Command{

@@ -1,22 +1,14 @@
 package cmd_test
 
 import (
-	// . "code.cloudfoundry.org/cfdev/cmd"
-
-	"encoding/binary"
-	"io/ioutil"
-	"net"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strconv"
+	"fmt"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 	"github.com/spf13/cobra"
 )
 
@@ -26,185 +18,103 @@ func (mc *MockClient) Event(string, map[string]interface{}) error      { return 
 func (mc *MockClient) Close()                                          {}
 func (mc *MockClient) PromptOptIn(chan struct{}, cfanalytics.UI) error { return nil }
 
+type MockLaunchdStop struct {
+	stopLabels []string
+	returns    map[string]error
+}
+
+func (m *MockLaunchdStop) Stop(label string) error {
+	m.stopLabels = append(m.stopLabels, label)
+	if v, ok := m.returns[label]; ok {
+		return v
+	}
+	return nil
+}
+
+type MockCfdevdClient struct {
+	uninstallWasCalled bool
+	returns            error
+}
+
+func (m *MockCfdevdClient) Uninstall() (string, error) {
+	m.uninstallWasCalled = true
+	return "", m.returns
+}
+
 var _ = Describe("Stop", func() {
 	var (
-		tmpDir                                                 string
-		linuxkit, vpnkit, hyperkit                             *gexec.Session
-		state, linuxkitPidPath, hyperkitPidPath, vpnkitPidPath string
-		cfg                                                    config.Config
-		stopCmd                                                *cobra.Command
+		cfg              config.Config
+		stopCmd          *cobra.Command
+		mockLaunchd      *MockLaunchdStop
+		mockCfdevdClient *MockCfdevdClient
 	)
 
 	BeforeEach(func() {
-		state, _ = ioutil.TempDir("", "pcfdev.stop.")
-
-		linuxkitPidPath = filepath.Join(state, "linuxkit.pid")
-		hyperkitPidPath = filepath.Join(state, "hyperkit.pid")
-		vpnkitPidPath = filepath.Join(state, "vpnkit.pid")
-		tmpDir, _ = ioutil.TempDir("", "cfdev.stop.")
-
 		cfg = config.Config{
-			LinuxkitPidFile:  linuxkitPidPath,
-			HyperkitPidFile:  hyperkitPidPath,
-			VpnkitPidFile:    vpnkitPidPath,
-			Analytics:        &MockClient{},
-			CFDevDSocketPath: filepath.Join(tmpDir, "cfdevd.socket"),
+			Analytics: &MockClient{},
 		}
-		stopCmd = cmd.NewStop(cfg)
+		mockLaunchd = &MockLaunchdStop{
+			returns: make(map[string]error, 0),
+		}
+
+		mockCfdevdClient = &MockCfdevdClient{}
+
+		stopCmd = cmd.NewStop(cfg, mockLaunchd, mockCfdevdClient)
 		stopCmd.SetArgs([]string{})
 		stopCmd.SetOutput(GinkgoWriter)
 	})
-	AfterEach(func() {
-		os.RemoveAll(state)
-		os.RemoveAll(tmpDir)
+
+	It("stops linuxkt", func() {
+		Expect(stopCmd.Execute()).To(Succeed())
+		Expect(mockLaunchd.stopLabels).To(ContainElement(process.LinuxKitLabel))
 	})
-	Context("all processes are running and pid files exist", func() {
+
+	It("stops vpnkit", func() {
+		Expect(stopCmd.Execute()).To(Succeed())
+		Expect(mockLaunchd.stopLabels).To(ContainElement(process.VpnKitLabel))
+	})
+
+	It("stops cfdevd", func() {
+		Expect(stopCmd.Execute()).To(Succeed())
+		Expect(mockCfdevdClient.uninstallWasCalled).To(BeTrue())
+	})
+
+	Context("stopping linuxkit fails", func() {
 		BeforeEach(func() {
-			linuxkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
-			vpnkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
-			hyperkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
-
-			ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(linuxkit.Command.Process.Pid)), 0644)
-			ioutil.WriteFile(vpnkitPidPath, []byte(strconv.Itoa(vpnkit.Command.Process.Pid)), 0644)
-			ioutil.WriteFile(hyperkitPidPath, []byte(strconv.Itoa(hyperkit.Command.Process.Pid)), 0644)
+			mockLaunchd.returns[process.LinuxKitLabel] = fmt.Errorf("test")
 		})
+		It("stops the others and returns linuxkit error", func() {
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop linuxkit: test"))
 
-		AfterEach(func() {
-			linuxkit.Terminate()
-			vpnkit.Terminate()
-			hyperkit.Terminate()
-		})
-
-		It("kill all Pids", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
-
-			Eventually(linuxkit).Should(gexec.Exit())
-			Eventually(vpnkit).Should(gexec.Exit())
-			Eventually(hyperkit).Should(gexec.Exit())
-		})
-
-		It("removes the pid files", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
-
-			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
-			Expect(vpnkitPidPath).ToNot(BeAnExistingFile())
-			Expect(hyperkitPidPath).ToNot(BeAnExistingFile())
+			Expect(mockLaunchd.stopLabels).To(ContainElement(process.LinuxKitLabel))
+			Expect(mockLaunchd.stopLabels).To(ContainElement(process.VpnKitLabel))
+			Expect(mockCfdevdClient.uninstallWasCalled).To(BeTrue())
 		})
 	})
 
-	Context("all pidfiles are missing", func() {
-		It("does nothing and succeeds", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
-		})
-	})
-
-	Context("one pid file is missing", func() {
+	Context("stopping vpnkit fails", func() {
 		BeforeEach(func() {
-			os.Remove(vpnkitPidPath)
+			mockLaunchd.returns[process.VpnKitLabel] = fmt.Errorf("test")
 		})
+		It("stops the others and returns vpnkit error", func() {
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop vpnkit: test"))
 
-		It("kills existing pids", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
-
-			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
-			Expect(hyperkitPidPath).ToNot(BeAnExistingFile())
+			Expect(mockLaunchd.stopLabels).To(ContainElement(process.LinuxKitLabel))
+			Expect(mockLaunchd.stopLabels).To(ContainElement(process.VpnKitLabel))
+			Expect(mockCfdevdClient.uninstallWasCalled).To(BeTrue())
 		})
 	})
 
-	Context("one process has stopped, pid file exists", func() {
+	Context("stopping cfdevd fails", func() {
 		BeforeEach(func() {
-			linuxkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
-			vpnkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
-			hyperkit, _ = gexec.Start(exec.Command("sleep", "100"), GinkgoWriter, GinkgoWriter)
-
-			Expect(ioutil.WriteFile(linuxkitPidPath, []byte(strconv.Itoa(linuxkit.Command.Process.Pid)), 0644)).To(Succeed())
-			Expect(ioutil.WriteFile(vpnkitPidPath, []byte(strconv.Itoa(vpnkit.Command.Process.Pid)), 0644)).To(Succeed())
-			Expect(ioutil.WriteFile(hyperkitPidPath, []byte(strconv.Itoa(hyperkit.Command.Process.Pid)), 0644)).To(Succeed())
-
-			vpnkit.Kill()
-			Eventually(vpnkit).Should(gexec.Exit())
+			mockCfdevdClient.returns = fmt.Errorf("test")
 		})
+		It("stops the others and returns cfdevd error", func() {
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to uninstall cfdevd: test"))
 
-		It("kills existing pids and returns error", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
-
-			Eventually(linuxkit).Should(gexec.Exit())
-			Eventually(hyperkit).Should(gexec.Exit())
-
-			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
-			Expect(vpnkitPidPath).ToNot(BeAnExistingFile())
-			Expect(hyperkitPidPath).ToNot(BeAnExistingFile())
-		})
-	})
-
-	Context("all processes have exited and all pidfiles exists", func() {
-		BeforeEach(func() {
-			proc, _ := gexec.Start(exec.Command("echo", "100"), GinkgoWriter, GinkgoWriter)
-			Eventually(proc).Should(gexec.Exit(0))
-			pid := []byte(strconv.Itoa(proc.Command.Process.Pid))
-
-			ioutil.WriteFile(linuxkitPidPath, pid, 0644)
-			ioutil.WriteFile(vpnkitPidPath, pid, 0644)
-			ioutil.WriteFile(hyperkitPidPath, pid, 0644)
-		})
-
-		It("deletes all pid files and succeeds", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
-
-			Expect(linuxkitPidPath).ToNot(BeAnExistingFile())
-			Expect(vpnkitPidPath).ToNot(BeAnExistingFile())
-			Expect(hyperkitPidPath).ToNot(BeAnExistingFile())
-		})
-	})
-
-	Context("cfdevd socket exists", func() {
-		var instructions chan byte
-		var uninstallErrorCode int
-		BeforeEach(func() {
-			instructions = make(chan byte, 1)
-			ln, err := net.Listen("unix", cfg.CFDevDSocketPath)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(cfg.CFDevDSocketPath).To(BeAnExistingFile())
-			go func() {
-				conn, err := ln.Accept()
-				Expect(err).NotTo(HaveOccurred())
-				handshake := make([]byte, 49, 49)
-				binary.Read(conn, binary.LittleEndian, handshake)
-				binary.Write(conn, binary.LittleEndian, handshake)
-				instruction := make([]byte, 1, 1)
-				binary.Read(conn, binary.LittleEndian, instruction)
-				instructions <- instruction[0]
-				if uninstallErrorCode == -1 {
-					conn.Close()
-				} else {
-					binary.Write(conn, binary.LittleEndian, []byte{byte(uninstallErrorCode)})
-				}
-			}()
-		})
-		It("succeeds and sends the uninstall command to cfdevd", func() {
-			uninstallErrorCode = 0
-			Expect(stopCmd.Execute()).To(Succeed())
-
-			Eventually(instructions).Should(Receive(Equal(byte(1))))
-		})
-		Context("cfdevd stops after receiving uninstall command, thus closes connection before writing success code", func() {
-			It("succeeds", func() {
-				uninstallErrorCode = -1
-				Expect(stopCmd.Execute()).To(Succeed())
-
-				Eventually(instructions).Should(Receive(Equal(byte(1))))
-			})
-		})
-		Context("cfdevd returns error to uninstall", func() {
-			It("returns the error", func() {
-				uninstallErrorCode = 1
-				Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to uninstall cfdevd: errorcode: 1"))
-			})
-		})
-	})
-	Context("cfdevd socket is specified but does not exist", func() {
-		It("succeeds", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
+			Expect(mockLaunchd.stopLabels).To(ContainElement(process.LinuxKitLabel))
+			Expect(mockLaunchd.stopLabels).To(ContainElement(process.VpnKitLabel))
+			Expect(mockCfdevdClient.uninstallWasCalled).To(BeTrue())
 		})
 	})
 })

@@ -23,7 +23,7 @@ var _ = Describe("cfdevd test", func() {
 		var err error
 		session, err := gexec.Start(exec.Command("sudo", "--non-interactive", "launchctl", "list"), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(0), "You may need to log sudo in")
 		Expect(string(session.Out.Contents())).ShouldNot(ContainSubstring("org.cloudfoundry.cfdevd"))
 
 		session, err = gexec.Start(exec.Command("ifconfig"), GinkgoWriter, GinkgoWriter)

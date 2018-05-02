@@ -61,10 +61,13 @@ func (c *Cache) download(item *Item) error {
 		return err
 	} else if match {
 		c.Progress.Add(item.Size)
-		return nil
+		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
 	}
 	if strings.HasPrefix(item.URL, "file://") {
-		return c.copyFile(item)
+		if err := c.copyFile(item); err != nil {
+			return err
+		}
+		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
 	}
 
 	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)

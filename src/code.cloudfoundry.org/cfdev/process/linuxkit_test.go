@@ -28,12 +28,12 @@ var _ = Describe("LinuxKit process", func() {
 	})
 
 	It("builds a command", func() {
-		start, err := linuxkit.Command(4, 4096)
+		start, err := linuxkit.DaemonSpec(4, 4096)
 		Expect(err).ToNot(HaveOccurred())
 
 		linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
-		Expect(start.Path).To(Equal(linuxkitExecPath))
-		Expect(start.Args).To(ConsistOf(
+		Expect(start.Program).To(Equal(linuxkitExecPath))
+		Expect(start.ProgramArguments).To(Equal([]string{
 			linuxkitExecPath,
 			"run", "hyperkit",
 			"-console-file",
@@ -47,8 +47,8 @@ var _ = Describe("LinuxKit process", func() {
 			"-disk", "file=/home-dir/.cfdev/cache/cf-deps.iso",
 			"-state", "/home-dir/.cfdev/state",
 			"--uefi", "/home-dir/.cfdev/cache/cfdev-efi.iso",
-		))
-		Expect(start.SysProcAttr.Setpgid).To(BeTrue())
+		}))
+		Expect(start.RunAtLoad).To(BeFalse())
 	})
 
 	Context("DepsIsoPath is set", func() {
@@ -65,12 +65,12 @@ var _ = Describe("LinuxKit process", func() {
 			})
 
 			It("sets linuxkit to use provided iso", func() {
-				start, err := linuxkit.Command(4, 4096)
+				start, err := linuxkit.DaemonSpec(4, 4096)
 				Expect(err).ToNot(HaveOccurred())
 
 				linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
-				Expect(start.Path).To(Equal(linuxkitExecPath))
-				Expect(start.Args).To(ConsistOf(
+				Expect(start.Program).To(Equal(linuxkitExecPath))
+				Expect(start.ProgramArguments).To(ConsistOf(
 					linuxkitExecPath,
 					"run", "hyperkit",
 					"-console-file",
@@ -93,7 +93,7 @@ var _ = Describe("LinuxKit process", func() {
 			})
 
 			It("returns file not found error", func() {
-				_, err := linuxkit.Command(4, 4096)
+				_, err := linuxkit.DaemonSpec(4, 4096)
 				Expect(err).To(HaveOccurred())
 			})
 		})
