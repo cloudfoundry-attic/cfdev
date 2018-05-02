@@ -29,8 +29,6 @@ pushd "$cf_deployment"
 
   bosh int cf-deployment.yml \
   \
-  -o "$ops_dir"/use-bosh-dns.yml \
-  \
   -o operations/use-compiled-releases.yml \
   \
   -o operations/experimental/skip-consul-cell-registrations.yml \
@@ -41,7 +39,6 @@ pushd "$cf_deployment"
   -o operations/experimental/disable-consul-bosh-lite.yml \
   \
   -o "$ops_dir"/allow-local-docker-registry.yml \
-  -o "$ops_dir"/add-host-pcfdev-dns-record.yml \
   -o "$ops_dir"/garden-disable-app-armour.yml \
   -o "$ops_dir"/collocate-tcp-router.yml \
   -o "$ops_dir"/set-cfdev-subnet.yml \

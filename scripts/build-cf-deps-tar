@@ -2,24 +2,27 @@
 
 set -ex
 
-while getopts "m:c:" arg; do
+while getopts "m:c:r:" arg; do
   case $arg in
     m) manifest="$OPTARG"
+      ;;
+    r) runtime="$OPTARG"
       ;;
     c) cloud_config="$OPTARG"
   esac
 done
 
-if [[ -z $manifest || -z $cloud_config ]]; then
-  echo "USAGE: build-cf-deps-tar -m <path-to-cf-manifest> -c <path-to-cloud-config>"
+if [[ -z $manifest || -z $cloud_config || -z $runtime ]]; then
+  echo "USAGE: build-cf-deps-tar -m <path-to-cf-manifest> -c <path-to-cloud-config> -r <path-to-runtime-config>"
   exit 2
 fi
-if [[ ! -f $manifest || ! -f $cloud_config ]]; then
+if [[ ! -f $manifest || ! -f $cloud_config  || ! -f $runtime ]]; then
   echo "ERROR: Either $manifest of $cloud_config do not exist"
   exit 2
 fi
 manifest="$(cd "$(dirname "$manifest")"; pwd)/$(basename "$manifest")"
 cloud_config="$(cd "$(dirname "$cloud_config")"; pwd)/$(basename "$cloud_config")"
+runtime_config="$(cd "$(dirname "$runtime")"; pwd)/$(basename "$runtime")"
 
 if [[ -z "$BOSH_ENVIRONMENT" ]]; then
   echo "ERROR: a bosh director is required to compile releases, please set your BOSH_* env variables"
@@ -71,25 +74,37 @@ download_compiled_releases () {
   done
 }
 
+compilation_manifest_template="$(cat <<EOF
+---
+instance_groups: []
+name: cf
+stemcells:
+- alias: default
+  os: ubuntu-trusty
+  version: "$(stemcell_version)"
+update:
+  canaries: 1
+  canary_watch_time: 30000-1200000
+  max_in_flight: 1
+  update_watch_time: 5000-1200000
+EOF
+)"
+
 compile_releases () {
-    releases_to_compile="$(rq -y <"$manifest" | jq -c '.releases[] | select(has("stemcell") | not)')"
-    compilation_manifest="$(rq -y <"$manifest" | jq 'del(.instance_groups) | del(.addons) | del(.variables)' | rq -Y)"
+    releases_to_compile="$(rq -y <"$1" | jq -c '[.releases[] | select(has("stemcell") | not)]')"
+    compilation_manifest="$(echo "$compilation_manifest_template" | rq -y | jq ".releases=$releases_to_compile" | rq -Y)"
     bosh upload-stemcell "https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-$(stemcell_version)-google-kvm-ubuntu-trusty-go_agent.tgz"
     bosh -n deploy -d cf <(echo "$compilation_manifest")
-    for release in $releases_to_compile; do
-      if [[ "$release" =~ bosh-dns* ]]; then
-        ## we cant compile bosh-dns-windows so only compile the linux job
-        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$tmpdir"/releases --job bosh-dns
-      else
-        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$tmpdir"/releases
-      fi
-      mv "$tmpdir"/releases/"$(name "$release")-$(version "$release")"-*.tgz "$tmpdir"/releases/"$(filename $release)"
+    for release in $(echo $releases_to_compile | jq -c .[]) ; do
+        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$tmpdir"
+        mv "$tmpdir"/"$(name "$release")-$(version "$release")"-*.tgz "$tmpdir"/"$(filename $release)"
     done
 }
 
 tar_deps () {
   cp "$manifest" "$tmpdir"/deployment.yml
   cp "$cloud_config" "$tmpdir"/cloud-config.yml
+  cp "$runtime" "$tmpdir"/runtime-config.yml
   pushd "$tmpdir"
     tar cvzf "$output_dir"/cf.tgz *
   popd
@@ -98,7 +113,8 @@ tar_deps () {
 main () {
   download_warden_stemcell
   download_compiled_releases
-  compile_releases
+  compile_releases "$manifest"
+  compile_releases "$runtime"
   tar_deps
 }
 

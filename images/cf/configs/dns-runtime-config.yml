@@ -1,0 +1,161 @@
+addons:
+- exclude:
+    jobs:
+    - name: smoke_tests
+      release: cf-smoke-tests
+  jobs:
+  - name: bosh-dns-aliases
+    properties:
+      aliases:
+      - domain: auctioneer.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: diego-api
+          network: default
+          query: '*'
+      - domain: bbs.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: diego-api
+          network: default
+          query: '*'
+      - domain: blobstore.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: singleton-blobstore
+          network: default
+          query: '*'
+      - domain: cc-uploader.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: api
+          network: default
+          query: '*'
+      - domain: tps.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: scheduler
+          network: default
+          query: '*'
+      - domain: bits-service.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: api
+          network: default
+          query: '*'
+      - domain: cell.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: diego-cell
+          network: default
+          query: '*'
+        - deployment: p-isolation-segment-*
+          domain: bosh
+          instance_group: diego-cell
+          network: '*'
+          query: '*'
+      - domain: cloud-controller-ng.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: api
+          network: default
+          query: '*'
+      - domain: doppler.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: doppler
+          network: default
+          query: '*'
+      - domain: file-server.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: diego-api
+          network: default
+          query: '*'
+      - domain: locket.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: diego-api
+          network: default
+          query: '*'
+      - domain: loggregator-trafficcontroller.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: log-api
+          network: default
+          query: '*'
+      - domain: sql-db.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: database
+          network: default
+          query: '*'
+      - domain: policy-server.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: api
+          network: default
+          query: '*'
+      - domain: reverse-log-proxy.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: log-api
+          network: default
+          query: '*'
+      - domain: routing-api.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: api
+          network: default
+          query: '*'
+      - domain: gorouter.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: router
+          network: default
+          query: '*'
+      - domain: silk-controller.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: diego-api
+          network: default
+          query: '*'
+      - domain: ssh-proxy.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: router
+          network: default
+          query: '*'
+      - domain: uaa.service.cf.internal
+        targets:
+        - deployment: cf
+          domain: bosh
+          instance_group: uaa
+          network: default
+          query: '*'
+    release: bosh-dns-aliases
+  name: aliases
+releases:
+- name: bosh-dns-aliases
+  sha1: 630ff814e5cf38b44c57eda68c60f48462b4b9a8
+  url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=0.0.2
+  version: 0.0.2

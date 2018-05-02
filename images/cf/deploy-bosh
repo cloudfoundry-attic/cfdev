@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+export HOST_IP="${HOST_IP:-192.168.65.1}"
 
 create_loop_devices() {
   echo "creating loop devices..."
@@ -50,11 +51,12 @@ create_loop_devices
 export BOSH_DIRECTOR_IP="10.245.0.2"
 
 cp /var/vcap/cache/director.yml "${DIRECTOR_DIR}"
+cp /var/vcap/cache/dns.yml "${DIRECTOR_DIR}"
 
 bosh --tty create-env \
   "${DIRECTOR_DIR}/director.yml" \
   --vars-store="${DIRECTOR_DIR}/creds.yml" \
-  --state="${DIRECTOR_DIR}/state.json"
+  --state="${DIRECTOR_DIR}/state.json" \
 
 bosh int "${DIRECTOR_DIR}/creds.yml" \
   --path /director_ssl/ca > "${DIRECTOR_DIR}/ca.crt"
@@ -70,6 +72,11 @@ export BOSH_CA_CERT="$(cat ${DIRECTOR_DIR}/ca.crt)"
 EOF
 
 source "${DIRECTOR_DIR}/env"
+
+bosh -n update-runtime-config "$DIRECTOR_DIR"/dns.yml --name=dns \
+  -v host_ip="$HOST_IP" \
+  --vars-store /var/vcap/director/vars.yml
+
 
 # Remove BOSH CLI cached files
 rm -rf $HOME/.bosh

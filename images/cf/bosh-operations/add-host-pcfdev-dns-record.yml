@@ -1,0 +1,8 @@
+---
+- type: replace
+  path: /addons/name=bosh-dns/jobs/name=bosh-dns/properties?/aliases?/host.pcfdev.io?
+  value:
+  - ((host_ip))
+
+- type: remove
+  path: /addons/name=bosh-dns-windows
