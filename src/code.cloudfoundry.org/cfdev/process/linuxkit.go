@@ -44,7 +44,7 @@ func (l *LinuxKit) Command(cpus, mem int) (*exec.Cmd, error) {
 
 	diskArgs := []string{
 		"type=qcow",
-		"size=50G",
+		"size=80G",
 		"trim=true",
 		fmt.Sprintf("qcow-tool=%s", qcowtool),
 		"qcow-onflush=os",
