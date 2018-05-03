@@ -66,7 +66,13 @@ var _ = Describe("hyperkit lifecycle", func() {
 	})
 
 	It("runs the entire vm lifecycle", func() {
-		session := cf.Cf("dev", "start")
+		var session *gexec.Session
+		isoPath := os.Getenv("ISO_PATH")
+		if isoPath != "" {
+			session = cf.Cf("dev", "start", "-f", isoPath, "-m", "8192")
+		} else {
+			session = cf.Cf("dev", "start")
+		}
 		Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 		By("settingup VPNKit dependencies")
@@ -84,11 +90,11 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 		EventuallyWeCanTargetTheBOSHDirector()
 
-		By("waiting for cf router to listen")
-		EventuallyShouldListenAt("http://"+CFRouterIP+":80", 1200)
-
 		By("waiting for cfdev cli to exit when the deploy finished")
-		Eventually(session, 300).Should(gexec.Exit(0))
+		Eventually(session, 3600).Should(gexec.Exit(0))
+
+		By("waiting for cf router to listen")
+		EventuallyShouldListenAt("http://"+CFRouterIP+":80", 60)
 
 		linuxkitPid := PidFromFile(linuxkitPidPath)
 		hyperkitPid := PidFromFile(hyperkitPidPath)
@@ -162,13 +168,18 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 
 	// This test is more representative of how `bosh env` should be invoked
 	w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
-	boshCmd := exec.Command("/bin/sh",
-		"-e",
-		"-c", fmt.Sprintf(`eval "$(cf dev bosh env)" && bosh env`))
+	boshEnv := func() *gexec.Session {
+		boshCmd := exec.Command("/bin/sh",
+			"-e",
+			"-c", fmt.Sprintf(`eval "$(cf dev bosh env)" && bosh env`))
 
-	session, err := gexec.Start(boshCmd, w, w)
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(session, 30, 1).Should(gexec.Exit(0))
+		session, err := gexec.Start(boshCmd, w, w)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(session).Should(gexec.Exit())
+		return session
+	}
+
+	Eventually(boshEnv, time.Minute, 10*time.Second).Should(gexec.Exit(0))
 }
 
 func RemoveIPAliases(aliases ...string) {
