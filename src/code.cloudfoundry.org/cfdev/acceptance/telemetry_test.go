@@ -90,4 +90,24 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 
 		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(Equal([]byte("optin")))
 	})
+
+	It("allows noninteractive telemetry --off command", func() {
+		cmd := exec.Command("/usr/local/bin/cf", "dev", "telemetry", "--off")
+		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+
+		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
+
+		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(Equal([]byte("optout")))
+	})
+
+	It("allows noninteractive telemetry --on command", func() {
+		cmd := exec.Command("/usr/local/bin/cf", "dev", "telemetry", "--on")
+		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+
+		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
+
+		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(Equal([]byte("optin")))
+	})
 })

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
@@ -96,10 +97,12 @@ func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 		return
 	}
 
-	if err := p.Config.Analytics.PromptOptIn(p.Exit, p.UI); err != nil {
-		p.UI.Failed(err.Error())
-		p.Config.Close()
-		os.Exit(1)
+	if strings.ToLower(args[1]) != "telemetry" {
+		if err := p.Config.Analytics.PromptOptIn(p.Exit, p.UI); err != nil {
+			p.UI.Failed(err.Error())
+			p.Config.Close()
+			os.Exit(1)
+		}
 	}
 
 	p.Root.SetArgs(args)
