@@ -62,8 +62,8 @@ var _ = BeforeEach(func() {
 })
 var _ = AfterEach(func() {
 	session := cf.Cf("dev", "stop")
-	Eventually(session, 1*time.Second).Should(gexec.Exit())
+	Eventually(session).Should(gexec.Exit())
 	os.Unsetenv("CF_HOME")
 	os.Unsetenv("CFDEV_HOME")
-	os.RemoveAll(tmpDir)
+	Expect(os.RemoveAll(tmpDir)).To(Succeed())
 })

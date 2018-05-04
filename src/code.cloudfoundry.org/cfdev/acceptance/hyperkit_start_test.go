@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -59,20 +58,6 @@ var _ = Describe("hyperkit start", func() {
 				Eventually(session.Out).Should(gbytes.Say("Setting up IP aliases"))
 				Eventually(session.Err).Should(gbytes.Say("Password:"))
 			})
-		})
-	})
-
-	Context("with an unsupported distribution", func() {
-		It("exits with code 1", func() {
-			session := cf.Cf("dev", "start", "-f", "UNSUPPORTTED")
-			Eventually(session, 10*time.Second).Should(gexec.Exit(1))
-		})
-	})
-
-	Context("with an unsupported version", func() {
-		It("exits with code 1", func() {
-			session := cf.Cf("dev", "start", "-n", "9.9.9.9.9")
-			Eventually(session).Should(gexec.Exit(1))
 		})
 	})
 
