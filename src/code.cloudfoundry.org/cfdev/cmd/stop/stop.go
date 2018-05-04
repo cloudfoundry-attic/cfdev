@@ -31,7 +31,7 @@ type UI interface {
 
 //go:generate mockgen -package mocks -destination mocks/analytics.go code.cloudfoundry.org/cfdev/cmd/stop Analytics
 type Analytics interface {
-	Event(string, map[string]interface{}) error
+	Event(event string, data ...map[string]interface{}) error
 }
 
 type Stop struct {
@@ -50,7 +50,7 @@ func (s *Stop) Cmd() *cobra.Command {
 }
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
-	s.Analytics.Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
+	s.Analytics.Event(cfanalytics.STOP)
 
 	var reterr error
 

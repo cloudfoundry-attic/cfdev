@@ -33,12 +33,14 @@ Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?` {
 type MockToggle struct {
 	defined   bool
 	val       bool
+	props     map[string]interface{}
 	SetCalled bool
 }
 
-func (t *MockToggle) Defined() bool    { return t.defined }
-func (t *MockToggle) Get() bool        { return t.val }
-func (t *MockToggle) Set(v bool) error { t.val = v; t.SetCalled = true; return nil }
+func (t *MockToggle) Defined() bool                    { return t.defined }
+func (t *MockToggle) Get() bool                        { return t.val }
+func (t *MockToggle) Set(v bool) error                 { t.val = v; t.SetCalled = true; return nil }
+func (t *MockToggle) GetProps() map[string]interface{} { return t.props }
 
 type MockClient struct {
 	CloseWasCalled    bool
@@ -52,34 +54,30 @@ var _ = Describe("Analytics", func() {
 	var (
 		mockToggle *MockToggle
 		mockClient *MockClient
+		exitChan   chan struct{}
+		mockUI     MockUI
 		subject    *cfanalytics.Analytics
 	)
 	BeforeEach(func() {
 		mockToggle = &MockToggle{}
 		mockClient = &MockClient{}
-		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test")
+		exitChan = make(chan struct{}, 1)
+		mockUI = MockUI{WasCalled: false}
+		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test", exitChan, &mockUI)
 	})
 
 	Describe("PromptOptIn", func() {
-		var exitChan chan struct{}
-		var mockUI MockUI
-		BeforeEach(func() {
-			exitChan = make(chan struct{}, 1)
-			mockUI = MockUI{
-				WasCalled: false,
-			}
-		})
 		Context("When user has NOT yet answered optin prompt", func() {
 			BeforeEach(func() { mockToggle.defined = false })
 			It("prompts user", func() {
-				Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
+				Expect(subject.PromptOptIn()).To(Succeed())
 				Expect(mockUI.WasCalled).To(Equal(true))
 			})
 			for _, answer := range []string{"yes", "y", "yEs"} {
 				Context("user answers "+answer, func() {
 					BeforeEach(func() { mockUI.Return = answer })
 					It("saves optin", func() {
-						Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
+						Expect(subject.PromptOptIn()).To(Succeed())
 						Expect(mockToggle.SetCalled).To(Equal(true))
 						Expect(mockToggle.val).To(Equal(true))
 					})
@@ -89,7 +87,7 @@ var _ = Describe("Analytics", func() {
 				Context("user answers "+answer, func() {
 					BeforeEach(func() { mockUI.Return = answer })
 					It("saves optout", func() {
-						Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
+						Expect(subject.PromptOptIn()).To(Succeed())
 						Expect(mockToggle.SetCalled).To(Equal(true))
 						Expect(mockToggle.val).To(Equal(false))
 					})
@@ -101,7 +99,7 @@ var _ = Describe("Analytics", func() {
 					exitChan <- struct{}{}
 				})
 				It("does not write set a value on toggle", func() {
-					Expect(subject.PromptOptIn(exitChan, &mockUI)).To(MatchError("Exit while waiting for telemetry prompt"))
+					Expect(subject.PromptOptIn()).To(MatchError("Exit while waiting for telemetry prompt"))
 					Expect(mockToggle.SetCalled).To(Equal(false))
 				})
 			})
@@ -109,7 +107,7 @@ var _ = Describe("Analytics", func() {
 		Context("When user has answered optin prompt", func() {
 			BeforeEach(func() { mockToggle.defined = true })
 			It("does not ask again", func() {
-				Expect(subject.PromptOptIn(exitChan, &mockUI)).To(Succeed())
+				Expect(subject.PromptOptIn()).To(Succeed())
 				Expect(mockUI.WasCalled).To(Equal(false))
 				Expect(mockToggle.SetCalled).To(Equal(false))
 			})
@@ -124,7 +122,12 @@ var _ = Describe("Analytics", func() {
 			})
 		})
 		Context("opt in", func() {
-			BeforeEach(func() { mockToggle.val = true })
+			BeforeEach(func() {
+				mockToggle.val = true
+				mockToggle.props = map[string]interface{}{
+					"type": "cf.1.2.3.iso",
+				}
+			})
 			It("sends event to segmentio", func() {
 				Expect(subject.Event("anevent", map[string]interface{}{"mykey": "myval"})).To(Succeed())
 
@@ -136,6 +139,7 @@ var _ = Describe("Analytics", func() {
 					"Properties": BeEquivalentTo(map[string]interface{}{
 						"os":      runtime.GOOS,
 						"version": "4.5.6-unit-test",
+						"type":    "cf.1.2.3.iso",
 						"mykey":   "myval",
 					}),
 				}))

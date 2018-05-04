@@ -60,8 +60,8 @@ var _ = Describe("Stop", func() {
 		os.RemoveAll(stateDir)
 	})
 
-	It("uninstalls linuxkt, vpnkit, and cfdevd, and sends analytics event", func() {
-		mockAnalytics.EXPECT().Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
+	It("uninstalls linuxkit, vpnkit, and cfdevd, and sends analytics event", func() {
+		mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 		mockLaunchd.EXPECT().RemoveDaemon(process.LinuxKitLabel)
 		mockLaunchd.EXPECT().RemoveDaemon(process.VpnKitLabel)
 		mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
@@ -71,7 +71,7 @@ var _ = Describe("Stop", func() {
 
 	Context("stopping linuxkit fails", func() {
 		It("stops the others and returns linuxkit error", func() {
-			mockAnalytics.EXPECT().Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockLaunchd.EXPECT().RemoveDaemon(process.VpnKitLabel)
 			mockLaunchd.EXPECT().RemoveDaemon(process.LinuxKitLabel).Return(fmt.Errorf("test"))
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
@@ -83,7 +83,7 @@ var _ = Describe("Stop", func() {
 
 	Context("stopping vpnkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
-			mockAnalytics.EXPECT().Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockLaunchd.EXPECT().RemoveDaemon(process.LinuxKitLabel)
 			mockLaunchd.EXPECT().RemoveDaemon(process.VpnKitLabel).Return(fmt.Errorf("test"))
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
@@ -94,7 +94,7 @@ var _ = Describe("Stop", func() {
 
 	Context("stopping hyperkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
-			mockAnalytics.EXPECT().Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockLaunchd.EXPECT().RemoveDaemon(process.LinuxKitLabel)
 			mockLaunchd.EXPECT().RemoveDaemon(process.VpnKitLabel)
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit").Return(fmt.Errorf("test"))
@@ -105,7 +105,7 @@ var _ = Describe("Stop", func() {
 
 	Context("stopping cfdevd fails", func() {
 		It("stops the others and returns cfdevd error", func() {
-			mockAnalytics.EXPECT().Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockLaunchd.EXPECT().RemoveDaemon(process.LinuxKitLabel)
 			mockLaunchd.EXPECT().RemoveDaemon(process.VpnKitLabel)
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")

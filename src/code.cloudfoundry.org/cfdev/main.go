@@ -1,12 +1,16 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
+	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
@@ -15,6 +19,7 @@ import (
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/spf13/cobra"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 type Command interface {
@@ -22,11 +27,12 @@ type Command interface {
 }
 
 type Plugin struct {
-	Exit    chan struct{}
-	UI      terminal.UI
-	Config  config.Config
-	Root    *cobra.Command
-	Version plugin.VersionType
+	Exit      chan struct{}
+	UI        terminal.UI
+	Config    config.Config
+	Analytics *cfanalytics.Analytics
+	Root      *cobra.Command
+	Version   plugin.VersionType
 }
 
 func main() {
@@ -53,16 +59,23 @@ func main() {
 		ui.Failed(err.Error())
 		os.Exit(1)
 	}
-	defer conf.Close()
+
+	analyticsToggle := toggle.New(filepath.Join(conf.CFDevHome, "analytics", "analytics.txt"))
+	baseAnalyticsClient, _ := analytics.NewWithConfig(conf.AnalyticsKey, analytics.Config{
+		Logger: analytics.StdLogger(log.New(ioutil.Discard, "", 0)),
+	})
+	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, exitChan, ui)
+	defer analyticsClient.Close()
 
 	lctl := launchd.New(conf.CFDevHome)
 
 	v := conf.CliVersion
 	cfdev := &Plugin{
-		UI:      ui,
-		Config:  conf,
-		Root:    cmd.NewRoot(exitChan, ui, conf, lctl),
-		Version: plugin.VersionType{Major: v.Major, Minor: v.Minor, Build: v.Build},
+		UI:        ui,
+		Config:    conf,
+		Analytics: analyticsClient,
+		Root:      cmd.NewRoot(exitChan, ui, conf, lctl, analyticsClient, analyticsToggle),
+		Version:   plugin.VersionType{Major: v.Major, Minor: v.Minor, Build: v.Build},
 	}
 
 	plugin.Start(cfdev)
@@ -86,14 +99,14 @@ func (p *Plugin) GetMetadata() plugin.PluginMetadata {
 
 func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	if args[0] == "CLI-MESSAGE-UNINSTALL" {
-		p.Config.Analytics.Event(cfanalytics.UNINSTALL, nil)
+		p.Analytics.Event(cfanalytics.UNINSTALL, nil)
 		return
 	}
 
 	if strings.ToLower(args[1]) != "telemetry" {
-		if err := p.Config.Analytics.PromptOptIn(p.Exit, p.UI); err != nil {
+		if err := p.Analytics.PromptOptIn(); err != nil {
 			p.UI.Failed(err.Error())
-			p.Config.Close()
+			p.Analytics.Close()
 			os.Exit(1)
 		}
 	}
@@ -102,8 +115,8 @@ func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 	if err := p.Root.Execute(); err != nil {
 		p.UI.Failed(err.Error())
 		extraData := map[string]interface{}{"errors": errors.SafeError(err)}
-		p.Config.Analytics.Event(cfanalytics.ERROR, extraData)
-		p.Config.Close()
+		p.Analytics.Event(cfanalytics.ERROR, extraData)
+		p.Analytics.Close()
 		os.Exit(1)
 	}
 }

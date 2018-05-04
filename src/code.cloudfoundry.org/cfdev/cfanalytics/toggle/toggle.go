@@ -1,30 +1,47 @@
 package toggle
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 )
 
 type Toggle struct {
-	defined  bool
-	value    bool
-	path     string
-	trueVal  string
-	falseVal string
+	defined bool
+	value   bool
+	path    string
+	props   map[string]interface{}
 }
 
-func New(path, trueVal, falseVal string) *Toggle {
+const deprecatedTrueVal = "optin"
+const deprecatedFalseVal = "optout"
+const keyEnabled = "enabled"
+
+func New(path string) *Toggle {
 	t := &Toggle{
-		defined:  false,
-		value:    false,
-		path:     path,
-		trueVal:  trueVal,
-		falseVal: falseVal,
+		defined: false,
+		value:   false,
+		path:    path,
+		props:   make(map[string]interface{}, 1),
 	}
 	if txt, err := ioutil.ReadFile(path); err == nil {
-		t.defined = len(txt) > 0
-		t.value = string(txt) == trueVal
+		if string(txt) == deprecatedFalseVal {
+			t.defined = true
+			t.value = false
+		} else if string(txt) == deprecatedTrueVal {
+			t.defined = true
+			t.value = true
+		} else {
+			data := make(map[string]interface{}, 1)
+			if err := json.Unmarshal(txt, &data); err == nil {
+				if _, t.defined = data[keyEnabled]; t.defined {
+					if v, ok := data[keyEnabled].(bool); ok {
+						t.value = v
+					}
+				}
+			}
+		}
 	}
 	return t
 }
@@ -40,10 +57,26 @@ func (t *Toggle) Get() bool {
 func (t *Toggle) Set(value bool) error {
 	t.defined = true
 	t.value = value
+	return t.save()
+}
+
+func (t *Toggle) GetProps() map[string]interface{} {
+	return t.props
+}
+
+func (t *Toggle) SetProp(k, v string) error {
+	t.props[k] = v
+	return t.save()
+}
+
+func (t *Toggle) save() error {
 	os.MkdirAll(filepath.Dir(t.path), 0755)
-	if value {
-		return ioutil.WriteFile(t.path, []byte(t.trueVal), 0644)
-	} else {
-		return ioutil.WriteFile(t.path, []byte(t.falseVal), 0644)
+	txt, err := json.Marshal(map[string]interface{}{
+		"enabled": t.value,
+		"props":   t.props,
+	})
+	if err != nil {
+		return err
 	}
+	return ioutil.WriteFile(t.path, txt, 0644)
 }

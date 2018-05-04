@@ -54,10 +54,9 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 
 		fmt.Fprintln(inWriter, "no")
 
-		Eventually(func() (string, error) {
-			contents, err := ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
-			return string(contents), err
-		}).Should(Equal("optout"))
+		Eventually(func() ([]byte, error) {
+			return ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
+		}).Should(MatchJSON(`{"enabled":false, "props":{"type":"cf"}}`))
 	})
 
 	It("optin", func() {
@@ -70,10 +69,9 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 
 		fmt.Fprintln(inWriter, "yes")
 
-		Eventually(func() (string, error) {
-			contents, err := ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
-			return string(contents), err
-		}).Should(Equal("optin"))
+		Eventually(func() ([]byte, error) {
+			return ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
+		}).Should(MatchJSON(`{"enabled":true, "props":{"type":"cf"}}`))
 	})
 
 	It("is already opted in", func() {
@@ -88,7 +86,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 
 		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
-		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(Equal([]byte("optin")))
+		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(MatchJSON([]byte(`{"enabled":true, "props":{"type":"cf"}}`)))
 	})
 
 	It("allows noninteractive telemetry --off command", func() {
@@ -98,7 +96,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 
 		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
-		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(Equal([]byte("optout")))
+		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(MatchJSON([]byte(`{"enabled":false, "props":{}}`)))
 	})
 
 	It("allows noninteractive telemetry --on command", func() {
@@ -108,6 +106,6 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 
 		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
-		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(Equal([]byte("optin")))
+		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(MatchJSON([]byte(`{"enabled":true, "props":{}}`)))
 	})
 })

@@ -20,6 +20,10 @@ type Toggle interface {
 	Defined() bool
 	Get() bool
 	Set(value bool) error
+	GetProps() map[string]interface{}
+}
+type UI interface {
+	Ask(prompt string) (answer string)
 }
 
 type Analytics struct {
@@ -27,9 +31,11 @@ type Analytics struct {
 	toggle  Toggle
 	userId  string
 	version string
+	exit    chan struct{}
+	ui      UI
 }
 
-func New(toggle Toggle, client analytics.Client, version string) *Analytics {
+func New(toggle Toggle, client analytics.Client, version string, exit chan struct{}, ui UI) *Analytics {
 	uuid, err := machineid.ProtectedID("cfdev")
 	if err != nil {
 		uuid = "UNKNOWN_ID"
@@ -39,6 +45,8 @@ func New(toggle Toggle, client analytics.Client, version string) *Analytics {
 		toggle:  toggle,
 		userId:  uuid,
 		version: version,
+		exit:    exit,
+		ui:      ui,
 	}
 }
 
@@ -46,15 +54,20 @@ func (a *Analytics) Close() {
 	a.client.Close()
 }
 
-func (a *Analytics) Event(event string, data map[string]interface{}) error {
+func (a *Analytics) Event(event string, data ...map[string]interface{}) error {
 	if !a.toggle.Get() {
 		return nil
 	}
 	properties := analytics.NewProperties()
 	properties.Set("os", runtime.GOOS)
 	properties.Set("version", a.version)
-	for k, v := range data {
+	for k, v := range a.toggle.GetProps() {
 		properties.Set(k, v)
+	}
+	for _, d := range data {
+		for k, v := range d {
+			properties.Set(k, v)
+		}
 	}
 
 	return a.client.Enqueue(analytics.Track{
@@ -65,13 +78,9 @@ func (a *Analytics) Event(event string, data map[string]interface{}) error {
 	})
 }
 
-type UI interface {
-	Ask(prompt string) (answer string)
-}
-
-func (a *Analytics) PromptOptIn(Exit chan struct{}, ui UI) error {
+func (a *Analytics) PromptOptIn() error {
 	if !a.toggle.Defined() {
-		response := ui.Ask(`
+		response := a.ui.Ask(`
 CF Dev collects anonymous usage data to help us improve your user experience. We intend to share these anonymous usage analytics with user community by publishing quarterly reports at :
 
 https://github.com/pivotal-cf/cfdev/wiki/Telemetry
@@ -79,7 +88,7 @@ https://github.com/pivotal-cf/cfdev/wiki/Telemetry
 Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?`)
 
 		select {
-		case <-Exit:
+		case <-a.exit:
 			return errors.SafeWrap(nil, "Exit while waiting for telemetry prompt")
 		case <-time.After(time.Millisecond):
 		}

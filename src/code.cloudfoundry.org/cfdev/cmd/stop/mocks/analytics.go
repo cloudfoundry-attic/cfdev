@@ -33,13 +33,18 @@ func (m *MockAnalytics) EXPECT() *MockAnalyticsMockRecorder {
 }
 
 // Event mocks base method
-func (m *MockAnalytics) Event(arg0 string, arg1 map[string]interface{}) error {
-	ret := m.ctrl.Call(m, "Event", arg0, arg1)
+func (m *MockAnalytics) Event(arg0 string, arg1 ...map[string]interface{}) error {
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Event", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Event indicates an expected call of Event
-func (mr *MockAnalyticsMockRecorder) Event(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Event", reflect.TypeOf((*MockAnalytics)(nil).Event), arg0, arg1)
+func (mr *MockAnalyticsMockRecorder) Event(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Event", reflect.TypeOf((*MockAnalytics)(nil).Event), varargs...)
 }

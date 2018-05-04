@@ -2,8 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,11 +9,8 @@ import (
 
 	"code.cloudfoundry.org/cfdev/errors"
 
-	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/semver"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 var (
@@ -55,11 +50,6 @@ var (
 	analyticsKey string
 )
 
-type Toggle interface {
-	Get() bool
-	Set(value bool) error
-}
-
 type Config struct {
 	BoshDirectorIP         string
 	CFRouterIP             string
@@ -71,8 +61,7 @@ type Config struct {
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
 	CliVersion             *semver.Version
-	Analytics              *cfanalytics.Analytics
-	AnalyticsToggle        Toggle
+	AnalyticsKey           string
 }
 
 func NewConfig() (Config, error) {
@@ -86,11 +75,6 @@ func NewConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	analyticsToggle := toggle.New(filepath.Join(cfdevHome, "analytics", "analytics.txt"), "optin", "optout")
-	analyticsClient, _ := analytics.NewWithConfig(analyticsKey, analytics.Config{
-		Logger: analytics.StdLogger(log.New(ioutil.Discard, "", 0)),
-	})
-
 	return Config{
 		BoshDirectorIP:         "10.245.0.2",
 		CFRouterIP:             "10.144.0.34",
@@ -102,13 +86,8 @@ func NewConfig() (Config, error) {
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
 		CliVersion:             semver.Must(semver.New(cliVersion)),
-		Analytics:              cfanalytics.New(analyticsToggle, analyticsClient, cliVersion),
-		AnalyticsToggle:        analyticsToggle,
+		AnalyticsKey:           analyticsKey,
 	}, nil
-}
-
-func (c Config) Close() {
-	c.Analytics.Close()
 }
 
 func aToUint64(a string) uint64 {

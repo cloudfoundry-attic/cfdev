@@ -1,7 +1,6 @@
 package telemetry
 
 import (
-	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
 )
@@ -9,11 +8,15 @@ import (
 type UI interface {
 	Say(message string, args ...interface{})
 }
+type Toggle interface {
+	Get() bool
+	Set(value bool) error
+}
 
 type Telemetry struct {
-	UI     UI
-	Config config.Config
-	Args   struct {
+	UI              UI
+	AnalyticsToggle Toggle
+	Args            struct {
 		FlagOff bool
 		FlagOn  bool
 	}
@@ -33,16 +36,16 @@ func (t *Telemetry) Cmd() *cobra.Command {
 
 func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 	if t.Args.FlagOff {
-		if err := t.Config.AnalyticsToggle.Set(false); err != nil {
+		if err := t.AnalyticsToggle.Set(false); err != nil {
 			return errors.SafeWrap(err, "turning off telemetry")
 		}
 	} else if t.Args.FlagOn {
-		if err := t.Config.AnalyticsToggle.Set(true); err != nil {
+		if err := t.AnalyticsToggle.Set(true); err != nil {
 			return errors.SafeWrap(err, "turning on telemetry")
 		}
 	}
 
-	if t.Config.AnalyticsToggle.Get() {
+	if t.AnalyticsToggle.Get() {
 		t.UI.Say("Telemetry is turned ON")
 	} else {
 		t.UI.Say("Telemetry is turned OFF")

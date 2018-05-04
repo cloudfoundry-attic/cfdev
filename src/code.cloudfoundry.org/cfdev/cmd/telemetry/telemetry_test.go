@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"code.cloudfoundry.org/cfdev/cmd/telemetry"
-	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
@@ -29,7 +28,6 @@ var _ = Describe("Telemetry", func() {
 	var (
 		mockUI     MockUI
 		mockToggle *MockToggle
-		conf       config.Config
 		telCmd     *cobra.Command
 	)
 
@@ -39,13 +37,9 @@ var _ = Describe("Telemetry", func() {
 		}
 		mockToggle = &MockToggle{}
 
-		conf = config.Config{
-			AnalyticsToggle: mockToggle,
-		}
-
 		subject := &telemetry.Telemetry{
-			UI:     &mockUI,
-			Config: conf,
+			UI:              &mockUI,
+			AnalyticsToggle: mockToggle,
 		}
 		telCmd = subject.Cmd()
 		telCmd.SetArgs([]string{})

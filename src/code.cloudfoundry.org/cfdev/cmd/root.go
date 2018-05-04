@@ -32,8 +32,17 @@ type Launchd interface {
 type cmdBuilder interface {
 	Cmd() *cobra.Command
 }
+type AnalyticsClient interface {
+	Event(event string, data ...map[string]interface{}) error
+	PromptOptIn() error
+}
+type Toggle interface {
+	Get() bool
+	Set(value bool) error
+	SetProp(k, v string) error
+}
 
-func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd) *cobra.Command {
+func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd, analyticsClient AnalyticsClient, analyticsToggle Toggle) *cobra.Command {
 	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
@@ -69,23 +78,25 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd) *
 			Config: config,
 		},
 		&b5.Start{
-			Exit:        exit,
-			LocalExit:   make(chan struct{}, 3),
-			UI:          ui,
-			Config:      config,
-			Launchd:     launchd,
-			ProcManager: &process.Manager{},
+			Exit:            exit,
+			LocalExit:       make(chan struct{}, 3),
+			UI:              ui,
+			Config:          config,
+			Launchd:         launchd,
+			ProcManager:     &process.Manager{},
+			Analytics:       analyticsClient,
+			AnalyticsToggle: analyticsToggle,
 		},
 		&b6.Stop{
 			Config:       config,
-			Analytics:    config.Analytics,
+			Analytics:    analyticsClient,
 			Launchd:      launchd,
 			ProcManager:  &process.Manager{},
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
 		&b7.Telemetry{
-			UI:     ui,
-			Config: config,
+			UI:              ui,
+			AnalyticsToggle: analyticsToggle,
 		},
 	} {
 		dev.AddCommand(cmd.Cmd())

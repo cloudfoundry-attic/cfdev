@@ -39,15 +39,25 @@ type Launchd interface {
 type ProcManager interface {
 	SafeKill(pidfile, name string) error
 }
+type AnalyticsClient interface {
+	Event(event string, data ...map[string]interface{}) error
+	PromptOptIn() error
+}
+type Toggle interface {
+	Get() bool
+	SetProp(k, v string) error
+}
 
 type Start struct {
-	Exit        chan struct{}
-	LocalExit   chan struct{}
-	UI          UI
-	Config      config.Config
-	Launchd     Launchd
-	ProcManager ProcManager
-	Args        struct {
+	Exit            chan struct{}
+	LocalExit       chan struct{}
+	UI              UI
+	Config          config.Config
+	Launchd         Launchd
+	ProcManager     ProcManager
+	Analytics       AnalyticsClient
+	AnalyticsToggle Toggle
+	Args            struct {
 		Registries  string
 		DepsIsoPath string
 		Cpus        int
@@ -89,13 +99,18 @@ func (s *Start) RunE(_ *cobra.Command, _ []string) error {
 		os.Exit(128)
 	}()
 
-	s.Config.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{"type": "cf"})
+	depsIsoName := "cf"
+	if s.Args.DepsIsoPath != "" {
+		depsIsoName = filepath.Base(s.Args.DepsIsoPath)
+	}
+	s.AnalyticsToggle.SetProp("type", depsIsoName)
+	s.Analytics.Event(cfanalytics.START_BEGIN)
 
 	if running, err := s.Launchd.IsRunning(process.LinuxKitLabel); err != nil {
 		return errors.SafeWrap(err, "is linuxkit running")
 	} else if running {
 		s.UI.Say("CF Dev is already running...")
-		s.Config.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"type": "cf", "alreadyrunning": true})
+		s.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true})
 		return nil
 	}
 
@@ -182,7 +197,7 @@ Admin user => Email: admin / Password: admin
 Regular user => Email: user / Password: pass
 `)
 
-	s.Config.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"type": "cf"})
+	s.Analytics.Event(cfanalytics.START_END)
 
 	return nil
 }
