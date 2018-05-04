@@ -60,6 +60,7 @@ var _ = BeforeEach(func() {
 	Eventually(session).Should(gbytes.Say("cfdev"))
 	Eventually(session).Should(gexec.Exit(0))
 })
+
 var _ = AfterEach(func() {
 	session := cf.Cf("dev", "stop")
 	Eventually(session).Should(gexec.Exit())

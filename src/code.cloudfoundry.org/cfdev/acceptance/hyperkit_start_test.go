@@ -2,9 +2,9 @@ package acceptance
 
 import (
 	"io/ioutil"
-	"net"
 	"os"
 	"path/filepath"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,25 +42,6 @@ var _ = Describe("hyperkit start", func() {
 		os.Unsetenv("CFDEV_SKIP_ASSET_CHECK")
 	})
 
-	Context("when lacking sudo privileges", func() {
-		BeforeEach(func(done Done) {
-			Expect(HasSudoPrivilege()).To(BeFalse())
-			close(done)
-		}, 10)
-
-		Context("BOSH & CF Router IP addresses are not aliased", func() {
-			BeforeEach(func() {
-				ExpectIPAddressedToNotBeAliased(BoshDirectorIP, CFRouterIP)
-			})
-
-			It("notifies and prompts for a password in order to sudo", func() {
-				session := cf.Cf("dev", "start")
-				Eventually(session.Out).Should(gbytes.Say("Setting up IP aliases"))
-				Eventually(session.Err).Should(gbytes.Say("Password:"))
-			})
-		})
-	})
-
 	Context("when CFDEV_HOME is not writable", func() {
 		BeforeEach(func() {
 			os.Chmod(cfdevHome, 0555)
@@ -95,11 +76,11 @@ var _ = Describe("hyperkit start", func() {
 	})
 
 	Context("cfdev linuxkit is already running", func() {
-		var tmpDir string
+		var launchdTmpDir string
 		var originalPid string
 		BeforeEach(func() {
-			tmpDir, _ = ioutil.TempDir("", "cfdev.test.running.")
-			lctl := launchd.New(tmpDir)
+			launchdTmpDir, _ = ioutil.TempDir("", "cfdev.test.running.")
+			lctl := launchd.New(launchdTmpDir)
 			Expect(lctl.IsRunning("org.cloudfoundry.cfdev.linuxkit")).To(BeFalse())
 			lctl.AddDaemon(models.DaemonSpec{
 				Label:            "org.cloudfoundry.cfdev.linuxkit",
@@ -113,30 +94,19 @@ var _ = Describe("hyperkit start", func() {
 		})
 
 		AfterEach(func() {
-			exec.Command("launchctl", "unload", "-w", filepath.Join(tmpDir, "org.cloudfoundry.cfdev.linuxkit.plist")).Run()
-			os.RemoveAll(tmpDir)
+			exec.Command("launchctl", "unload", "-w", filepath.Join(launchdTmpDir, "org.cloudfoundry.cfdev.linuxkit.plist")).Run()
+			os.RemoveAll(launchdTmpDir)
 		})
 
 		It("doesn't restart the linuxkit process", func() {
 			session := cf.Cf("dev", "start")
-			Eventually(session).Should(gexec.Exit(0))
+			Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 
 			Expect(session).To(gbytes.Say("CF Dev is already running..."))
 			Expect(LaunchdPid("org.cloudfoundry.cfdev.linuxkit")).To(Equal(originalPid))
 		})
 	})
 })
-
-func ExpectIPAddressedToNotBeAliased(aliases ...string) {
-	addrs, err := net.InterfaceAddrs()
-	Expect(err).ToNot(HaveOccurred())
-
-	for _, addr := range addrs {
-		for _, alias := range aliases {
-			Expect(addr.String()).ToNot(Equal(alias + "/32"))
-		}
-	}
-}
 
 func LaunchdPid(label string) (string, error) {
 	out, err := exec.Command("launchctl", "list", label).Output()
