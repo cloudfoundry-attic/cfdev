@@ -10,31 +10,28 @@ import (
 
 var _ = Describe("VPNKit", func() {
 	It("builds a command", func() {
-		homeDir := "/home"
-		cacheDir := "/home/cache"
-		stateDir := "/home/state"
-
 		vpnKit := process.VpnKit{
 			Config: config.Config{
-				CFDevHome: homeDir,
-				CacheDir:  cacheDir,
-				StateDir:  stateDir,
+				CFDevHome:      "some-home-dir",
+				CacheDir:       "some-cache-dir",
+				StateDir:       "some-state-dir",
+				VpnkitStateDir: "some-vpnkit-state-dir",
 			},
 		}
 
 		cmd := vpnKit.DaemonSpec()
 
-		Expect(cmd.Program).To(Equal("/home/cache/vpnkit"))
+		Expect(cmd.Program).To(Equal("some-cache-dir/vpnkit"))
 		Expect(cmd.ProgramArguments).To(ConsistOf(
-			"/home/cache/vpnkit",
+			"some-cache-dir/vpnkit",
 			"--ethernet",
-			"/home/vpnkit_eth.sock",
+			"some-vpnkit-state-dir/vpnkit_eth.sock",
 			"--port",
-			"/home/vpnkit_port.sock",
+			"some-vpnkit-state-dir/vpnkit_port.sock",
 			"--vsock-path",
-			"/home/state/connect",
+			"some-state-dir/connect",
 			"--http",
-			"/home/http_proxy.json",
+			"some-vpnkit-state-dir/http_proxy.json",
 		))
 	})
 })

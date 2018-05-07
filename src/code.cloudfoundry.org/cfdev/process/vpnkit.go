@@ -26,13 +26,13 @@ func (v *VpnKit) DaemonSpec() launchd.DaemonSpec {
 		ProgramArguments: []string{
 			path.Join(v.Config.CacheDir, "vpnkit"),
 			"--ethernet",
-			path.Join(v.Config.CFDevHome, "vpnkit_eth.sock"),
+			path.Join(v.Config.VpnkitStateDir, "vpnkit_eth.sock"),
 			"--port",
-			path.Join(v.Config.CFDevHome, "vpnkit_port.sock"),
+			path.Join(v.Config.VpnkitStateDir, "vpnkit_port.sock"),
 			"--vsock-path",
 			path.Join(v.Config.StateDir, "connect"),
 			"--http",
-			path.Join(v.Config.CFDevHome, "http_proxy.json"),
+			path.Join(v.Config.VpnkitStateDir, "http_proxy.json"),
 		},
 		RunAtLoad:  false,
 		StdoutPath: path.Join(v.Config.CFDevHome, "vpnkit.stdout.log"),
@@ -41,7 +41,7 @@ func (v *VpnKit) DaemonSpec() launchd.DaemonSpec {
 }
 
 func (v *VpnKit) SetupVPNKit() error {
-	httpProxyPath := filepath.Join(v.Config.CFDevHome, "http_proxy.json")
+	httpProxyPath := filepath.Join(v.Config.VpnkitStateDir, "http_proxy.json")
 
 	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP)
 	proxyContents, err := json.Marshal(proxyConfig)

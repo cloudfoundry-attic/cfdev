@@ -29,7 +29,7 @@ var _ = Describe("hyperkit start", func() {
 
 	BeforeEach(func() {
 		cacheDir = filepath.Join(cfdevHome, "cache")
-		stateDir = filepath.Join(cfdevHome, "state")
+		stateDir = filepath.Join(cfdevHome, "state", "linuxkit")
 
 		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
 			SetupDependencies(cacheDir)

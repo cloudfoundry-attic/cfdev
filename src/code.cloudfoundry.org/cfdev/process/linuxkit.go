@@ -29,8 +29,8 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int) (launchd.DaemonSpec, error) {
 	hyperkit := filepath.Join(l.Config.CacheDir, "hyperkit")
 	uefi := filepath.Join(l.Config.CacheDir, "UEFI.fd")
 	qcowtool := filepath.Join(l.Config.CacheDir, "qcow-tool")
-	vpnkitEthSock := filepath.Join(l.Config.CFDevHome, "vpnkit_eth.sock")
-	vpnkitPortSock := filepath.Join(l.Config.CFDevHome, "vpnkit_port.sock")
+	vpnkitEthSock := filepath.Join(l.Config.VpnkitStateDir, "vpnkit_eth.sock")
+	vpnkitPortSock := filepath.Join(l.Config.VpnkitStateDir, "vpnkit_port.sock")
 
 	if l.DepsIsoPath == "" {
 		l.DepsIsoPath = filepath.Join(l.Config.CacheDir, "cf-deps.iso")

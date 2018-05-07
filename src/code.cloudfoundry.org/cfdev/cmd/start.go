@@ -88,7 +88,7 @@ func (s *start) RunE() error {
 		return errors.SafeWrap(err, "environment setup")
 	}
 
-	if err := cleanupStateDir(s.Config.StateDir); err != nil {
+	if err := cleanupStateDir(s.Config); err != nil {
 		return errors.SafeWrap(err, "cleaning state directory")
 	}
 
@@ -193,13 +193,14 @@ func waitForGarden(client garden.Client) {
 	}
 }
 
-func cleanupStateDir(stateDir string) error {
-	if err := os.RemoveAll(stateDir); err != nil {
-		return errors.SafeWrap(err, "Unable to clean up .cfdev state directory")
-	}
-
-	if err := os.MkdirAll(stateDir, 0755); err != nil {
-		return errors.SafeWrap(err, "Unable to create .cfdev state directory")
+func cleanupStateDir(cfg config.Config) error {
+	for _, dir := range []string{cfg.StateDir, cfg.VpnkitStateDir} {
+		if err := os.RemoveAll(dir); err != nil {
+			return errors.SafeWrap(err, "Unable to clean up .cfdev state directory")
+		}
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return errors.SafeWrap(err, "Unable to create .cfdev state directory")
+		}
 	}
 
 	return nil

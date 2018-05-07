@@ -20,9 +20,10 @@ var _ = Describe("LinuxKit process", func() {
 	BeforeEach(func() {
 		linuxkit = process.LinuxKit{
 			Config: config.Config{
-				CFDevHome: "/home-dir/.cfdev",
-				StateDir:  "/home-dir/.cfdev/state",
-				CacheDir:  "/home-dir/.cfdev/cache",
+				CFDevHome:      "/home-dir/.cfdev",
+				StateDir:       "/home-dir/.cfdev/state",
+				VpnkitStateDir: "/home-dir/.cfdev/state_vpnkit",
+				CacheDir:       "/home-dir/.cfdev/cache",
 			},
 		}
 	})
@@ -41,7 +42,7 @@ var _ = Describe("LinuxKit process", func() {
 			"-mem", "4096",
 			"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
 			"-networking",
-			"vpnkit,/home-dir/.cfdev/vpnkit_eth.sock,/home-dir/.cfdev/vpnkit_port.sock",
+			"vpnkit,/home-dir/.cfdev/state_vpnkit/vpnkit_eth.sock,/home-dir/.cfdev/state_vpnkit/vpnkit_port.sock",
 			"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
 			"-disk", "type=qcow,size=80G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
 			"-disk", "file=/home-dir/.cfdev/cache/cf-deps.iso",
@@ -78,7 +79,7 @@ var _ = Describe("LinuxKit process", func() {
 					"-mem", "4096",
 					"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
 					"-networking",
-					"vpnkit,/home-dir/.cfdev/vpnkit_eth.sock,/home-dir/.cfdev/vpnkit_port.sock",
+					"vpnkit,/home-dir/.cfdev/state_vpnkit/vpnkit_eth.sock,/home-dir/.cfdev/state_vpnkit/vpnkit_port.sock",
 					"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
 					"-disk", "type=qcow,size=80G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
 					"-disk", "file="+path.Join(assetDir, "test-deps.dev"),
