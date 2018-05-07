@@ -99,8 +99,8 @@ func ProcessIsRunning(pid int) (bool, error) {
 	return true, nil
 }
 
-func IsLaunchdRunning(label string) func(bool, error) {
-	return func(bool, error) {
+func IsLaunchdRunning(label string) func() (bool, error) {
+	return func() (bool, error) {
 		txt, err := exec.Command("launchctl", "list", label).CombinedOutput()
 		if err != nil {
 			if strings.Contains(string(txt), "Could not find service") {

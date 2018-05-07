@@ -54,7 +54,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 	AfterEach(func() {
 		gexec.KillAndWait()
-		FullCleanup()
 		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 
 		session := cf.Cf("dev", "stop")
@@ -120,7 +119,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("Custom ISO", func() {
+		FIt("Custom ISO", func() {
 			session := cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
 			Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
