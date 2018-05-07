@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -96,6 +97,25 @@ func ProcessIsRunning(pid int) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func IsLaunchdRunning(label string) func(bool, error) {
+	return func(bool, error) {
+		txt, err := exec.Command("launchctl", "list", label).CombinedOutput()
+		if err != nil {
+			if strings.Contains(string(txt), "Could not find service") {
+				return false, nil
+			}
+			return false, err
+		}
+		re := regexp.MustCompile(`^\s*"PID"\s*=`)
+		for _, line := range strings.Split(string(txt), "\n") {
+			if re.MatchString(line) {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
 }
 
 func PidFromFile(pidFile string) int {

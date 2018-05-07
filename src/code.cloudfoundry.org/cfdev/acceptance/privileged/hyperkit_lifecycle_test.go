@@ -28,11 +28,9 @@ import (
 
 var _ = Describe("hyperkit lifecycle", func() {
 	var (
-		cfdevHome       string
-		linuxkitPidPath string
-		vpnkitPidPath   string
-		stateDir        string
-		cacheDir        string
+		cfdevHome string
+		stateDir  string
+		cacheDir  string
 	)
 
 	BeforeEach(func() {
@@ -47,8 +45,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 		}
 		cacheDir = filepath.Join(cfdevHome, "cache")
 		stateDir = filepath.Join(cfdevHome, "state")
-		linuxkitPidPath = filepath.Join(stateDir, "linuxkit.pid")
-		vpnkitPidPath = filepath.Join(stateDir, "vpnkit.pid")
 
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))
@@ -75,11 +71,11 @@ var _ = Describe("hyperkit lifecycle", func() {
 		}
 		Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
+		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 10, 1).Should(BeTrue())
+		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
+
 		By("settingup VPNKit dependencies")
 		Eventually(filepath.Join(cfdevHome, "http_proxy.json"), 10, 1).Should(BeAnExistingFile())
-
-		Eventually(vpnkitPidPath, 10, 1).Should(BeAnExistingFile())
-		Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
 
 		// FYI - this will take time until we use thin provisioned disks
 		hyperkitPidPath := filepath.Join(stateDir, "hyperkit.pid")
@@ -96,18 +92,16 @@ var _ = Describe("hyperkit lifecycle", func() {
 		By("waiting for cf router to listen")
 		EventuallyShouldListenAt("http://"+CFRouterIP+":80", 60)
 
-		linuxkitPid := PidFromFile(linuxkitPidPath)
 		hyperkitPid := PidFromFile(hyperkitPidPath)
-		vpnkitPid := PidFromFile(vpnkitPidPath)
 
 		By("deploy finished - stopping...")
 		session = cf.Cf("dev", "stop")
 		Eventually(session).Should(gexec.Exit(0))
 
 		//ensure pid is not running
-		EventuallyProcessStops(linuxkitPid, 5)
+		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
 		EventuallyProcessStops(hyperkitPid, 5)
-		EventuallyProcessStops(vpnkitPid, 5)
+		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
 	})
 
 	Context("Run with", func() {
@@ -132,8 +126,8 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 			By("settingup VPNKit dependencies")
 			Eventually(filepath.Join(cfdevHome, "http_proxy.json"), 10, 1).Should(BeAnExistingFile())
-			Eventually(vpnkitPidPath, 10, 1).Should(BeAnExistingFile())
-			Eventually(linuxkitPidPath, 10, 1).Should(BeAnExistingFile())
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 10, 1).Should(BeTrue())
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
 
 			hyperkitPidPath := filepath.Join(stateDir, "hyperkit.pid")
 			Eventually(hyperkitPidPath, 120, 1).Should(BeAnExistingFile())
