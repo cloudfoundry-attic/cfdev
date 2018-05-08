@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -36,17 +37,26 @@ type Launchd interface {
 
 type start struct {
 	Exit        chan struct{}
+	LocalExit   chan struct{}
 	UI          UI
 	Config      config.Config
 	Launchd     Launchd
+	ProcManager ProcManager
 	Registries  string
 	DepsIsoPath string
 	Cpus        int
 	Mem         int
 }
 
-func NewStart(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd) *cobra.Command {
-	s := start{Exit: Exit, UI: UI, Config: Config, Launchd: Launchd}
+func NewStart(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd, procManager ProcManager) *cobra.Command {
+	s := start{
+		Exit:        Exit,
+		UI:          UI,
+		Config:      Config,
+		Launchd:     Launchd,
+		ProcManager: procManager,
+		LocalExit:   make(chan struct{}, 10),
+	}
 	cmd := &cobra.Command{
 		Use: "start",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -68,9 +78,15 @@ func NewStart(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd) 
 
 func (s *start) RunE() error {
 	go func() {
-		<-s.Exit
+		select {
+		case <-s.Exit:
+			// no-op
+		case <-s.LocalExit:
+			// no-op
+		}
 		s.Launchd.Stop(process.LinuxKitLabel)
 		s.Launchd.Stop(process.VpnKitLabel)
+		s.ProcManager.SafeKill(filepath.Join(s.Config.StateDir, "hyperkit.pid"), "hyperkit")
 		os.Exit(128)
 	}()
 
@@ -247,7 +263,7 @@ func (s *start) watchLaunchd(label string) {
 			running, err := s.Launchd.IsRunning(label)
 			if !running && err == nil {
 				s.UI.Say("ERROR: %s has stopped", label)
-				close(s.Exit)
+				s.LocalExit <- struct{}{}
 				return
 			}
 			time.Sleep(5 * time.Second)

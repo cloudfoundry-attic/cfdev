@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/process"
 	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
 	"github.com/spf13/cobra"
 )
@@ -27,8 +28,8 @@ func NewRoot(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd) *
 	dev.AddCommand(NewBosh(Exit, UI, Config))
 	dev.AddCommand(NewCatalog(UI, Config))
 	dev.AddCommand(NewDownload(Exit, UI, Config))
-	dev.AddCommand(NewStart(Exit, UI, Config, Launchd))
-	dev.AddCommand(NewStop(Config, Launchd, cfdevdClient.New("CFD3V", Config.CFDevDSocketPath)))
+	dev.AddCommand(NewStart(Exit, UI, Config, Launchd, &process.Manager{}))
+	dev.AddCommand(NewStop(Config, Launchd, cfdevdClient.New("CFD3V", Config.CFDevDSocketPath), &process.Manager{}))
 	dev.AddCommand(NewTelemetry(UI, Config))
 	dev.AddCommand(NewVersion(UI, Config))
 	dev.AddCommand(&cobra.Command{

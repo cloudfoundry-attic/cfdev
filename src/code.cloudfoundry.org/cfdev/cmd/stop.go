@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
-	"strconv"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
@@ -21,11 +18,15 @@ type CfdevdClient interface {
 	Uninstall() (string, error)
 }
 
-func NewStop(config config.Config, launchd LaunchdStop, cfdevdClient CfdevdClient) *cobra.Command {
+type ProcManager interface {
+	SafeKill(string, string) error
+}
+
+func NewStop(config config.Config, launchd LaunchdStop, cfdevdClient CfdevdClient, procManager ProcManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "stop",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runStop(config, launchd, cfdevdClient)
+			err := runStop(config, launchd, cfdevdClient, procManager)
 			if err != nil {
 				return errors.SafeWrap(err, "cf dev stop")
 			}
@@ -35,7 +36,7 @@ func NewStop(config config.Config, launchd LaunchdStop, cfdevdClient CfdevdClien
 	return cmd
 }
 
-func runStop(config config.Config, launchd LaunchdStop, cfdevdClient CfdevdClient) error {
+func runStop(config config.Config, launchd LaunchdStop, cfdevdClient CfdevdClient, procManager ProcManager) error {
 	config.Analytics.Event(cfanalytics.STOP, map[string]interface{}{"type": "cf"})
 
 	var reterr error
@@ -48,7 +49,7 @@ func runStop(config config.Config, launchd LaunchdStop, cfdevdClient CfdevdClien
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}
 
-	if err := killHyperkit(config); err != nil {
+	if err := procManager.SafeKill(filepath.Join(config.StateDir, "hyperkit.pid"), "hyperkit"); err != nil {
 		reterr = errors.SafeWrap(err, "failed to kill hyperkit")
 	}
 
@@ -57,29 +58,4 @@ func runStop(config config.Config, launchd LaunchdStop, cfdevdClient CfdevdClien
 	}
 
 	return reterr
-}
-
-func killHyperkit(config config.Config) error {
-	pidfile := filepath.Join(config.StateDir, "hyperkit.pid")
-	data, err := ioutil.ReadFile(pidfile)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	pid, err := strconv.Atoi(string(data))
-	if err != nil {
-		return err
-	}
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return err
-	}
-	err = process.Kill()
-	if err != nil {
-		return err
-	}
-	os.Remove(pidfile)
-	return nil
 }

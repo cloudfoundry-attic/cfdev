@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strconv"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cmd"
@@ -14,7 +11,6 @@ import (
 	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 	"github.com/spf13/cobra"
 )
 
@@ -47,6 +43,10 @@ func (m *MockCfdevdClient) Uninstall() (string, error) {
 	return "", m.returns
 }
 
+type MockProcManager struct{}
+
+func (mp *MockProcManager) SafeKill(pidfile, match string) error { return nil }
+
 var _ = Describe("Stop", func() {
 	var (
 		cfg              config.Config
@@ -71,7 +71,7 @@ var _ = Describe("Stop", func() {
 
 		mockCfdevdClient = &MockCfdevdClient{}
 
-		stopCmd = cmd.NewStop(cfg, mockLaunchd, mockCfdevdClient)
+		stopCmd = cmd.NewStop(cfg, mockLaunchd, mockCfdevdClient, &MockProcManager{})
 		stopCmd.SetArgs([]string{})
 		stopCmd.SetOutput(GinkgoWriter)
 	})
@@ -105,39 +105,6 @@ var _ = Describe("Stop", func() {
 			Expect(mockLaunchd.stopLabels).To(ContainElement(process.LinuxKitLabel))
 			Expect(mockLaunchd.stopLabels).To(ContainElement(process.VpnKitLabel))
 			Expect(mockCfdevdClient.uninstallWasCalled).To(BeTrue())
-		})
-	})
-
-	Context("hyperkit is still running after stopping linuxkit", func() {
-		var (
-			err          error
-			fakeHyperkit *gexec.Session
-		)
-
-		BeforeEach(func() {
-			fakeHyperkit, err = gexec.Start(exec.Command("sleep", "36000"), GinkgoWriter, GinkgoWriter)
-			Expect(err).NotTo(HaveOccurred())
-			pid := strconv.Itoa(fakeHyperkit.Command.Process.Pid)
-			ioutil.WriteFile(
-				filepath.Join(stateDir, "hyperkit.pid"),
-				[]byte(pid),
-				0644,
-			)
-		})
-
-		AfterEach(func() {
-			gexec.KillAndWait()
-		})
-
-		It("kills hyperkit", func() {
-			Expect(stopCmd.Execute()).To(Succeed())
-			Eventually(fakeHyperkit).Should(gexec.Exit())
-
-			Expect(mockLaunchd.stopLabels).To(ContainElement(process.LinuxKitLabel))
-			Expect(mockLaunchd.stopLabels).To(ContainElement(process.VpnKitLabel))
-			Expect(mockCfdevdClient.uninstallWasCalled).To(BeTrue())
-
-			Expect(filepath.Join(stateDir, "hyperkit.pid")).NotTo(BeAnExistingFile())
 		})
 	})
 

@@ -80,7 +80,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		Eventually(session, 3600).Should(gexec.Exit(0))
 
 		By("waiting for cf router to listen")
-		session = cf.Cf("auth", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin")
+		session = cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin")
 		Eventually(session).Should(gexec.Exit(0))
 
 		hyperkitPid := PidFromFile(hyperkitPidPath)
