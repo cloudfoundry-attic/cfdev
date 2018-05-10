@@ -2,6 +2,7 @@ package privileged_test
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -82,6 +83,9 @@ var _ = Describe("hyperkit lifecycle", func() {
 		By("waiting for cf router to listen")
 		session = cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin")
 		Eventually(session).Should(gexec.Exit(0))
+
+		By("pushing an app")
+		PushAnApp()
 
 		hyperkitPid := PidFromFile(hyperkitPidPath)
 
@@ -220,4 +224,64 @@ func FullCleanup() {
 			fmt.Printf("WARNING: one of the 'kits' processes are was still running: %s", line)
 		}
 	}
+}
+
+func PushAnApp() {
+	server, port := fakeTcpServer()
+	defer server.Close()
+
+	tmpDir, _ := ioutil.TempDir("", "cf-test-app-")
+	defer os.RemoveAll(tmpDir)
+	Expect(ioutil.WriteFile(filepath.Join(tmpDir, "app"), []byte(`#!/usr/bin/env ruby
+require 'webrick'
+require 'open-uri'
+require 'socket'
+server = WEBrick::HTTPServer.new :Port => ENV['PORT']
+server.mount_proc '/' do |request, response|
+	response.body = 'Hello, world!'
+end
+server.mount_proc '/external' do |request, response|
+	response.body = open('http://example.com').read
+end
+server.mount_proc '/host' do |request, response|
+	# response.body = %x(host host.pcfdev.io)
+	response.body = TCPSocket.new('host.pcfdev.io', `+strconv.Itoa(port)+`).gets
+end
+trap 'INT' do server.shutdown end
+server.start
+`), 0755)).To(Succeed())
+
+	session := cf.Cf("push", "cf-test-app", "-p", tmpDir, "-b", "binary_buildpack", "-c", "./app")
+	Eventually(session, 60).Should(gexec.Exit(0))
+
+	Expect(httpGet("http://cf-test-app.v3.pcfdev.io")).To(Equal("Hello, world!"))
+	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/external")).To(ContainSubstring("Example Domain"))
+
+	// TODO enable below once host.pcfdev.io works again
+	// Expect(httpGet("http://cf-test-app.v3.pcfdev.io/host")).To(Equal("Text From Test Code"))
+}
+
+func fakeTcpServer() (net.Listener, int) {
+	server, err := net.Listen("tcp", "0:0")
+	Expect(err).NotTo(HaveOccurred())
+	go func() {
+		for {
+			conn, err := server.Accept()
+			if err == nil {
+				conn.Write([]byte("Text From Test Code"))
+				conn.Close()
+			}
+		}
+	}()
+	return server, server.Addr().(*net.TCPAddr).Port
+}
+
+func httpGet(url string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	return string(b), err
 }
