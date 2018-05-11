@@ -1,15 +1,39 @@
 package cmd
 
 import (
+	"io"
 	"strings"
 
+	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
+	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
+	b4 "code.cloudfoundry.org/cfdev/cmd/download"
+	b5 "code.cloudfoundry.org/cfdev/cmd/start"
+	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
+	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
+	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/process"
 	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
+	launchdModels "code.cloudfoundry.org/cfdevd/launchd/models"
 	"github.com/spf13/cobra"
 )
 
-func NewRoot(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd) *cobra.Command {
+type UI interface {
+	Say(message string, args ...interface{})
+	Writer() io.Writer
+}
+type Launchd interface {
+	AddDaemon(launchdModels.DaemonSpec) error
+	RemoveDaemon(label string) error
+	Start(label string) error
+	Stop(label string) error
+	IsRunning(label string) (bool, error)
+}
+type cmdBuilder interface {
+	Cmd() *cobra.Command
+}
+
+func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd) *cobra.Command {
 	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
@@ -25,13 +49,47 @@ func NewRoot(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd) *
 	}
 	root.AddCommand(dev)
 
-	dev.AddCommand(NewBosh(Exit, UI, Config))
-	dev.AddCommand(NewCatalog(UI, Config))
-	dev.AddCommand(NewDownload(Exit, UI, Config))
-	dev.AddCommand(NewStart(Exit, UI, Config, Launchd, &process.Manager{}))
-	dev.AddCommand(NewStop(Config, Launchd, cfdevdClient.New("CFD3V", Config.CFDevDSocketPath), &process.Manager{}))
-	dev.AddCommand(NewTelemetry(UI, Config))
-	dev.AddCommand(NewVersion(UI, Config))
+	for _, cmd := range []cmdBuilder{
+		&b1.Version{
+			UI:     ui,
+			Config: config,
+		},
+		&b2.Bosh{
+			Exit:   exit,
+			UI:     ui,
+			Config: config,
+		},
+		&b3.Catalog{
+			UI:     ui,
+			Config: config,
+		},
+		&b4.Download{
+			Exit:   exit,
+			UI:     ui,
+			Config: config,
+		},
+		&b5.Start{
+			Exit:        exit,
+			UI:          ui,
+			Config:      config,
+			Launchd:     launchd,
+			ProcManager: &process.Manager{},
+		},
+		&b6.Stop{
+			Config:       config,
+			Analytics:    config.Analytics,
+			Launchd:      launchd,
+			ProcManager:  &process.Manager{},
+			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
+		},
+		&b7.Telemetry{
+			UI:     ui,
+			Config: config,
+		},
+	} {
+		dev.AddCommand(cmd.Cmd())
+	}
+
 	dev.AddCommand(&cobra.Command{
 		Use:   "help [command]",
 		Short: "Help about any command",

@@ -1,13 +1,23 @@
-package cmd_test
+package version_test
 
 import (
-	"code.cloudfoundry.org/cfdev/cmd"
+	"fmt"
+
+	"code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/semver"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 )
+
+type MockUI struct {
+	WasCalledWith string
+}
+
+func (m *MockUI) Say(message string, args ...interface{}) {
+	m.WasCalledWith = fmt.Sprintf(message, args...)
+}
 
 var _ = Describe("Version", func() {
 	var (
@@ -22,7 +32,11 @@ var _ = Describe("Version", func() {
 			CliVersion: &semver.Version{Original: "1.2.3-rc.4"},
 		}
 
-		verCmd = cmd.NewVersion(&mockUI, conf)
+		subject := &version.Version{
+			UI:     &mockUI,
+			Config: conf,
+		}
+		verCmd = subject.Cmd()
 		verCmd.SetArgs([]string{})
 	})
 

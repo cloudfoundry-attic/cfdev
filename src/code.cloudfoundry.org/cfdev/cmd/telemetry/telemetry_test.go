@@ -1,12 +1,29 @@
-package cmd_test
+package telemetry_test
 
 import (
-	"code.cloudfoundry.org/cfdev/cmd"
+	"fmt"
+
+	"code.cloudfoundry.org/cfdev/cmd/telemetry"
 	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 )
+
+type MockUI struct {
+	WasCalledWith string
+}
+
+func (m *MockUI) Say(message string, args ...interface{}) {
+	m.WasCalledWith = fmt.Sprintf(message, args...)
+}
+
+type MockToggle struct {
+	val bool
+}
+
+func (t *MockToggle) Get() bool        { return t.val }
+func (t *MockToggle) Set(v bool) error { t.val = v; return nil }
 
 var _ = Describe("Telemetry", func() {
 	var (
@@ -26,7 +43,11 @@ var _ = Describe("Telemetry", func() {
 			AnalyticsToggle: mockToggle,
 		}
 
-		telCmd = cmd.NewTelemetry(&mockUI, conf)
+		subject := &telemetry.Telemetry{
+			UI:     &mockUI,
+			Config: conf,
+		}
+		telCmd = subject.Cmd()
 		telCmd.SetArgs([]string{})
 	})
 

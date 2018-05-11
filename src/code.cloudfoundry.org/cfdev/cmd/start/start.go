@@ -1,4 +1,4 @@
-package cmd
+package start
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
+	"code.cloudfoundry.org/cfdev/cmd/download"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
@@ -34,49 +35,46 @@ type Launchd interface {
 	Stop(label string) error
 	IsRunning(label string) (bool, error)
 }
+type ProcManager interface {
+	SafeKill(pidfile, name string) error
+}
 
-type start struct {
+type Start struct {
 	Exit        chan struct{}
 	LocalExit   chan struct{}
 	UI          UI
 	Config      config.Config
 	Launchd     Launchd
 	ProcManager ProcManager
-	Registries  string
-	DepsIsoPath string
-	Cpus        int
-	Mem         int
+	Args        struct {
+		Registries  string
+		DepsIsoPath string
+		Cpus        int
+		Mem         int
+	}
 }
 
-func NewStart(Exit chan struct{}, UI UI, Config config.Config, Launchd Launchd, procManager ProcManager) *cobra.Command {
-	s := start{
-		Exit:        Exit,
-		UI:          UI,
-		Config:      Config,
-		Launchd:     Launchd,
-		ProcManager: procManager,
-		LocalExit:   make(chan struct{}, 10),
-	}
+func (s *Start) Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "start",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := s.RunE()
-			if err != nil {
+			if err := s.RunE(cmd, args); err != nil {
 				return errors.SafeWrap(err, "cf dev start")
 			}
 			return nil
 		},
 	}
+
 	pf := cmd.PersistentFlags()
-	pf.StringVarP(&s.DepsIsoPath, "file", "f", "", "path to .dev file containing bosh & cf bits")
-	pf.StringVarP(&s.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
-	pf.IntVarP(&s.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
-	pf.IntVarP(&s.Mem, "memory", "m", 4096, "memory to allocate to vm in MB")
+	pf.StringVarP(&s.Args.DepsIsoPath, "file", "f", "", "path to .dev file containing bosh & cf bits")
+	pf.StringVarP(&s.Args.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
+	pf.IntVarP(&s.Args.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
+	pf.IntVarP(&s.Args.Mem, "memory", "m", 4096, "memory to allocate to vm in MB")
 
 	return cmd
 }
 
-func (s *start) RunE() error {
+func (s *Start) RunE(_ *cobra.Command, _ []string) error {
 	go func() {
 		select {
 		case <-s.Exit:
@@ -112,17 +110,17 @@ func (s *start) RunE() error {
 		return errors.SafeWrap(err, "setting up network")
 	}
 
-	registries, err := s.parseDockerRegistriesFlag(s.Registries)
+	registries, err := s.parseDockerRegistriesFlag(s.Args.Registries)
 	if err != nil {
 		return errors.SafeWrap(err, "Unable to parse docker registries")
 	}
 
-	if s.DepsIsoPath != "" {
+	if s.Args.DepsIsoPath != "" {
 		item := s.Config.Dependencies.Lookup("cf-deps.iso")
 		item.InUse = false
 	}
 
-	if err = download(s.Config.Dependencies, s.Config.CacheDir, s.UI.Writer()); err != nil {
+	if err = download.CacheSync(s.Config.Dependencies, s.Config.CacheDir, s.UI.Writer()); err != nil {
 		return errors.SafeWrap(err, "downloading")
 	}
 
@@ -150,9 +148,9 @@ func (s *start) RunE() error {
 	s.UI.Say("Starting the VM...")
 	linuxKit := process.LinuxKit{
 		Config:      s.Config,
-		DepsIsoPath: s.DepsIsoPath,
+		DepsIsoPath: s.Args.DepsIsoPath,
 	}
-	daemonSpec, err := linuxKit.DaemonSpec(s.Cpus, s.Mem)
+	daemonSpec, err := linuxKit.DaemonSpec(s.Args.Cpus, s.Args.Mem)
 	if err != nil {
 		return err
 	}
@@ -222,7 +220,7 @@ func cleanupStateDir(cfg config.Config) error {
 	return nil
 }
 
-func (s *start) setupNetworking() error {
+func (s *Start) setupNetworking() error {
 	err := network.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP)
 
 	if err != nil {
@@ -232,7 +230,7 @@ func (s *start) setupNetworking() error {
 	return nil
 }
 
-func (s *start) parseDockerRegistriesFlag(flag string) ([]string, error) {
+func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 	if flag == "" {
 		return nil, nil
 	}
@@ -257,7 +255,7 @@ func (s *start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 	return registries, nil
 }
 
-func (s *start) watchLaunchd(label string) {
+func (s *Start) watchLaunchd(label string) {
 	go func() {
 		for {
 			running, err := s.Launchd.IsRunning(label)

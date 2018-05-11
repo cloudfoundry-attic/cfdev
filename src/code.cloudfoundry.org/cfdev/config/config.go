@@ -55,12 +55,6 @@ var (
 	analyticsKey string
 )
 
-type Analytics interface {
-	Event(string, map[string]interface{}) error
-	Close()
-	PromptOptIn(chan struct{}, cfanalytics.UI) error
-}
-
 type Toggle interface {
 	Get() bool
 	Set(value bool) error
@@ -77,7 +71,7 @@ type Config struct {
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
 	CliVersion             *semver.Version
-	Analytics              Analytics
+	Analytics              *cfanalytics.Analytics
 	AnalyticsToggle        Toggle
 }
 
