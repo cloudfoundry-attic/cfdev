@@ -70,6 +70,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd) *
 		},
 		&b5.Start{
 			Exit:        exit,
+			LocalExit:   make(chan struct{}, 3),
 			UI:          ui,
 			Config:      config,
 			Launchd:     launchd,
