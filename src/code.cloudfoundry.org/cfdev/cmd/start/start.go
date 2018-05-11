@@ -17,6 +17,7 @@ import (
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
+	"code.cloudfoundry.org/cfdev/vpnkit"
 	launchdModels "code.cloudfoundry.org/cfdevd/launchd/models"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
@@ -131,18 +132,7 @@ func (s *Start) RunE(_ *cobra.Command, _ []string) error {
 	}
 
 	s.UI.Say("Starting VPNKit ...")
-	vpnKit := process.VpnKit{
-		Config: s.Config,
-	}
-	if err := vpnKit.SetupVPNKit(); err != nil {
-		return errors.SafeWrap(err, "Failed to setup VPNKit")
-	}
-	if err := s.Launchd.AddDaemon(vpnKit.DaemonSpec()); err != nil {
-		return errors.SafeWrap(err, "install vpnkit")
-	}
-	if err := s.Launchd.Start(process.VpnKitLabel); err != nil {
-		return errors.SafeWrap(err, "start vpnkit")
-	}
+	vpnkit.Start(s.Config, s.Launchd)
 	s.watchLaunchd(process.VpnKitLabel)
 
 	s.UI.Say("Starting the VM...")
