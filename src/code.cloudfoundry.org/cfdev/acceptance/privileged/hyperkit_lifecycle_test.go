@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,7 +17,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"syscall"
 
 	. "code.cloudfoundry.org/cfdev/acceptance"
 	"code.cloudfoundry.org/garden/client"
@@ -29,95 +27,95 @@ import (
 
 var _ = Describe("hyperkit lifecycle", func() {
 	var (
-		cfdevHome       string
-		hyperkitPidPath string
+		startSession *gexec.Session
 	)
 
-	BeforeEach(func() {
-		Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
-		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
-		FullCleanup()
-
-		cfdevHome = os.Getenv("CFDEV_HOME")
-		if cfdevHome == "" {
-			cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
-		}
-		hyperkitPidPath = filepath.Join(cfdevHome, "state", "linuxkit", "hyperkit.pid")
-
-		session := cf.Cf("install-plugin", pluginPath, "-f")
-		Eventually(session).Should(gexec.Exit(0))
-		session = cf.Cf("plugins")
-		Eventually(session).Should(gexec.Exit(0))
-	})
-
-	AfterEach(func() {
-		gexec.KillAndWait()
-		RemoveIPAliases(BoshDirectorIP, CFRouterIP)
-
-		session := cf.Cf("dev", "stop")
-		Eventually(session).Should(gexec.Exit(0))
-	})
-
-	It("runs the entire vm lifecycle", func() {
-		var session *gexec.Session
-		isoPath := os.Getenv("ISO_PATH")
-		if isoPath != "" {
-			session = cf.Cf("dev", "start", "-f", isoPath, "-m", "8192")
-		} else {
-			session = cf.Cf("dev", "start")
-		}
-		Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
-
-		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 10, 1).Should(BeTrue())
-		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
-
-		By("waiting for garden to listen")
-		client := client.New(connection.New("tcp", "localhost:8888"))
-		Eventually(client.Ping, 360).Should(Succeed())
-
-		EventuallyWeCanTargetTheBOSHDirector()
-
-		By("waiting for cfdev cli to exit when the deploy finished")
-		Eventually(session, 3600).Should(gexec.Exit(0))
-
-		By("waiting for cf router to listen")
-		session = cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin")
-		Eventually(session).Should(gexec.Exit(0))
-
-		By("pushing an app")
-		PushAnApp()
-
-		hyperkitPid := PidFromFile(hyperkitPidPath)
-
-		By("deploy finished - stopping...")
-		session = cf.Cf("dev", "stop")
-		Eventually(session).Should(gexec.Exit(0))
-
-		//ensure pid is not running
-		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
-		EventuallyProcessStops(hyperkitPid, 5)
-		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
-	})
-
-	Context("Run with", func() {
-		var assetUrl = "https://s3.amazonaws.com/cfdev-test-assets/test-deps.dev"
-		var assetDir string
-
+	Context("starting the default cf dev file", func() {
 		BeforeEach(func() {
-			var err error
-			assetDir, err = ioutil.TempDir(os.TempDir(), "asset")
-			Expect(err).ToNot(HaveOccurred())
-			downloadTestAsset(assetDir, assetUrl)
+			isoPath := os.Getenv("ISO_PATH")
+			if isoPath != "" {
+				startSession = cf.Cf("dev", "start", "-f", isoPath, "-m", "8192")
+			} else {
+				startSession = cf.Cf("dev", "start")
+			}
 		})
 
 		AfterEach(func() {
-			err := os.RemoveAll(assetDir)
-			Expect(err).NotTo(HaveOccurred())
+			hyperkitPid := PidFromFile(hyperkitPidPath)
+
+			startSession.Terminate()
+			Eventually(startSession).Should(gexec.Exit())
+
+			By("deploy finished - stopping...")
+			stopSession := cf.Cf("dev", "stop")
+			Eventually(stopSession).Should(gexec.Exit(0))
+
+			//ensure pid is not running
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
+			EventuallyProcessStops(hyperkitPid, 5)
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
+
+			gexec.KillAndWait()
+			RemoveIPAliases(BoshDirectorIP, CFRouterIP)
+		})
+
+		It("runs the entire vm lifecycle", func() {
+			Eventually(startSession, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
+
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 10, 1).Should(BeTrue())
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
+
+			By("waiting for garden to listen")
+			client := client.New(connection.New("tcp", "localhost:8888"))
+			Eventually(client.Ping, 360).Should(Succeed())
+
+			By("pushing an app")
+			PushAnApp()
+
+			EventuallyWeCanTargetTheBOSHDirector()
+
+			By("waiting for cfdev cli to exit when the deploy finished")
+			Eventually(startSession, 3600).Should(gexec.Exit(0))
+
+			By("waiting for cf router to listen")
+			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin")
+			Eventually(loginSession).Should(gexec.Exit(0))
+		})
+	})
+
+	Context("run with -f flag", func() {
+		var assetDir string
+		var startSession *gexec.Session
+
+		BeforeEach(func() {
+			var err error
+			assetUrl := "https://s3.amazonaws.com/cfdev-test-assets/test-deps.dev"
+			assetDir, err = ioutil.TempDir(os.TempDir(), "asset")
+			Expect(err).ToNot(HaveOccurred())
+			downloadTestAsset(assetDir, assetUrl)
+
+			startSession = cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
+		})
+
+		AfterEach(func() {
+			hyperkitPid := PidFromFile(hyperkitPidPath)
+
+			startSession.Terminate()
+			Eventually(startSession).Should(gexec.Exit())
+
+			session := cf.Cf("dev", "stop")
+			Eventually(session).Should(gexec.Exit(0))
+
+			//ensure pid is not running
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
+			EventuallyProcessStops(hyperkitPid, 5)
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
+
+			Expect(os.RemoveAll(assetDir)).To(Succeed())
 		})
 
 		It("Custom ISO", func() {
-			session := cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
-			Eventually(session, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
+			Eventually(startSession, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 			By("settingup VPNKit dependencies")
 			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 10, 1).Should(BeTrue())
@@ -130,20 +128,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 			Eventually(func() (string, error) {
 				return GetFile(client, "deploy-bosh", "/var/vcap/cache/test-file-one.txt")
 			}).Should(Equal("testfileone\n"))
-
-			session.Terminate()
-			Eventually(session).Should(gexec.Exit())
-
-			hyperkitPid := PidFromFile(hyperkitPidPath)
-
-			By("deploy finished - stopping...")
-			session = cf.Cf("dev", "stop")
-			Eventually(session).Should(gexec.Exit(0))
-
-			//ensure pid is not running
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
-			EventuallyProcessStops(hyperkitPid, 5)
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
 		})
 	})
 })
@@ -203,27 +187,6 @@ func downloadTestAsset(targetDir string, resourceUrl string) error {
 	}
 
 	return nil
-}
-
-func FullCleanup() {
-	out, err := exec.Command("ps", "aux").Output()
-	Expect(err).NotTo(HaveOccurred())
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.Contains(line, "linuxkit") || strings.Contains(line, "hyperkit") || strings.Contains(line, "vpnkit") {
-			cols := strings.Fields(line)
-			pid, err := strconv.Atoi(cols[1])
-			if err == nil && pid > 0 {
-				syscall.Kill(pid, syscall.SIGKILL)
-			}
-		}
-	}
-	out, err = exec.Command("ps", "aux").Output()
-	Expect(err).NotTo(HaveOccurred())
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.Contains(line, "linuxkit") || strings.Contains(line, "hyperkit") || strings.Contains(line, "vpnkit") {
-			fmt.Printf("WARNING: one of the 'kits' processes are was still running: %s", line)
-		}
-	}
 }
 
 func PushAnApp() {

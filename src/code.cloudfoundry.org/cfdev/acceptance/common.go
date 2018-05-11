@@ -17,9 +17,7 @@ import (
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
-	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 )
 
 const (
@@ -122,18 +120,6 @@ func PidFromFile(pidFile string) int {
 	pidBytes, _ := ioutil.ReadFile(pidFile)
 	pid, _ := strconv.ParseInt(string(pidBytes), 10, 64)
 	return int(pid)
-}
-
-func HasSudoPrivilege() bool {
-	cmd := exec.Command("sh", "-c", "sudo -n true")
-	session, err := gexec.Start(cmd, ginkgo.GinkgoWriter, ginkgo.GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
-	Eventually(session).Should(gexec.Exit())
-
-	if session.ExitCode() == 0 {
-		return true
-	}
-	return false
 }
 
 func FileExists(file string) (bool, error) {
