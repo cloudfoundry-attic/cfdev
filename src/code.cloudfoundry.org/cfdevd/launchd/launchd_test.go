@@ -3,6 +3,7 @@ package launchd_test
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,26 +16,32 @@ import (
 )
 
 var _ = Describe("launchd", func() {
+	var plistDir string
+	var plistPath string
+	var label string
+	var lnchd launchd.Launchd
+
+	BeforeEach(func() {
+		label = randomDaemonName()
+		plistDir, _ = ioutil.TempDir("", "plist")
+		lnchd = launchd.Launchd{
+			PListDir: plistDir,
+		}
+		plistPath = filepath.Join(plistDir, label+".plist")
+	})
+
 	Describe("AddDaemon", func() {
-		var plistDir string
-		var plistPath string
 		var binDir string
-		var lnchd launchd.Launchd
 
 		BeforeEach(func() {
-			plistDir, _ = ioutil.TempDir("", "plist")
-			plistPath = filepath.Join(plistDir, "/org.some-org.some-daemon-name.plist")
 			binDir, _ = ioutil.TempDir("", "bin")
-			lnchd = launchd.Launchd{
-				PListDir: plistDir,
-			}
 			ioutil.WriteFile(filepath.Join(binDir, "some-executable"), []byte(`some-content`), 0777)
-			Expect(loadedDaemons()).ShouldNot(ContainSubstring("org.some-org.some-daemon-name"))
+			Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
 		})
 
 		AfterEach(func() {
 			exec.Command("launchctl", "unload", plistPath).Run()
-			Expect(loadedDaemons()).ShouldNot(ContainSubstring("org.some-org.some-daemon-name"))
+			Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
 			Expect(os.RemoveAll(plistDir)).To(Succeed())
 			Expect(os.RemoveAll(binDir)).To(Succeed())
 		})
@@ -42,7 +49,7 @@ var _ = Describe("launchd", func() {
 		It("should write the plist and load the daemon", func() {
 			executableToInstall := filepath.Join(binDir, "some-executable")
 			spec := models.DaemonSpec{
-				Label:            "org.some-org.some-daemon-name",
+				Label:            label,
 				Program:          executableToInstall,
 				ProgramArguments: []string{executableToInstall, "some-arg"},
 				RunAtLoad:        true,
@@ -57,7 +64,7 @@ var _ = Describe("launchd", func() {
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>org.some-org.some-daemon-name</string>
+  <string>%s</string>
   <key>Program</key>
   <string>%s</string>
   <key>ProgramArguments</key>
@@ -69,18 +76,18 @@ var _ = Describe("launchd", func() {
   <true/>
 </dict>
 </plist>
-`, executableToInstall, executableToInstall)))
+`, label, executableToInstall, executableToInstall)))
 			plistFileInfo, err := os.Stat(plistPath)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(plistFileInfo.Mode()).To(BeEquivalentTo(0644))
 
-			Expect(loadedDaemons()).Should(ContainSubstring("org.some-org.some-daemon-name"))
+			Expect(loadedDaemons()).Should(ContainSubstring(label))
 		})
 
 		It("sets unix socket listeners on plist", func() {
 			executableToInstall := filepath.Join(binDir, "some-executable")
 			spec := models.DaemonSpec{
-				Label:            "org.some-org.some-daemon-name",
+				Label:            label,
 				Program:          executableToInstall,
 				ProgramArguments: []string{executableToInstall, "some-arg"},
 				RunAtLoad:        true,
@@ -97,7 +104,7 @@ var _ = Describe("launchd", func() {
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>org.some-org.some-daemon-name</string>
+  <string>%s</string>
   <key>Program</key>
   <string>%s</string>
   <key>ProgramArguments</key>
@@ -119,45 +126,19 @@ var _ = Describe("launchd", func() {
   </dict>
 </dict>
 </plist>
-`, executableToInstall, executableToInstall)))
+`, label, executableToInstall, executableToInstall)))
 		})
 	})
 
 	Describe("RemoveDaemon", func() {
 		var (
-			plistDir  string
-			binDir    string
-			plistPath string
-			binPath   string
-			lnchd     launchd.Launchd
+			binDir  string
+			binPath string
 		)
 
 		BeforeEach(func() {
-			plistDir, _ = ioutil.TempDir("", "plist")
 			binDir, _ = ioutil.TempDir("", "bin")
-			plistPath = filepath.Join(plistDir, "org.some-org.some-daemon-to-remove.plist")
 			binPath = filepath.Join(binDir, "some-bin-to-remove")
-			Expect(ioutil.WriteFile(binPath, []byte("#!/bin bash echo hi"), 0700)).To(Succeed())
-			Expect(ioutil.WriteFile(plistPath, []byte(fmt.Sprintf(`
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key>
-  <string>org.some-org.some-daemon-to-remove</string>
-  <key>Program</key>
-  <string>%s</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>%s</string>
-  </array>
-</dict>
-</plist>`, binPath)), 0644)).To(Succeed())
-			lnchd = launchd.Launchd{
-				PListDir: plistDir,
-			}
-			Expect(exec.Command("launchctl", "load", plistPath).Run()).To(Succeed())
-			Expect(loadedDaemons()).Should(ContainSubstring("org.some-org.some-daemon-to-remove"))
 		})
 
 		AfterEach(func() {
@@ -165,10 +146,106 @@ var _ = Describe("launchd", func() {
 			Expect(os.RemoveAll(binDir)).To(Succeed())
 		})
 
-		It("should unload the daemon and remove the files", func() {
-			Expect(lnchd.RemoveDaemon("org.some-org.some-daemon-to-remove")).To(Succeed())
-			Expect(loadedDaemons()).ShouldNot(ContainSubstring("org.some-org.some-daemon-to-remove"))
-			Expect(plistPath).NotTo(BeAnExistingFile())
+		Context("daemon is loaded and file exists", func() {
+			BeforeEach(func() {
+				Expect(ioutil.WriteFile(binPath, []byte("#!/bin bash echo hi"), 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(plistPath, []byte(fmt.Sprintf(`
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>%s</string>
+  <key>Program</key>
+  <string>%s</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>%s</string>
+  </array>
+</dict>
+</plist>`, label, binPath)), 0644)).To(Succeed())
+				lnchd = launchd.Launchd{
+					PListDir: plistDir,
+				}
+
+				cmd := exec.Command("launchctl", "load", "-F", plistPath)
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session).Should(gexec.Exit(0))
+				Expect(loadedDaemons()).Should(ContainSubstring(label))
+			})
+
+			It("should unload the daemon and remove the files", func() {
+				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+				Expect(plistPath).NotTo(BeAnExistingFile())
+			})
+		})
+
+		Context("daemon is loaded and file does not exists", func() {
+			BeforeEach(func() {
+				Expect(ioutil.WriteFile(binPath, []byte("#!/bin bash echo hi"), 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(plistPath, []byte(fmt.Sprintf(`
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>%s</string>
+  <key>Program</key>
+  <string>%s</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>%s</string>
+  </array>
+</dict>
+</plist>`, label, binPath)), 0644)).To(Succeed())
+				lnchd = launchd.Launchd{
+					PListDir: plistDir,
+				}
+				Expect(exec.Command("launchctl", "load", "-F", plistPath).Run()).To(Succeed())
+				Expect(loadedDaemons()).Should(ContainSubstring(label))
+				Expect(os.RemoveAll(plistDir)).To(Succeed())
+			})
+			It("unloads the daemon", func() {
+				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+			})
+		})
+
+		Context("daemon is not loaded and file exists", func() {
+			BeforeEach(func() {
+				Expect(ioutil.WriteFile(binPath, []byte("#!/bin bash echo hi"), 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(plistPath, []byte(fmt.Sprintf(`
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>%s</string>
+  <key>Program</key>
+  <string>%s</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>%s</string>
+  </array>
+</dict>
+</plist>`, label, binPath)), 0644)).To(Succeed())
+				lnchd = launchd.Launchd{
+					PListDir: plistDir,
+				}
+				Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+			})
+			It("removes the file", func() {
+				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				Expect(plistPath).NotTo(BeAnExistingFile())
+			})
+		})
+
+		Context("daemon is not loaded and file does not exist", func() {
+			It("succeeds", func() {
+				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+			})
 		})
 	})
 
@@ -198,7 +275,7 @@ var _ = Describe("launchd", func() {
 	<plist version="1.0">
 	<dict>
 		<key>Label</key>
-		<string>org.some-org.some-daemon</string>
+		<string>%s</string>
 		<key>RunAtLoad</key>
 		<false/>
 		<key>Program</key>
@@ -208,27 +285,27 @@ var _ = Describe("launchd", func() {
 			<string>%s/exe</string>
 		</array>
 	</dict>
-	</plist>`, tmpDir, tmpDir)), 0644)).To(Succeed())
+	</plist>`, label, tmpDir, tmpDir)), 0644)).To(Succeed())
 				lnchd = launchd.Launchd{
 					PListDir: tmpDir,
 				}
 				Expect(exec.Command("launchctl", "load", filepath.Join(tmpDir, "some.plist")).Run()).To(Succeed())
-				Expect(loadedDaemons()).Should(ContainSubstring("org.some-org.some-daemon"))
+				Expect(loadedDaemons()).Should(ContainSubstring(label))
 			})
 			AfterEach(func() {
-				exec.Command("launchctl", "remove", "org.some-org.some-daemon").Output()
+				exec.Command("launchctl", "remove", label).Output()
 			})
 			Context("but not started", func() {
 				It("returns false", func() {
-					Expect(lnchd.IsRunning("org.some-org.some-daemon")).To(BeFalse())
+					Expect(lnchd.IsRunning(label)).To(BeFalse())
 				})
 			})
 			Context("and started", func() {
 				BeforeEach(func() {
-					Expect(exec.Command("launchctl", "start", "org.some-org.some-daemon").Run()).To(Succeed())
+					Expect(exec.Command("launchctl", "start", label).Run()).To(Succeed())
 				})
 				It("returns true", func() {
-					Expect(lnchd.IsRunning("org.some-org.some-daemon")).To(BeTrue())
+					Expect(lnchd.IsRunning(label)).To(BeTrue())
 				})
 			})
 		})
@@ -240,4 +317,14 @@ func loadedDaemons() string {
 	Expect(err).NotTo(HaveOccurred())
 	Eventually(session).Should(gexec.Exit(0))
 	return string(session.Out.Contents())
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randomDaemonName() string {
+	b := make([]rune, 10)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return "some-daemon" + string(b)
 }

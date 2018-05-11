@@ -19,6 +19,10 @@ extend_sudo_timeout &
 
 cd "$script_dir"
 
+pushd ../cfdevd > /dev/null
+   ginkgo -r
+popd > /dev/null
+
 pushd acceptance/privileged > /dev/null
    ginkgo -v "$@"
 popd > /dev/null

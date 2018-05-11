@@ -25,7 +25,7 @@ func New(pListDir string) *Launchd {
 
 func (l *Launchd) AddDaemon(spec models.DaemonSpec) error {
 	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
-	exec.Command("launchctl", "unload", "-w", plistPath).Run()
+	l.remove(spec.Label)
 	if err := l.writePlist(spec, plistPath); err != nil {
 		return err
 	}
@@ -34,10 +34,23 @@ func (l *Launchd) AddDaemon(spec models.DaemonSpec) error {
 
 func (l *Launchd) RemoveDaemon(label string) error {
 	plistPath := filepath.Join(l.PListDir, label+".plist")
-	if err := l.unload(plistPath); err != nil {
+	loaded, err := l.isLoaded(label)
+	if err != nil {
 		return err
 	}
-	return os.Remove(plistPath)
+	if loaded {
+		if err := l.remove(label); err != nil {
+			return err
+		}
+	}
+
+	err = os.Remove(plistPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+	}
+	return err
 }
 
 func (l *Launchd) Start(label string) error {
@@ -57,12 +70,17 @@ func (l *Launchd) Stop(label string) error {
 	return cmd.Run()
 }
 
-func (l *Launchd) IsRunning(label string) (bool, error) {
+func (l *Launchd) list() (string, error) {
 	out, err := exec.Command("launchctl", "list").Output()
+	return string(out), err
+}
+
+func (l *Launchd) IsRunning(label string) (bool, error) {
+	out, err := l.list()
 	if err != nil {
 		return false, err
 	}
-	for _, line := range strings.Split(string(out), "\n") {
+	for _, line := range strings.Split(out, "\n") {
 		cols := strings.Fields(line)
 		if len(cols) >= 3 && cols[2] == label {
 			return cols[0] != "-", nil
@@ -71,15 +89,23 @@ func (l *Launchd) IsRunning(label string) (bool, error) {
 	return false, nil
 }
 
+func (l *Launchd) isLoaded(label string) (bool, error) {
+	out, err := l.list()
+	if err != nil {
+		return false, err
+	}
+	return strings.Contains(out, label), nil
+}
+
 func (l *Launchd) load(plistPath string) error {
-	cmd := exec.Command("launchctl", "load", "-w", plistPath)
+	cmd := exec.Command("launchctl", "load", "-F", plistPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func (l *Launchd) unload(plistPath string) error {
-	cmd := exec.Command("launchctl", "unload", "-w", plistPath)
+func (l *Launchd) remove(label string) error {
+	cmd := exec.Command("launchctl", "remove", label)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
