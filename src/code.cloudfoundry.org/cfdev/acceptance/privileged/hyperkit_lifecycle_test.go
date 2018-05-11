@@ -69,9 +69,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 			client := client.New(connection.New("tcp", "localhost:8888"))
 			Eventually(client.Ping, 360).Should(Succeed())
 
-			By("pushing an app")
-			PushAnApp()
-
 			EventuallyWeCanTargetTheBOSHDirector()
 
 			By("waiting for cfdev cli to exit when the deploy finished")
@@ -80,6 +77,9 @@ var _ = Describe("hyperkit lifecycle", func() {
 			By("waiting for cf router to listen")
 			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin")
 			Eventually(loginSession).Should(gexec.Exit(0))
+
+			By("pushing an app")
+			PushAnApp()
 		})
 	})
 
