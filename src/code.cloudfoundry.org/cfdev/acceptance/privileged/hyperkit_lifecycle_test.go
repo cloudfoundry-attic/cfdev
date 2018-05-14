@@ -75,7 +75,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 			Eventually(startSession, 3600).Should(gexec.Exit(0))
 
 			By("waiting for cf router to listen")
-			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin")
+			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 			Eventually(loginSession).Should(gexec.Exit(0))
 
 			By("pushing an app")
@@ -215,7 +215,7 @@ server.start
 `), 0755)).To(Succeed())
 
 	session := cf.Cf("push", "cf-test-app", "-p", tmpDir, "-b", "binary_buildpack", "-c", "./app")
-	Eventually(session, 60).Should(gexec.Exit(0))
+	Eventually(session, 120).Should(gexec.Exit(0))
 
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io")).To(Equal("Hello, world!"))
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/external")).To(ContainSubstring("Example Domain"))
