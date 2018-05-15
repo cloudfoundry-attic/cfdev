@@ -36,12 +36,12 @@ var _ = Describe("launchd", func() {
 		BeforeEach(func() {
 			binDir, _ = ioutil.TempDir("", "bin")
 			ioutil.WriteFile(filepath.Join(binDir, "some-executable"), []byte(`some-content`), 0777)
-			Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+			Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 		})
 
 		AfterEach(func() {
 			exec.Command("launchctl", "unload", plistPath).Run()
-			Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+			Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			Expect(os.RemoveAll(plistDir)).To(Succeed())
 			Expect(os.RemoveAll(binDir)).To(Succeed())
 		})
@@ -81,7 +81,7 @@ var _ = Describe("launchd", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(plistFileInfo.Mode()).To(BeEquivalentTo(0644))
 
-			Expect(loadedDaemons()).Should(ContainSubstring(label))
+			Eventually(loadedDaemons).Should(ContainSubstring(label))
 		})
 
 		It("sets unix socket listeners on plist", func() {
@@ -172,12 +172,12 @@ var _ = Describe("launchd", func() {
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
-				Expect(loadedDaemons()).Should(ContainSubstring(label))
+				Eventually(loadedDaemons).Should(ContainSubstring(label))
 			})
 
 			It("should unload the daemon and remove the files", func() {
 				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
-				Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 				Expect(plistPath).NotTo(BeAnExistingFile())
 			})
 		})
@@ -204,12 +204,12 @@ var _ = Describe("launchd", func() {
 					PListDir: plistDir,
 				}
 				Expect(exec.Command("launchctl", "load", "-F", plistPath).Run()).To(Succeed())
-				Expect(loadedDaemons()).Should(ContainSubstring(label))
+				Eventually(loadedDaemons).Should(ContainSubstring(label))
 				Expect(os.RemoveAll(plistDir)).To(Succeed())
 			})
 			It("unloads the daemon", func() {
 				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
-				Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			})
 		})
 
@@ -234,7 +234,7 @@ var _ = Describe("launchd", func() {
 				lnchd = launchd.Launchd{
 					PListDir: plistDir,
 				}
-				Expect(loadedDaemons()).ShouldNot(ContainSubstring(label))
+				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			})
 			It("removes the file", func() {
 				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
@@ -290,7 +290,7 @@ var _ = Describe("launchd", func() {
 					PListDir: tmpDir,
 				}
 				Expect(exec.Command("launchctl", "load", filepath.Join(tmpDir, "some.plist")).Run()).To(Succeed())
-				Expect(loadedDaemons()).Should(ContainSubstring(label))
+				Eventually(loadedDaemons).Should(ContainSubstring(label))
 			})
 			AfterEach(func() {
 				exec.Command("launchctl", "remove", label).Output()
