@@ -40,7 +40,7 @@ var _ = Describe("launchd", func() {
 		})
 
 		AfterEach(func() {
-			exec.Command("launchctl", "unload", plistPath).Run()
+			exec.Command("launchctl", "remove", label).Run()
 			Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			Expect(os.RemoveAll(plistDir)).To(Succeed())
 			Expect(os.RemoveAll(binDir)).To(Succeed())
@@ -51,6 +51,7 @@ var _ = Describe("launchd", func() {
 			spec := models.DaemonSpec{
 				Label:            label,
 				Program:          executableToInstall,
+				SessionType:      "Background",
 				ProgramArguments: []string{executableToInstall, "some-arg"},
 				RunAtLoad:        true,
 			}
@@ -67,6 +68,8 @@ var _ = Describe("launchd", func() {
   <string>%s</string>
   <key>Program</key>
   <string>%s</string>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>ProgramArguments</key>
   <array>
     <string>%s</string>
@@ -89,6 +92,7 @@ var _ = Describe("launchd", func() {
 			spec := models.DaemonSpec{
 				Label:            label,
 				Program:          executableToInstall,
+				SessionType:      "Background",
 				ProgramArguments: []string{executableToInstall, "some-arg"},
 				RunAtLoad:        true,
 				Sockets: map[string]string{
@@ -107,6 +111,8 @@ var _ = Describe("launchd", func() {
   <string>%s</string>
   <key>Program</key>
   <string>%s</string>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>ProgramArguments</key>
   <array>
     <string>%s</string>
@@ -158,6 +164,8 @@ var _ = Describe("launchd", func() {
   <string>%s</string>
   <key>Program</key>
   <string>%s</string>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>ProgramArguments</key>
   <array>
     <string>%s</string>
@@ -168,7 +176,7 @@ var _ = Describe("launchd", func() {
 					PListDir: plistDir,
 				}
 
-				cmd := exec.Command("launchctl", "load", "-F", plistPath)
+				cmd := exec.Command("launchctl", "load", "-S", "Background", "-F", plistPath)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
@@ -194,6 +202,8 @@ var _ = Describe("launchd", func() {
   <string>%s</string>
   <key>Program</key>
   <string>%s</string>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>ProgramArguments</key>
   <array>
     <string>%s</string>
@@ -203,7 +213,7 @@ var _ = Describe("launchd", func() {
 				lnchd = launchd.Launchd{
 					PListDir: plistDir,
 				}
-				Expect(exec.Command("launchctl", "load", "-F", plistPath).Run()).To(Succeed())
+				Expect(exec.Command("launchctl", "load", "-S", "Background", "-F", plistPath).Run()).To(Succeed())
 				Eventually(loadedDaemons).Should(ContainSubstring(label))
 				Expect(os.RemoveAll(plistDir)).To(Succeed())
 			})
@@ -225,6 +235,8 @@ var _ = Describe("launchd", func() {
   <string>%s</string>
   <key>Program</key>
   <string>%s</string>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>ProgramArguments</key>
   <array>
     <string>%s</string>
@@ -270,26 +282,28 @@ var _ = Describe("launchd", func() {
 			BeforeEach(func() {
 				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "exe"), []byte("#!/usr/bin/env bash\nsleep 60"), 0700)).To(Succeed())
 				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "some.plist"), []byte(fmt.Sprintf(`
-	<?xml version="1.0" encoding="UTF-8"?>
-	<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-	<plist version="1.0">
-	<dict>
-		<key>Label</key>
-		<string>%s</string>
-		<key>RunAtLoad</key>
-		<false/>
-		<key>Program</key>
-		<string>%s/exe</string>
-		<key>ProgramArguments</key>
-		<array>
-			<string>%s/exe</string>
-		</array>
-	</dict>
-	</plist>`, label, tmpDir, tmpDir)), 0644)).To(Succeed())
+  <?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  <plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>%s</string>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>Program</key>
+    <string>%s/exe</string>
+    <key>LimitLoadToSessionType</key>
+    <string>Background</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>%s/exe</string>
+    </array>
+  </dict>
+  </plist>`, label, tmpDir, tmpDir)), 0644)).To(Succeed())
 				lnchd = launchd.Launchd{
 					PListDir: tmpDir,
 				}
-				Expect(exec.Command("launchctl", "load", filepath.Join(tmpDir, "some.plist")).Run()).To(Succeed())
+				Expect(exec.Command("launchctl", "load", "-S", "Background", "-F", filepath.Join(tmpDir, "some.plist")).Run()).To(Succeed())
 				Eventually(loadedDaemons).Should(ContainSubstring(label))
 			})
 			AfterEach(func() {

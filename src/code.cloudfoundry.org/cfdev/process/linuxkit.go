@@ -54,8 +54,9 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int) (launchd.DaemonSpec, error) {
 	}
 
 	return launchd.DaemonSpec{
-		Label:   LinuxKitLabel,
-		Program: linuxkit,
+		Label:       LinuxKitLabel,
+		Program:     linuxkit,
+		SessionType: "Background",
 		ProgramArguments: []string{
 			linuxkit, "run", "hyperkit",
 			"-console-file",

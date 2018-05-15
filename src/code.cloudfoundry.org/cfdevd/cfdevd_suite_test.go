@@ -9,5 +9,5 @@ import (
 
 func TestTcpbinder(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Tcpbinder Suite")
+	RunSpecs(t, "Cfdevd Suite")
 }

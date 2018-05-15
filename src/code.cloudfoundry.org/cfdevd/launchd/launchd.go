@@ -29,7 +29,7 @@ func (l *Launchd) AddDaemon(spec models.DaemonSpec) error {
 	if err := l.writePlist(spec, plistPath); err != nil {
 		return err
 	}
-	return l.load(plistPath)
+	return l.load(plistPath, spec)
 }
 
 func (l *Launchd) RemoveDaemon(label string) error {
@@ -97,8 +97,13 @@ func (l *Launchd) isLoaded(label string) (bool, error) {
 	return strings.Contains(out, label), nil
 }
 
-func (l *Launchd) load(plistPath string) error {
-	cmd := exec.Command("launchctl", "load", "-F", plistPath)
+func (l *Launchd) load(plistPath string, spec models.DaemonSpec) error {
+	args := []string{"load"}
+	if spec.SessionType != "" {
+		args = append(args, "-S", "Background")
+	}
+	args = append(args, "-F", plistPath)
+	cmd := exec.Command("launchctl", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -129,18 +134,22 @@ var plistTemplate = `<?xml version="1.0" encoding="UTF-8"?>
   <string>{{.Label}}</string>
   <key>Program</key>
   <string>{{.Program}}</string>
+  {{if .SessionType}}
+  <key>LimitLoadToSessionType</key>
+  <string>{{.SessionType}}</string>
+  {{end}}
   <key>ProgramArguments</key>
   <array>
   {{range .ProgramArguments}}
     <string>{{.}}</string>
-	{{end}}
+  {{end}}
   </array>
   <key>RunAtLoad</key>
   <{{.RunAtLoad}}/>
   {{if .Sockets}}
   <key>Sockets</key>
   <dict>
-	  {{range $name, $path := .Sockets}}
+    {{range $name, $path := .Sockets}}
     <key>{{$name}}</key>
     <dict>
       <key>SockPathMode</key>
@@ -148,16 +157,16 @@ var plistTemplate = `<?xml version="1.0" encoding="UTF-8"?>
       <key>SockPathName</key>
       <string>{{$path}}</string>
     </dict>
-		{{end}}
+    {{end}}
   </dict>
   {{end}}
   {{if .StdoutPath}}
-	<key>StandardOutPath</key>
-	<string>{{.StdoutPath}}</string>
+  <key>StandardOutPath</key>
+  <string>{{.StdoutPath}}</string>
   {{end}}
   {{if .StderrPath}}
-	<key>StandardErrorPath</key>
-	<string>{{.StderrPath}}</string>
+  <key>StandardErrorPath</key>
+  <string>{{.StderrPath}}</string>
   {{end}}
 </dict>
 </plist>

@@ -21,8 +21,9 @@ const VpnKitLabel = "org.cloudfoundry.cfdev.vpnkit"
 
 func (v *VpnKit) DaemonSpec() launchd.DaemonSpec {
 	return launchd.DaemonSpec{
-		Label:   VpnKitLabel,
-		Program: path.Join(v.Config.CacheDir, "vpnkit"),
+		Label:       VpnKitLabel,
+		Program:     path.Join(v.Config.CacheDir, "vpnkit"),
+		SessionType: "Background",
 		ProgramArguments: []string{
 			path.Join(v.Config.CacheDir, "vpnkit"),
 			"--ethernet",
