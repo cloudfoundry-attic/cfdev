@@ -11,7 +11,7 @@ addons:
         targets:
         - deployment: cf
           domain: bosh
-          instance_group: diego-api
+          instance_group: scheduler
           network: default
           query: '*'
       - domain: bbs.service.cf.internal
@@ -49,7 +49,7 @@ addons:
           instance_group: api
           network: default
           query: '*'
-      - domain: cell.service.cf.internal
+      - domain: _.cell.service.cf.internal
         targets:
         - deployment: cf
           domain: bosh
@@ -79,7 +79,7 @@ addons:
         targets:
         - deployment: cf
           domain: bosh
-          instance_group: diego-api
+          instance_group: api
           network: default
           query: '*'
       - domain: locket.service.cf.internal

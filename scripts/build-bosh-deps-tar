@@ -33,7 +33,7 @@ releases_dir="$(mktemp -d)"
 mkdir -p "$output_dir"
 mkdir -p "$releases_dir"
 trap cleanup EXIT
-export STEMCELL_VERSION="3541.12"
+export STEMCELL_VERSION="3586.7"
 
 cleanup () {
   rm -rf "$releases_dir"
