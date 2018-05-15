@@ -23,9 +23,8 @@ pushd ../cfdevd > /dev/null
    ginkgo -r
 popd > /dev/null
 
+ginkgo -r -skipPackage privileged "$@"
+
 pushd acceptance/privileged > /dev/null
    ginkgo -v "$@"
 popd > /dev/null
-
-# Invalidate sudo credentials
-ginkgo -r -skipPackage privileged "$@"
