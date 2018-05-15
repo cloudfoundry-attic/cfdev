@@ -56,10 +56,11 @@ var _ = Describe("cfdevd test", func() {
 		Expect(recvHello(conn)).To(Equal("CFD3V"))
 		Expect(sendUninstall(conn)).To(Succeed())
 
-		session, err := gexec.Start(exec.Command("sudo", "--non-interactive", "launchctl", "list"), GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit(0))
-		Expect(string(session.Out.Contents())).ShouldNot(ContainSubstring("org.cloudfoundry.cfdevd"))
+		Eventually(func() (string, error) {
+			session, err := gexec.Start(exec.Command("sudo", "--non-interactive", "launchctl", "list"), GinkgoWriter, GinkgoWriter)
+			Eventually(session).Should(gexec.Exit(0))
+			return string(session.Out.Contents()), err
+		}).ShouldNot(ContainSubstring("org.cloudfoundry.cfdevd"))
 
 		gexec.KillAndWait()
 		gexec.CleanupBuildArtifacts()
