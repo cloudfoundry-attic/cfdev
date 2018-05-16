@@ -1,13 +1,9 @@
 package privileged_test
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
-	"strings"
-	"syscall"
 	"testing"
 
 	. "code.cloudfoundry.org/cfdev/acceptance"
@@ -40,7 +36,6 @@ var _ = BeforeSuite(func() {
 
 	Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
 	RemoveIPAliases(BoshDirectorIP, CFRouterIP)
-	FullCleanup()
 
 	cfdevHome = os.Getenv("CFDEV_HOME")
 	if cfdevHome == "" {
@@ -68,25 +63,4 @@ func HasSudoPrivilege() bool {
 		return true
 	}
 	return false
-}
-
-func FullCleanup() {
-	out, err := exec.Command("ps", "aux").Output()
-	Expect(err).NotTo(HaveOccurred())
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.Contains(line, "linuxkit") || strings.Contains(line, "hyperkit") || strings.Contains(line, "vpnkit") {
-			cols := strings.Fields(line)
-			pid, err := strconv.Atoi(cols[1])
-			if err == nil && pid > 0 {
-				syscall.Kill(pid, syscall.SIGKILL)
-			}
-		}
-	}
-	out, err = exec.Command("ps", "aux").Output()
-	Expect(err).NotTo(HaveOccurred())
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.Contains(line, "linuxkit") || strings.Contains(line, "hyperkit") || strings.Contains(line, "vpnkit") {
-			fmt.Printf("WARNING: one of the 'kits' processes are was still running: %s", line)
-		}
-	}
 }
