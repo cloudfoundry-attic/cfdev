@@ -5,14 +5,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	. "code.cloudfoundry.org/cfdev/acceptance"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"time"
-
 	"github.com/onsi/gomega/gexec"
 )
 

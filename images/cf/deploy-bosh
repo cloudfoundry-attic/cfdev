@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-export HOST_IP="${HOST_IP:-192.168.65.1}"
+export HOST_IP="${HOST_IP:-192.168.65.2}"
 
 create_loop_devices() {
   echo "creating loop devices..."

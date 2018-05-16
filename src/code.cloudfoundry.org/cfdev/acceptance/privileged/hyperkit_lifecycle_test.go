@@ -219,9 +219,7 @@ server.start
 
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io")).To(Equal("Hello, world!"))
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/external")).To(ContainSubstring("Example Domain"))
-
-	// TODO enable below once host.pcfdev.io works again
-	// Expect(httpGet("http://cf-test-app.v3.pcfdev.io/host")).To(Equal("Text From Test Code"))
+	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/host")).To(Equal("Text From Test Code"))
 }
 
 func fakeTcpServer() (net.Listener, int) {
@@ -230,10 +228,12 @@ func fakeTcpServer() (net.Listener, int) {
 	go func() {
 		for {
 			conn, err := server.Accept()
-			if err == nil {
-				conn.Write([]byte("Text From Test Code"))
-				conn.Close()
+			if err != nil {
+				continue
 			}
+			_, err = conn.Write([]byte("Text From Test Code"))
+			Expect(err).NotTo(HaveOccurred())
+			conn.Close()
 		}
 	}()
 	return server, server.Addr().(*net.TCPAddr).Port
