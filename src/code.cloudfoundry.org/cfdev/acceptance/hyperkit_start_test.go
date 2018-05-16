@@ -85,6 +85,7 @@ var _ = Describe("hyperkit start", func() {
 			lctl.AddDaemon(models.DaemonSpec{
 				Label:            "org.cloudfoundry.cfdev.linuxkit",
 				Program:          "/bin/bash",
+				SessionType:      "Background",
 				ProgramArguments: []string{"/bin/bash", "-c", "sleep 300"},
 				RunAtLoad:        true,
 			})
