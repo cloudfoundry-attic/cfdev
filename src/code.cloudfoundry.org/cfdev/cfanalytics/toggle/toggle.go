@@ -40,6 +40,11 @@ func New(path string) *Toggle {
 						t.value = v
 					}
 				}
+				if v, ok := data["props"]; ok {
+					if props, ok := v.(map[string]interface{}); ok {
+						t.props = props
+					}
+				}
 			}
 		}
 	}
@@ -71,10 +76,11 @@ func (t *Toggle) SetProp(k, v string) error {
 
 func (t *Toggle) save() error {
 	os.MkdirAll(filepath.Dir(t.path), 0755)
-	txt, err := json.Marshal(map[string]interface{}{
-		"enabled": t.value,
-		"props":   t.props,
-	})
+	hash := map[string]interface{}{"props": t.props}
+	if t.defined {
+		hash["enabled"] = t.value
+	}
+	txt, err := json.Marshal(hash)
 	if err != nil {
 		return err
 	}

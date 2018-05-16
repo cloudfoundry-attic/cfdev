@@ -123,6 +123,27 @@ var _ = Describe("Toggle", func() {
 		})
 	})
 
+	Describe("GetProps", func() {
+		Context("file missing", func() {
+			It("is empty", func() {
+				t := toggle.New(saveFile)
+				Expect(t.GetProps()).To(BeEmpty())
+			})
+		})
+		Context("file has props", func() {
+			BeforeEach(func() {
+				Expect(ioutil.WriteFile(saveFile, []byte(`{"props":{"key":"value","other":"thing"}}`), 0644)).To(Succeed())
+			})
+			It("returns data from file", func() {
+				t := toggle.New(saveFile)
+				Expect(t.GetProps()).To(BeEquivalentTo(map[string]interface{}{
+					"key":   "value",
+					"other": "thing",
+				}))
+			})
+		})
+	})
+
 	Describe("Set", func() {
 		var (
 			t *toggle.Toggle
@@ -177,6 +198,7 @@ var _ = Describe("Toggle", func() {
 			}))
 		})
 		It("writes props to file", func() {
+			Expect(t.Set(false)).To(Succeed())
 			Expect(t.SetProp("key", "value")).To(Succeed())
 			Expect(t.SetProp("other", "thing")).To(Succeed())
 
@@ -187,6 +209,16 @@ var _ = Describe("Toggle", func() {
 					"other": "thing"
 				}
 			}`))
+		})
+		Context("optin was not defined", func() {
+			It("stores prop but not enabled flag", func() {
+				Expect(t.SetProp("key", "value")).To(Succeed())
+				Expect(ioutil.ReadFile(saveFile)).To(MatchJSON(`{
+					"props": {
+						"key": "value"
+					}
+				}`))
+			})
 		})
 	})
 })
