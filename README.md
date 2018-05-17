@@ -33,7 +33,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 * Please note CF Dev only supports macOS at this time
 
 ## Install 
-1. Download latest binary [here](http://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.3-darwin) .
+1. Download latest binary [here](http://d3p1cc0zb2wjno.cloudfront.net/cfdev/cfdev-v0.0.4-darwin) .
 1. _(if needed)_ Uninstall your existing PCF Dev or CF Dev plugin if its installed `cf uninstall-plugin pcfdev` OR `cf uninstall-plugin cfdev`
 1. Install the CF Dev plugin `cf install-plugin <path to cfdev binary>`.
 
