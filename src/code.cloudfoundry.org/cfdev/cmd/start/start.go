@@ -102,6 +102,7 @@ func (s *Start) RunE(_ *cobra.Command, _ []string) error {
 	depsIsoName := "cf"
 	if s.Args.DepsIsoPath != "" {
 		depsIsoName = filepath.Base(s.Args.DepsIsoPath)
+		var err error
 		s.Args.DepsIsoPath, err = filepath.Abs(s.Args.DepsIsoPath)
 		if err != nil {
 			return errors.SafeWrap(err, "determining absolute path to deps iso")
