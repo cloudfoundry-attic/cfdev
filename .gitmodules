@@ -67,3 +67,9 @@
 [submodule "src/github.com/spf13/pflag"]
 	path = src/github.com/spf13/pflag
 	url = https://github.com/spf13/pflag.git
+[submodule "src/github.com/cloudfoundry/bosh-cli"]
+	path = src/github.com/cloudfoundry/bosh-cli
+	url = https://github.com/cloudfoundry/bosh-cli.git
+[submodule "src/github.com/cppforlife/go-semi-semantic"]
+	path = src/github.com/cppforlife/go-semi-semantic
+	url = https://github.com/cppforlife/go-semi-semantic.git
