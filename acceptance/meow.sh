@@ -77,7 +77,7 @@ EOF
 
     export GOPATH=$networking_release_path
     export PATH=$networking_release_path/bin:$PATH
-    ginkgo -slowSpecThreshold=120 ${@:2} .
+    ginkgo -slowSpecThreshold=120 --flakeAttempts=3 ${@:2} .
   popd > /dev/null
 }
 
@@ -131,7 +131,7 @@ EOF
       go build -ldflags "-X main.version=2.9" -o $GOPATH/bin/rtr
     popd > /dev/null
 
-    ginkgo -r -race -slowSpecThreshold=120 ${@:2} smoke_tests http_routes tcp_routing
+    ginkgo -r -race -slowSpecThreshold=120 --flakeAttempts=3 ${@:2} smoke_tests http_routes tcp_routing
   popd >/dev/null
 }
 
@@ -162,7 +162,7 @@ EOF
     export GOPATH=$volume_release_path
     export TEST_APPLICATION_PATH="$persi_test_dir/assets/pora"
 
-    ginkgo -r -slowSpecThreshold=120 ${@:2} .
+    ginkgo -r -slowSpecThreshold=120 --flakeAttempts=3 ${@:2} .
   popd >/dev/null
 }
 
@@ -230,7 +230,7 @@ EOF
     git checkout .
     git apply $script_dir/patches/private-docker-registry-auth.patch
 
-    GOPATH=$script_dir ./bin/test -slowSpecThreshold=120 ${@:2} .
+    GOPATH=$script_dir ./bin/test -slowSpecThreshold=120 --flakeAttempts=3 ${@:2} .
 
     # Undo our patches
     git apply -R $script_dir/patches/private-docker-registry-auth.patch
