@@ -56,11 +56,11 @@ func (e *Environment) Prepare(config garden.BOSHConfiguration) (string, error) {
 	for _, envvar := range os.Environ() {
 		if strings.HasPrefix(envvar, "BOSH_") {
 			envvar = strings.Split(envvar, "=")[0]
-			fmt.Fprintf(&output, "unset %s\n", envvar)
+			fmt.Fprintf(&output, "unset %s;\n", envvar)
 		}
 	}
 	for _, name := range order {
-		fmt.Fprintf(&output, "export %s=\"%s\"\n", name, values[name])
+		fmt.Fprintf(&output, "export %s=\"%s\";\n", name, values[name])
 	}
 	return output.String(), nil
 }

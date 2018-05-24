@@ -41,11 +41,11 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 
 	It("formats BOSH configuration for eval'ing", func() {
 		expectedExports := []string{
-			`export BOSH_ENVIRONMENT="10.245.0.2"`,
-			`export BOSH_CLIENT="admin"`,
-			`export BOSH_CLIENT_SECRET="admin-password"`,
-			`export BOSH_GW_HOST="10.245.0.3"`,
-			`export BOSH_GW_USER="jumpbox"`,
+			`export BOSH_ENVIRONMENT="10.245.0.2";`,
+			`export BOSH_CLIENT="admin";`,
+			`export BOSH_CLIENT_SECRET="admin-password";`,
+			`export BOSH_GW_HOST="10.245.0.3";`,
+			`export BOSH_GW_USER="jumpbox";`,
 
 			// The following items will be saved to files so we
 			// ignore the value for now
@@ -76,13 +76,13 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 		It("unsets any other previously set BOSH environment variables", func() {
 			exports, err := env.Prepare(config)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(exports).To(MatchRegexp(`(?m)^unset BOSH_ALL_PROXY$`))
+			Expect(exports).To(MatchRegexp(`(?m)^unset BOSH_ALL_PROXY;$`))
 		})
 		It("only unsets BOSH_ALL_PROXY if it is currently set", func() {
 			os.Unsetenv("BOSH_ALL_PROXY")
 			exports, err := env.Prepare(config)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(exports).ToNot(ContainSubstring("BOSH_ALL_PROXY"))
+			Expect(exports).ToNot(ContainSubstring("BOSH_ALL_PROXY;"))
 		})
 		It("does not unset  other environment variables", func() {
 			exports, err := env.Prepare(config)
