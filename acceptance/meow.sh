@@ -254,16 +254,16 @@ trap "{ \
 
 
 run_cats $@
-run_networking_tests $@
-run_routing_tests $@
-#run_persi_tests $@
+# run_networking_tests $@
+# run_routing_tests $@
+# run_persi_tests $@
 
 # Docker registry will run on a local IP so we
 # allow containers to access internal networks again
-cf bind-staging-security-group all_access
-cf bind-running-security-group all_access
+# cf bind-staging-security-group all_access
+# cf bind-running-security-group all_access
 
-run_docker_registry_tests $@
+# run_docker_registry_tests $@
 
 # not enabled for cats
 # include_credhub
