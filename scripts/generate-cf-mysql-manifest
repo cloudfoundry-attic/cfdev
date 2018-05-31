@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -ex
+
+while getopts "m:" arg; do
+  case $arg in
+    m) cf_mysql_deployment=$OPTARG
+      ;;
+  esac
+done
+
+if [[ -z $cf_mysql_deployment ]]; then
+  echo "USAGE: generate-cf-mysql-manifest -m <path-to-cf-mysql-deployment>"
+  exit 1
+fi
+if [[ ! -d $cf_mysql_deployment ]]; then
+  echo "ERROR: cf_mysql_deployment $cf_mysql_deployment does not exist"
+  exit 2
+fi
+cf_mysql_deployment="$(cd "$(dirname "$cf_mysql_deployment")"; pwd)/$(basename "$cf_mysql_deployment")"
+
+scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+output_dir="$scripts_dir"/../output
+ops_dir="$scripts_dir"/../images/cf/mysql-operations
+
+mkdir -p "$output_dir"
+
+pushd "$cf_mysql_deployment"
+
+bosh int cf-mysql-deployment.yml \
+  -o operations/add-broker.yml \
+  -o operations/register-proxy-route.yml \
+  -o operations/no-arbitrator.yml \
+  \
+  -o "$ops_dir"/single-instances.yml \
+  -o "$ops_dir"/use-stemcell-3586.16.yml \
+  \
+  -v cf_mysql_external_host=p-mysql.v3.pcfdev.io \
+  -v cf_mysql_host=v3.pcfdev.io \
+  -v cf_admin_password=admin \
+  -v cf_api_url=https://api.v3.pcfdev.io \
+  -v cf_skip_ssl_validation=true \
+  -v proxy_vm_extension=mysql-proxy-lb \
+  \
+  > "$output_dir/mysql.yml"
+popd

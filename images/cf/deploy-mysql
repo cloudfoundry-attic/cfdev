@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+export CACHE_DIR=${CACHE_DIR:-/var/vcap/cache}
+## TODO remove once shifted to deps file.
+export CACHE_DIR=/usr/bin
+
+exec 2>&1
+
+source /var/vcap/director/env
+
+if [ "$(curl -s -k "https://$BOSH_ENVIRONMENT:25555/info" | jq '.features.config_server.status')" == "true" ]; then
+  bosh --tty --non-interactive --deployment cf-mysql \
+    deploy "${CACHE_DIR}/mysql.yml" \
+    --no-redact
+else
+  bosh --tty --non-interactive --deployment cf-mysql \
+    deploy "${CACHE_DIR}/mysql.yml" \
+    --no-redact \
+    --vars-store "${CF_DIR}/vars.yml"
+fi
+
+bosh -d cf-mysql run-errand broker-registrar

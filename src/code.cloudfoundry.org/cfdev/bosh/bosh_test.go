@@ -45,7 +45,7 @@ var _ = Describe("Bosh", func() {
 				mockDepVMInfos.Return(vmInfos, nil)
 			})
 
-			ch := subject.VMProgress()
+			ch := subject.VMProgress("cf")
 			var p bosh.VMProgress
 
 			Eventually(ch).Should(Receive(&p))

@@ -1,0 +1,19 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    mysql2 (0.5.1)
+    rack (2.0.5)
+    roda (3.8.0)
+      rack
+    sequel (5.8.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  mysql2
+  roda
+  sequel
+
+BUNDLED WITH
+   1.16.1

@@ -58,6 +58,9 @@ RUN set -x && \
 ADD app-security-group.json /etc/cf/app-security-group.json
 ADD deploy-bosh /usr/bin/deploy-bosh
 ADD deploy-cf /usr/bin/deploy-cf
+ADD deploy-mysql /usr/bin/deploy-mysql
+## TODO move to similar to scripts/build-cf-deps-tar
+ADD cf-mysql-int.yml /usr/bin/mysql.yml
 
 RUN mkdir -p /var/vcap
 

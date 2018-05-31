@@ -29,9 +29,17 @@ echo "GENERATE BOSH TAR"
 
 ./scripts/build-bosh-deps-tar -m output/bosh.yml -r output/dns-runtime-config.yml
 
+echo "GENERATE MYSQL MANIFEST"
+
+./scripts/generate-cf-mysql-manifest -m ../cf-mysql-deployment/
+
+echo "GENERATE MYSQL TAR"
+
+./scripts/build-cf-mysql-deps-tar -m output/mysql.yml
+
 echo "GENERATE CF ISO"
 
-./scripts/build-cf-deps-iso -c output/cf.tgz  -b output/bosh.tgz
+./scripts/build-cf-deps-iso -c output/cf.tgz  -b output/bosh.tgz -m output/mysql.tgz
 
 echo "BUILD EFI IMAGE"
 

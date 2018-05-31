@@ -1,0 +1,12 @@
+---
+- type: replace
+  path: /instance_groups/name=broker/instances
+  value: 1
+
+- type: replace
+  path: /instance_groups/name=mysql/instances
+  value: 1
+
+- type: replace
+  path: /instance_groups/name=proxy/instances
+  value: 1

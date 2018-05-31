@@ -2,23 +2,26 @@
 
 set -ex
 
-while getopts "c:b:" arg; do
+while getopts "c:b:m:" arg; do
   case $arg in
     c) cf_deps=$OPTARG
+      ;;
+    m) mysql_deps=$OPTARG
       ;;
     b) bosh_deps=$OPTARG
   esac
 done
 
-if [[ -z "$cf_deps" || -z "$bosh_deps" ]]; then
-  echo "USAGE: ./build-cf-iso -c <cf-deps-tar> -b <bosh-deps-tar>"
+if [[ -z "$cf_deps" || -z "$mysql_deps" || -z "$bosh_deps" ]]; then
+  echo "USAGE: ./build-cf-iso -c <cf-deps-tar> -m <cf-mysql-deps-tar> -b <bosh-deps-tar>"
   exit 1
 fi
-if [[ ! -f $cf_deps || ! -f $bosh_deps ]]; then
-  echo "ERROR: Either $manifest of $cloud_config do not exist"
+if [[ ! -f $cf_deps || ! -f $mysql_deps || ! -f $bosh_deps ]]; then
+  echo "ERROR: Either $cf_deps, $mysql_deps or $bosh_deps do not exist"
   exit 2
 fi
 cf_deps="$(cd "$(dirname "$cf_deps")"; pwd)/$(basename "$cf_deps")"
+mysql_deps="$(cd "$(dirname "$mysql_deps")"; pwd)/$(basename "$mysql_deps")"
 bosh_deps="$(cd "$(dirname "$bosh_deps")"; pwd)/$(basename "$bosh_deps")"
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -50,6 +53,7 @@ export() {
 
 add_deps(){
   tar xzf "$cf_deps" -C $iso_dir
+  tar xzf "$mysql_deps" -C $iso_dir
   tar xzf "$bosh_deps" -C $iso_dir
 }
 

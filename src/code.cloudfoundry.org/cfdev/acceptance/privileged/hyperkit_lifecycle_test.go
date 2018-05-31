@@ -193,33 +193,16 @@ func PushAnApp() {
 	server, port := fakeTcpServer()
 	defer server.Close()
 
-	tmpDir, _ := ioutil.TempDir("", "cf-test-app-")
-	defer os.RemoveAll(tmpDir)
-	Expect(ioutil.WriteFile(filepath.Join(tmpDir, "app"), []byte(`#!/usr/bin/env ruby
-require 'webrick'
-require 'open-uri'
-require 'socket'
-server = WEBrick::HTTPServer.new :Port => ENV['PORT']
-server.mount_proc '/' do |request, response|
-	response.body = 'Hello, world!'
-end
-server.mount_proc '/external' do |request, response|
-	response.body = open('http://example.com').read
-end
-server.mount_proc '/host' do |request, response|
-	# response.body = %x(host host.pcfdev.io)
-	response.body = TCPSocket.new('host.pcfdev.io', `+strconv.Itoa(port)+`).gets
-end
-trap 'INT' do server.shutdown end
-server.start
-`), 0755)).To(Succeed())
-
-	session := cf.Cf("push", "cf-test-app", "-p", tmpDir, "-b", "binary_buildpack", "-c", "./app")
-	Eventually(session, 120).Should(gexec.Exit(0))
+	Eventually(cf.Cf("push", "cf-test-app", "--no-start", "-p", "./fixture", "-b", "ruby_buildpack"), 120).Should(gexec.Exit(0))
+	Eventually(cf.Cf("set-env", "cf-test-app", "HOST_SERVER_PORT", strconv.Itoa(port)), 120).Should(gexec.Exit(0))
+	Eventually(cf.Cf("create-service", "p-mysql", "10mb", "mydb"), 120).Should(gexec.Exit(0))
+	Eventually(cf.Cf("bind-service", "cf-test-app", "mydb"), 120).Should(gexec.Exit(0))
+	Eventually(cf.Cf("start", "cf-test-app"), 120).Should(gexec.Exit(0))
 
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io")).To(Equal("Hello, world!"))
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/external")).To(ContainSubstring("Example Domain"))
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/host")).To(Equal("Text From Test Code"))
+	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/mysql")).To(ContainSubstring("innodb"))
 }
 
 func fakeTcpServer() (net.Listener, int) {

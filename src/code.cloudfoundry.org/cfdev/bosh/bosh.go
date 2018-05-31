@@ -47,13 +47,13 @@ type VMProgress struct {
 	Duration time.Duration
 }
 
-func (b *Bosh) VMProgress() chan VMProgress {
+func (b *Bosh) VMProgress(deploymentName string) chan VMProgress {
 	start := time.Now()
 	var dep boshdir.Deployment
 
 	for {
 		var err error
-		dep, err = b.dir.FindDeployment("cf")
+		dep, err = b.dir.FindDeployment(deploymentName)
 		if err == nil {
 			break
 		}

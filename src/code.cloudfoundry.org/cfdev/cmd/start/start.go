@@ -184,9 +184,15 @@ func (s *Start) RunE(_ *cobra.Command, _ []string) error {
 	}
 
 	s.UI.Say("Deploying CF...")
-	go reportCfDeployProgress(s.UI, garden)
+	go reportDeployProgress(s.UI, garden, "cf")
 	if err := gdn.DeployCloudFoundry(garden, registries); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
+	}
+
+	s.UI.Say("Deploying Mysql...")
+	go reportDeployProgress(s.UI, garden, "cf-mysql")
+	if err := gdn.DeployMysql(garden); err != nil {
+		return errors.SafeWrap(err, "Failed to deploy mysql")
 	}
 
 	s.UI.Say(`
@@ -283,12 +289,13 @@ func (s *Start) watchLaunchd(label string) {
 	}()
 }
 
-func reportCfDeployProgress(UI UI, garden client.Client) {
+func reportDeployProgress(UI UI, garden client.Client, deploymentName string) {
+	start := time.Now()
 	ui := singlelinewriter.New(UI.Writer())
 	ui.Say("  Uploading Releases")
 	b, err := bosh.New(garden)
 	if err == nil {
-		ch := b.VMProgress()
+		ch := b.VMProgress(deploymentName)
 		for p := range ch {
 			if p.Total > 0 {
 				ui.Say("  Progress: %d of %d (%s)", p.Done, p.Total, p.Duration.Round(time.Second))
@@ -297,6 +304,6 @@ func reportCfDeployProgress(UI UI, garden client.Client) {
 			}
 		}
 		ui.Close()
-		UI.Say("  Setup CF")
+		UI.Say("  Done (%s)", time.Now().Sub(start).Round(time.Second))
 	}
 }
