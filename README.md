@@ -51,7 +51,7 @@ Follow the CF Dev team's progress [here](https://github.com/cloudfoundry-incubat
 
 ## Uninstall
 
-To stop CF Dev run `cf dev stop`. This will completely stop and destory the CF Dev VM.
+To stop CF Dev run `cf dev stop`. This will completely stop and destroy the CF Dev VM.
 
 To uninstall the CF Dev cf CLI plugin run `cf uninstall-plugin cfdev`.
 
