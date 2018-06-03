@@ -3,8 +3,6 @@
 set -e
 
 export CACHE_DIR=${CACHE_DIR:-/var/vcap/cache}
-## TODO remove once shifted to deps file.
-export CACHE_DIR=/usr/bin
 
 exec 2>&1
 
