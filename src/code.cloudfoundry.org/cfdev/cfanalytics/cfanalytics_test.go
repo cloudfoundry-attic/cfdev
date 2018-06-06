@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
+	"code.cloudfoundry.org/cfdev/cfanalytics/mocks"
 	"github.com/denisbrodbeck/machineid"
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gstruct"
@@ -42,28 +44,27 @@ func (t *MockToggle) Get() bool                        { return t.val }
 func (t *MockToggle) Set(v bool) error                 { t.val = v; t.SetCalled = true; return nil }
 func (t *MockToggle) GetProps() map[string]interface{} { return t.props }
 
-type MockClient struct {
-	CloseWasCalled    bool
-	EnqueueCalledWith analytics.Message
-}
-
-func (c *MockClient) Close() error                        { c.CloseWasCalled = true; return nil }
-func (c *MockClient) Enqueue(msg analytics.Message) error { c.EnqueueCalledWith = msg; return nil }
-
 var _ = Describe("Analytics", func() {
 	var (
+		mockController *gomock.Controller
+		mockClient     *mocks.MockClient
+
 		mockToggle *MockToggle
-		mockClient *MockClient
 		exitChan   chan struct{}
 		mockUI     MockUI
 		subject    *cfanalytics.Analytics
 	)
 	BeforeEach(func() {
+		mockController = gomock.NewController(GinkgoT())
+		mockClient = mocks.NewMockClient(mockController)
+
 		mockToggle = &MockToggle{}
-		mockClient = &MockClient{}
 		exitChan = make(chan struct{}, 1)
 		mockUI = MockUI{WasCalled: false}
 		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test", exitChan, &mockUI)
+	})
+	AfterEach(func() {
+		mockController.Finish()
 	})
 
 	Describe("PromptOptIn", func() {
@@ -118,7 +119,6 @@ var _ = Describe("Analytics", func() {
 			BeforeEach(func() { mockToggle.val = false })
 			It("does nothing and succeeds", func() {
 				Expect(subject.Event("anevent", map[string]interface{}{"mykey": "myval"})).To(Succeed())
-				Expect(mockClient.EnqueueCalledWith).To(BeNil())
 			})
 		})
 		Context("opt in", func() {
@@ -128,21 +128,29 @@ var _ = Describe("Analytics", func() {
 					"type": "cf.1.2.3.iso",
 				}
 			})
-			It("sends event to segmentio", func() {
-				Expect(subject.Event("anevent", map[string]interface{}{"mykey": "myval"})).To(Succeed())
-
+			It("sends identity and event to segmentio", func() {
 				uuid, _ := machineid.ProtectedID("cfdev")
-				Expect(mockClient.EnqueueCalledWith).To(gstruct.MatchFields(gstruct.IgnoreExtras, gstruct.Fields{
-					"UserId":    Equal(uuid),
-					"Event":     Equal("anevent"),
-					"Timestamp": BeTemporally(">=", time.Now().Add(-1*time.Minute)),
-					"Properties": BeEquivalentTo(map[string]interface{}{
-						"os":      runtime.GOOS,
-						"version": "4.5.6-unit-test",
-						"type":    "cf.1.2.3.iso",
-						"mykey":   "myval",
-					}),
-				}))
+
+				mockClient.EXPECT().Enqueue(gomock.Any()).Do(func(msg analytics.Message) {
+					Expect(msg).To(Equal(analytics.Identify{
+						UserId: uuid,
+					}))
+				})
+				mockClient.EXPECT().Enqueue(gomock.Any()).Do(func(msg analytics.Message) {
+					Expect(msg).To(gstruct.MatchFields(gstruct.IgnoreExtras, gstruct.Fields{
+						"UserId":    Equal(uuid),
+						"Event":     Equal("anevent"),
+						"Timestamp": BeTemporally(">=", time.Now().Add(-1*time.Minute)),
+						"Properties": BeEquivalentTo(map[string]interface{}{
+							"os":      runtime.GOOS,
+							"version": "4.5.6-unit-test",
+							"type":    "cf.1.2.3.iso",
+							"mykey":   "myval",
+						}),
+					}))
+				})
+
+				Expect(subject.Event("anevent", map[string]interface{}{"mykey": "myval"})).To(Succeed())
 			})
 		})
 	})

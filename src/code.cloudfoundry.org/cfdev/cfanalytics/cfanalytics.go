@@ -16,6 +16,8 @@ const STOP = "stop"
 const ERROR = "error"
 const UNINSTALL = "uninstall"
 
+//go:generate mockgen -package mocks -destination mocks/analytics_client.go gopkg.in/segmentio/analytics-go.v3 Client
+
 type Toggle interface {
 	Defined() bool
 	Get() bool
@@ -58,6 +60,11 @@ func (a *Analytics) Event(event string, data ...map[string]interface{}) error {
 	if !a.toggle.Get() {
 		return nil
 	}
+
+	a.client.Enqueue(analytics.Identify{
+		UserId: a.userId,
+	})
+
 	properties := analytics.NewProperties()
 	properties.Set("os", runtime.GOOS)
 	properties.Set("version", a.version)
