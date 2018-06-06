@@ -10,20 +10,25 @@ import (
 	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
-const START_BEGIN = "start_begin"
-const START_END = "start_end"
-const STOP = "stop"
-const ERROR = "error"
-const UNINSTALL = "uninstall"
+const (
+	START_BEGIN = "start_begin"
+	START_END   = "start_end"
+	STOP        = "stop"
+	ERROR       = "error"
+	UNINSTALL   = "uninstall"
+)
 
 //go:generate mockgen -package mocks -destination mocks/analytics_client.go gopkg.in/segmentio/analytics-go.v3 Client
 
+//go:generate mockgen -package mocks -destination mocks/toggle.go code.cloudfoundry.org/cfdev/cfanalytics Toggle
 type Toggle interface {
 	Defined() bool
 	Get() bool
 	Set(value bool) error
 	GetProps() map[string]interface{}
 }
+
+//go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cfanalytics UI
 type UI interface {
 	Ask(prompt string) (answer string)
 }
