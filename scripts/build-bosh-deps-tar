@@ -20,7 +20,7 @@ if [[ ! -f $manifest || ! -f $runtime ]]; then
   exit 2
 fi
 manifest="$(cd "$(dirname "$manifest")"; pwd)/$(basename "$manifest")"
-ruintim="$(cd "$(dirname "$runtime")"; pwd)/$(basename "$runtime")"
+runtime="$(cd "$(dirname "$runtime")"; pwd)/$(basename "$runtime")"
 
 if [[ -z "${BOSH_ENVIRONMENT:-}" ]]; then
   echo "ERROR: a bosh director is required to compile releases, please set your BOSH_* env variables"
@@ -120,6 +120,8 @@ main () {
   compile_releases "$runtime"
   finalize "$manifest" > "$releases_dir"/director.yml
   finalize "$runtime" > "$releases_dir"/dns.yml
+  mkdir "$releases_dir"/bin
+  cp "$dir"/../images/cf/deploy-bosh "$releases_dir"/bin/deploy-bosh
   tar_deps
 }
 

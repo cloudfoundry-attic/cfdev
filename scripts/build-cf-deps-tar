@@ -39,9 +39,6 @@ trap cleanup EXIT
 source "$dir"/build-deps-tar-helpers
 
 tar_deps () {
-  cp "$manifest" "$tmpdir"/deployment.yml
-  cp "$cloud_config" "$tmpdir"/cloud-config.yml
-  cp "$runtime" "$tmpdir"/runtime-config.yml
   pushd "$tmpdir"
     tar cvzf "$output_dir"/cf.tgz *
   popd
@@ -52,6 +49,12 @@ main () {
   download_compiled_releases
   compile_releases "$manifest"
   compile_releases "$runtime"
+  cp "$manifest" "$tmpdir"/deployment.yml
+  cp "$cloud_config" "$tmpdir"/cloud-config.yml
+  cp "$runtime" "$tmpdir"/runtime-config.yml
+  mkdir "$tmpdir"/bin
+  cp "$dir"/../images/cf/app-security-group.json "$tmpdir"/app-security-group.json
+  cp "$dir"/../images/cf/deploy-cf "$tmpdir"/bin/deploy-cf
   tar_deps
 }
 

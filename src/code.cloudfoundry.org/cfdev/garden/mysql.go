@@ -36,7 +36,8 @@ func DeployMysql(client garden.Client) error {
 
 	process, err := container.Run(garden.ProcessSpec{
 		ID:   "deploy-mysql",
-		Path: "/usr/bin/deploy-mysql",
+		Path: "/bin/bash",
+		Args: []string{"/var/vcap/cache/bin/deploy-mysql"},
 		User: "root",
 	}, garden.ProcessIO{})
 

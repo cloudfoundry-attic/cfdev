@@ -36,7 +36,8 @@ func DeployBosh(client garden.Client) error {
 
 	process, err := container.Run(garden.ProcessSpec{
 		ID:   "deploy-bosh",
-		Path: "/usr/bin/deploy-bosh",
+		Path: "/bin/bash",
+		Args: []string{"/var/vcap/cache/bin/deploy-bosh"},
 		User: "root",
 	}, garden.ProcessIO{})
 

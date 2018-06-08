@@ -34,7 +34,6 @@ trap cleanup EXIT
 source "$dir"/build-deps-tar-helpers
 
 tar_deps () {
-  cp "$manifest" "$tmpdir"/mysql.yml
   pushd "$tmpdir"
     tar cvzf "$output_dir"/mysql.tgz *
   popd
@@ -44,6 +43,9 @@ main () {
   download_warden_stemcell
   download_compiled_releases
   compile_releases "$manifest"
+  cp "$manifest" "$tmpdir"/mysql.yml
+  mkdir "$tmpdir"/bin
+  cp "$dir"/../images/cf/deploy-mysql "$tmpdir"/bin/deploy-mysql
   tar_deps
 }
 

@@ -54,12 +54,6 @@ RUN set -x && \
     \
     chmod a+x /usr/bin/cf
 
-## Local scripts & dependencies
-ADD app-security-group.json /etc/cf/app-security-group.json
-ADD deploy-bosh /usr/bin/deploy-bosh
-ADD deploy-cf /usr/bin/deploy-cf
-ADD deploy-mysql /usr/bin/deploy-mysql
-
 RUN mkdir -p /var/vcap
 
 # TODO Throw an error if BOSH & CF deployment do not have the same major version

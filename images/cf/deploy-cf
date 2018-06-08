@@ -61,6 +61,6 @@ cf set-space-role user "${CF_ORG}" "${CF_SPACE}" SpaceManager
 cf set-space-role user "${CF_ORG}" "${CF_SPACE}" SpaceDeveloper
 cf set-space-role user "${CF_ORG}" "${CF_SPACE}" SpaceAuditor
 
-cf create-security-group all_access /etc/cf/app-security-group.json
+cf create-security-group all_access /var/vcap/cache/app-security-group.json
 cf bind-staging-security-group all_access
 cf bind-running-security-group all_access
