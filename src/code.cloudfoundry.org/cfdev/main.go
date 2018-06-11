@@ -103,7 +103,7 @@ func (p *Plugin) Run(connection plugin.CliConnection, args []string) {
 		return
 	}
 
-	if strings.ToLower(args[1]) != "telemetry" {
+	if len(args) >= 2 && strings.ToLower(args[1]) != "telemetry" {
 		if err := p.Analytics.PromptOptIn(); err != nil {
 			p.UI.Failed(err.Error())
 			p.Analytics.Close()
