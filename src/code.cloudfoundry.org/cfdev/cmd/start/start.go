@@ -178,8 +178,6 @@ func (s *Start) RunE(_ *cobra.Command, _ []string) error {
 	garden := client.New(connection.New("tcp", "localhost:8888"))
 	waitForGarden(garden)
 
-	unsetPreviousBoshEnvs()
-
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := gdn.DeployBosh(garden); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
@@ -307,16 +305,5 @@ func reportDeployProgress(UI UI, garden client.Client, deploymentName string) {
 		}
 		ui.Close()
 		UI.Say("  Done (%s)", time.Now().Sub(start).Round(time.Second))
-	}
-}
-
-func unsetPreviousBoshEnvs() {
-	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BOSH_") {
-			m := strings.SplitN(kv, "=", 2)
-			if len(m) == 2 {
-				os.Unsetenv(m[0])
-			}
-		}
 	}
 }
