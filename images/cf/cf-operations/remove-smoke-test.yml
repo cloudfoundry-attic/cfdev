@@ -1,0 +1,9 @@
+---
+- type: remove
+  path: /instance_groups/name=smoke-tests
+
+- type: remove
+  path: /releases/name=cf-smoke-tests
+
+- type: remove
+  path: /addons/0/exclude/jobs/name=smoke_tests
