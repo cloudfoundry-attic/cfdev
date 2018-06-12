@@ -63,6 +63,10 @@ In addition to making this data completely anonymous, we require users to opt-in
 
 You can learn more about what we do with telemetry [here](https://github.com/cloudfoundry-incubator/cfdev/wiki/Telemetry)
 
+## TCP Ports
+
+The tcp port range has been limited to 1024 - 1049 to prevent reaching file descriptor limits on some systems.
+
 ## Contributing
 
 If you are interested in contributing to CF Dev, please refer to the [contributing guidelines](CONTRIBUTING.md).

@@ -1,0 +1,4 @@
+---
+- type: replace
+  path: /instance_groups/name=api/jobs/name=routing-api/properties/routing_api/router_groups/name=default-tcp/reservable_ports
+  value: 1024-1049
