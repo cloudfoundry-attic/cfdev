@@ -69,7 +69,8 @@ var _ = Describe("DeployBosh", func() {
 			spec, _ := fakeContainer.RunArgsForCall(0)
 			Expect(spec).To(Equal(garden.ProcessSpec{
 				ID:   "deploy-bosh",
-				Path: "/usr/bin/deploy-bosh",
+				Path: "/bin/bash",
+				Args: []string{"/var/vcap/cache/bin/deploy-bosh"},
 				User: "root",
 			}))
 		})

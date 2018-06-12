@@ -70,7 +70,8 @@ var _ = Describe("DeployMysql", func() {
 			Expect(io).To(Equal(garden.ProcessIO{}))
 			Expect(spec).To(Equal(garden.ProcessSpec{
 				ID:   "deploy-mysql",
-				Path: "/usr/bin/deploy-mysql",
+				Path: "/bin/bash",
+				Args: []string{"/var/vcap/cache/bin/deploy-mysql"},
 				User: "root",
 			}))
 		})

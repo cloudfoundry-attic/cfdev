@@ -99,7 +99,8 @@ var _ = Describe("DeployCloudFoundry", func() {
 			Expect(io).To(Equal(garden.ProcessIO{}))
 			Expect(spec).To(Equal(garden.ProcessSpec{
 				ID:   "deploy-cf",
-				Path: "/usr/bin/deploy-cf",
+				Path: "/bin/bash",
+				Args: []string{"/var/vcap/cache/bin/deploy-cf"},
 				User: "root",
 			}))
 		})
