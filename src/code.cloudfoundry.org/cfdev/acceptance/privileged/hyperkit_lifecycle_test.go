@@ -204,11 +204,11 @@ func PushAnApp() {
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/host")).To(Equal("Text From Test Code"))
 	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/mysql")).To(ContainSubstring("innodb"))
 
-	Eventually(cf.Cf("create-shared-domain", "tcp.v3.pcfdev.io", "--router-group", "default-tcp"), 120).Should(gexec.Exit(0))
-	Eventually(cf.Cf("create-route", "cfdev-space", "tcp.v3.pcfdev.io", "--port", "1030"), 120).Should(gexec.Exit(0))
-	Eventually(cf.Cf("map-route", "cf-test-app", "tcp.v3.pcfdev.io", "--port", "1030"), 120).Should(gexec.Exit(0))
+	Eventually(cf.Cf("create-shared-domain", "tcp.v3.pcfdev.io", "--router-group", "default-tcp"), 10).Should(gexec.Exit(0))
+	Eventually(cf.Cf("create-route", "cfdev-space", "tcp.v3.pcfdev.io", "--port", "1030"), 10).Should(gexec.Exit(0))
+	Eventually(cf.Cf("map-route", "cf-test-app", "tcp.v3.pcfdev.io", "--port", "1030"), 10).Should(gexec.Exit(0))
 
-	Expect(httpGet("http://tcp.v3.pcfdev.io:1030")).To(Equal("Hello, world!"))
+	Eventually(func() (string, error) { return httpGet("http://tcp.v3.pcfdev.io:1030") }, 10).Should(Equal("Hello, world!"))
 }
 
 func fakeTcpServer() (net.Listener, int) {
