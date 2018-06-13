@@ -1,5 +1,6 @@
 package main
 
+import _ "code.cloudfoundry.org/cfdev/unset-bosh-all-proxy"
 import (
 	"io/ioutil"
 	"log"
