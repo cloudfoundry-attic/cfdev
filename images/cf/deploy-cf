@@ -28,6 +28,7 @@ fi
 bosh -n update-runtime-config "$CF_DIR"/runtime-config.yml --name=cf
 bosh -n update-runtime-config "$CF_DIR"/dns.yml --name=dns \
   -v host_ip="$HOST_IP"
+  --vars-store "${CF_DIR}/vars.yml"
 
 for filename in "$CACHE_DIR"/bosh-stemcell-*.tgz; do
   bosh --tty upload-stemcell "$filename"
