@@ -50,7 +50,6 @@ create_loop_devices
 export BOSH_DIRECTOR_IP="10.245.0.2"
 
 cp /var/vcap/cache/director.yml "${DIRECTOR_DIR}"
-cp /var/vcap/cache/dns.yml "${DIRECTOR_DIR}"
 
 bosh --tty create-env \
   "${DIRECTOR_DIR}/director.yml" \
