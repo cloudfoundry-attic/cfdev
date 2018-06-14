@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-export HOST_IP="${HOST_IP:-192.168.65.2}"
 
 create_loop_devices() {
   echo "creating loop devices..."
@@ -70,13 +69,6 @@ export BOSH_CLIENT=admin
 export BOSH_CLIENT_SECRET=$(bosh int "${DIRECTOR_DIR}/creds.yml" --path /admin_password)
 export BOSH_CA_CERT="$(cat ${DIRECTOR_DIR}/ca.crt)"
 EOF
-
-source "${DIRECTOR_DIR}/env"
-
-bosh -n update-runtime-config "$DIRECTOR_DIR"/dns.yml --name=dns \
-  -v host_ip="$HOST_IP" \
-  --vars-store /var/vcap/director/vars.yml
-
 
 # Remove BOSH CLI cached files
 rm -rf $HOME/.bosh
