@@ -62,8 +62,15 @@ compile_releases () {
     bosh upload-stemcell "https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-$(stemcell_version)-google-kvm-ubuntu-trusty-go_agent.tgz"
     bosh -n deploy -d cf <(echo "$compilation_manifest")
     for release in $(echo $releases_to_compile | jq -c .[]) ; do
+
+      if [[ "$release" =~ bosh-dns* ]]; then
+        ## we cant compile bosh-dns-windows so only compile the linux job
+        bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$tmpdir" --job bosh-dns
+      else
         bosh -d cf export-release "$(name "$release")/$(version "$release")" ubuntu-trusty/"$(stemcell_version)" --dir "$tmpdir"
-        mv "$tmpdir"/"$(name "$release")-$(version "$release")"-*.tgz "$tmpdir"/releases/"$(filename $release)"
+      fi
+
+      mv "$tmpdir"/"$(name "$release")-$(version "$release")"-*.tgz "$tmpdir"/releases/"$(filename $release)"
     done
 }
 

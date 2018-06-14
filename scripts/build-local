@@ -13,21 +13,21 @@ echo "GENERATE CF MANIFEST"
 
 ./scripts/generate-cf-manifest -c ../cf-deployment/
 
+echo "GENERATE BOSH RUNTIME CONFIG"
+
+./scripts/generate-bosh-runtime-config -b ../bosh-deployment/
+
 echo "GENERATE CF DEPS TAR"
 
-./scripts/build-cf-deps-tar -m output/cf.yml -c output/cloud-config.yml -r images/cf/configs/dns-runtime-config.yml
+./scripts/build-cf-deps-tar -m output/cf.yml -c output/cloud-config.yml -r images/cf/configs/dns-runtime-config.yml -d output/dns-runtime-config.yml
 
 echo "GENERATE BOSH MANIFEST"
 
 ./scripts/generate-bosh-manifest -b ../bosh-deployment/
 
-echo "GENERATE BOSH RUNTIME CONFIG"
-
-./scripts/generate-bosh-runtime-config -b ../bosh-deployment/
-
 echo "GENERATE BOSH TAR"
 
-./scripts/build-bosh-deps-tar -m output/bosh.yml -r output/dns-runtime-config.yml
+./scripts/build-bosh-deps-tar -m output/bosh.yml
 
 echo "GENERATE MYSQL MANIFEST"
 

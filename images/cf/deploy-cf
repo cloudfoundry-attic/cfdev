@@ -8,6 +8,7 @@ export CF_DOMAIN=v3.pcfdev.io
 export CF_ORG=cfdev-org
 export CF_SPACE=cfdev-space
 export DOCKER_REGISTRIES="${DOCKER_REGISTRIES:-[\"host.pcfdev.io:5000\"]}"
+export HOST_IP="${HOST_IP:-192.168.65.2}"
 
 mkdir -p "${CF_DIR}"
 
@@ -24,6 +25,8 @@ if [ -f "$CACHE_DIR"/cloud-config.yml ]; then
 fi
 
 bosh -n update-runtime-config "$CF_DIR"/runtime-config.yml --name=cf
+bosh -n update-runtime-config "$CF_DIR"/dns.yml --name=dns \
+  -v host_ip="$HOST_IP"
 
 for filename in "$CACHE_DIR"/bosh-stemcell-*.tgz; do
   bosh --tty upload-stemcell "$filename"
