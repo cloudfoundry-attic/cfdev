@@ -30,6 +30,8 @@ services:
       - /var/lib:/var/lib
       - /var/vcap:/var/vcap:rshared,rbind
       - /etc/resolv.conf:/etc/resolv.conf
+    # sleeping in required in windows to wait for a healthy eth0
+    command: ["/bin/sh", "-c", "sleep 7; /usr/bin/garden"]
 
   - name: setup-bosh-lite-routing
     image: pivotal/bosh-lite-routing:dev

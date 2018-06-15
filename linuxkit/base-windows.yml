@@ -1,0 +1,72 @@
+kernel:
+  image: linuxkit/kernel:4.9.104
+  cmdline: "console=ttyS0 vsyscall=emulate no_timer_check"
+init:
+  - linuxkit/init:42a92119e1ca10380e0d33e26c0cbcf85b9b3558
+  - linuxkit/runc:817fdc592eac6cb7804fa1721a43a7f6e23fb50f
+  - linuxkit/containerd:82be2bbb7cf83bab161ffe2a64624ba1107725ff
+  - linuxkit/ca-certificates:af4880e78edc28743f7c5e262678c67c6add4c26
+  - linuxkit/getty:626ccc8e1766c40447f29a790d3a7cfff126f2a2
+  # install vpnkit-expose-port and vpnkit-iptables-wrapper on host
+  - linuxkit/vpnkit-expose-port:15c56c57ac9a7adeec20b34f36f2bc165c347679
+  - pivotal/expose-multiple-ports:dev
+  - pivotal/openssl:dev
+onboot:
+  - name: format
+    image: linuxkit/format:6b46d0450082f397177da36be6b4d74d93eacd1e
+  - name: mount
+    image: linuxkit/mount:41685ecc8039643948e5dff46e17584753469a7a
+    command: ["/usr/bin/mountie", "/var/lib"]
+
+  # make a swap file on the mounted disk
+  - name: swap
+    image: linuxkit/swap:25a2f13110585f3d964a8191fa3a84de51dbb8fd
+    command: ["/swap.sh", "--path", "/var/lib/swap", "--size", "1024M"]
+
+  - name: make-vpnkit-9pmountpoint
+    image: alpine:3.6
+    binds:
+      - /var/:/host_var:rbind,rshared
+    capabilities:
+      - CAP_SYS_ADMIN
+    rootfsPropagation: shared
+    command: ["mkdir", "/host_var/vpnkit"]
+
+  - name: vpnkit-9pmount-vsock
+    image: cfdev/vpnkit-9pmount-vsock:dev
+    capabilities:
+        - CAP_SYS_ADMIN
+    net: host
+    rootfsPropagation: shared
+    binds:
+        - /var:/host_var:rbind,rshared
+    command: ["/sbin/vpnkit-9pmount-vsock", "listen", "port", "/host_var/vpnkit", "--serviceid", "cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa"]
+services:
+  - name: acpid
+    image: linuxkit/acpid:168f871c7211c9d5e96002d53cb497b26e2d622b
+   # Format and mount the disk image in /var/lib
+
+  - name: vpnkit-tap-vsockd
+    image: cfdev/vpnkit-tap-vsockd:dev
+    capabilities:
+        - CAP_SYS_ADMIN
+        - CAP_NET_ADMIN
+    net: host
+    binds:
+        - /dev:/dev:rbind,rshared
+    command: ["/sbin/vpnkit-tap-vsockd", "--tap", "eth0", "--message-size", "8192", "--buffer-size", "262144", "--listen", "--serviceid", "7207f451-2ca3-4b88-8d01-820a21d78293"]
+
+  - name: dhcpcd
+    image: linuxkit/dhcpcd:48831507404049660b960e4055f544917d90378e
+    command: ["/bin/sh", "-c", "sleep 5; /sbin/dhcpcd --nobackground -f /dhcpcd.conf"]
+
+  - name: vpnkit-forwarder
+    image: linuxkit/vpnkit-forwarder:c7e61d9250de0b21455dc5c8bb885bd8faa31621
+    net: host
+    binds:
+        - /var/vpnkit:/port
+    command: ["/vpnkit-forwarder", "-hvGuid", "e3ae8f06-8c25-47fb-b6ed-c20702bcef5e"]
+
+trust:
+  org:
+    - linuxkit
