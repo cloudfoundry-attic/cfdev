@@ -24,14 +24,11 @@ var _ = Describe("VPNKit", func() {
 		Expect(cmd.Program).To(Equal("some-cache-dir/vpnkit"))
 		Expect(cmd.ProgramArguments).To(ConsistOf(
 			"some-cache-dir/vpnkit",
-			"--ethernet",
-			"some-vpnkit-state-dir/vpnkit_eth.sock",
-			"--port",
-			"some-vpnkit-state-dir/vpnkit_port.sock",
-			"--vsock-path",
-			"some-state-dir/connect",
-			"--http",
-			"some-vpnkit-state-dir/http_proxy.json",
+			"--ethernet", "some-vpnkit-state-dir/vpnkit_eth.sock",
+			"--port", "some-vpnkit-state-dir/vpnkit_port.sock",
+			"--vsock-path", "some-state-dir/connect",
+			"--http", "some-vpnkit-state-dir/http_proxy.json",
+			"--host-names", "host.pcfdev.io",
 		))
 	})
 })
