@@ -1,52 +1,23 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-if [[ $# -lt 2 ]]; then
-  echo "USAGE: ./build-cf-iso [path to tar]..."
-  exit 1
-fi
+cd "$(dirname "$0")/.."
+mkdir -p output/cache/{bin,releases}
+rm output/cache/*.yml output/generate.log
 
-tars=$@
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-output_dir="$script_dir/../output"
-iso_file="$output_dir"/cf-deps.iso
+rq -y < ../cf-deployment/cf-deployment.yml | jq -r '.stemcells[0].version' > output/STEMCELL.txt
 
-rm -rf "$iso_file"
-mkdir -p "$output_dir"
-iso_dir="$(mktemp -d)"
-trap cleanup EXIT
+echo "GENERATE MANIFESTS"
+./scripts/generate-bosh-manifest -b ../bosh-deployment/ 2>> output/generate.log
+./scripts/generate-cf-manifest -c ../cf-deployment/ 2>> output/generate.log
+./scripts/generate-cf-mysql-manifest -m ../cf-mysql-deployment/ 2>> output/generate.log
+./scripts/build-workspace-tar 2>> output/generate.log >> output/generate.log
 
-cleanup() {
-  rm -rf "$iso_dir"
-}
+echo "MODIFY MANIFESTS"
+go run src/builder/main.go $(cat output/STEMCELL.txt) output/cache/*.yml
 
-build() {
-  "$script_dir"/../images/cf/build.sh
-}
+echo "DELETE OLD FILES"
+find output/cache/ -type f ! -newer output/STEMCELL.txt -delete
 
-export() {
-  # Place the 'workspace' container image
-  cid=$(docker run -d pivotal/cf sleep infinity)
-  docker export "$cid" > "${iso_dir}/workspace.tar"
-  docker kill "$cid"
-  docker rm "$cid"
-}
-
-add_deps(){
-  for tar in $tars; do
-    tar xzf "$tar" -C $iso_dir
-  done
-}
-
-make_iso() {
-  mkisofs -V cf-deps -R -o "$iso_file" "$iso_dir"
-}
-
-main () {
-  build
-  export
-  add_deps
-  make_iso
-}
-
-main
+echo "MAKE ISO FILE"
+mkisofs -quiet -V cf-deps -R -o output/cf-deps.iso output/cache/

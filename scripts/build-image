@@ -1,6 +1,5 @@
 #!/bin/bash -e
-
-set -ex
+set -euxo pipefail
 
 while getopts "l:" arg; do
   case $arg in
@@ -9,7 +8,7 @@ while getopts "l:" arg; do
   esac
 done
 
-if [[ -z $linuxkit ]]; then
+if [[ -z ${linuxkit:-} ]]; then
   if ! which linuxkit; then
     echo "ERROR: either provide the linuxkit binary with the '-l' flag or add linuxkit to your path"
     exit 1

@@ -1,52 +1,52 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-set -ex
-
+root_dir="$(cd "$(dirname "$0")"/.. && pwd)"
+output_dir="$root_dir"/output/cache
+imgscf_dir="$root_dir"/images/cf
+ops_dir="$root_dir"/images/cf/cf-operations
 while getopts "c:" arg; do
   case $arg in
-    c) cf_deployment=$OPTARG
+    c) cf_deployment="$(cd $OPTARG && pwd)"
       ;;
   esac
 done
+for var in cf_deployment; do
+  if [[ -z ${!var:-} ]]; then
+    echo "USAGE: generate-cf-manifest -c <path-to-cf-deployment>"
+    exit 1
+  fi
+done
+set -x
 
-if [[ -z $cf_deployment ]]; then
-  echo "USAGE: generate-cf-manifest -c <path-to-cf-deployment>"
-  exit 1
-fi
-if [[ ! -d $cf_deployment ]]; then
-  echo "ERROR: cf_deployment $cf_deployment does not exist"
-  exit 2
-fi
-cf_deployment="$(cd "$(dirname "$cf_deployment")"; pwd)/$(basename "$cf_deployment")"
-
-scripts_dir="$(cd "$(dirname "$0")" && pwd)"
-output_dir="$scripts_dir"/../output
-ops_dir="$scripts_dir"/../images/cf/cf-operations
-
-mkdir -p "$output_dir"
+cp "$imgscf_dir"/configs/dns-runtime-config.yml "$output_dir"/runtime-config.yml
+cp "$imgscf_dir"/app-security-group.json "$output_dir"/app-security-group.json
+cp "$imgscf_dir"/deploy-cf "$output_dir"/bin/deploy-cf
 
 pushd "$cf_deployment"
-
   bosh int cf-deployment.yml \
-  \
-  -o operations/use-compiled-releases.yml \
-  \
-  -o operations/experimental/skip-consul-cell-registrations.yml \
-  -o operations/experimental/skip-consul-locks.yml \
-  -o operations/experimental/use-bosh-dns-for-containers.yml \
-  -o operations/experimental/disable-consul.yml \
-  -o operations/bosh-lite.yml \
-  -o operations/experimental/disable-consul-bosh-lite.yml \
-  \
-  -o "$ops_dir"/allow-local-docker-registry.yml \
-  -o "$ops_dir"/garden-disable-app-armour.yml \
-  -o "$ops_dir"/collocate-tcp-router.yml \
-  -o "$ops_dir"/set-cfdev-subnet.yml \
-  -o "$ops_dir"/lower-memory.yml \
-  -o "$ops_dir"/remove-smoke-test.yml \
-  -o "$ops_dir"/low-tcp-ports.yml \
-  \
-  -v cf_admin_password=admin \
-  -v uaa_admin_client_secret=admin-client-secret \
-  > "$output_dir/cf.yml"
+    -o operations/use-compiled-releases.yml \
+    \
+    -o operations/experimental/skip-consul-cell-registrations.yml \
+    -o operations/experimental/skip-consul-locks.yml \
+    -o operations/experimental/use-bosh-dns-for-containers.yml \
+    -o operations/experimental/disable-consul.yml \
+    -o operations/bosh-lite.yml \
+    -o operations/experimental/disable-consul-bosh-lite.yml \
+    \
+    -o "$ops_dir"/allow-local-docker-registry.yml \
+    -o "$ops_dir"/garden-disable-app-armour.yml \
+    -o "$ops_dir"/collocate-tcp-router.yml \
+    -o "$ops_dir"/set-cfdev-subnet.yml \
+    -o "$ops_dir"/lower-memory.yml \
+    -o "$ops_dir"/remove-smoke-test.yml \
+    -o "$ops_dir"/low-tcp-ports.yml \
+    \
+    -v cf_admin_password=admin \
+    -v uaa_admin_client_secret=admin-client-secret \
+    > "$output_dir/deployment.yml"
+
+  bosh int iaas-support/bosh-lite/cloud-config.yml \
+    -o "$ops_dir"/set-cloud-config-subnet.yml \
+    > "$output_dir/cloud-config.yml"
 popd

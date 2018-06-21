@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-
-set -ex
+set -exo pipefail
 
 cfdev="/Users/pivotal/workspace/cfdev"
 dir="$( cd "$( dirname "$0" )" && pwd )"

@@ -9,4 +9,4 @@ gaol -t 127.0.0.1:8888 \
   -m /var/vcap/cache:/var/vcap/cache
 
 gaol -t 127.0.0.1:8888 \
-  run deploy-bosh --attach -c /usr/bin/deploy-bosh
+  run deploy-bosh --attach -c "/bin/bash /var/vcap/cache/bin/deploy-bosh"

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-set -ex
-
+root_dir="$(cd "$(dirname "$0")"/.. && pwd)"
+output_dir="$root_dir"/output/cache
+imgscf_dir="$root_dir"/images/cf
+ops_dir="$root_dir"/images/cf/bosh-operations
 while getopts "b:cu" arg; do
   case $arg in
-    b) bosh_deployment=$OPTARG
+    b) bosh_deployment="$(cd $OPTARG && pwd)"
       ;;
     c) include_credhub=true
       ;;
@@ -12,51 +15,51 @@ while getopts "b:cu" arg; do
       ;;
   esac
 done
+for var in bosh_deployment; do
+  if [[ -z ${!var:-} ]]; then
+    echo "USAGE: generate-bosh-manifest -b <path-to-bosh-deployment>"
+    exit 1
+  fi
+done
+set -x
 
-if [[ -z $bosh_deployment ]]; then
-  echo "USAGE: generate-bosh-manifest -b <path-to-bosh-deployment>"
-  exit 1
-fi
-if [[ ! -d $bosh_deployment ]]; then
-  echo "ERROR: bosh_deployment $bosh_deployment does not exist"
-  exit 2
-fi
-bosh_deployment="$(cd "$(dirname "$bosh_deployment")"; pwd)/$(basename "$bosh_deployment")"
+cp "$imgscf_dir"/deploy-bosh "$output_dir"/bin/deploy-bosh
 
-scripts_dir="$(cd "$(dirname "$0")" && pwd)"
-output_dir="$scripts_dir"/../output
-ops_dir="$scripts_dir"/../images/cf/bosh-operations
-
-mkdir -p "$output_dir"
 ops=( \
       -o bosh-lite.yml \
       -o bosh-lite-runc.yml \
       -o bosh-lite-grootfs.yml \
+      -o "$ops_dir"/remove-bosh-warden-cpi.yml
       -o warden/cpi.yml \
       -o warden/cpi-grootfs.yml \
       -o jumpbox-user.yml \
 )
-if [[ $include_uaa ]]; then
+if [[ ${include_uaa:-} ]]; then
   ops+=(-o uaa.yml)
 fi
 
-if [[ $include_credhub ]]; then
+if [[ ${include_credhub:-} ]]; then
   ops+=(-o credhub.yml)
 fi
 
 pushd "$bosh_deployment"
-    bosh int bosh.yml \
-      ${ops[@]} \
-      \
-      -o "$ops_dir"/disable-app-armor.yml \
-      -o "$ops_dir"/remove-ports.yml \
-      -o "$ops_dir"/use-warden-cpi-v39.yml \
-      -o "$ops_dir"/use-stemcell-3586.16.yml \
-      \
-      -v director_name="warden" \
-      -v internal_cidr=10.245.0.0/24 \
-      -v internal_gw=10.245.0.1 \
-      -v internal_ip=10.245.0.2 \
-      -v garden_host=10.0.0.10 \
-      > "$output_dir/bosh.yml"
+  bosh int bosh.yml \
+    ${ops[@]} \
+    \
+    -o "$ops_dir"/disable-app-armor.yml \
+    -o "$ops_dir"/remove-ports.yml \
+    -o "$ops_dir"/use-warden-cpi-v39.yml \
+    -o "$ops_dir"/use-stemcell-3586.24.yml \
+    \
+    -v director_name="warden" \
+    -v internal_cidr=10.245.0.0/24 \
+    -v internal_gw=10.245.0.1 \
+    -v internal_ip=10.245.0.2 \
+    -v garden_host=10.0.0.10 \
+    > "$output_dir"/director.yml
+
+  bosh int runtime-configs/dns.yml \
+    -o "$ops_dir"/add-host-pcfdev-dns-record.yml \
+    \
+    > "$output_dir"/dns.yml
 popd
