@@ -1,29 +1,12 @@
 #!/usr/bin/env bash
+set -euxo pipefail
 
-set -ex
-
-while getopts "c:b:m:" arg; do
-  case $arg in
-    c) cf_deps=$OPTARG
-      ;;
-    m) mysql_deps=$OPTARG
-      ;;
-    b) bosh_deps=$OPTARG
-  esac
-done
-
-if [[ -z "$cf_deps" || -z "$mysql_deps" || -z "$bosh_deps" ]]; then
-  echo "USAGE: ./build-cf-iso -c <cf-deps-tar> -m <cf-mysql-deps-tar> -b <bosh-deps-tar>"
+if [[ $# -lt 2 ]]; then
+  echo "USAGE: ./build-cf-iso [path to tar]..."
   exit 1
 fi
-if [[ ! -f $cf_deps || ! -f $mysql_deps || ! -f $bosh_deps ]]; then
-  echo "ERROR: Either $cf_deps, $mysql_deps or $bosh_deps do not exist"
-  exit 2
-fi
-cf_deps="$(cd "$(dirname "$cf_deps")"; pwd)/$(basename "$cf_deps")"
-mysql_deps="$(cd "$(dirname "$mysql_deps")"; pwd)/$(basename "$mysql_deps")"
-bosh_deps="$(cd "$(dirname "$bosh_deps")"; pwd)/$(basename "$bosh_deps")"
 
+tars=$@
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 output_dir="$script_dir/../output"
 iso_file="$output_dir"/cf-deps.iso
@@ -33,7 +16,6 @@ mkdir -p "$output_dir"
 iso_dir="$(mktemp -d)"
 trap cleanup EXIT
 
-
 cleanup() {
   rm -rf "$iso_dir"
 }
@@ -41,7 +23,6 @@ cleanup() {
 build() {
   "$script_dir"/../images/cf/build.sh
 }
-
 
 export() {
   # Place the 'workspace' container image
@@ -52,9 +33,9 @@ export() {
 }
 
 add_deps(){
-  tar xzf "$cf_deps" -C $iso_dir
-  tar xzf "$mysql_deps" -C $iso_dir
-  tar xzf "$bosh_deps" -C $iso_dir
+  for tar in $tars; do
+    tar xzf "$tar" -C $iso_dir
+  done
 }
 
 make_iso() {

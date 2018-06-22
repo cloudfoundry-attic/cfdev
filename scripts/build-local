@@ -39,7 +39,7 @@ echo "GENERATE MYSQL TAR"
 
 echo "GENERATE CF ISO"
 
-./scripts/build-cf-deps-iso -c output/cf.tgz  -b output/bosh.tgz -m output/mysql.tgz
+./scripts/build-cf-deps-iso output/cf.tgz output/bosh.tgz output/mysql.tgz
 
 echo "BUILD EFI IMAGE"
 
