@@ -3,7 +3,7 @@ set -euxo pipefail
 
 cd "$(dirname "$0")/.."
 mkdir -p output/cache/{bin,releases}
-rm output/cache/*.yml output/generate.log
+rm -f output/cache/*.yml output/generate.log
 
 rq -y < ../cf-deployment/cf-deployment.yml | jq -r '.stemcells[0].version' > output/STEMCELL.txt
 
