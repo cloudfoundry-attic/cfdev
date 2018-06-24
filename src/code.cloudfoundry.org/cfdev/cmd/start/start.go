@@ -189,10 +189,16 @@ func (s *Start) RunE(_ *cobra.Command, _ []string) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	s.UI.Say("Deploying Mysql...")
-	go reportDeployProgress(s.UI, garden, "cf-mysql")
-	if err := gdn.DeployMysql(garden); err != nil {
-		return errors.SafeWrap(err, "Failed to deploy mysql")
+	services, err := gdn.GetServices(garden)
+	if err != nil {
+		return errors.SafeWrap(err, "Failed to get list of services to deploy")
+	}
+	for _, service := range services {
+		s.UI.Say("Deploying %s...", service.Name)
+		go reportDeployProgress(s.UI, garden, service.Deployment)
+		if err := gdn.DeployService(garden, service.Handle, service.Script); err != nil {
+			return errors.SafeWrap(err, fmt.Sprintf("Failed to deploy %s", service.Name))
+		}
 	}
 
 	s.UI.Say(`

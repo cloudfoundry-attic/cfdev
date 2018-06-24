@@ -5,9 +5,11 @@ root_dir="$(cd "$(dirname "$0")"/.. && pwd)"
 output_dir="$root_dir"/output/cache
 imgscf_dir="$root_dir"/images/cf
 ops_dir="$root_dir"/images/cf/bosh-operations
-while getopts "b:cu" arg; do
+while getopts "b:s:cu" arg; do
   case $arg in
     b) bosh_deployment="$(cd $OPTARG && pwd)"
+      ;;
+    s) stemcell_version=$OPTARG
       ;;
     c) include_credhub=true
       ;;
@@ -15,9 +17,9 @@ while getopts "b:cu" arg; do
       ;;
   esac
 done
-for var in bosh_deployment; do
+for var in bosh_deployment stemcell_version; do
   if [[ -z ${!var:-} ]]; then
-    echo "USAGE: generate-bosh-manifest -b <path-to-bosh-deployment>"
+    echo "USAGE: generate-bosh-manifest -b <path-to-bosh-deployment> -s <stemcell_version>"
     exit 1
   fi
 done
@@ -42,6 +44,13 @@ if [[ ${include_credhub:-} ]]; then
   ops+=(-o credhub.yml)
 fi
 
+stemcell_ops="---
+- type: replace
+  path: /resource_pools/name=vms/stemcell
+  value:
+    url: https://bosh.io/d/stemcells/bosh-google-kvm-ubuntu-trusty-go_agent?v=$stemcell_version
+"
+
 pushd "$bosh_deployment"
   bosh int bosh.yml \
     ${ops[@]} \
@@ -49,7 +58,7 @@ pushd "$bosh_deployment"
     -o "$ops_dir"/disable-app-armor.yml \
     -o "$ops_dir"/remove-ports.yml \
     -o "$ops_dir"/use-warden-cpi-v39.yml \
-    -o "$ops_dir"/use-stemcell-3586.24.yml \
+    -o <(echo "$stemcell_ops") \
     \
     -v director_name="warden" \
     -v internal_cidr=10.245.0.0/24 \

@@ -5,21 +5,29 @@ root_dir="$(cd "$(dirname "$0")"/.. && pwd)"
 output_dir="$root_dir"/output/cache
 imgscf_dir="$root_dir"/images/cf
 ops_dir="$root_dir"/images/cf/mysql-operations
-while getopts "m:" arg; do
+while getopts "m:s:" arg; do
   case $arg in
     m) cf_mysql_deployment="$(cd $OPTARG && pwd)"
       ;;
+    s) stemcell_version=$OPTARG
+      ;;
   esac
 done
-for var in cf_mysql_deployment; do
+for var in cf_mysql_deployment stemcell_version; do
   if [[ -z ${!var:-} ]]; then
-    echo "USAGE: generate-cf-mysql-manifest -m <path-to-cf-mysql-deployment>"
+    echo "USAGE: generate-cf-mysql-manifest -m <path-to-cf-mysql-deployment> -s <stemcell_version>"
     exit 1
   fi
 done
 set -x
 
 cp "$imgscf_dir"/deploy-mysql "$output_dir"/bin/deploy-mysql
+
+stemcell_ops="---
+- type: replace
+  path: /stemcells/alias=default/version
+  value: "$stemcell_version"
+"
 
 pushd "$cf_mysql_deployment"
   bosh int cf-mysql-deployment.yml \
@@ -28,7 +36,7 @@ pushd "$cf_mysql_deployment"
     -o operations/no-arbitrator.yml \
     \
     -o "$ops_dir"/single-instances.yml \
-    -o "$ops_dir"/use-stemcell-3586.24.yml \
+    -o <(echo "$stemcell_ops") \
     \
     -v cf_mysql_external_host=p-mysql.v3.pcfdev.io \
     -v cf_mysql_host=v3.pcfdev.io \

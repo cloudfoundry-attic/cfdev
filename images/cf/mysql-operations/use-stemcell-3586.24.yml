@@ -1,4 +1,0 @@
----
-- type: replace
-  path: /stemcells/alias=default/version
-  value: "3586.24"

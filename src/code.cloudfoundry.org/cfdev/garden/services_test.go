@@ -23,7 +23,7 @@ var _ = Describe("DeployMysql", func() {
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.DeployMysql(fakeClient)
+		err = gdn.DeployService(fakeClient, "deploy-mysql", "bin/deploy-mysql")
 	})
 
 	It("creates a container", func() {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -94,8 +95,8 @@ func Stemcells(data Yaml) (string, error) {
 	if stemcells, ok := data["stemcells"].([]interface{}); ok {
 		for _, stemcell := range stemcells {
 			if stemcell, ok := stemcell.(Yaml); ok {
-				if stemcell["os"] == "ubuntu-trusty" {
-					stemcellVersion = stemcell["version"].(string)
+				stemcellVersion = fmt.Sprintf("%v", stemcell["version"])
+				if stemcell["os"] == "ubuntu-trusty" && stemcellVersion != "<nil>" {
 					if _, err := DownloadStemcell(stemcellVersion); err != nil {
 						return "", err
 					}
@@ -104,6 +105,55 @@ func Stemcells(data Yaml) (string, error) {
 		}
 	}
 	return stemcellVersion, nil
+}
+
+func isStemcellUploaded(stemcellVersion string) (bool, error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("bosh", "stemcells", "--json")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", stderr.String())
+		return false, err
+	}
+	data := struct {
+		Tables []struct {
+			Rows []struct {
+				Version string `json:"version"`
+			}
+		}
+	}{}
+	if err := json.Unmarshal(stdout.Bytes(), &data); err != nil {
+		return false, err
+	}
+	for _, table := range data.Tables {
+		for _, row := range table.Rows {
+			if row.Version == stemcellVersion || row.Version == fmt.Sprintf("%s*", stemcellVersion) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func UploadStemcell(stemcellVersion string) error {
+	if uploaded, err := isStemcellUploaded(stemcellVersion); err != nil {
+		return err
+	} else if uploaded {
+		return nil
+	}
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command(
+		"bosh", "upload-stemcell",
+		fmt.Sprintf("https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-%s-google-kvm-ubuntu-trusty-go_agent.tgz", stemcellVersion),
+	)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", stderr.String())
+		return err
+	}
+	return nil
 }
 
 func CompileRelease(stemcellVersion string, release map[interface{}]interface{}, path string) error {
@@ -174,23 +224,45 @@ func Releases(data Yaml, stemcellVersion string) error {
 						return err
 					}
 					release["url"] = newURL
-				} else if release["stemcell"] != nil || strings.Contains(release["url"].(string), "-compiled-") {
-					fmt.Println("Download:", release["url"])
-					if err := Download(release["url"].(string), path); err != nil {
-						return fmt.Errorf("download: %s: %s", release["url"], err)
+				} else if url, ok := release["url"].(string); ok && url != "<nil>" {
+					if strings.HasPrefix(url, "file://release") {
+						release["url"] = "file:///var/vcap" + (release["url"].(string))[6:]
+						fmt.Println("Convert Absolute:", release["url"])
+					} else if release["stemcell"] != nil || strings.Contains(url, "-compiled-") {
+						fmt.Println("Download:", url)
+						if err := Download(url, path); err != nil {
+							return fmt.Errorf("download: %s: %s", url, err)
+						}
+						release["url"] = newURL
+					} else {
+						fmt.Println("Compile:", url)
+						if err := CompileRelease(stemcellVersion, release, path); err != nil {
+							return fmt.Errorf("compile release: %s: %s", url, err)
+						}
+						release["url"] = newURL
 					}
-					release["url"] = newURL
-				} else {
-					fmt.Println("Compile:", release["url"])
-					if err := CompileRelease(stemcellVersion, release, path); err != nil {
-						return fmt.Errorf("compile release: %s: %s", release["url"], err)
-					}
-					release["url"] = newURL
 				}
 			}
 		}
 	}
 	return nil
+}
+
+func OneInstance(data Yaml) {
+	if groups, ok := data["instance_groups"].([]interface{}); ok {
+		for _, group := range groups {
+			if group, ok := group.(Yaml); ok {
+				if i, ok := group["instances"].(int); ok {
+					if i > 1 {
+						group["instances"] = 1
+						fmt.Printf("Instances: %s: %d -> 1\n", group["name"], i)
+					} else {
+						fmt.Printf("Instances: %s: %d\n", group["name"], i)
+					}
+				}
+			}
+		}
+	}
 }
 
 func Write(data interface{}, path string) error {
@@ -211,12 +283,16 @@ func Process(stemcellVersion, file string) error {
 		return fmt.Errorf("stemcells: %s: %s", file, err)
 	}
 	if foundStemcellVersion != "" && foundStemcellVersion != stemcellVersion {
-		// TODO have a better plan
-		return fmt.Errorf("expected stemcell %s, found %s", stemcellVersion, foundStemcellVersion)
+		fmt.Printf("===\n=== expected stemcell %s, found %s (using found version)\n===\n", stemcellVersion, foundStemcellVersion)
+		stemcellVersion = foundStemcellVersion
+	}
+	if err := UploadStemcell(stemcellVersion); err != nil {
+		return fmt.Errorf("upload stemcell: %s: %s", file, err)
 	}
 	if err := Releases(data, stemcellVersion); err != nil {
 		return fmt.Errorf("releases: %s: %s", file, err)
 	}
+	OneInstance(data)
 	if err := Write(data, file); err != nil {
 		return fmt.Errorf("write: %s: %s", file, err)
 	}
