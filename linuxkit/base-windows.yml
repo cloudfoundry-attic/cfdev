@@ -33,7 +33,7 @@ onboot:
     command: ["mkdir", "/host_var/vpnkit"]
 
   - name: vpnkit-9pmount-vsock
-    image: cfdev/vpnkit-9pmount-vsock:dev
+    image: pivotal/vpnkit-9pmount-vsock:dev
     capabilities:
         - CAP_SYS_ADMIN
     net: host
@@ -47,7 +47,7 @@ services:
    # Format and mount the disk image in /var/lib
 
   - name: vpnkit-tap-vsockd
-    image: cfdev/vpnkit-tap-vsockd:dev
+    image: pivotal/vpnkit-tap-vsockd:dev
     capabilities:
         - CAP_SYS_ADMIN
         - CAP_NET_ADMIN

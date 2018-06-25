@@ -21,15 +21,32 @@ if [[ -z ${linuxkit:-} ]]; then
   fi
 fi
 
-script_dir="$( cd "$( dirname "$BASH_SOURCE[0]" )" && pwd )"
-output_dir="$script_dir"/../output
-linuxkit_dir="$script_dir"/../linuxkit
+dir="$( cd "$( dirname "$BASH_SOURCE[0]" )" && cd .. && pwd )"
+script_dir="$dir/scripts"
+output_dir="$dir"/output
+linuxkit_dir="$dir"/linuxkit
+baseyml_path="$linuxkit_dir"/base.yml
 
-if [[ "$os" == "windows" ]]; then
-  baseyml_path="$linuxkit_dir"/base-windows.yml
-else
-  baseyml_path="$linuxkit_dir"/base.yml
-fi
+function cleanup() {
+  rm -f $dir/src/github.com/moby/vpnkit/c/vpnkit-9pmount-vsock/build.yml
+  rm -f $dir/src/github.com/moby/vpnkit/c/vpnkit-tap-vsockd/build.yml
+}
+trap cleanup exit
+
+function build_vpnkit_image () {
+  image=$1
+
+  pushd $dir/src/github.com/moby/vpnkit > /dev/null
+    cat > ./c/$image/build.yml <<EOF
+image: $image
+org: pivotal
+network: true
+disable-content-trust: true
+EOF
+
+    "$linuxkit" pkg build -hash dev ./c/$image
+  popd > /dev/null
+}
 
 mkdir -p "$output_dir"
 
@@ -38,10 +55,16 @@ mkdir -p "$output_dir"
 "$linuxkit" pkg build -hash dev "$linuxkit_dir"/pkg/garden-runc
 "$linuxkit" pkg build -hash dev "$linuxkit_dir"/pkg/openssl
 
+if [[ "$os" == "windows" ]]; then
+  baseyml_path="$linuxkit_dir"/base-windows.yml
+  build_vpnkit_image vpnkit-9pmount-vsock
+  build_vpnkit_image vpnkit-tap-vsockd
+fi
+
 "$linuxkit" build \
  -disable-content-trust \
  -name cfdev \
  -format iso-efi \
  -dir "$output_dir" \
  $baseyml_path \
- "$linuxkit_dir"/garden.yml \
+ "$linuxkit_dir"/garden.yml
