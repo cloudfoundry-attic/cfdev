@@ -1,9 +1,11 @@
 #!/bin/bash -e
 set -euxo pipefail
 
-while getopts "l:" arg; do
+while getopts "l:o:" arg; do
   case $arg in
     l) linuxkit=$OPTARG
+      ;;
+    o) os=$OPTARG
       ;;
   esac
 done
@@ -17,10 +19,19 @@ if [[ -z ${linuxkit:-} ]]; then
   fi
 fi
 
+if [[ -z $os ]]; then
+  os=darwin
+fi
 
 script_dir="$( cd "$( dirname "$BASH_SOURCE[0]" )" && pwd )"
 output_dir="$script_dir"/../output
 linuxkit_dir="$script_dir"/../linuxkit
+
+if [[ "$os" == "windows" ]]; then
+  baseyml_path="$linuxkit_dir"/base-windows.yml
+else
+  baseyml_path="$linuxkit_dir"/base.yml
+fi
 
 mkdir -p "$output_dir"
 
@@ -34,5 +45,5 @@ mkdir -p "$output_dir"
  -name cfdev \
  -format iso-efi \
  -dir "$output_dir" \
- "$linuxkit_dir"/base.yml \
+ $baseyml_path \
  "$linuxkit_dir"/garden.yml \
