@@ -1,6 +1,8 @@
 #!/bin/bash -e
 set -euxo pipefail
 
+os=darwin
+
 while getopts "l:o:" arg; do
   case $arg in
     l) linuxkit=$OPTARG
@@ -17,10 +19,6 @@ if [[ -z ${linuxkit:-} ]]; then
   else
     linuxkit="linuxkit"
   fi
-fi
-
-if [[ -z $os ]]; then
-  os=darwin
 fi
 
 script_dir="$( cd "$( dirname "$BASH_SOURCE[0]" )" && pwd )"
