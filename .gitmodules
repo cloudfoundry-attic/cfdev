@@ -73,3 +73,6 @@
 [submodule "src/github.com/cppforlife/go-semi-semantic"]
 	path = src/github.com/cppforlife/go-semi-semantic
 	url = https://github.com/cppforlife/go-semi-semantic.git
+[submodule "src/github.com/moby/vpnkit"]
+	path = src/github.com/moby/vpnkit
+	url = https://github.com/moby/vpnkit.git
