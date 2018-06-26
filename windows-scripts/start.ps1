@@ -21,6 +21,11 @@ $script_dir = [System.IO.Path]::GetDirectoryName($myInvocation.MyCommand.Definit
 $cf_dev_home="$HOME\.cfdev"
 $vmName="cfdev"
 
+function Generate-DNSFiles {
+    $file_path = Join-Path $script_dir generate-dns-files.go
+    go run $file_path
+}
+
 function Register-ServiceGuids {
   $ethServiceGuid="7207f451-2ca3-4b88-8d01-820a21d78293"
   $ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name $ethServiceGuid
@@ -80,14 +85,17 @@ function Create-VM {
 }
 
 function Start-VPNKit {
+  $env:dns_path = Join-Path $script_dir resolv.conf
+  $env:dhcp_path = Join-Path $script_dir dhcp.json 
+
   start-job -Name "vpnkit"  `
       -InitializationScript { $id=(Get-VM -Name cfdev).Id } `
       -ScriptBlock { C:\Users\pivotal\vpnkit\vpnkit.exe `
       --ethernet hyperv-connect://$id/"7207f451-2ca3-4b88-8d01-820a21d78293" `
       --port hyperv-connect://$id/"cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa" `
       --port hyperv-connect://$id/"e3ae8f06-8c25-47fb-b6ed-c20702bcef5e" `
-      --dns "C:\Users\pivotal\AppData\Roaming\Docker\resolv.conf" `
-      --dhcp "C:\Users\pivotal\AppData\Roaming\Docker\dhcp.json" `
+      --dns $env:dns_path `
+      --dhcp $env:dhcp_path `
       --diagnostics "\\.\pipe\cfdevVpnKitDiagnostics" `
       --listen-backlog 32 `
       --lowest-ip 169.254.82.3 `
@@ -97,6 +105,7 @@ function Start-VPNKit {
 }
 
 function Main {
+  Generate-DNSFiles
   Add-IPAliases
   Register-ServiceGuids
   Create-VM
