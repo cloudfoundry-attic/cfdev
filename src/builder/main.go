@@ -217,27 +217,31 @@ func Releases(data Yaml, stemcellVersion string) error {
 		for _, release := range releases {
 			if release, ok := release.(Yaml); ok {
 				path := fmt.Sprintf("output/cache/releases/%v-%v-%s.tgz", release["name"], release["version"], stemcellVersion)
+				newURL := fmt.Sprintf("file:///var/vcap/cache/releases/%v-%v-%s.tgz", release["name"], release["version"], stemcellVersion)
 				if Exists(path) {
 					fmt.Println("Skip:", filepath.Base(path))
 					if err := os.Chtimes(path, time.Now(), time.Now()); err != nil {
 						return err
 					}
+					release["url"] = newURL
 				} else if url, ok := release["url"].(string); ok && url != "<nil>" {
-					if strings.HasPrefix(url, "file://releases/") {
+					if strings.HasPrefix(url, "file://release") {
+						release["url"] = "file:///var/vcap/cache" + (release["url"].(string))[6:]
 						fmt.Println("Convert Absolute:", release["url"])
 					} else if release["stemcell"] != nil || strings.Contains(url, "-compiled-") {
+						fmt.Println("Download:", url)
 						if err := Download(url, path); err != nil {
 							return fmt.Errorf("download: %s: %s", url, err)
 						}
+						release["url"] = newURL
 					} else {
 						fmt.Println("Compile:", url)
 						if err := CompileRelease(stemcellVersion, release, path); err != nil {
 							return fmt.Errorf("compile release: %s: %s", url, err)
 						}
+						release["url"] = newURL
 					}
 				}
-				delete(release, "url")
-				delete(release, "sha1")
 			}
 		}
 	}
