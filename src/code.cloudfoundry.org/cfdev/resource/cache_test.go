@@ -31,7 +31,7 @@ var _ = Describe("Cache Sync", func() {
 
 	var (
 		tmpDir       string
-		catalog      *resource.Catalog
+		catalog      resource.Catalog
 		cache        *resource.Cache
 		downloads    []string
 		mockProgress *MockProgress
@@ -47,7 +47,7 @@ var _ = Describe("Cache Sync", func() {
 		// 1. Asset is missing
 		// 2. Existing asset contains incorrect checksum
 		// 3. Existing asset contains correct checksum
-		catalog = &resource.Catalog{
+		catalog = resource.Catalog{
 			Items: []resource.Item{
 				{
 					Name:  "first-resource",
@@ -166,7 +166,7 @@ var _ = Describe("Cache Sync", func() {
 	})
 
 	It("handles file:// schema", func() {
-		catalog = &resource.Catalog{Items: []resource.Item{{
+		catalog = resource.Catalog{Items: []resource.Item{{
 			Name:  "file-resource",
 			URL:   fmt.Sprintf("file://%s/other-file", tmpDir),
 			MD5:   "9a0364b9e99bb480dd25e1f0284c8555", // md5 -s content

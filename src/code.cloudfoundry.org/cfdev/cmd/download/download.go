@@ -65,7 +65,7 @@ func CacheSync(dependencies resource.Catalog, cacheDir string, writer io.Writer)
 		Writer:                writer,
 	}
 
-	if err := cache.Sync(&dependencies); err != nil {
+	if err := cache.Sync(dependencies); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 	return nil

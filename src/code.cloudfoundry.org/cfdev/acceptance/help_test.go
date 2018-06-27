@@ -1,9 +1,7 @@
 package acceptance
 
 import (
-	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -14,18 +12,6 @@ import (
 )
 
 var _ = Describe("help", func() {
-	BeforeEach(func() {
-		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
-			SetupDependencies(filepath.Join(cfdevHome, "cache"))
-			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
-		}
-	})
-
-	AfterEach(func() {
-		gexec.Kill()
-		os.Unsetenv("CFDEV_SKIP_ASSET_CHECK")
-	})
-
 	It("running 'cf dev' provides help", func() {
 		cmd := exec.Command("cf", "dev")
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -34,6 +20,7 @@ var _ = Describe("help", func() {
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Expect(session).To(gbytes.Say("Usage:"))
 		Expect(session).To(gbytes.Say("Available Commands:"))
+		Expect(session).To(gexec.Exit())
 	})
 
 	It("running 'cf dev help' provides help", func() {
@@ -44,5 +31,6 @@ var _ = Describe("help", func() {
 		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
 		Expect(session).To(gbytes.Say("Usage:"))
 		Expect(session).To(gbytes.Say("Available Commands:"))
+		Expect(session).To(gexec.Exit())
 	})
 })

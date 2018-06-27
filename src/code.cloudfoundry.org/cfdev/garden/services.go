@@ -12,8 +12,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func DeployService(client garden.Client, handle, script string) error {
-	container, err := client.Create(containerSpec(handle))
+func (g *Garden) DeployService(handle, script string) error {
+	container, err := g.Client.Create(containerSpec(handle))
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func DeployService(client garden.Client, handle, script string) error {
 		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %d", exitCode))
 	}
 
-	client.Destroy(handle)
+	g.Client.Destroy(handle)
 
 	return nil
 }
@@ -50,8 +50,8 @@ type Service struct {
 	Deployment string `yaml:"deployment"`
 }
 
-func GetServices(client garden.Client) ([]Service, error) {
-	container, err := client.Create(containerSpec("get-services"))
+func (g *Garden) GetServices() ([]Service, error) {
+	container, err := g.Client.Create(containerSpec("get-services"))
 	if err != nil {
 		return nil, err
 	}

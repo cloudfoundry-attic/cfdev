@@ -7,7 +7,7 @@ import (
 	"code.cloudfoundry.org/garden"
 )
 
-func DeployBosh(client garden.Client) error {
+func (g *Garden) DeployBosh() error {
 	containerSpec := garden.ContainerSpec{
 		Handle:     "deploy-bosh",
 		Privileged: true,
@@ -29,7 +29,7 @@ func DeployBosh(client garden.Client) error {
 		},
 	}
 
-	container, err := client.Create(containerSpec)
+	container, err := g.Client.Create(containerSpec)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func DeployBosh(client garden.Client) error {
 		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
 	}
 
-	client.Destroy("deploy-bosh")
+	g.Client.Destroy("deploy-bosh")
 
 	return nil
 }

@@ -5,10 +5,12 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
-
 	"code.cloudfoundry.org/cfdev/resource"
 )
+
+type CFDevD struct {
+	ExecutablePath string
+}
 
 func IsCFDevDInstalled(sockPath string, binPath string, expectedMD5 string) bool {
 	currentMD5, err := resource.MD5(binPath)
@@ -29,10 +31,9 @@ func IsCFDevDInstalled(sockPath string, binPath string, expectedMD5 string) bool
 	return true
 }
 
-func InstallCFDevD(cacheDir string) error {
-	cfdevdPath := filepath.Join(cacheDir, "cfdevd")
+func (c *CFDevD) Install() error {
 	fmt.Println("Installing networking components (requires root privileges)")
-	cmd := exec.Command("sudo", "-S", cfdevdPath, "install")
+	cmd := exec.Command("sudo", "-S", c.ExecutablePath, "install")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdevd/launchd"
-	"code.cloudfoundry.org/cfdevd/launchd/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -48,7 +47,7 @@ var _ = Describe("launchd", func() {
 
 		It("should write the plist and load the daemon", func() {
 			executableToInstall := filepath.Join(binDir, "some-executable")
-			spec := models.DaemonSpec{
+			spec := launchd.DaemonSpec{
 				Label:            label,
 				Program:          executableToInstall,
 				SessionType:      "Background",
@@ -89,7 +88,7 @@ var _ = Describe("launchd", func() {
 
 		It("sets unix socket listeners on plist", func() {
 			executableToInstall := filepath.Join(binDir, "some-executable")
-			spec := models.DaemonSpec{
+			spec := launchd.DaemonSpec{
 				Label:            label,
 				Program:          executableToInstall,
 				SessionType:      "Background",

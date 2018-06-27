@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
+	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"gopkg.in/yaml.v2"
 )
 
-func FetchBOSHConfig(client garden.Client) (BOSHConfiguration, error) {
+func (g *Garden) FetchBOSHConfig() (bosh.Config, error) {
 	containerSpec := garden.ContainerSpec{
 		Handle:     "fetch-bosh-config",
 		Privileged: true,
@@ -26,9 +27,9 @@ func FetchBOSHConfig(client garden.Client) (BOSHConfiguration, error) {
 		},
 	}
 
-	container, err := client.Create(containerSpec)
+	container, err := g.Client.Create(containerSpec)
 	if err != nil {
-		return BOSHConfiguration{}, err
+		return bosh.Config{}, err
 	}
 
 	buffer := &bytes.Buffer{}
@@ -42,37 +43,26 @@ func FetchBOSHConfig(client garden.Client) (BOSHConfiguration, error) {
 	})
 
 	if err != nil {
-		return BOSHConfiguration{}, err
+		return bosh.Config{}, err
 	}
 
 	exitCode, err := process.Wait()
 	if err != nil {
-		return BOSHConfiguration{}, err
+		return bosh.Config{}, err
 	}
 
 	if exitCode != 0 {
-		return BOSHConfiguration{}, errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
+		return bosh.Config{}, errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
 	}
 
-	client.Destroy("fetch-bosh-config")
+	g.Client.Destroy("fetch-bosh-config")
 
 	var resp yamlResponse
 	if err := yaml.Unmarshal(buffer.Bytes(), &resp); err != nil {
-		return BOSHConfiguration{}, errors.SafeWrap(err, "unable to parse bosh config")
+		return bosh.Config{}, errors.SafeWrap(err, "unable to parse bosh config")
 	}
 
 	return resp.convert()
-}
-
-type BOSHConfiguration struct {
-	AdminUsername   string
-	AdminPassword   string
-	CACertificate   string
-	DirectorAddress string
-
-	GatewayHost       string
-	GatewayPrivateKey string
-	GatewayUsername   string
 }
 
 type yamlResponse struct {
@@ -85,8 +75,8 @@ type yamlResponse struct {
 	} `yaml:"jumpbox_ssh"`
 }
 
-func (r *yamlResponse) convert() (BOSHConfiguration, error) {
-	conf := BOSHConfiguration{}
+func (r *yamlResponse) convert() (bosh.Config, error) {
+	conf := bosh.Config{}
 
 	if r.AdminPassword == "" {
 		return conf, errors.SafeWrap(nil, "admin password was not returned")

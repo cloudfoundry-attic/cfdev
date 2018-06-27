@@ -15,15 +15,17 @@ var _ = Describe("DeployMysql", func() {
 	var (
 		fakeClient *gardenfakes.FakeClient
 		err        error
+		gclient    *gdn.Garden
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
+		gclient = &gdn.Garden{Client: fakeClient}
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.DeployService(fakeClient, "deploy-mysql", "bin/deploy-mysql")
+		err = gclient.DeployService("deploy-mysql", "bin/deploy-mysql")
 	})
 
 	It("creates a container", func() {

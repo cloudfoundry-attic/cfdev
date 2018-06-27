@@ -56,7 +56,7 @@ type Config struct {
 	CFDevHome              string
 	StateDir               string
 	CacheDir               string
-	VpnkitStateDir         string
+	VpnKitStateDir         string
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
@@ -81,7 +81,7 @@ func NewConfig() (Config, error) {
 		CFDevHome:              cfdevHome,
 		StateDir:               filepath.Join(cfdevHome, "state", "linuxkit"),
 		CacheDir:               filepath.Join(cfdevHome, "cache"),
-		VpnkitStateDir:         filepath.Join(cfdevHome, "state", "vpnkit"),
+		VpnKitStateDir:         filepath.Join(cfdevHome, "state", "vpnkit"),
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),

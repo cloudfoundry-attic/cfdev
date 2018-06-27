@@ -29,6 +29,27 @@ var _ = Describe("hyperkit lifecycle", func() {
 	var (
 		startSession *gexec.Session
 	)
+	BeforeEach(func(){
+		pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")
+		if pluginPath == "" {
+			Fail("please provide CFDEV_PLUGIN_PATH (use ./generate-plugin.sh)")
+		}
+		os.Unsetenv("BOSH_ALL_PROXY")
+
+		cfdevHome = os.Getenv("CFDEV_HOME")
+		if cfdevHome == "" {
+			cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
+		}
+		hyperkitPidPath = filepath.Join(cfdevHome, "state", "linuxkit", "hyperkit.pid")
+
+		session := cf.Cf("install-plugin", pluginPath, "-f")
+		Eventually(session).Should(gexec.Exit(0))
+	})
+
+	AfterEach(func(){
+		session := cf.Cf("uninstall-plugin", "cfdev")
+		Eventually(session).Should(gexec.Exit(0))
+	})
 
 	Context("starting the default cf dev file", func() {
 		BeforeEach(func() {

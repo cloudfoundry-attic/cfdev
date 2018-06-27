@@ -9,15 +9,15 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/shell"
 )
 
 var _ = Describe("Formatting BOSH Configuration", func() {
-	var config garden.BOSHConfiguration
+	var config bosh.Config
 	var env shell.Environment
 	BeforeEach(func() {
-		config = garden.BOSHConfiguration{
+		config = bosh.Config{
 			AdminUsername:   "admin",
 			AdminPassword:   "admin-password",
 			CACertificate:   "ca-certificate",
@@ -97,7 +97,7 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 				StateDir: "/some-garbage-directory",
 			}
 
-			_, err := env.Prepare(garden.BOSHConfiguration{})
+			_, err := env.Prepare(bosh.Config{})
 			Expect(err).To(HaveOccurred())
 		})
 	})

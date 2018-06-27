@@ -5,19 +5,19 @@ import (
 	"os"
 	"strings"
 
+	"code.cloudfoundry.org/cfdev/bosh"
+
 	"bytes"
 
 	"io/ioutil"
 	"path/filepath"
-
-	"code.cloudfoundry.org/cfdev/garden"
 )
 
 type Environment struct {
 	StateDir string
 }
 
-func (e *Environment) Prepare(config garden.BOSHConfiguration) (string, error) {
+func (e *Environment) Prepare(config bosh.Config) (string, error) {
 	keyPath := filepath.Join(e.StateDir, "bosh-gw-key")
 	certPath := filepath.Join(e.StateDir, "bosh-ca-cert")
 

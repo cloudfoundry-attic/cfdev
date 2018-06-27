@@ -7,9 +7,10 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"code.cloudfoundry.org/cfdev/config"
-	launchd "code.cloudfoundry.org/cfdevd/launchd/models"
+	"code.cloudfoundry.org/cfdevd/launchd"
 )
 
 type UI interface {
@@ -18,29 +19,52 @@ type UI interface {
 }
 
 type LinuxKit struct {
-	Config      config.Config
-	DepsIsoPath string
+	Config  config.Config
+	Launchd Launchd
+}
+
+type Launchd interface {
+	AddDaemon(launchd.DaemonSpec) error
+	Start(label string) error
+	Stop(label string) error
+	IsRunning(label string) (bool, error)
 }
 
 const LinuxKitLabel = "org.cloudfoundry.cfdev.linuxkit"
 
-func (l *LinuxKit) DaemonSpec(cpus, mem int) (launchd.DaemonSpec, error) {
+func (l *LinuxKit) Start(cpus int, mem int, depsIsoPath string) error {
+	daemonSpec, err := l.DaemonSpec(cpus, mem, depsIsoPath)
+	if err != nil {
+		return err
+	}
+	if err := l.Launchd.AddDaemon(daemonSpec); err != nil {
+		return err
+	}
+	return l.Launchd.Start(LinuxKitLabel)
+}
+
+func (l *LinuxKit) Stop() {
+	l.Launchd.Stop(LinuxKitLabel)
+	procManager := &Manager{}
+	procManager.SafeKill(filepath.Join(l.Config.StateDir, "hyperkit.pid"), "hyperkit")
+}
+
+func (l *LinuxKit) IsRunning() (bool, error) {
+	return l.Launchd.IsRunning(LinuxKitLabel)
+}
+
+func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.DaemonSpec, error) {
 	linuxkit := filepath.Join(l.Config.CacheDir, "linuxkit")
 	hyperkit := filepath.Join(l.Config.CacheDir, "hyperkit")
 	uefi := filepath.Join(l.Config.CacheDir, "UEFI.fd")
 	qcowtool := filepath.Join(l.Config.CacheDir, "qcow-tool")
-	vpnkitEthSock := filepath.Join(l.Config.VpnkitStateDir, "vpnkit_eth.sock")
-	vpnkitPortSock := filepath.Join(l.Config.VpnkitStateDir, "vpnkit_port.sock")
+	vpnkitEthSock := filepath.Join(l.Config.VpnKitStateDir, "vpnkit_eth.sock")
+	vpnkitPortSock := filepath.Join(l.Config.VpnKitStateDir, "vpnkit_port.sock")
 
-	if l.DepsIsoPath == "" {
-		l.DepsIsoPath = filepath.Join(l.Config.CacheDir, "cf-deps.iso")
-	} else {
-		if _, err := os.Stat(l.DepsIsoPath); os.IsNotExist(err) {
-			return launchd.DaemonSpec{}, err
-		}
+	if _, err := os.Stat(depsIsoPath); os.IsNotExist(err) {
+		return launchd.DaemonSpec{}, err
 	}
 
-	dependencyImagePath := l.DepsIsoPath
 	osImagePath := filepath.Join(l.Config.CacheDir, "cfdev-efi.iso")
 
 	diskArgs := []string{
@@ -66,7 +90,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int) (launchd.DaemonSpec, error) {
 			"-networking", fmt.Sprintf("vpnkit,%v,%v", vpnkitEthSock, vpnkitPortSock),
 			"-fw", uefi,
 			"-disk", strings.Join(diskArgs, ","),
-			"-disk", "file=" + dependencyImagePath,
+			"-disk", "file=" + depsIsoPath,
 			"-state", l.Config.StateDir,
 			"--uefi",
 			osImagePath,
@@ -75,4 +99,17 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int) (launchd.DaemonSpec, error) {
 		StdoutPath: path.Join(l.Config.CFDevHome, "linuxkit.stdout.log"),
 		StderrPath: path.Join(l.Config.CFDevHome, "linuxkit.stderr.log"),
 	}, nil
+}
+
+func (l *LinuxKit) Watch(exit chan string) {
+	go func() {
+		for {
+			running, err := l.Launchd.IsRunning(VpnKitLabel)
+			if !running && err == nil {
+				exit <- "linuxkit"
+				return
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}()
 }

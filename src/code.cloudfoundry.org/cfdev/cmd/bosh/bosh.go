@@ -3,12 +3,10 @@ package bosh
 import (
 	"os"
 
+	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
-	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/shell"
-	"code.cloudfoundry.org/garden/client"
-	"code.cloudfoundry.org/garden/client/connection"
 	"github.com/spf13/cobra"
 )
 
@@ -16,10 +14,15 @@ type UI interface {
 	Say(message string, args ...interface{})
 }
 
+type GardenClient interface {
+	FetchBOSHConfig() (bosh.Config, error)
+}
+
 type Bosh struct {
-	Exit   chan struct{}
-	UI     UI
-	Config config.Config
+	Exit         chan struct{}
+	UI           UI
+	Config       config.Config
+	GardenClient GardenClient
 }
 
 func (b *Bosh) Cmd() *cobra.Command {
@@ -43,8 +46,7 @@ func (b *Bosh) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(128)
 	}()
 
-	gClient := client.New(connection.New("tcp", "localhost:8888"))
-	config, err := gdn.FetchBOSHConfig(gClient)
+	config, err := b.GardenClient.FetchBOSHConfig()
 	if err != nil {
 		return errors.SafeWrap(err, "failed to fetch bosh configuration")
 	}

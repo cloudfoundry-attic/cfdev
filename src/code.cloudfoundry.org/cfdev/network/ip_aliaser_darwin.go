@@ -8,7 +8,9 @@ import (
 	"strings"
 )
 
-func AddLoopbackAliases(addrs ...string) error {
+type HostNet struct {}
+
+func (*HostNet) AddLoopbackAliases(addrs ...string) error {
 	prompted := false
 	for _, addr := range addrs {
 		exists, err := aliasExists(addr)

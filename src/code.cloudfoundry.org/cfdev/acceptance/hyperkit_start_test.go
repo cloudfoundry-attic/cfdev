@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdevd/launchd"
-	"code.cloudfoundry.org/cfdevd/launchd/models"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -82,7 +81,7 @@ var _ = Describe("hyperkit start", func() {
 			launchdTmpDir, _ = ioutil.TempDir("", "cfdev.test.running.")
 			lctl := launchd.New(launchdTmpDir)
 			Expect(lctl.IsRunning("org.cloudfoundry.cfdev.linuxkit")).To(BeFalse())
-			lctl.AddDaemon(models.DaemonSpec{
+			lctl.AddDaemon(launchd.DaemonSpec{
 				Label:            "org.cloudfoundry.cfdev.linuxkit",
 				Program:          "/bin/bash",
 				SessionType:      "Background",

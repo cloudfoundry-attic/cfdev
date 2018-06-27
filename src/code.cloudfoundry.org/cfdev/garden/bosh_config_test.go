@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"code.cloudfoundry.org/cfdev/bosh"
 	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/gardenfakes"
@@ -15,17 +16,19 @@ import (
 var _ = Describe("Fetching BOSH Configuration", func() {
 	var (
 		fakeClient *gardenfakes.FakeClient
-		boshConfig gdn.BOSHConfiguration
+		boshConfig bosh.Config
 		err        error
+		gclient    *gdn.Garden
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
+		gclient = &gdn.Garden{Client: fakeClient}
 	})
 
 	JustBeforeEach(func() {
-		boshConfig, err = gdn.FetchBOSHConfig(fakeClient)
+		boshConfig, err = gclient.FetchBOSHConfig()
 	})
 
 	It("creates a container", func() {
@@ -81,7 +84,7 @@ var _ = Describe("Fetching BOSH Configuration", func() {
 			})
 
 			It("returns the configuration", func() {
-				Expect(boshConfig).Should(Equal(gdn.BOSHConfiguration{
+				Expect(boshConfig).Should(Equal(bosh.Config{
 					AdminUsername:   "admin",
 					AdminPassword:   "admin-password",
 					CACertificate:   "ca-certificate",

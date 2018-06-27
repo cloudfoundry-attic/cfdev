@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-
-	"code.cloudfoundry.org/cfdevd/launchd/models"
 )
 
 type Launchd struct {
@@ -23,7 +21,7 @@ func New(pListDir string) *Launchd {
 	}
 }
 
-func (l *Launchd) AddDaemon(spec models.DaemonSpec) error {
+func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
 	l.remove(spec.Label)
 	if err := l.writePlist(spec, plistPath); err != nil {
@@ -97,7 +95,7 @@ func (l *Launchd) isLoaded(label string) (bool, error) {
 	return strings.Contains(out, label), nil
 }
 
-func (l *Launchd) load(plistPath string, spec models.DaemonSpec) error {
+func (l *Launchd) load(plistPath string, spec DaemonSpec) error {
 	args := []string{"load"}
 	if spec.SessionType != "" {
 		args = append(args, "-S", "Background")
@@ -116,7 +114,7 @@ func (l *Launchd) remove(label string) error {
 	return cmd.Run()
 }
 
-func (l *Launchd) writePlist(spec models.DaemonSpec, dest string) error {
+func (l *Launchd) writePlist(spec DaemonSpec, dest string) error {
 	tmplt := template.Must(template.New("plist").Parse(plistTemplate))
 	plist, err := os.Create(dest)
 	if err != nil {

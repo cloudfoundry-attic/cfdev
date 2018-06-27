@@ -15,15 +15,17 @@ var _ = Describe("DeployBosh", func() {
 	var (
 		fakeClient *gardenfakes.FakeClient
 		err        error
+		gclient    *gdn.Garden
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
+		gclient = &gdn.Garden{Client: fakeClient}
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.DeployBosh(fakeClient)
+		err = gclient.DeployBosh()
 	})
 
 	It("creates a container", func() {

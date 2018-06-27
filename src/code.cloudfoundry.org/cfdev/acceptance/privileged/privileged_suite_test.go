@@ -1,14 +1,11 @@
 package privileged_test
 
 import (
-	"os"
 	"os/exec"
-	"path/filepath"
 	"testing"
 	"time"
 
 	. "code.cloudfoundry.org/cfdev/acceptance"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -24,30 +21,13 @@ func TestPrivileged(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")
-	if pluginPath == "" {
-		Fail("please provide CFDEV_PLUGIN_PATH (use ./generate-plugin.sh)")
-	}
-	os.Unsetenv("BOSH_ALL_PROXY")
-
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
 	RemoveIPAliases(BoshDirectorIP, CFRouterIP)
-
-	cfdevHome = os.Getenv("CFDEV_HOME")
-	if cfdevHome == "" {
-		cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
-	}
-	hyperkitPidPath = filepath.Join(cfdevHome, "state", "linuxkit", "hyperkit.pid")
-
-	session := cf.Cf("install-plugin", pluginPath, "-f")
-	Eventually(session).Should(gexec.Exit(0))
 })
 
 var _ = AfterSuite(func() {
-	session := cf.Cf("uninstall-plugin", "cfdev")
-	Eventually(session).Should(gexec.Exit(0))
 	gexec.CleanupBuildArtifacts()
 })
 

@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/errors"
-	gdn "code.cloudfoundry.org/cfdev/garden"
-	"code.cloudfoundry.org/garden"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	"github.com/onsi/ginkgo"
 )
@@ -16,11 +14,18 @@ type Bosh struct {
 	dir boshdir.Director
 }
 
-func New(gClient garden.Client) (*Bosh, error) {
-	config, err := gdn.FetchBOSHConfig(gClient)
-	if err != nil {
-		return nil, errors.SafeWrap(err, "failed to fetch bosh configuration")
-	}
+type Config struct {
+	AdminUsername   string
+	AdminPassword   string
+	CACertificate   string
+	DirectorAddress string
+
+	GatewayHost       string
+	GatewayPrivateKey string
+	GatewayUsername   string
+}
+
+func New(config Config) (*Bosh, error) {
 	cfg := boshdir.FactoryConfig{
 		Host:         config.DirectorAddress,
 		Port:         25555,

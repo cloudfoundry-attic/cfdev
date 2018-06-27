@@ -18,15 +18,17 @@ var _ = Describe("DeployCloudFoundry", func() {
 		fakeClient       *gardenfakes.FakeClient
 		err              error
 		dockerRegistries []string
+		gclient          *gdn.Garden
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
+		gclient = &gdn.Garden{Client: fakeClient}
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.DeployCloudFoundry(fakeClient, dockerRegistries)
+		err = gclient.DeployCloudFoundry(dockerRegistries)
 	})
 
 	It("creates a container", func() {

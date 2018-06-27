@@ -31,7 +31,7 @@ type Cache struct {
 	Writer                io.Writer
 }
 
-func (c *Cache) Sync(clog *Catalog) error {
+func (c *Cache) Sync(clog Catalog) error {
 	c.Progress.Start(c.total(clog))
 	for _, item := range clog.Items {
 		if err := c.download(&item); err != nil {
@@ -42,7 +42,7 @@ func (c *Cache) Sync(clog *Catalog) error {
 	return c.removeUnknown(clog)
 }
 
-func (c *Cache) total(clog *Catalog) uint64 {
+func (c *Cache) total(clog Catalog) uint64 {
 	var total uint64 = 0
 	for _, item := range clog.Items {
 		if item.InUse {
@@ -117,7 +117,7 @@ func (c *Cache) downloadHTTP(url, tmpPath string) error {
 	return nil
 }
 
-func (c *Cache) removeUnknown(clog *Catalog) error {
+func (c *Cache) removeUnknown(clog Catalog) error {
 	known := make(map[string]bool, 0)
 	for _, item := range clog.Items {
 		known[item.Name] = true

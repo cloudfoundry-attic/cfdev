@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func DeployCloudFoundry(client garden.Client, dockerRegistries []string) error {
+func (g *Garden) DeployCloudFoundry(dockerRegistries []string) error {
 	containerSpec := garden.ContainerSpec{
 		Handle:     "deploy-cf",
 		Privileged: true,
@@ -40,7 +40,7 @@ func DeployCloudFoundry(client garden.Client, dockerRegistries []string) error {
 		containerSpec.Env = append(containerSpec.Env, "DOCKER_REGISTRIES="+string(bytes))
 	}
 
-	container, err := client.Create(containerSpec)
+	container, err := g.Client.Create(containerSpec)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func DeployCloudFoundry(client garden.Client, dockerRegistries []string) error {
 		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %d", exitCode))
 	}
 
-	client.Destroy("deploy-cf")
+	g.Client.Destroy("deploy-cf")
 
 	return nil
 }

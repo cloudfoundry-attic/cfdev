@@ -13,7 +13,6 @@ import (
 
 	"code.cloudfoundry.org/cfdevd/cmd"
 	"code.cloudfoundry.org/cfdevd/launchd"
-	"code.cloudfoundry.org/cfdevd/launchd/models"
 )
 
 const SockName = "ListenSocket"
@@ -44,7 +43,7 @@ func registerSignalHandler() {
 func install(programSrc string) {
 	lctl := launchd.New("")
 	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
-	cfdevdSpec := models.DaemonSpec{
+	cfdevdSpec := launchd.DaemonSpec{
 		Label:   "org.cloudfoundry.cfdevd",
 		Program: program,
 		ProgramArguments: []string{
