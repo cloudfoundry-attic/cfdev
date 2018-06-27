@@ -9,10 +9,12 @@ export CF_ORG=cfdev-org
 export CF_SPACE=cfdev-space
 export DOCKER_REGISTRIES="${DOCKER_REGISTRIES:-[\"host.pcfdev.io:5000\"]}"
 export HOST_IP="${HOST_IP:-192.168.65.2}"
+export LOG_DIR=/var/vcap/logs
 
+mkdir -p "${LOG_DIR}"
 mkdir -p "${CF_DIR}"
 
-exec 1> >(tee -i "${CF_DIR}/deploy.log")
+exec 1> >(tee -i "${LOG_DIR}/deploy-cf.log")
 exec 2>&1
 
 source /var/vcap/director/env

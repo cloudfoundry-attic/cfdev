@@ -3,7 +3,10 @@
 set -e
 
 export CACHE_DIR=${CACHE_DIR:-/var/vcap/cache}
+export LOG_DIR=/var/vcap/logs
+mkdir -p "${LOG_DIR}"
 
+exec 1> >(tee -i "${LOG_DIR}/deploy-mysql.log")
 exec 2>&1
 
 source /var/vcap/director/env

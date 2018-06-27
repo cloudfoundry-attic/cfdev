@@ -39,9 +39,11 @@ permit_device_control() {
 }
 
 export DIRECTOR_DIR=/var/vcap/director
+export LOG_DIR=/var/vcap/logs
 mkdir -p "${DIRECTOR_DIR}"
+mkdir -p "${LOG_DIR}"
 
-exec 1> >(tee -i "${DIRECTOR_DIR}/deploy.log")
+exec 1> >(tee -i "${LOG_DIR}/deploy-bosh.log")
 exec 2>&1
 
 permit_device_control
