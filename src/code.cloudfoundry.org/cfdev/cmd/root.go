@@ -10,6 +10,7 @@ import (
 	b5 "code.cloudfoundry.org/cfdev/cmd/start"
 	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
+	b8 "code.cloudfoundry.org/cfdev/cmd/logs"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/process"
@@ -97,6 +98,9 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd, a
 		&b7.Telemetry{
 			UI:              ui,
 			AnalyticsToggle: analyticsToggle,
+		},
+		&b8.Logs{
+			UI: ui,
 		},
 	} {
 		dev.AddCommand(cmd.Cmd())

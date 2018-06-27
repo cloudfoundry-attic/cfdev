@@ -41,6 +41,18 @@ var _ = Describe("hyperkit lifecycle", func() {
 		})
 
 		AfterEach(func() {
+			if os.Getenv("CFDEV_FETCH_LOGS") == "true" {
+				var logsSession *gexec.Session
+
+				if dir := os.Getenv("CFDEV_LOG_DIR"); dir != "" {
+					logsSession = cf.Cf("dev", "logs", "--dir", dir)
+				} else {
+					logsSession = cf.Cf("dev", "logs")
+				}
+
+				Eventually(logsSession).Should(gexec.Exit())
+			}
+			
 			hyperkitPid := PidFromFile(hyperkitPidPath)
 
 			startSession.Terminate()
