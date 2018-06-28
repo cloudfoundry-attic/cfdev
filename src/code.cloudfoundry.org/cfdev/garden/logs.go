@@ -39,6 +39,7 @@ func FetchLogs(client garden.Client, destinationDir string) error {
 	if err != nil {
 		return err
 	}
+	defer tr.Close()
 
 	err = os.MkdirAll(destinationDir, os.ModePerm)
 	if err != nil {
@@ -51,6 +52,7 @@ func FetchLogs(client garden.Client, destinationDir string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	_, err = io.Copy(f, tr)
 	return err
