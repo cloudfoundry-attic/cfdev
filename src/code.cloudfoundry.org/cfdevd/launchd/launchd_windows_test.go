@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"strings"
 	"path/filepath"
-	"time"
 	"os"
 )
 
@@ -71,29 +70,30 @@ var _ = Describe("launchd windows", func() {
 			os.RemoveAll(filepath.Join(tempDir, "simple-file.txt"))
 		})
 
-		It("should start, stop the daemon", func() {
+		FIt("should start, stop the daemon", func() {
 			By("adding the service")
 			spec := launchd.DaemonSpec{
 				Label: label,
 				Program: "powershell.exe",
 				ProgramArguments: []string{
 					"-Command",
-					`"some-content" >> $env:TEMP\simple-file.txt; Start-Sleep 60`,
+					`"some-content" >> $env:TEMP\simple-file.txt`,
 				},
 			}
 			Expect(lnchd.AddDaemon(spec)).To(Succeed())
 
 			By("starting the service")
-			Expect(lnchd.Start(label)).To(Succeed())
-			Eventually(func() string {
-				return filepath.Join(tempDir, "simple-file.txt")
-			}, 5*time.Second).Should(BeAnExistingFile())
-			//Eventually(filepath.Join(tempDir, "simple-file.txt")).Should(BeAnExistingFile())
-			//Expect(lnchd.IsRunning(label)).To(BeTrue())
+			Expect(lnchd.Start(spec)).To(Succeed())
+			//Expect(filepath.Join(tempDir, "simple-file.txt")).To(BeAnExistingFile())
+			//Eventually(func() string {
+			//	return filepath.Join(tempDir, "simple-file.txt")
+			//}, 60, 1).Should(BeAnExistingFile())
+			Eventually(filepath.Join(tempDir, "simple-file.txt")).Should(BeAnExistingFile())
+			Expect(lnchd.IsRunning(label)).To(BeTrue())
 
 			By("stopping the service")
 			Expect(lnchd.Stop(label)).To(Succeed())
-			//Expect(lnchd.IsRunning(label)).To(BeFalse())
+			Expect(lnchd.IsRunning(label)).To(BeFalse())
 		})
 	})
 })

@@ -34,9 +34,7 @@ func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 		return err
 	}
 
-	s.Install()
-	go s.Run()
-	return nil
+	return s.Install()
 }
 
 func (l *Launchd) RemoveDaemon(label string) error {
@@ -53,18 +51,23 @@ func (l *Launchd) RemoveDaemon(label string) error {
 	return s.Uninstall()
 }
 
-func (l *Launchd) Start(label string) error {
+func (l *Launchd) Start(spec DaemonSpec) error {
 	srvConfig := &service.Config{
-		Name: label,
+		Name: spec.Label,
 	}
 
-	prg := &program{}
+	prg := &program{
+		executable: spec.Program,
+		args:       spec.ProgramArguments,
+	}
 	s, err := service.New(prg, srvConfig)
 	if err != nil {
 		return err
 	}
 
-	return s.Start()
+	go s.Run()
+
+	return nil
 }
 
 func (l *Launchd) Stop(label string) error {
@@ -82,5 +85,12 @@ func (l *Launchd) Stop(label string) error {
 }
 
 func (l *Launchd) IsRunning(label string) (bool, error) {
-	return false, nil
+	//babaling
+	arg := fmt.Sprintf(`Get-Service | Where-Object { $_.Name -eq "%s" } | Select -ExpandProperty "Status"`, label)
+	cmd := exec.Command("powershell.exe", "-Command", arg)
+	status, err := cmd.Output()
+	if err != nil {
+		 //log err
+	}
+	return status == "Running", err
 }
