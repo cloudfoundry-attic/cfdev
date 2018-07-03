@@ -24,9 +24,9 @@ func (g *Garden) ReportProgress(ui UI, deploymentName string) {
 			ch := b.VMProgress(deploymentName)
 			for p := range ch {
 				if p.Total > 0 {
-					ui.Say("  Progress: %d of %d (%s)", p.Done, p.Total, p.Duration.Round(time.Second))
+					lineWriter.Say("  Progress: %d of %d (%s)", p.Done, p.Total, p.Duration.Round(time.Second))
 				} else {
-					ui.Say("  Uploaded Releases: %d (%s)", p.Releases, p.Duration.Round(time.Second))
+					lineWriter.Say("  Uploaded Releases: %d (%s)", p.Releases, p.Duration.Round(time.Second))
 				}
 			}
 			lineWriter.Close()
