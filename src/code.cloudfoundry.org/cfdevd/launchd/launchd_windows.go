@@ -1,8 +1,13 @@
 package launchd
 
 import (
-	"github.com/kardianos/service"
 	"os/exec"
+	"os"
+	"path/filepath"
+	"io/ioutil"
+	"encoding/xml"
+	"strings"
+	"io"
 )
 
 type program struct {
@@ -10,87 +15,158 @@ type program struct {
 	args       []string
 }
 
-func (p *program) Start(s service.Service) error {
-	command := exec.Command(p.executable, p.args...)
-	return command.Start()
-}
-
-func (p *program) Stop(s service.Service) error {
-	return nil
+type Config struct {
+	XMLName     xml.Name `xml:"configuration"`
+	Id          string   `xml:"id"`
+	Name        string   `xml:"name"`
+	Description string   `xml:"description"`
+	Executable  string   `xml:"executable"`
+	Arguments   string   `xml:"arguments"`
+	StartMode   string   `xml:"startmode"`
 }
 
 func (l *Launchd) AddDaemon(spec DaemonSpec) error {
-	srvConfig := &service.Config{
-		Name: spec.Label,
-	}
-
-	prg := &program{
-		executable: spec.Program,
-		args:       spec.ProgramArguments,
-	}
-
-	s, err := service.New(prg, srvConfig)
+	serviceDst, executablePath, err := copyBinary(spec)
 	if err != nil {
 		return err
 	}
 
-	return s.Install()
+	err = createXml(serviceDst, spec)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(executablePath, "install")
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (l *Launchd) RemoveDaemon(label string) error {
-	srvConfig := &service.Config{
-		Name: label,
-	}
+	_, executablePath, _ := getServicePaths(label)
 
-	prg := &program{}
-	s, err := service.New(prg, srvConfig)
+	cmd := exec.Command(executablePath, "uninstall")
+	err := cmd.Start()
 	if err != nil {
 		return err
 	}
 
-	return s.Uninstall()
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (l *Launchd) Start(spec DaemonSpec) error {
-	srvConfig := &service.Config{
-		Name: spec.Label,
-	}
+func (l *Launchd) Start(label string) error {
+	_, executablePath, _ := getServicePaths(label)
 
-	prg := &program{
-		executable: spec.Program,
-		args:       spec.ProgramArguments,
-	}
-	s, err := service.New(prg, srvConfig)
+	cmd := exec.Command(executablePath, "start")
+	err := cmd.Start()
 	if err != nil {
 		return err
 	}
 
-	go s.Run()
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (l *Launchd) Stop(label string) error {
-	srvConfig := &service.Config{
-		Name: label,
-	}
+	_, executablePath, _ := getServicePaths(label)
 
-	prg := &program{}
-	s, err := service.New(prg, srvConfig)
+	cmd := exec.Command(executablePath, "stop")
+	err := cmd.Start()
 	if err != nil {
 		return err
 	}
 
-	return s.Stop()
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (l *Launchd) IsRunning(label string) (bool, error) {
-	//babaling
-	arg := fmt.Sprintf(`Get-Service | Where-Object { $_.Name -eq "%s" } | Select -ExpandProperty "Status"`, label)
-	cmd := exec.Command("powershell.exe", "-Command", arg)
-	status, err := cmd.Output()
+	_, executablePath, _ := getServicePaths(label)
+	cmd := exec.Command(executablePath, "status")
+
+	output, err := cmd.Output()
 	if err != nil {
-		 //log err
+		return false, err
 	}
-	return status == "Running", err
+
+	isRunning := strings.Contains(string(output),"Started")
+	return isRunning, nil
+}
+
+func copyBinary(spec DaemonSpec) (string, string, error) {
+	serviceDst, executablePath, cfdevHome := getServicePaths(spec.Label)
+
+	err := os.MkdirAll(serviceDst, 0666)
+	if err != nil {
+		return "", "", err
+	}
+
+	winswPath := filepath.Join(cfdevHome, "cache", "winsw.exe")
+	winswData, err := ioutil.ReadFile(winswPath)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = ioutil.WriteFile(executablePath, winswData, 0666)
+	if err != nil {
+		return "", "", err
+	}
+
+	return serviceDst, executablePath, nil
+}
+
+func createXml(serviceDst string, spec DaemonSpec) error {
+	file, err := os.Create(filepath.Join(serviceDst, spec.Label+".xml"))
+	if err != nil {
+		return err
+	}
+
+	config := &Config{
+		Id:          spec.Label,
+		Name:        spec.Label,
+		Description: spec.Label,
+		Executable:  spec.Program,
+		Arguments:   strings.Join(spec.ProgramArguments[:], ";"),
+		StartMode:   "Manual",
+	}
+	configWriter := io.Writer(file)
+
+	enc := xml.NewEncoder(configWriter)
+	enc.Encode(config)
+	file.Close()
+
+	return nil
+}
+
+func getServicePaths(label string) (string, string, string) {
+	cfdevHome := os.Getenv("CFDEV_HOME")
+	if cfdevHome == "" {
+		cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
+	}
+
+	serviceDst := filepath.Join(cfdevHome, "winservice", label)
+	executablePath := filepath.Join(serviceDst, label+".exe")
+
+	return serviceDst, executablePath, cfdevHome
 }

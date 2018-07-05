@@ -76,9 +76,6 @@
 [submodule "src/github.com/moby/vpnkit"]
 	path = src/github.com/moby/vpnkit
 	url = https://github.com/moby/vpnkit.git
-[submodule "src/github.com/kardianos/service"]
-	path = src/github.com/kardianos/service
-	url = https://github.com/kardianos/service.git
 [submodule "src/golang.org/x/sys"]
 	path = src/golang.org/x/sys
 	url = https://go.googlesource.com/sys
