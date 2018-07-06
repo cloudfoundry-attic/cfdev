@@ -145,4 +145,4 @@ services:
     command: ["/usr/bin/expose-multiple-ports",
               "-container-ip","10.144.0.34",
               "-start-port","1024",
-              "-end-port","1049"]
+              "-end-port","1030"]
