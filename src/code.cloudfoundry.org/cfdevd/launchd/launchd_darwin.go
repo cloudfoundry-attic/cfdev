@@ -8,15 +8,6 @@ import (
 	"text/template"
 )
 
-func New(pListDir string) *Launchd {
-	if pListDir == "" {
-		pListDir = "/Library/LaunchDaemons"
-	}
-	return &Launchd{
-		PListDir: pListDir,
-	}
-}
-
 func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
 	l.remove(spec.Label)

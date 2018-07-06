@@ -1,0 +1,71 @@
+package process_test
+
+import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"code.cloudfoundry.org/cfdev/process"
+	"path/filepath"
+	"io/ioutil"
+	"code.cloudfoundry.org/cfdev/config"
+	"os"
+	"os/exec"
+	"github.com/onsi/gomega/gexec"
+)
+
+var _ = FDescribe("VpnKit", func() {
+	var (
+		vpnkit *process.VpnKit
+		tempDir string
+	)
+
+	BeforeEach(func() {
+		var err error
+		tempDir, err = ioutil.TempDir("", "cfdev-test-")
+		Expect(err).NotTo(HaveOccurred())
+
+		vpnkit = &process.VpnKit{
+			Config: config.Config{
+				CFDevHome: tempDir,
+			},
+		}
+	})
+
+	AfterEach(func() {
+		os.RemoveAll(tempDir)
+	})
+
+	Describe("Setup", func() {
+		It("writes the dhcp and resolv conf files in the cfdevDir", func() {
+			Expect(vpnkit.Setup()).To(Succeed())
+
+			dnsPath := filepath.Join(tempDir, "resolv.conf")
+			Expect(dnsPath).To(BeAnExistingFile())
+			output, err := ioutil.ReadFile(dnsPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(output)).To(MatchRegexp(`nameserver\s.*`))
+
+			dhcpPath := filepath.Join(tempDir, "dhcp.json")
+			Expect(dhcpPath).To(BeAnExistingFile())
+			output, err = ioutil.ReadFile(dhcpPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(string(output)).To(ContainSubstring("domainName"))
+		})
+
+		It("writes service guids to the registry", func() {
+			Expect(vpnkit.Setup()).To(Succeed())
+
+			command := exec.Command("powershell.exe", "-Command", `dir "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices"`)
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session).Should(gexec.Exit())
+			contents := string(session.Out.Contents())
+
+			Expect(contents).To(ContainSubstring("CF Dev VPNkit Ethernet Service"))
+			Expect(contents).To(ContainSubstring("CF Dev VPNkit Port Service"))
+			Expect(contents).To(ContainSubstring("CF Dev VPNkit Forwarder Service"))
+		})
+	})
+
+})

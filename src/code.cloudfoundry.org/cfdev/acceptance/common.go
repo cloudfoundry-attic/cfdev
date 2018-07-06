@@ -97,6 +97,16 @@ func ProcessIsRunning(pid int) (bool, error) {
 	return true, nil
 }
 
+//func isProcessRunning(label string) func() (bool, error) {
+//	if runtime.GOOS == "windows" {
+//		return func() (bool, error) {
+//
+//		}
+//	} else {
+//		return IsLaunchdRunning(label)
+//	}
+//}
+
 func IsLaunchdRunning(label string) func() (bool, error) {
 	return func() (bool, error) {
 		txt, err := exec.Command("launchctl", "list", label).CombinedOutput()

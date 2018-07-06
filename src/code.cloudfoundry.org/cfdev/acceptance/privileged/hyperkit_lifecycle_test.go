@@ -51,7 +51,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		Eventually(session).Should(gexec.Exit(0))
 	})
 
-	Context("starting the default cf dev file", func() {
+	FContext("starting the default cf dev file", func() {
 		BeforeEach(func() {
 			isoPath := os.Getenv("ISO_PATH")
 			if isoPath != "" {
@@ -192,6 +192,8 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 }
 
 func RemoveIPAliases(aliases ...string) {
+	if IsWindows() { return }
+
 	for _, alias := range aliases {
 		cmd := exec.Command("sudo", "-n", "ifconfig", "lo0", "inet", alias+"/32", "remove")
 		writer := gexec.NewPrefixedWriter("[ifconfig] ", GinkgoWriter)

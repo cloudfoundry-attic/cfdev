@@ -11,6 +11,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/semver"
+	"runtime"
 )
 
 var (
@@ -65,10 +66,7 @@ type Config struct {
 }
 
 func NewConfig() (Config, error) {
-	cfdevHome := os.Getenv("CFDEV_HOME")
-	if cfdevHome == "" {
-		cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
-	}
+	cfdevHome := getCfdevHome()
 
 	catalog, err := catalog()
 	if err != nil {
@@ -173,4 +171,17 @@ func catalog() (resource.Catalog, error) {
 		return catalog.Items[i].Size < catalog.Items[j].Size
 	})
 	return catalog, nil
+}
+
+func getCfdevHome() string {
+	cfdevHome := os.Getenv("CFDEV_HOME")
+	if cfdevHome != "" {
+		return cfdevHome
+	}
+
+	if runtime.GOOS == "windows" {
+		return filepath.Join(os.Getenv("HOMEDRIVE"), os.Getenv("HOMEPATH"), ".cfdev")
+	} else {
+		return filepath.Join(os.Getenv("HOME"), ".cfdev")
+	}
 }
