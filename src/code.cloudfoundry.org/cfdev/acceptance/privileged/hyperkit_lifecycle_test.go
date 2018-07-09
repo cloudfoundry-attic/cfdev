@@ -42,6 +42,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 		}
 		hyperkitPidPath = filepath.Join(cfdevHome, "state", "linuxkit", "hyperkit.pid")
 
+		fmt.Println("PLUGIN PATH: " + pluginPath)
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))
 	})

@@ -109,7 +109,7 @@ var _ = Describe("launchd windows", func() {
 					Label:   label,
 					Program: "powershell.exe" ,
 					ProgramArguments: []string{
-						fmt.Sprintf("'some-content' >> %s", testFilePath),
+						fmt.Sprintf("'some-content' >> %s;", testFilePath),
 						"Start-Sleep -Seconds 20",
 					},
 				}

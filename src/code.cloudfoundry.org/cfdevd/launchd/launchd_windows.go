@@ -147,7 +147,7 @@ func createXml(serviceDst string, spec DaemonSpec) error {
 		Name:        spec.Label,
 		Description: spec.Label,
 		Executable:  spec.Program,
-		Arguments:   strings.Join(spec.ProgramArguments[:], ";"),
+		Arguments:   strings.Join(spec.ProgramArguments[:], " "),
 		StartMode:   "Manual",
 	}
 	configWriter := io.Writer(file)

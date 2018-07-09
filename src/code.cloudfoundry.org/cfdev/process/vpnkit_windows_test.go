@@ -1,20 +1,21 @@
 package process_test
 
 import (
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/process"
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdev/process"
-	"path/filepath"
+	"github.com/onsi/gomega/gexec"
 	"io/ioutil"
-	"code.cloudfoundry.org/cfdev/config"
 	"os"
 	"os/exec"
-	"github.com/onsi/gomega/gexec"
+	"path/filepath"
 )
 
-var _ = FDescribe("VpnKit", func() {
+var _ = Describe("VpnKit", func() {
 	var (
-		vpnkit *process.VpnKit
+		vpnkit  *process.VpnKit
 		tempDir string
 	)
 
@@ -66,6 +67,37 @@ var _ = FDescribe("VpnKit", func() {
 			Expect(contents).To(ContainSubstring("CF Dev VPNkit Port Service"))
 			Expect(contents).To(ContainSubstring("CF Dev VPNkit Forwarder Service"))
 		})
+
 	})
 
+	FDescribe("VPNKIT", func() {
+		var (
+			vmGuid string
+			vmName string
+			vpnkit process.VpnKit
+		)
+
+		vmName = "testVm"
+		vpnkit = process.VpnKit{}
+
+		BeforeEach(func() {
+			cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vmName))
+			err := cmd.Run()
+			Expect(err).ToNot(HaveOccurred())
+
+			cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("((Get-VM -Name %s).Id).Guid", vmName))
+			output, err := cmd.Output()
+			vmGuid = string(output)
+		})
+
+		AfterEach(func() {
+			cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
+			err := cmd.Run()
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("creates proper daemon spec", func() {
+			Expect(vpnkit.Start()).To(Succeed())
+		})
+	})
 })

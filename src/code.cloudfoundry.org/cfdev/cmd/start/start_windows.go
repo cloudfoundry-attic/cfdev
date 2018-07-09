@@ -80,5 +80,20 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 
+
+
+
+	s.UI.Say("Starting VPNKit...")
+	if err := s.VpnKit.Start(); err != nil {
+		return errors.SafeWrap(err, "starting vpnkit")
+	}
+	s.VpnKit.Watch(s.LocalExit)
+
+	// /////////////////
+
+
+
+
+
 	return nil
 }
