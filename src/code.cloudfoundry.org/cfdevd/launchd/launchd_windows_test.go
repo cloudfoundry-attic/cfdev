@@ -19,7 +19,6 @@ var (
 	label    string
 	tmpDir   string
 	assetDir string
-	origCfDevHome string
 )
 
 var _ = Describe("launchd windows", func() {
@@ -35,16 +34,12 @@ var _ = Describe("launchd windows", func() {
 
 		assetPath := filepath.Join(assetDir, "winsw.exe")
 
-		origCfDevHome = os.Getenv("CFDEV_HOME")
-		Expect(os.Setenv("CFDEV_HOME", tmpDir)).To(Succeed())
-
 		err = downloadTestAsset(assetPath, "https://github.com/kohsuke/winsw/releases/download/winsw-v2.1.2/WinSW.NET4.exe")
 		Expect(err).To(BeNil())
 		Expect(assetPath).To(BeAnExistingFile())
 	})
 
 	AfterEach(func(){
-		os.Setenv("CFDEV_HOME", origCfDevHome)
 		err := os.RemoveAll(tmpDir)
 		Expect(err).To(BeNil())
 	})
@@ -56,14 +51,19 @@ var _ = Describe("launchd windows", func() {
 		})
 
 		AfterEach(func() {
-			lnchd.Stop(label)
-			lnchd.RemoveDaemon(label)
-		})
+			spec := launchd.DaemonSpec{
+				Label:   label,
+				CfDevHome: tmpDir,
+			}
+			lnchd.Stop(spec)
+			lnchd.RemoveDaemon(spec)
+				})
 
-		Describe("AddDaemon", func() {
-			It("should load the daemon", func() {
-				spec := launchd.DaemonSpec{
-					Label:   label,
+				Describe("AddDaemon", func() {
+					It("should load the daemon", func() {
+						spec := launchd.DaemonSpec{
+							Label:   label,
+							CfDevHome: tmpDir,
 					Program: "powershell.exe",
 					ProgramArguments: []string{ "echo 'hello'"},
 				}
@@ -79,6 +79,7 @@ var _ = Describe("launchd windows", func() {
 			It("should remove the daemon", func() {
 				spec := launchd.DaemonSpec{
 					Label:   label,
+					CfDevHome: tmpDir,
 					Program: "powershell.exe",
 				}
 
@@ -86,7 +87,7 @@ var _ = Describe("launchd windows", func() {
 				output := getPowerShellOutput("get-service")
 				Expect(output).To(ContainSubstring(label))
 
-				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 				output = getPowerShellOutput(fmt.Sprintf(`Get-Service | Where-Object { $_.Name -eq "%s" }`, label))
 				Expect(output).To(BeEmpty())
 			})
@@ -107,6 +108,7 @@ var _ = Describe("launchd windows", func() {
 				By("adding the service")
 				spec := launchd.DaemonSpec{
 					Label:   label,
+					CfDevHome: tmpDir,
 					Program: "powershell.exe" ,
 					ProgramArguments: []string{
 						fmt.Sprintf("'some-content' >> %s;", testFilePath),
@@ -116,17 +118,17 @@ var _ = Describe("launchd windows", func() {
 				Expect(lnchd.AddDaemon(spec)).To(Succeed())
 
 				By("starting the service")
-				Expect(lnchd.Start(spec.Label)).To(Succeed())
+				Expect(lnchd.Start(spec)).To(Succeed())
 				Eventually(func() bool {
-					isRunning, _ := lnchd.IsRunning(label)
+					isRunning, _ := lnchd.IsRunning(spec)
 					return isRunning
 				}, 20, 1).Should(BeTrue())
 
 				Eventually(testFilePath).Should(BeAnExistingFile())
 
 				By("stopping the service")
-				Expect(lnchd.Stop(label)).To(Succeed())
-				Expect(lnchd.IsRunning(label)).To(BeFalse())
+				Expect(lnchd.Stop(spec)).To(Succeed())
+				Expect(lnchd.IsRunning(spec)).To(BeFalse())
 			})
 		})
 	})

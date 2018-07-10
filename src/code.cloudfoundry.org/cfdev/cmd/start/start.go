@@ -55,6 +55,12 @@ type LinuxKit interface {
 	IsRunning() (bool, error)
 }
 
+//go:generate mockgen -package mocks -destination mocks/hyperv.go code.cloudfoundry.org/cfdev/cmd/start HyperV
+type HyperV interface {
+	Start(vmName string) error
+	CreateVM() error
+}
+
 //go:generate mockgen -package mocks -destination mocks/garden.go code.cloudfoundry.org/cfdev/cmd/start GardenClient
 type GardenClient interface {
 	Ping() error
@@ -84,6 +90,7 @@ type Start struct {
 	Cache           Cache
 	CFDevD          CFDevD
 	VpnKit          VpnKit
+	HyperV          HyperV
 	LinuxKit        LinuxKit
 	GardenClient    GardenClient
 }

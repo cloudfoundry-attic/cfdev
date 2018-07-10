@@ -1,7 +1,7 @@
 package launchd
 
 type Launchd struct {
-	PListDir string
+	PListDir string 
 }
 
 func New(pListDir string) *Launchd {

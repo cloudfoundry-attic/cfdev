@@ -25,9 +25,9 @@ type LinuxKit struct {
 
 type Launchd interface {
 	AddDaemon(launchd.DaemonSpec) error
-	Start(label string) error
-	Stop(label string) error
-	IsRunning(label string) (bool, error)
+	Start(launchd.DaemonSpec) error
+	Stop(launchd.DaemonSpec) error
+	IsRunning(launchd.DaemonSpec) (bool, error)
 }
 
 const LinuxKitLabel = "org.cloudfoundry.cfdev.linuxkit"
@@ -40,17 +40,23 @@ func (l *LinuxKit) Start(cpus int, mem int, depsIsoPath string) error {
 	if err := l.Launchd.AddDaemon(daemonSpec); err != nil {
 		return err
 	}
-	return l.Launchd.Start(LinuxKitLabel)
+	return l.Launchd.Start(daemonSpec)
 }
 
 func (l *LinuxKit) Stop() {
-	l.Launchd.Stop(LinuxKitLabel)
+	daemonSpec := launchd.DaemonSpec{
+		Label: LinuxKitLabel,
+	}
+	l.Launchd.Stop(daemonSpec)
 	procManager := &Manager{}
 	procManager.SafeKill(filepath.Join(l.Config.StateDir, "hyperkit.pid"), "hyperkit")
 }
 
 func (l *LinuxKit) IsRunning() (bool, error) {
-	return l.Launchd.IsRunning(LinuxKitLabel)
+	daemonSpec := launchd.DaemonSpec{
+		Label: LinuxKitLabel,
+	}
+	return l.Launchd.IsRunning(daemonSpec)
 }
 
 func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.DaemonSpec, error) {
@@ -80,6 +86,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.Daemon
 	return launchd.DaemonSpec{
 		Label:       LinuxKitLabel,
 		Program:     linuxkit,
+		CfDevHome:   l.Config.CFDevHome,
 		SessionType: "Background",
 		ProgramArguments: []string{
 			linuxkit, "run", "hyperkit",
@@ -104,7 +111,10 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.Daemon
 func (l *LinuxKit) Watch(exit chan string) {
 	go func() {
 		for {
-			running, err := l.Launchd.IsRunning(VpnKitLabel)
+			daemonSpec := launchd.DaemonSpec{
+				Label: LinuxKitLabel,
+			}
+			running, err := l.Launchd.IsRunning(daemonSpec)
 			if !running && err == nil {
 				exit <- "linuxkit"
 				return

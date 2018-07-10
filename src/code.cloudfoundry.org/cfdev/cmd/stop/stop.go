@@ -8,11 +8,12 @@ import (
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdevd/launchd"
 )
 
 //go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdev/cmd/stop Launchd
 type Launchd interface {
-	RemoveDaemon(label string) error
+	RemoveDaemon(spec launchd.DaemonSpec) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/cfdevd_client.go code.cloudfoundry.org/cfdev/cmd/stop CfdevdClient
@@ -54,11 +55,11 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 
 	var reterr error
 
-	if err := s.Launchd.RemoveDaemon(process.LinuxKitLabel); err != nil {
+	if err := s.Launchd.RemoveDaemon(daemonSpec(process.LinuxKitLabel)); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop linuxkit")
 	}
 
-	if err := s.Launchd.RemoveDaemon(process.VpnKitLabel); err != nil {
+	if err := s.Launchd.RemoveDaemon(daemonSpec(process.VpnKitLabel)); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}
 
@@ -74,4 +75,10 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		return errors.SafeWrap(reterr, "cf dev stop")
 	}
 	return nil
+}
+
+func daemonSpec(label string) launchd.DaemonSpec {
+	return launchd.DaemonSpec {
+		Label: label,
+	}
 }

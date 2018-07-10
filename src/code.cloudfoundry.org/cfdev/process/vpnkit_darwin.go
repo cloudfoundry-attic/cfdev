@@ -31,7 +31,7 @@ func (v *VpnKit) Start() error {
 	if err := v.Launchd.AddDaemon(v.daemonSpec()); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
-	if err := v.Launchd.Start(VpnKitLabel); err != nil {
+	if err := v.Launchd.Start(v.daemonSpec()); err != nil {
 		return errors.SafeWrap(err, "start vpnkit")
 	}
 	attempt := 0
@@ -50,13 +50,13 @@ func (v *VpnKit) Start() error {
 }
 
 func (v *VpnKit) Stop() {
-	v.Launchd.Stop(VpnKitLabel)
+	v.Launchd.Stop(v.daemonSpec())
 }
 
 func (v *VpnKit) Watch(exit chan string) {
 	go func() {
 		for {
-			running, err := v.Launchd.IsRunning(VpnKitLabel)
+			running, err := v.Launchd.IsRunning(v.daemonSpec())
 			if !running && err == nil {
 				exit <- "vpnkit"
 				return
@@ -69,6 +69,7 @@ func (v *VpnKit) Watch(exit chan string) {
 func (v *VpnKit) daemonSpec() launchd.DaemonSpec {
 	return launchd.DaemonSpec{
 		Label:       VpnKitLabel,
+		CfDevHome: 	 v.Config.CfDevHome,
 		Program:     path.Join(v.Config.CacheDir, "vpnkit"),
 		SessionType: "Background",
 		ProgramArguments: []string{

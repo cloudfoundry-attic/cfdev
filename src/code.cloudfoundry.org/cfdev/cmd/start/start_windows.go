@@ -80,20 +80,21 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 
-
-
+	s.UI.Say("Creating VM...")
+	if err := s.HyperV.CreateVM(); err != nil {
+		return errors.SafeWrap(err, "Unable to create VM")
+	}
 
 	s.UI.Say("Starting VPNKit...")
 	if err := s.VpnKit.Start(); err != nil {
 		return errors.SafeWrap(err, "starting vpnkit")
 	}
-	s.VpnKit.Watch(s.LocalExit)
+	//s.VpnKit.Watch(s.LocalExit) what is this?
 
-	// /////////////////
-
-
-
-
+	s.UI.Say("Starting VM...")
+	if err := s.HyperV.Start("cfdev"); err != nil {
+		return errors.SafeWrap(err, "starting vpnkit")
+	}
 
 	return nil
 }

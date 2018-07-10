@@ -35,10 +35,10 @@ type UI interface {
 
 type Launchd interface {
 	AddDaemon(launchd.DaemonSpec) error
-	RemoveDaemon(label string) error
-	Start(label string) error
-	Stop(label string) error
-	IsRunning(label string) (bool, error)
+	RemoveDaemon(launchd.DaemonSpec) error
+	Start(launchd.DaemonSpec) error
+	Stop(launchd.DaemonSpec) error
+	IsRunning(launchd.DaemonSpec) (bool, error)
 }
 
 type cmdBuilder interface {
@@ -113,6 +113,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd, a
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         &network.HostNet{},
 			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
+			HyperV:          &process.HyperV{Config: config, Launchd: launchd},
 			VpnKit:          &process.VpnKit{Config: config, Launchd: launchd},
 			LinuxKit:        &process.LinuxKit{Config: config, Launchd: launchd},
 			GardenClient:    garden.New(),

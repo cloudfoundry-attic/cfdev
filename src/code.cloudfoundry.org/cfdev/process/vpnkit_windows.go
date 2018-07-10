@@ -27,6 +27,8 @@ func (v *VpnKit) Setup() error {
 		return err
 	}
 
+	fmt.Println("VCP A")
+
 	dns, err := exec.Command("powershell.exe", "-Command", "get-dnsclientserveraddress -family ipv4 | select-object -expandproperty serveraddresses").Output()
 	if err != nil {
 		return err
@@ -39,15 +41,27 @@ func (v *VpnKit) Setup() error {
 		dnsFile += fmt.Sprintf("nameserver %s\r\n", line)
 	}
 
-	err = ioutil.WriteFile(filepath.Join(v.Config.CFDevHome, "resolv.conf"), []byte(dnsFile), 0600)
+	fmt.Println("VCP B")
+
+	resolvConfPath := filepath.Join(v.Config.CFDevHome, "resolv.conf")
+	if fileExists(resolvConfPath) {
+		os.RemoveAll(resolvConfPath)
+	}
+
+	err = ioutil.WriteFile(resolvConfPath, []byte(dnsFile), 0600)
 	if err != nil {
 		return err
 	}
 
-	dhcp, err := exec.Command("powershell.exe", "-Command", "get-dnsclient | select-object -expandproperty connectionspecificsuffix").Output()
+	fmt.Println("VCP C")
+
+	cmd := exec.Command("powershell.exe", "-Command", "get-dnsclient | select-object -expandproperty connectionspecificsuffix")
+	dhcp, err := cmd.Output()
 	if err != nil {
 		return err
 	}
+
+	cmd.Wait()
 
 	var output struct {
 		SearchDomains []string `json:"searchDomains"`
@@ -65,7 +79,14 @@ func (v *VpnKit) Setup() error {
 		}
 	}
 
-	file, err := os.Create(filepath.Join(v.Config.CFDevHome, "dhcp.json"))
+	fmt.Println("VCP D")
+
+	dhcpJsonPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
+	if fileExists(dhcpJsonPath) {
+		os.RemoveAll(dhcpJsonPath)
+	}
+
+	file, err := os.Create(dhcpJsonPath)
 	if err != nil {
 		return err
 	}
@@ -75,23 +96,37 @@ func (v *VpnKit) Setup() error {
 }
 
 func (v *VpnKit) Start() error {
+
+	fmt.Println("CHECK A")
+
 	if err := v.Setup(); err != nil {
 		return errors.SafeWrap(err, "Failed to setup VPNKit")
 	}
 
+	fmt.Println("CHECK B")
+
 	cmd := exec.Command("powershell.exe", "-Command", "((Get-VM -Name cfdev).Id).Guid")
-	vmGuid, err := cmd.Output()
+	output, err := cmd.Output()
 	if err != nil {
 		return err
 	}
 
-	if err := v.Launchd.AddDaemon(v.daemonSpec(string(vmGuid))); err != nil {
+	cmd.Wait()
+	vmGuid := strings.TrimSpace(string(output))
+	fmt.Println("CHECK C")
+	fmt.Println("VM GUID: " + string(vmGuid))
+
+	if err := v.Launchd.AddDaemon(v.daemonSpec(vmGuid)); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
 
-	//if err := v.Launchd.Start(VpnKitLabel); err != nil {
-	//	return errors.SafeWrap(err, "start vpnkit")
-	//}
+	fmt.Println("CHECK D")
+
+	if err := v.Launchd.Start(v.daemonSpec(vmGuid)); err != nil {
+		return errors.SafeWrap(err, "start vpnkit")
+	}
+
+	fmt.Println("CHECK E")
 	//attempt := 0
 	//for {
 	//	conn, err := net.Dial("unix", filepath.Join(v.Config.VpnKitStateDir, "vpnkit_eth.sock"))
@@ -141,21 +176,30 @@ func (v *VpnKit) daemonSpec(vmGuid string) launchd.DaemonSpec {
 	return launchd.DaemonSpec{
 		Label:   VpnKitLabel,
 		Program: path.Join(v.Config.CacheDir, "vpnkit.exe"),
+		CfDevHome: v.Config.CFDevHome,
 		ProgramArguments: []string{
-			fmt.Sprintf("--ethernet hyperv-connect://%s/'7207f451-2ca3-4b88-8d01-820a21d78293'", vmGuid),
-			fmt.Sprintf("--port hyperv-connect://%s/'cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa'", vmGuid),
-			fmt.Sprintf("--port hyperv-connect://%s/'e3ae8f06-8c25-47fb-b6ed-c20702bcef5e'", vmGuid),
+			fmt.Sprintf("--ethernet hyperv-connect://%s/7207f451-2ca3-4b88-8d01-820a21d78293", vmGuid),
+			fmt.Sprintf("--port hyperv-connect://%s/cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa", vmGuid),
+			fmt.Sprintf("--port hyperv-connect://%s/e3ae8f06-8c25-47fb-b6ed-c20702bcef5e", vmGuid),
 			fmt.Sprintf("--dns %s", dnsPath),
 			fmt.Sprintf("--dhcp %s", dhcpPath),
-			"--diagnostics '\\\\.\\pipe\\cfdevVpnKitDiagnostics'",
+			"--diagnostics \\\\.\\pipe\\cfdevVpnKitDiagnostics",
 			"--listen-backlog 32",
 			"--lowest-ip 169.254.82.3",
 			"--highest-ip 169.254.82.255",
 			"--host-ip 169.254.82.2",
-			fmt.Sprintf("--gateway-ip 169.254.82.1 2>&1 > %s", filepath.Join(v.Config.CFDevHome, "vpnkit.log")),
+			"--gateway-ip 169.254.82.1",
 		},
 		RunAtLoad:  false,
 		StdoutPath: path.Join(v.Config.CFDevHome, "vpnkit.stdout.log"),
 		StderrPath: path.Join(v.Config.CFDevHome, "vpnkit.stderr.log"),
 	}
+}
+
+func fileExists(path string) bool {
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+
+	return false
 }

@@ -114,6 +114,12 @@ func addVhdDrive(isoPath string, vmName string) error {
 	return nil
 }
 
-func (h *HyperV) Start() error {
+func (h *HyperV) Start(vmName string) error {
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Start-VM -Name %s", vmName))
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

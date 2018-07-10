@@ -35,6 +35,10 @@ var (
 	linuxkitMd5  string
 	linuxkitSize string
 
+	winswUrl  string
+	winswMd5  string
+	winswSize string
+
 	qcowtoolUrl  string
 	qcowtoolMd5  string
 	qcowtoolSize string
@@ -142,6 +146,13 @@ func catalog() (resource.Catalog, error) {
 				Name:  "linuxkit",
 				MD5:   linuxkitMd5,
 				Size:  aToUint64(linuxkitSize),
+				InUse: true,
+			},
+			{
+				URL:   winswUrl,
+				Name:  "winsw.exe",
+				MD5:   winswMd5,
+				Size:  aToUint64(winswUrl),
 				InUse: true,
 			},
 			{

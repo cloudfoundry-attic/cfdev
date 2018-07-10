@@ -70,7 +70,7 @@ var _ = Describe("VpnKit", func() {
 
 	})
 
-	FDescribe("VPNKIT", func() {
+	Describe("VPNKIT", func() {
 		var (
 			vmGuid string
 			vmName string
