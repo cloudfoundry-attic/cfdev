@@ -127,7 +127,7 @@ var _ = Describe("Start", func() {
 							Script:     "/path/to/some-other-script",
 							Deployment: "some-other-deployment",
 						},
-					}, nil),
+					}, "", nil),
 					mockUI.EXPECT().Say("Deploying %s...", "some-service"),
 					mockGardenClient.EXPECT().ReportProgress(mockUI, "some-deployment"),
 					mockGardenClient.EXPECT().DeployService("some-handle", "/path/to/some-script"),

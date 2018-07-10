@@ -73,7 +73,7 @@ type GardenClient interface {
 	DeployBosh() error
 	DeployCloudFoundry([]string) error
 	DeployService(string, string) error
-	GetServices() ([]garden.Service, error)
+	GetServices() ([]garden.Service, string, error)
 	ReportProgress(garden.UI, string)
 }
 
@@ -207,7 +207,7 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	services, err := s.GardenClient.GetServices()
+	services, message, err := s.GardenClient.GetServices()
 	if err != nil {
 		return errors.SafeWrap(err, "Failed to get list of services to deploy")
 	}
@@ -233,8 +233,11 @@ func (s *Start) Execute(args Args) error {
 	    cf login -a https://api.v3.pcfdev.io --skip-ssl-validation
 
 	Admin user => Email: admin / Password: admin
-	Regular user => Email: user / Password: pass
-	`)
+	Regular user => Email: user / Password: pass`)
+
+	if message != "" {
+		s.UI.Say(message)
+	}
 
 	s.Analytics.Event(cfanalytics.START_END)
 

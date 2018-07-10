@@ -50,14 +50,14 @@ type Service struct {
 	Deployment string `yaml:"deployment"`
 }
 
-func (g *Garden) GetServices() ([]Service, error) {
+func (g *Garden) GetServices() ([]Service, string, error) {
 	container, err := g.Client.Create(containerSpec("get-services"))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	r, err := container.StreamOut(garden.StreamOutSpec{Path: "/var/vcap/cache/metadata.yml"})
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer r.Close()
 	tr := tar.NewReader(r)
@@ -67,19 +67,20 @@ func (g *Garden) GetServices() ([]Service, error) {
 			break // End of archive
 		}
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		b, err := ioutil.ReadAll(tr)
 		if err != nil {
-			return nil, fmt.Errorf("parsing %s: %s", hdr.Name, err)
+			return nil, "", fmt.Errorf("parsing %s: %s", hdr.Name, err)
 		}
 		services := struct {
+			Message  string    `yaml:"splash_message"`
 			Services []Service `yaml:"services"`
 		}{}
 		err = yaml.Unmarshal(b, &services)
-		return services.Services, err
+		return services.Services, services.Message, err
 	}
-	return nil, fmt.Errorf("metadata.yml not found in container")
+	return nil, "", fmt.Errorf("metadata.yml not found in container")
 }
 
 func containerSpec(handle string) garden.ContainerSpec {

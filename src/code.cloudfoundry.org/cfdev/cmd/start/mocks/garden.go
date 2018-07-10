@@ -70,11 +70,12 @@ func (mr *MockGardenClientMockRecorder) DeployService(arg0, arg1 interface{}) *g
 }
 
 // GetServices mocks base method
-func (m *MockGardenClient) GetServices() ([]garden.Service, error) {
+func (m *MockGardenClient) GetServices() ([]garden.Service, string, error) {
 	ret := m.ctrl.Call(m, "GetServices")
 	ret0, _ := ret[0].([]garden.Service)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetServices indicates an expected call of GetServices

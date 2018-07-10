@@ -31,6 +31,8 @@ func (c *Client) Send(command uint8) (string, error) {
 	if err != nil {
 		return "", errors.SafeWrap(err, connectCfdevdMsg)
 	}
+	defer conn.Close()
+
 	if err := binary.Write(conn, binary.LittleEndian, handshake); err != nil {
 		return "", errors.SafeWrap(err, "sending handshake to cfdevd")
 	}
