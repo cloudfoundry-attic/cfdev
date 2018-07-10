@@ -1,0 +1,4 @@
+---
+- type: replace
+  path: /networks/name=default/subnets/0/dns?
+  value: [192.168.65.1]

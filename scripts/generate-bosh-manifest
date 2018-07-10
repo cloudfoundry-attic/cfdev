@@ -59,6 +59,7 @@ pushd "$bosh_deployment"
     -o "$ops_dir"/remove-ports.yml \
     -o "$ops_dir"/use-warden-cpi-v39.yml \
     -o <(echo "$stemcell_ops") \
+    -o "$ops_dir"/replace-dns-with-vpnkit.yml \
     \
     -v director_name="warden" \
     -v internal_cidr=10.245.0.0/24 \
