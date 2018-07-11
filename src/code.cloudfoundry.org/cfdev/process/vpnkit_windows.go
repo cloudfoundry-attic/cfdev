@@ -152,6 +152,7 @@ func (v *VpnKit) Watch(exit chan string) {
 }
 
 func (v *VpnKit) generateServiceGUIDs() error {
+	/*
 	for _, serviceName := range []string{"CF Dev VPNkit Ethernet Service", "CF Dev VPNkit Port Service", "CF Dev VPNkit Forwarder Service"} {
 		command := exec.Command(
 			"powershell.exe", "-Command",
@@ -165,6 +166,34 @@ func (v *VpnKit) generateServiceGUIDs() error {
 			return err
 		}
 	}
+	*/
+
+	command := exec.Command(
+		"powershell.exe", "-Command",
+		`$ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name 7207f451-2ca3-4b88-8d01-820a21d78293;
+             $ethService.SetValue("ElementName", "CF Dev VPNkit Ethernet Service" )`)
+
+	if err := command.Run(); err != nil {
+		return err
+	}
+
+	command = exec.Command(
+		"powershell.exe", "-Command",
+		`$ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa;
+             $ethService.SetValue("ElementName", "CF Dev VPNkit Port Service" )`)
+
+	if err := command.Run(); err != nil {
+		return err
+	}
+
+	command = exec.Command(
+		"powershell.exe", "-Command",
+		`$ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name e3ae8f06-8c25-47fb-b6ed-c20702bcef5e;
+             $ethService.SetValue("ElementName", "CF Dev VPNkit Forwarder Service" )`)
+
+	if err := command.Run(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -174,8 +203,8 @@ func (v *VpnKit) daemonSpec(vmGuid string) launchd.DaemonSpec {
 	dhcpPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
 
 	return launchd.DaemonSpec{
-		Label:   VpnKitLabel,
-		Program: path.Join(v.Config.CacheDir, "vpnkit.exe"),
+		Label:     VpnKitLabel,
+		Program:   path.Join(v.Config.CacheDir, "vpnkit.exe"),
 		CfDevHome: v.Config.CFDevHome,
 		ProgramArguments: []string{
 			fmt.Sprintf("--ethernet hyperv-connect://%s/7207f451-2ca3-4b88-8d01-820a21d78293", vmGuid),

@@ -7,6 +7,10 @@ import (
 	"path/filepath"
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/env"
+	"fmt"
+	"time"
+	"strings"
+	"net/url"
 )
 
 func (s *Start) Cmd() *cobra.Command {
@@ -75,6 +79,11 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "adding aliases")
 	}
 
+	registries, err := s.parseDockerRegistriesFlag(args.Registries)
+	if err != nil {
+		return errors.SafeWrap(err, "Unable to parse docker registries")
+	}
+
 	s.UI.Say("Downloading Resources...")
 	if err := s.Cache.Sync(s.Config.Dependencies); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
@@ -96,5 +105,85 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "starting vpnkit")
 	}
 
+	s.UI.Say("Waiting for Garden...")
+	s.waitForGarden()
+
+	s.UI.Say("Deploying the BOSH Director...")
+	if err := s.GardenClient.DeployBosh(); err != nil {
+		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
+	}
+
+	s.UI.Say("Deploying CF...")
+	s.GardenClient.ReportProgress(s.UI, "cf")
+	if err := s.GardenClient.DeployCloudFoundry(registries); err != nil {
+		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
+	}
+
+	services, err := s.GardenClient.GetServices()
+	if err != nil {
+		return errors.SafeWrap(err, "Failed to get list of services to deploy")
+	}
+	for _, service := range services {
+		s.UI.Say("Deploying %s...", service.Name)
+		s.GardenClient.ReportProgress(s.UI, service.Deployment)
+		if err := s.GardenClient.DeployService(service.Handle, service.Script); err != nil {
+			return errors.SafeWrap(err, fmt.Sprintf("Failed to deploy %s", service.Name))
+		}
+	}
+
+	s.UI.Say(`
+
+	  ██████╗███████╗██████╗ ███████╗██╗   ██╗
+	 ██╔════╝██╔════╝██╔══██╗██╔════╝██║   ██║
+	 ██║     █████╗  ██║  ██║█████╗  ██║   ██║
+	 ██║     ██╔══╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝
+	 ╚██████╗██║     ██████╔╝███████╗ ╚████╔╝
+	  ╚═════╝╚═╝     ╚═════╝ ╚══════╝  ╚═══╝
+	             is now running!
+
+	To begin using CF Dev, please run:
+	    cf login -a https://api.v3.pcfdev.io --skip-ssl-validation
+
+	Admin user => Email: admin / Password: admin
+	Regular user => Email: user / Password: pass
+	`)
+
+	s.Analytics.Event(cfanalytics.START_END)
+
 	return nil
+}
+
+
+func (s *Start) waitForGarden() {
+	for {
+		if err := s.GardenClient.Ping(); err == nil {
+			return
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
+	if flag == "" {
+		return nil, nil
+	}
+
+	values := strings.Split(flag, ",")
+
+	registries := make([]string, 0, len(values))
+
+	for _, value := range values {
+		// Including the // will cause url.Parse to validate 'value' as a host:port
+		u, err := url.Parse("//" + value)
+
+		if err != nil {
+			// Grab the more succinct error message
+			if urlErr, ok := err.(*url.Error); ok {
+				err = urlErr.Err
+			}
+			return nil, fmt.Errorf("'%v' - %v", value, err)
+		}
+		registries = append(registries, u.Host)
+	}
+	return registries, nil
 }
