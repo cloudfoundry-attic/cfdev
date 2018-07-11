@@ -181,6 +181,66 @@ var _ = Describe("Start", func() {
 			})
 		})
 
+		Context("when the -f flag is provided", func() {
+			It("starts the given iso and adds the deps iso name as an analytics property", func() {
+				gomock.InOrder(
+					mockToggle.EXPECT().SetProp("type", "some-deps.iso"),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+					mockUI.EXPECT().Say("Downloading Resources..."),
+					mockCache.EXPECT().Sync(resource.Catalog{
+						Items: []resource.Item{{Name: "some-item"}},
+					}),
+					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
+					mockCFDevD.EXPECT().Install(),
+					mockUI.EXPECT().Say("Starting VPNKit..."),
+					mockVpnKit.EXPECT().Start(),
+					mockVpnKit.EXPECT().Watch(localExitChan),
+					mockUI.EXPECT().Say("Starting the VM..."),
+					mockLinuxKit.EXPECT().Start(7, 6666, "/path/to/some-deps.iso"),
+					mockLinuxKit.EXPECT().Watch(localExitChan),
+					mockUI.EXPECT().Say("Waiting for Garden..."),
+					mockGardenClient.EXPECT().Ping(),
+					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+					mockGardenClient.EXPECT().DeployBosh(),
+					mockUI.EXPECT().Say("Deploying CF..."),
+					mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
+					mockGardenClient.EXPECT().DeployCloudFoundry(nil),
+					mockGardenClient.EXPECT().GetServices().Return([]garden.Service{
+						{
+							Name:       "some-service",
+							Handle:     "some-handle",
+							Script:     "/path/to/some-script",
+							Deployment: "some-deployment",
+						},
+						{
+							Name:       "some-other-service",
+							Handle:     "some-other-handle",
+							Script:     "/path/to/some-other-script",
+							Deployment: "some-other-deployment",
+						},
+					}, "", nil),
+					mockUI.EXPECT().Say("Deploying %s...", "some-service"),
+					mockGardenClient.EXPECT().ReportProgress(mockUI, "some-deployment"),
+					mockGardenClient.EXPECT().DeployService("some-handle", "/path/to/some-script"),
+					mockUI.EXPECT().Say("Deploying %s...", "some-other-service"),
+					mockGardenClient.EXPECT().ReportProgress(mockUI, "some-other-deployment"),
+					mockGardenClient.EXPECT().DeployService("some-other-handle", "/path/to/some-other-script"),
+
+					//welcome message
+					mockUI.EXPECT().Say(gomock.Any()),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+				)
+
+				Expect(startCmd.Execute(start.Args{
+					Cpus:        7,
+					Mem:         6666,
+					DepsIsoPath: "/path/to/some-deps.iso",
+				})).To(Succeed())
+			})
+		})
+
 		Context("when linuxkit is already running", func() {
 			It("says cf dev is already running", func() {
 				gomock.InOrder(
