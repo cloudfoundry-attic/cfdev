@@ -80,6 +80,7 @@ type GardenClient interface {
 type Args struct {
 	Registries  string
 	DepsIsoPath string
+	NoProvision bool
 	Cpus        int
 	Mem         int
 }
@@ -116,7 +117,9 @@ func (s *Start) Cmd() *cobra.Command {
 	pf.StringVarP(&args.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 	pf.IntVarP(&args.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
 	pf.IntVarP(&args.Mem, "memory", "m", 4096, "memory to allocate to vm in MB")
+	pf.BoolVarP(&args.NoProvision, "no-provision", "n", false, "start vm but do not provision")
 
+	pf.MarkHidden("no-provision")
 	return cmd
 }
 
@@ -195,6 +198,11 @@ func (s *Start) Execute(args Args) error {
 
 	s.UI.Say("Waiting for Garden...")
 	s.waitForGarden()
+
+	if args.NoProvision {
+		s.UI.Say("VM will not be provisioned because '-n' (no-provision) flag was specified.")
+		return nil
+	}
 
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := s.GardenClient.DeployBosh(); err != nil {

@@ -147,6 +147,40 @@ var _ = Describe("Start", func() {
 			})
 		})
 
+		Context("when the --no-provision flag is provided", func() {
+			It("starts the VM and garden but does not provision", func() {
+				gomock.InOrder(
+					mockToggle.EXPECT().SetProp("type", "cf"),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+					mockUI.EXPECT().Say("Downloading Resources..."),
+					mockCache.EXPECT().Sync(resource.Catalog{
+						Items: []resource.Item{{Name: "some-item"}},
+					}),
+					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
+					mockCFDevD.EXPECT().Install(),
+					mockUI.EXPECT().Say("Starting VPNKit..."),
+					mockVpnKit.EXPECT().Start(),
+					mockVpnKit.EXPECT().Watch(localExitChan),
+					mockUI.EXPECT().Say("Starting the VM..."),
+					mockLinuxKit.EXPECT().Start(7, 6666, filepath.Join(cacheDir, "cf-deps.iso")),
+					mockLinuxKit.EXPECT().Watch(localExitChan),
+					mockUI.EXPECT().Say("Waiting for Garden..."),
+					mockGardenClient.EXPECT().Ping(),
+				)
+
+				//no provision message message
+				mockUI.EXPECT().Say(gomock.Any())
+
+				Expect(startCmd.Execute(start.Args{
+					Cpus:        7,
+					Mem:         6666,
+					NoProvision: true,
+				})).To(Succeed())
+			})
+		})
+
 		Context("when linuxkit is already running", func() {
 			It("says cf dev is already running", func() {
 				gomock.InOrder(
