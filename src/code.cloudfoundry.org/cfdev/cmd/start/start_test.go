@@ -62,10 +62,11 @@ var _ = Describe("Start", func() {
 				StateDir:       filepath.Join(tmpDir, "some-state-dir"),
 				VpnKitStateDir: filepath.Join(tmpDir, "some-vpnkit-state-dir"),
 				CacheDir:       cacheDir,
-				CFRouterIP:     "some-cf-router-ip",
-				BoshDirectorIP: "some-bosh-director-ip",
-				Dependencies: resource.Catalog{
-					Items: []resource.Item{{Name: "some-item"}},
+				CFRouterIP:     "some-cf-router-ip", BoshDirectorIP: "some-bosh-director-ip", Dependencies: resource.Catalog{
+					Items: []resource.Item{
+						{Name: "some-item"},
+						{Name: "cf-deps.iso"},
+					},
 				},
 			},
 			Exit:            exitChan,
@@ -97,7 +98,10 @@ var _ = Describe("Start", func() {
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
-						Items: []resource.Item{{Name: "some-item"}},
+						Items: []resource.Item{
+							{Name: "some-item"},
+							{Name: "cf-deps.iso"},
+						},
 					}),
 					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
 					mockCFDevD.EXPECT().Install(),
@@ -156,7 +160,10 @@ var _ = Describe("Start", func() {
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
-						Items: []resource.Item{{Name: "some-item"}},
+						Items: []resource.Item{
+							{Name: "some-item"},
+							{Name: "cf-deps.iso"},
+						},
 					}),
 					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
 					mockCFDevD.EXPECT().Install(),
@@ -182,15 +189,18 @@ var _ = Describe("Start", func() {
 		})
 
 		Context("when the -f flag is provided", func() {
-			It("starts the given iso and adds the deps iso name as an analytics property", func() {
+			It("starts the given iso, doesn't download cf-deps.iso, adds the iso name as an analytics property", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "some-deps.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
+					// don't download cf-deps.iso that we won't use
 					mockCache.EXPECT().Sync(resource.Catalog{
-						Items: []resource.Item{{Name: "some-item"}},
+						Items: []resource.Item{
+							{Name: "some-item"},
+						},
 					}),
 					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
 					mockCFDevD.EXPECT().Install(),

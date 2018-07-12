@@ -138,12 +138,19 @@ func (s *Start) Execute(args Args) error {
 
 	depsIsoName := "cf"
 	depsIsoPath := filepath.Join(s.Config.CacheDir, "cf-deps.iso")
+	depsToDownload := s.Config.Dependencies
 	if args.DepsIsoPath != "" {
 		depsIsoName = filepath.Base(args.DepsIsoPath)
 		var err error
 		depsIsoPath, err = filepath.Abs(args.DepsIsoPath)
 		if err != nil {
 			return errors.SafeWrap(err, "determining absolute path to deps iso")
+		}
+		depsToDownload = resource.Catalog{}
+		for _, item := range s.Config.Dependencies.Items {
+			if item.Name != "cf-deps.iso" {
+				depsToDownload.Items = append(depsToDownload.Items, item)
+			}
 		}
 	}
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
@@ -175,7 +182,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Downloading Resources...")
-	if err := s.Cache.Sync(s.Config.Dependencies); err != nil {
+	if err := s.Cache.Sync(depsToDownload); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 
