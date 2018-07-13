@@ -12,10 +12,10 @@ import (
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
+	b8 "code.cloudfoundry.org/cfdev/cmd/logs"
 	b5 "code.cloudfoundry.org/cfdev/cmd/start"
 	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
-	b8 "code.cloudfoundry.org/cfdev/cmd/logs"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/garden"
@@ -113,7 +113,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd, a
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         &network.HostNet{},
 			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
-			HyperV:          &process.HyperV{Config: config, Launchd: launchd},
+			HyperV:          &process.HyperV{Config: config},
 			VpnKit:          &process.VpnKit{Config: config, Launchd: launchd},
 			LinuxKit:        &process.LinuxKit{Config: config, Launchd: launchd},
 			GardenClient:    garden.New(),
@@ -122,7 +122,9 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd, a
 			Config:       config,
 			Analytics:    analyticsClient,
 			Launchd:      launchd,
+			HyperV:       &process.HyperV{Config: config},
 			ProcManager:  &process.Manager{},
+			HostNet:      &network.HostNet{},
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
 		&b7.Telemetry{

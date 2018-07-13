@@ -119,7 +119,7 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	services, err := s.GardenClient.GetServices()
+	services, message, err := s.GardenClient.GetServices()
 	if err != nil {
 		return errors.SafeWrap(err, "Failed to get list of services to deploy")
 	}
@@ -147,6 +147,10 @@ func (s *Start) Execute(args Args) error {
 	Admin user => Email: admin / Password: admin
 	Regular user => Email: user / Password: pass
 	`)
+
+	if message != "" {
+		s.UI.Say(message)
+	}
 
 	s.Analytics.Event(cfanalytics.START_END)
 

@@ -10,7 +10,6 @@ import (
 
 type HyperV struct {
 	Config  config.Config
-	Launchd Launchd
 }
 
 func (h *HyperV) CreateVM() error {
@@ -122,4 +121,22 @@ func (h *HyperV) Start(vmName string) error {
 	}
 
 	return nil
+}
+
+func (h *HyperV) Stop(vmName string) error {
+	var reterr error
+
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Stop-VM -Name %s -Turnoff", vmName))
+	err := cmd.Run()
+	if err != nil {
+		reterr = err
+	}
+
+	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
+	err = cmd.Run()
+	if err != nil {
+		reterr = err
+	}
+
+	return reterr
 }

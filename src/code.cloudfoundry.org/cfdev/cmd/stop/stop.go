@@ -1,18 +1,16 @@
 package stop
 
 import (
-	"path/filepath"
-
-	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
-	"github.com/spf13/cobra"
 	"code.cloudfoundry.org/cfdevd/launchd"
+	"github.com/spf13/cobra"
 )
 
 //go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdev/cmd/stop Launchd
 type Launchd interface {
+	Stop(spec launchd.DaemonSpec) error
 	RemoveDaemon(spec launchd.DaemonSpec) error
 }
 
@@ -38,47 +36,16 @@ type Analytics interface {
 type Stop struct {
 	Config       config.Config
 	Launchd      Launchd
+	HyperV       *process.HyperV
 	ProcManager  ProcManager
 	CfdevdClient CfdevdClient
 	Analytics    Analytics
+	HostNet      *network.HostNet
 }
 
 func (s *Stop) Cmd() *cobra.Command {
 	return &cobra.Command{
 		Use:  "stop",
 		RunE: s.RunE,
-	}
-}
-
-func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
-	s.Analytics.Event(cfanalytics.STOP)
-
-	var reterr error
-
-	if err := s.Launchd.RemoveDaemon(daemonSpec(process.LinuxKitLabel)); err != nil {
-		reterr = errors.SafeWrap(err, "failed to stop linuxkit")
-	}
-
-	if err := s.Launchd.RemoveDaemon(daemonSpec(process.VpnKitLabel)); err != nil {
-		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
-	}
-
-	if err := s.ProcManager.SafeKill(filepath.Join(s.Config.StateDir, "hyperkit.pid"), "hyperkit"); err != nil {
-		reterr = errors.SafeWrap(err, "failed to kill hyperkit")
-	}
-
-	if _, err := s.CfdevdClient.Uninstall(); err != nil {
-		reterr = errors.SafeWrap(err, "failed to uninstall cfdevd")
-	}
-
-	if reterr != nil {
-		return errors.SafeWrap(reterr, "cf dev stop")
-	}
-	return nil
-}
-
-func daemonSpec(label string) launchd.DaemonSpec {
-	return launchd.DaemonSpec {
-		Label: label,
 	}
 }

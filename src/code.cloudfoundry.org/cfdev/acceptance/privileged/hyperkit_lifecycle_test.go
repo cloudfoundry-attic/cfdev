@@ -49,8 +49,8 @@ var _ = Describe("hyperkit lifecycle", func() {
 	})
 
 	AfterEach(func() {
-		//session := cf.Cf("uninstall-plugin", "cfdev")
-		//Eventually(session).Should(gexec.Exit(0))
+		session := cf.Cf("uninstall-plugin", "cfdev")
+		Eventually(session).Should(gexec.Exit(0))
 	})
 
 	Context("starting the default cf dev file", func() {

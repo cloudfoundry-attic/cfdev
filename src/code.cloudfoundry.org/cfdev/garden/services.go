@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
-
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 func (g *Garden) DeployService(handle, script string) error {
@@ -21,7 +19,7 @@ func (g *Garden) DeployService(handle, script string) error {
 	process, err := container.Run(garden.ProcessSpec{
 		ID:   handle,
 		Path: "/bin/bash",
-		Args: []string{filepath.Join("/var/vcap/cache", script)},
+		Args: []string{fmt.Sprintf("/var/vcap/cache/%s", script)},
 		User: "root",
 	}, garden.ProcessIO{})
 
