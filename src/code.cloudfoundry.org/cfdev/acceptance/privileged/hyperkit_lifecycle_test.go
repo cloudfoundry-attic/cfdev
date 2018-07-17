@@ -75,7 +75,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 				Eventually(logsSession).Should(gexec.Exit())
 			}
-
+ 
 			hyperkitPidPath := PidFromFile(hyperkitPidPath)
 
 			startSession.Terminate()
@@ -117,7 +117,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 			EventuallyWeCanTargetTheBOSHDirector()
 
 			By("waiting for cfdev cli to exit when the deploy finished")
-			Eventually(startSession, 2*time.Hour).Should(gexec.Exit(0))
+			Eventually(startSession, 3600).Should(gexec.Exit(0))
 
 			By("waiting for cf router to listen")
 			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
