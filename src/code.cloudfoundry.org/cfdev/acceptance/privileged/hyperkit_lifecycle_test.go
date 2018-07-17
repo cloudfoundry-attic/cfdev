@@ -26,6 +26,7 @@ import (
 )
 
 var _ = Describe("hyperkit lifecycle", func() {
+	
 	var (
 		startSession *gexec.Session
 	)
