@@ -77,18 +77,21 @@ var _ = Describe("hyperkit start", func() {
 	Context("cfdev linuxkit is already running", func() {
 		var launchdTmpDir string
 		var originalPid string
+		var testDaemonSpec launchd.DaemonSpec
 		BeforeEach(func() {
 			launchdTmpDir, _ = ioutil.TempDir("", "cfdev.test.running.")
 			lctl := launchd.New(launchdTmpDir)
-			Expect(lctl.IsRunning("org.cloudfoundry.cfdev.linuxkit")).To(BeFalse())
-			lctl.AddDaemon(launchd.DaemonSpec{
+			testDaemonSpec = launchd.DaemonSpec{
 				Label:            "org.cloudfoundry.cfdev.linuxkit",
 				Program:          "/bin/bash",
 				SessionType:      "Background",
 				ProgramArguments: []string{"/bin/bash", "-c", "sleep 300"},
 				RunAtLoad:        true,
-			})
-			Eventually(func() (bool, error) { return lctl.IsRunning("org.cloudfoundry.cfdev.linuxkit") }).Should(BeTrue())
+			}
+			Expect(lctl.IsRunning(testDaemonSpec)).To(BeFalse())
+
+			lctl.AddDaemon(testDaemonSpec)
+			Eventually(func() (bool, error) { return lctl.IsRunning(testDaemonSpec) }).Should(BeTrue())
 			originalPid, _ = LaunchdPid("org.cloudfoundry.cfdev.linuxkit")
 			Expect(originalPid).NotTo(BeEmpty())
 		})

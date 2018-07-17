@@ -90,7 +90,10 @@ func copyExecutable(src string, dest string) error {
 func uninstall(prog string) {
 	lctl := launchd.New("")
 	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
-	if err := lctl.RemoveDaemon("org.cloudfoundry.cfdevd"); err != nil {
+	spec := launchd.DaemonSpec{
+		Label: "org.cloudfoundry.cfdevd",
+	}
+	if err := lctl.RemoveDaemon(spec); err != nil {
 		fmt.Println("Failed to uninstall cfdevd: ", err)
 	}
 	if err := os.Remove(program); err != nil {

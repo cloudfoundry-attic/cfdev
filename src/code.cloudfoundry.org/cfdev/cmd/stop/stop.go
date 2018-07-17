@@ -1,11 +1,11 @@
 package stop
 
 import (
-	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/network"
-	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/network"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/process"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 //go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdev/cmd/stop Launchd
@@ -49,3 +49,5 @@ func (s *Stop) Cmd() *cobra.Command {
 		RunE: s.RunE,
 	}
 }
+
+

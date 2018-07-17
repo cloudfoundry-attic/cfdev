@@ -3,11 +3,11 @@ package stop
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdevd/launchd"
 	"github.com/spf13/cobra"
 	"os/exec"
 )
+
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	s.Analytics.Event(cfanalytics.STOP)

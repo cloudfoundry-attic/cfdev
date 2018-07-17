@@ -98,7 +98,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 			RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 		})
 
-		FIt("runs the entire vm lifecycle", func() {
+		It("runs the entire vm lifecycle", func() {
 			Eventually(startSession, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
 			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 30, 1).Should(BeTrue())

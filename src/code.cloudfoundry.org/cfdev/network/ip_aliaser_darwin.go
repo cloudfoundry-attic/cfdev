@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type HostNet struct {}
+type HostNet struct{}
 
 func (*HostNet) AddLoopbackAliases(addrs ...string) error {
 	prompted := false

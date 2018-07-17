@@ -8,6 +8,8 @@ import (
 	"text/template"
 )
 
+
+
 func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
 	l.remove(spec.Label)
@@ -18,7 +20,7 @@ func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 }
 
 func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
-	plistPath := filepath.Join(l.PListDir, label+".plist")
+	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
 	loaded, err := l.isLoaded(spec.Label)
 	if err != nil {
 		return err
@@ -67,7 +69,7 @@ func (l *Launchd) IsRunning(spec DaemonSpec) (bool, error) {
 	}
 	for _, line := range strings.Split(out, "\n") {
 		cols := strings.Fields(line)
-		if len(cols) >= 3 && cols[2] == spec.Label{
+		if len(cols) >= 3 && cols[2] == spec.Label {
 			return cols[0] != "-", nil
 		}
 	}

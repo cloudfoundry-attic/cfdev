@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdevd/launchd"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"code.cloudfoundry.org/cfdev/errors"
 )
 
 type VpnKit struct {
@@ -153,19 +153,19 @@ func (v *VpnKit) Watch(exit chan string) {
 
 func (v *VpnKit) generateServiceGUIDs() error {
 	/*
-	for _, serviceName := range []string{"CF Dev VPNkit Ethernet Service", "CF Dev VPNkit Port Service", "CF Dev VPNkit Forwarder Service"} {
-		command := exec.Command(
-			"powershell.exe", "-Command",
-			fmt.Sprintf(`$guid=[guid]::newguid().Guid;
-			  $ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name $guid;
-             $ethService.SetValue("ElementName", "%s")
-             `, serviceName),
-		)
+			for _, serviceName := range []string{"CF Dev VPNkit Ethernet Service", "CF Dev VPNkit Port Service", "CF Dev VPNkit Forwarder Service"} {
+				command := exec.Command(
+					"powershell.exe", "-Command",
+					fmt.Sprintf(`$guid=[guid]::newguid().Guid;
+					  $ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name $guid;
+		             $ethService.SetValue("ElementName", "%s")
+		             `, serviceName),
+				)
 
-		if err := command.Run(); err != nil {
-			return err
-		}
-	}
+				if err := command.Run(); err != nil {
+					return err
+				}
+			}
 	*/
 
 	command := exec.Command(

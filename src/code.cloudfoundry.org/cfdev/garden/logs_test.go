@@ -9,9 +9,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io"
-	"path/filepath"
-	"os"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 var _ = Describe("Logs", func() {
@@ -77,7 +77,6 @@ var _ = Describe("Logs", func() {
 				fakeContainer.StreamOutReturns(newFakeReadCloser("some-tar-file"), nil)
 			})
 
-
 			It("puts the logs onto the file system", func() {
 				Expect(fakeContainer.StreamOutCallCount()).To(Equal(1))
 
@@ -99,7 +98,6 @@ var _ = Describe("Logs", func() {
 				fakeContainer.StreamOutReturns(newFakeReadCloser("some-tar-file"), nil)
 			})
 
-
 			It("creates the dir before putting the logs onto the file system", func() {
 				Expect(fakeContainer.StreamOutCallCount()).To(Equal(1))
 
@@ -116,7 +114,6 @@ var _ = Describe("Logs", func() {
 			BeforeEach(func() {
 				fakeContainer.StreamOutReturns(nil, errors.New("some-stream-out-error"))
 			})
-
 
 			It("returns the error", func() {
 				Expect(err).To(MatchError("some-stream-out-error"))

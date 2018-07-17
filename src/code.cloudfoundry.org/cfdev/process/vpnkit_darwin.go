@@ -69,7 +69,7 @@ func (v *VpnKit) Watch(exit chan string) {
 func (v *VpnKit) daemonSpec() launchd.DaemonSpec {
 	return launchd.DaemonSpec{
 		Label:       VpnKitLabel,
-		CfDevHome: 	 v.Config.CfDevHome,
+		CfDevHome:   v.Config.CFDevHome,
 		Program:     path.Join(v.Config.CacheDir, "vpnkit"),
 		SessionType: "Background",
 		ProgramArguments: []string{

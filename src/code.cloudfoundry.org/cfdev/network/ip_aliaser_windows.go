@@ -1,14 +1,14 @@
 package network
 
 import (
-	"net"
-	"strings"
 	"fmt"
-	"os/exec"
+	"net"
 	"os"
+	"os/exec"
+	"strings"
 )
 
-type HostNet struct {}
+type HostNet struct{}
 
 func (*HostNet) AddLoopbackAliases(addrs ...string) error {
 	prompted := false
@@ -47,7 +47,7 @@ func (*HostNet) AddLoopbackAliases(addrs ...string) error {
 	return nil
 }
 
-func (*HostNet) RemoveNetworkSwitch() error  {
+func (*HostNet) RemoveNetworkSwitch() error {
 	command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name cfdev -force")
 	return command.Run()
 }

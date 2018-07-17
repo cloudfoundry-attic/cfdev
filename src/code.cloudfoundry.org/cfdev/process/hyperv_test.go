@@ -1,3 +1,5 @@
+// +build windows
+
 package process_test
 
 import (
@@ -35,7 +37,6 @@ var _ = Describe("HyperV process", func() {
 				CFDevHome: cfDevHome,
 				CacheDir:  filepath.Join(cfDevHome, "cache"),
 			},
-			Launchd: nil,
 		}
 
 		err = os.MkdirAll(hyperV.Config.CacheDir, 0666)
@@ -45,12 +46,12 @@ var _ = Describe("HyperV process", func() {
 	})
 
 	AfterEach(func() {
-		//cmd := exec.Command("powershell.exe", "-Command", "Remove-VM -Name cfdev -Force")
-		//err := cmd.Run()
-		//Expect(err).ToNot(HaveOccurred())
-		//
-		//err = os.RemoveAll(cfDevHome)
-		//Expect(err).ToNot(HaveOccurred())
+		cmd := exec.Command("powershell.exe", "-Command", "Remove-VM -Name cfdev -Force")
+		err := cmd.Run()
+		Expect(err).ToNot(HaveOccurred())
+
+		err = os.RemoveAll(cfDevHome)
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("creates hyperv VM", func() {

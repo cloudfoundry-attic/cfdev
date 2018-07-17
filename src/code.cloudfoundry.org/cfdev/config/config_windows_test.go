@@ -14,7 +14,7 @@ var _ = Describe("config", func() {
 		Context("when CFDEV_HOME is not set", func() {
 			var (
 				oldHomeDrive string
-				oldHomePath string
+				oldHomePath  string
 			)
 
 			BeforeEach(func() {

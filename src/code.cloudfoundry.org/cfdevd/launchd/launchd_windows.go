@@ -1,14 +1,14 @@
 package launchd
 
 import (
-	"os/exec"
-	"os"
-	"path/filepath"
-	"io/ioutil"
 	"encoding/xml"
-	"strings"
-	"io"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 type program struct {
@@ -113,7 +113,7 @@ func (l *Launchd) IsRunning(spec DaemonSpec) (bool, error) {
 		return false, err
 	}
 
-	isRunning := strings.Contains(string(output),"Started")
+	isRunning := strings.Contains(string(output), "Started")
 	return isRunning, nil
 }
 

@@ -2,12 +2,12 @@ package garden
 
 import (
 	"archive/tar"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
+	"fmt"
 	"gopkg.in/yaml.v2"
+	"io"
+	"io/ioutil"
 )
 
 func (g *Garden) DeployService(handle, script string) error {

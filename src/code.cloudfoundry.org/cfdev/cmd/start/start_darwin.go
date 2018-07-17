@@ -13,6 +13,8 @@ import (
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/resource"
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 func (s *Start) Cmd() *cobra.Command {
@@ -32,7 +34,9 @@ func (s *Start) Cmd() *cobra.Command {
 	pf.StringVarP(&args.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 	pf.IntVarP(&args.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
 	pf.IntVarP(&args.Mem, "memory", "m", 4096, "memory to allocate to vm in MB")
+	pf.BoolVarP(&args.NoProvision, "no-provision", "n", false, "start vm but do not provision")
 
+	pf.MarkHidden("no-provision")
 	return cmd
 }
 
@@ -51,12 +55,19 @@ func (s *Start) Execute(args Args) error {
 
 	depsIsoName := "cf"
 	depsIsoPath := filepath.Join(s.Config.CacheDir, "cf-deps.iso")
+	depsToDownload := s.Config.Dependencies
 	if args.DepsIsoPath != "" {
 		depsIsoName = filepath.Base(args.DepsIsoPath)
 		var err error
 		depsIsoPath, err = filepath.Abs(args.DepsIsoPath)
 		if err != nil {
 			return errors.SafeWrap(err, "determining absolute path to deps iso")
+		}
+		depsToDownload = resource.Catalog{}
+		for _, item := range s.Config.Dependencies.Items {
+			if item.Name != "cf-deps.iso" {
+				depsToDownload.Items = append(depsToDownload.Items, item)
+			}
 		}
 	}
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
@@ -74,7 +85,7 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "environment setup")
 	}
 
-	if err := CleanupStateDir(s.Config); err != nil {
+	if err := cleanupStateDir(s.Config); err != nil {
 		return errors.SafeWrap(err, "cleaning state directory")
 	}
 
@@ -88,7 +99,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Downloading Resources...")
-	if err := s.Cache.Sync(s.Config.Dependencies); err != nil {
+	if err := s.Cache.Sync(depsToDownload); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 
@@ -112,6 +123,11 @@ func (s *Start) Execute(args Args) error {
 	s.UI.Say("Waiting for Garden...")
 	s.waitForGarden()
 
+	if args.NoProvision {
+		s.UI.Say("VM will not be provisioned because '-n' (no-provision) flag was specified.")
+		return nil
+	}
+
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := s.GardenClient.DeployBosh(); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
@@ -123,7 +139,7 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	services, err := s.GardenClient.GetServices()
+	services, message, err := s.GardenClient.GetServices()
 	if err != nil {
 		return errors.SafeWrap(err, "Failed to get list of services to deploy")
 	}
@@ -149,8 +165,11 @@ func (s *Start) Execute(args Args) error {
 	    cf login -a https://api.v3.pcfdev.io --skip-ssl-validation
 
 	Admin user => Email: admin / Password: admin
-	Regular user => Email: user / Password: pass
-	`)
+	Regular user => Email: user / Password: pass`)
+
+	if message != "" {
+		s.UI.Say(message)
+	}
 
 	s.Analytics.Event(cfanalytics.START_END)
 
@@ -164,6 +183,19 @@ func (s *Start) waitForGarden() {
 		}
 		time.Sleep(time.Second)
 	}
+}
+
+func cleanupStateDir(cfg config.Config) error {
+	for _, dir := range []string{cfg.StateDir, cfg.VpnKitStateDir} {
+		if err := os.RemoveAll(dir); err != nil {
+			return errors.SafeWrap(err, "Unable to clean up .cfdev state directory")
+		}
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return errors.SafeWrap(err, "Unable to create .cfdev state directory")
+		}
+	}
+
+	return nil
 }
 
 func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {

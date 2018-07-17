@@ -17,9 +17,9 @@ import (
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
+	"fmt"
 	. "github.com/onsi/gomega"
 	"runtime"
-	"fmt"
 )
 
 const (

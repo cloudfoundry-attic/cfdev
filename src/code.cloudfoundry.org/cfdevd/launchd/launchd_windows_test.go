@@ -5,13 +5,13 @@ import (
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"os/exec"
-	"strings"
-	"os"
-	"net/http"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -39,7 +39,7 @@ var _ = Describe("launchd windows", func() {
 		Expect(assetPath).To(BeAnExistingFile())
 	})
 
-	AfterEach(func(){
+	AfterEach(func() {
 		err := os.RemoveAll(tmpDir)
 		Expect(err).To(BeNil())
 	})
@@ -52,20 +52,20 @@ var _ = Describe("launchd windows", func() {
 
 		AfterEach(func() {
 			spec := launchd.DaemonSpec{
-				Label:   label,
+				Label:     label,
 				CfDevHome: tmpDir,
 			}
 			lnchd.Stop(spec)
 			lnchd.RemoveDaemon(spec)
-				})
+		})
 
-				Describe("AddDaemon", func() {
-					It("should load the daemon", func() {
-						spec := launchd.DaemonSpec{
-							Label:   label,
-							CfDevHome: tmpDir,
-					Program: "powershell.exe",
-					ProgramArguments: []string{ "echo 'hello'"},
+		Describe("AddDaemon", func() {
+			It("should load the daemon", func() {
+				spec := launchd.DaemonSpec{
+					Label:            label,
+					CfDevHome:        tmpDir,
+					Program:          "powershell.exe",
+					ProgramArguments: []string{"echo 'hello'"},
 				}
 
 				Expect(lnchd.AddDaemon(spec)).To(Succeed())
@@ -78,9 +78,9 @@ var _ = Describe("launchd windows", func() {
 		Describe("RemoveDaemon", func() {
 			It("should remove the daemon", func() {
 				spec := launchd.DaemonSpec{
-					Label:   label,
+					Label:     label,
 					CfDevHome: tmpDir,
-					Program: "powershell.exe",
+					Program:   "powershell.exe",
 				}
 
 				Expect(lnchd.AddDaemon(spec)).To(Succeed())
@@ -96,7 +96,7 @@ var _ = Describe("launchd windows", func() {
 		Describe("Lifecycle", func() {
 			var testFilePath string
 
-			BeforeEach(func(){
+			BeforeEach(func() {
 				testFilePath = filepath.Join(tmpDir, "test-file.txt")
 			})
 
@@ -107,9 +107,9 @@ var _ = Describe("launchd windows", func() {
 			It("should start, stop the daemon", func() {
 				By("adding the service")
 				spec := launchd.DaemonSpec{
-					Label:   label,
+					Label:     label,
 					CfDevHome: tmpDir,
-					Program: "powershell.exe" ,
+					Program:   "powershell.exe",
 					ProgramArguments: []string{
 						fmt.Sprintf("'some-content' >> %s;", testFilePath),
 						"Start-Sleep -Seconds 20",

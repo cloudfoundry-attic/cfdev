@@ -2,13 +2,13 @@ package garden
 
 import (
 	"code.cloudfoundry.org/garden"
-	"path/filepath"
-	"os"
 	"io"
+	"os"
+	"path/filepath"
 )
 
 var (
-	LogsFileName = "cfdev-logs.tgz"
+	LogsFileName        = "cfdev-logs.tgz"
 	logsContainerHandle = "fetch-logs"
 )
 

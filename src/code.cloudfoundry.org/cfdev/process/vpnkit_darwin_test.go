@@ -52,7 +52,7 @@ var _ = Describe("VpnKit", func() {
 	})
 
 	AfterEach(func() {
-		Expect(lctl.RemoveDaemon(process.VpnKitLabel)).To(Succeed())
+		Expect(lctl.RemoveDaemon(launchd.DaemonSpec{Label:process.VpnKitLabel})).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 
