@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
@@ -75,7 +74,7 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "environment setup")
 	}
 
-	if err := cleanupStateDir(s.Config); err != nil {
+	if err := CleanupStateDir(s.Config); err != nil {
 		return errors.SafeWrap(err, "cleaning state directory")
 	}
 
@@ -165,19 +164,6 @@ func (s *Start) waitForGarden() {
 		}
 		time.Sleep(time.Second)
 	}
-}
-
-func cleanupStateDir(cfg config.Config) error {
-	for _, dir := range []string{cfg.StateDir, cfg.VpnKitStateDir} {
-		if err := os.RemoveAll(dir); err != nil {
-			return errors.SafeWrap(err, "Unable to clean up .cfdev state directory")
-		}
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return errors.SafeWrap(err, "Unable to create .cfdev state directory")
-		}
-	}
-
-	return nil
 }
 
 func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {

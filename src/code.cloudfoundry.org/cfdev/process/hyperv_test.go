@@ -1,11 +1,6 @@
 package process_test
 
 import (
-	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/process"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,6 +8,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/process"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("HyperV process", func() {
@@ -53,7 +54,7 @@ var _ = Describe("HyperV process", func() {
 	})
 
 	It("creates hyperv VM", func() {
-		Expect(hyperV.CreateVM()).To(Succeed())
+		Expect(hyperV.CreateVM("")).To(Succeed())
 
 		cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev")
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)

@@ -1,21 +1,24 @@
 package process
 
 import (
-	"code.cloudfoundry.org/cfdev/config"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 type HyperV struct {
-	Config  config.Config
+	Config config.Config
 }
 
-func (h *HyperV) CreateVM() error {
+func (h *HyperV) CreateVM(cfDepsIso string) error {
 	var vmName = "cfdev"
 	var cfdevEfiIso = filepath.Join(h.Config.CacheDir, "cfdev-efi.iso")
-	var cfDepsIso = filepath.Join(h.Config.CacheDir, "cf-deps.iso")
+	if cfDepsIso == "" {
+		cfDepsIso = filepath.Join(h.Config.CacheDir, "cf-deps.iso")
+	}
 	var cfDevVHD = filepath.Join(h.Config.CFDevHome, "cfdev.vhd")
 
 	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vmName))

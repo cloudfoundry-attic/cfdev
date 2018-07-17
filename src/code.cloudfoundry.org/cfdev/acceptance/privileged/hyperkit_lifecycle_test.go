@@ -23,7 +23,6 @@ import (
 	"code.cloudfoundry.org/garden/client/connection"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
-	"runtime"
 )
 
 var _ = Describe("hyperkit lifecycle", func() {
@@ -64,46 +63,49 @@ var _ = Describe("hyperkit lifecycle", func() {
 		})
 
 		AfterEach(func() {
-			//if os.Getenv("CFDEV_FETCH_LOGS") == "true" {
-			//	var logsSession *gexec.Session
-			//
-			//	if dir := os.Getenv("CFDEV_LOG_DIR"); dir != "" {
-			//		logsSession = cf.Cf("dev", "logs", "--dir", dir)
-			//	} else {
-			//		logsSession = cf.Cf("dev", "logs")
-			//	}
-			//
-			//	Eventually(logsSession).Should(gexec.Exit())
-			//}
-			//
-			//hyperkitPid := PidFromFile(hyperkitPidPath)
-			//
-			//startSession.Terminate()
-			//Eventually(startSession).Should(gexec.Exit())
-			//
-			//By("deploy finished - stopping...")
-			//stopSession := cf.Cf("dev", "stop")
-			//Eventually(stopSession).Should(gexec.Exit(0))
-			//
-			////ensure pid is not running
-			//Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
-			//EventuallyProcessStops(hyperkitPid, 5)
-			//Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
-			//
-			//gexec.KillAndWait()
-			//RemoveIPAliases(BoshDirectorIP, CFRouterIP)
+			if os.Getenv("CFDEV_FETCH_LOGS") == "true" {
+				var logsSession *gexec.Session
+
+				if dir := os.Getenv("CFDEV_LOG_DIR"); dir != "" {
+					logsSession = cf.Cf("dev", "logs", "--dir", dir)
+				} else {
+					logsSession = cf.Cf("dev", "logs")
+				}
+
+				Eventually(logsSession).Should(gexec.Exit())
+			}
+
+			startSession.Terminate()
+			Eventually(startSession).Should(gexec.Exit())
+
+			By("deploy finished - stopping...")
+			stopSession := cf.Cf("dev", "stop")
+			Eventually(stopSession).Should(gexec.Exit(0))
+
+			//ensure pid is not running
+			if IsWindows() {
+				Expect(doesVMExist()).To(BeFalse())
+			} else {
+				Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
+
+				hyperkitPid := PidFromFile(hyperkitPidPath)
+				EventuallyProcessStops(hyperkitPid, 5)
+			}
+
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
+
+			gexec.KillAndWait()
+			RemoveIPAliases(BoshDirectorIP, CFRouterIP)
 		})
 
 		FIt("runs the entire vm lifecycle", func() {
 			Eventually(startSession, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
 
-			//daemonSpec := launchd.DaemonSpec{
-			//	Label:"org.cloudfoundry.cfdev.vpnkit",
-			//	CfDevHome: cfdevHome,
-			//}
- 
 			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 30, 1).Should(BeTrue())
-			//Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
+
+			if !IsWindows() {
+				Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
+			}
 
 			By("waiting for garden to listen")
 			client := client.New(connection.New("tcp", "localhost:8888"))
@@ -182,7 +184,7 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	session := cf.Cf("dev", "bosh", "env")
 	Eventually(session, 120, 1).Should(gexec.Exit(0))
 
-	if runtime.GOOS != "windows" {
+	if !IsWindows() {
 		// This test is more representative of how `bosh env` should be invoked
 		w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
 		boshEnv := func() *gexec.Session {
@@ -282,4 +284,14 @@ func httpGet(url string) (string, error) {
 	defer resp.Body.Close()
 	b, err := ioutil.ReadAll(resp.Body)
 	return string(b), err
+}
+
+func doesVMExist() bool {
+	cmd := exec.Command("powershell.exe", "-Command", "(Get-VM -Name cfdev).name")
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	return string(output) == "cfdev"
 }

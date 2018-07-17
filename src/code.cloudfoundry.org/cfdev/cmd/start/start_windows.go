@@ -1,16 +1,17 @@
 package start
 
 import (
-	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/cfdev/errors"
+	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
+
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/env"
-	"fmt"
-	"time"
-	"strings"
-	"net/url"
+	"code.cloudfoundry.org/cfdev/errors"
+	"github.com/spf13/cobra"
 )
 
 func (s *Start) Cmd() *cobra.Command {
@@ -60,20 +61,14 @@ func (s *Start) Execute(args Args) error {
 	}
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
 	s.Analytics.Event(cfanalytics.START_BEGIN)
-	_ = depsIsoPath
-	//if running, err := s.LinuxKit.IsRunning(); err != nil {
-	//	return errors.SafeWrap(err, "is linuxkit running")
-	//} else if running {
-	//	s.UI.Say("CF Dev is already running...")
-	//	s.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true})
-	//	return nil
-	//}
 
 	if err := env.Setup(s.Config); err != nil {
 		return errors.SafeWrap(err, "environment setup")
 	}
 
-	//TODO CLEANUP STATE DIR?????
+	if err := CleanupStateDir(s.Config); err != nil {
+		return errors.SafeWrap(err, "cleaning state directory")
+	}
 
 	if err := s.HostNet.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
 		return errors.SafeWrap(err, "adding aliases")
@@ -90,7 +85,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Creating VM...")
-	if err := s.HyperV.CreateVM(); err != nil {
+	if err := s.HyperV.CreateVM(depsIsoPath); err != nil {
 		return errors.SafeWrap(err, "Unable to create VM")
 	}
 
@@ -98,7 +93,6 @@ func (s *Start) Execute(args Args) error {
 	if err := s.VpnKit.Start(); err != nil {
 		return errors.SafeWrap(err, "starting vpnkit")
 	}
-	//s.VpnKit.Watch(s.LocalExit) what is this?
 
 	s.UI.Say("Starting VM...")
 	if err := s.HyperV.Start("cfdev"); err != nil {
@@ -119,17 +113,17 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	services, message, err := s.GardenClient.GetServices()
-	if err != nil {
-		return errors.SafeWrap(err, "Failed to get list of services to deploy")
-	}
-	for _, service := range services {
-		s.UI.Say("Deploying %s...", service.Name)
-		s.GardenClient.ReportProgress(s.UI, service.Deployment)
-		if err := s.GardenClient.DeployService(service.Handle, service.Script); err != nil {
-			return errors.SafeWrap(err, fmt.Sprintf("Failed to deploy %s", service.Name))
-		}
-	}
+	//services, message, err := s.GardenClient.GetServices()
+	//if err != nil {
+	//	return errors.SafeWrap(err, "Failed to get list of services to deploy")
+	//}
+	//for _, service := range services {
+	//	s.UI.Say("Deploying %s...", service.Name)
+	//	s.GardenClient.ReportProgress(s.UI, service.Deployment)
+	//	if err := s.GardenClient.DeployService(service.Handle, service.Script); err != nil {
+	//		return errors.SafeWrap(err, fmt.Sprintf("Failed to deploy %s", service.Name))
+	//	}
+	//}
 
 	s.UI.Say(`
 
@@ -148,15 +142,14 @@ func (s *Start) Execute(args Args) error {
 	Regular user => Email: user / Password: pass
 	`)
 
-	if message != "" {
-		s.UI.Say(message)
-	}
+	//if message != "" {
+	//	s.UI.Say(message)
+	//}
 
 	s.Analytics.Event(cfanalytics.START_END)
 
 	return nil
 }
-
 
 func (s *Start) waitForGarden() {
 	for {

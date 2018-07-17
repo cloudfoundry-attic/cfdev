@@ -2,7 +2,11 @@ package start
 
 import (
 	"io"
+
+	"os"
+
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/resource"
 )
@@ -58,7 +62,7 @@ type LinuxKit interface {
 //go:generate mockgen -package mocks -destination mocks/hyperv.go code.cloudfoundry.org/cfdev/cmd/start HyperV
 type HyperV interface {
 	Start(vmName string) error
-	CreateVM() error
+	CreateVM(depsIsoPath string) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/garden.go code.cloudfoundry.org/cfdev/cmd/start GardenClient
@@ -93,4 +97,17 @@ type Start struct {
 	HyperV          HyperV
 	LinuxKit        LinuxKit
 	GardenClient    GardenClient
+}
+
+func CleanupStateDir(cfg config.Config) error {
+	for _, dir := range []string{cfg.StateDir, cfg.VpnKitStateDir} {
+		if err := os.RemoveAll(dir); err != nil {
+			return errors.SafeWrap(err, "Unable to clean up .cfdev state directory")
+		}
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return errors.SafeWrap(err, "Unable to create .cfdev state directory")
+		}
+	}
+
+	return nil
 }
