@@ -4,9 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
-
-	"code.cloudfoundry.org/cfdevd/launchd"
 	"os"
+	"code.cloudfoundry.org/cfdevd/launchd"
 )
 
 type Command interface {

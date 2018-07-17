@@ -17,7 +17,9 @@ import (
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
+	"fmt"
 	. "github.com/onsi/gomega"
+	"runtime"
 )
 
 const (
@@ -97,22 +99,46 @@ func ProcessIsRunning(pid int) (bool, error) {
 	return true, nil
 }
 
+//func isProcessRunning(label string) func() (bool, error) {
+//	if runtime.GOOS == "windows" {
+//		return func() (bool, error) {
+//
+//		}
+//	} else {
+//		return IsLaunchdRunning(label)
+//	}
+//}
+
 func IsLaunchdRunning(label string) func() (bool, error) {
 	return func() (bool, error) {
-		txt, err := exec.Command("launchctl", "list", label).CombinedOutput()
-		if err != nil {
-			if strings.Contains(string(txt), "Could not find service") {
-				return false, nil
+		if runtime.GOOS == "darwin" {
+			txt, err := exec.Command("launchctl", "list", label).CombinedOutput()
+			if err != nil {
+				if strings.Contains(string(txt), "Could not find service") {
+					return false, nil
+				}
+				return false, err
 			}
-			return false, err
-		}
-		re := regexp.MustCompile(`^\s*"PID"\s*=`)
-		for _, line := range strings.Split(string(txt), "\n") {
-			if re.MatchString(line) {
+			re := regexp.MustCompile(`^\s*"PID"\s*=`)
+			for _, line := range strings.Split(string(txt), "\n") {
+				if re.MatchString(line) {
+					return true, nil
+				}
+			}
+			return false, nil
+		} else {
+			cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-Service | Where-Object {$_.Name -eq \"%s\"}", label))
+			output, err := cmd.Output()
+			if err != nil {
+				return false, err
+			}
+
+			if strings.Contains(string(output), label) {
 				return true, nil
 			}
+
+			return false, nil
 		}
-		return false, nil
 	}
 }
 

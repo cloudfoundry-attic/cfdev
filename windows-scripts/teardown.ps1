@@ -12,3 +12,5 @@ Remove-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualiza
 $forwarderServiceGuid="e3ae8f06-8c25-47fb-b6ed-c20702bcef5e"
 Remove-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices/$forwarderServiceGuid"
 
+
+sc.exe delete "org.cloudfoundry.cfdev.vpnkit"

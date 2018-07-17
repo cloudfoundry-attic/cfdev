@@ -53,6 +53,7 @@ func (c *Cache) total(clog Catalog) uint64 {
 }
 
 func (c *Cache) download(item *Item) error {
+
 	if !item.InUse {
 		return nil
 	}
@@ -63,7 +64,13 @@ func (c *Cache) download(item *Item) error {
 		c.Progress.Add(item.Size)
 		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
 	}
+
 	if strings.HasPrefix(item.URL, "file://") {
+		if err := c.copyFile(item); err != nil {
+			return err
+		}
+		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
+	} else if strings.HasPrefix(item.URL, "C:") {
 		if err := c.copyFile(item); err != nil {
 			return err
 		}

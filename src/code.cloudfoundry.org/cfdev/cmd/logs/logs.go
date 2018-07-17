@@ -1,11 +1,11 @@
 package logs
 
 import (
-	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/garden/client/connection"
-	"code.cloudfoundry.org/garden/client"
-	gdn "code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/errors"
+	gdn "code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/garden/client"
+	"code.cloudfoundry.org/garden/client/connection"
+	"github.com/spf13/cobra"
 	"path/filepath"
 )
 
@@ -14,7 +14,7 @@ type UI interface {
 }
 
 type Logs struct {
-	UI UI
+	UI   UI
 	Args struct {
 		DestDir string
 	}
@@ -22,7 +22,7 @@ type Logs struct {
 
 func (l *Logs) Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "logs",
+		Use:  "logs",
 		RunE: l.RunE,
 	}
 

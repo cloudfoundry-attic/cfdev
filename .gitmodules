@@ -76,3 +76,9 @@
 [submodule "src/github.com/moby/vpnkit"]
 	path = src/github.com/moby/vpnkit
 	url = https://github.com/moby/vpnkit.git
+[submodule "src/golang.org/x/sys"]
+	path = src/golang.org/x/sys
+	url = https://go.googlesource.com/sys
+[submodule "src/github.com/inconshreveable/mousetrap"]
+	path = src/github.com/inconshreveable/mousetrap.git
+	url = https://github.com/inconshreveable/mousetrap.git

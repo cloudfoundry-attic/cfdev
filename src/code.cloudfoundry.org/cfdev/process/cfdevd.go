@@ -1,11 +1,11 @@
 package process
 
 import (
+	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
-	"code.cloudfoundry.org/cfdev/resource"
 )
 
 type CFDevD struct {
