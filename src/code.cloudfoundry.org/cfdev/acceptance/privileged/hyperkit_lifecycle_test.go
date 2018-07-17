@@ -119,7 +119,7 @@ var _ = Describe("hyperkit lifecycle", func() {
 			By("waiting for cf router to listen")
 			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 			Eventually(loginSession).Should(gexec.Exit(0))
-			//
+
 			//By("pushing an app")
 			//PushAnApp()
 		})
