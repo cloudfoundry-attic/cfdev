@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 	"runtime"
+	"os"
 )
 
 var pluginPath string
@@ -26,9 +27,13 @@ var _ = BeforeSuite(func() {
 
 	Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
 	RemoveIPAliases(BoshDirectorIP, CFRouterIP)
-
-	//TODO make sure you want this
+ 
 	var err error
+
+	pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")
+	if pluginPath != "" {
+		return
+	}
 
 	if runtime.GOOS == "windows" {
 		pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev", "-ldflags", `-X code.cloudfoundry.org/cfdev/config.cfdepsUrl=https://s3.amazonaws.com/cfdev-ci/cf-oss-deps/cf-deps-0.78.0.iso
@@ -90,6 +95,8 @@ var _ = BeforeSuite(func() {
      -X code.cloudfoundry.org/cfdev/config.analyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2
 `)
 	}
+
+	os.Setenv("CFDEV_PLUGIN_PATH", pluginPath)
 
 	Expect(err).ShouldNot(HaveOccurred())
 })

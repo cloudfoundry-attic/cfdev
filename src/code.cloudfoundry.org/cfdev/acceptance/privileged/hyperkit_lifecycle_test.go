@@ -75,8 +75,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 				Eventually(logsSession).Should(gexec.Exit())
 			}
- 
-			hyperkitPidPath := PidFromFile(hyperkitPidPath)
 
 			startSession.Terminate()
 			Eventually(startSession).Should(gexec.Exit())
