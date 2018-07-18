@@ -12,6 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"code.cloudfoundry.org/cfdevd/launchd"
 )
 
 var _ bool = Describe("UninstallCommand", func() {
@@ -61,7 +62,10 @@ var _ bool = Describe("UninstallCommand", func() {
 			controller.Finish()
 		})
 		It("removes the correct daemon", func() {
-			mockLaunchd.EXPECT().RemoveDaemon("org.cloudfoundry.cfdevd")
+			spec := launchd.DaemonSpec{
+				Label: "org.cloudfoundry.cfdevd",
+			}
+			mockLaunchd.EXPECT().RemoveDaemon(spec)
 			Expect(uninstall.Execute(conn)).To(Succeed())
 		})
 		It("sends 0 (success) over the communication socket", func() {
@@ -76,7 +80,6 @@ var _ bool = Describe("UninstallCommand", func() {
 			})
 			It("returns the failure from launchd", func() {
 				Expect(uninstall.Execute(conn)).To(Equal(errors.New("Mega Fail")))
-
 			})
 			It("sends 1 (failure) over the communication socket", func() {
 				uninstall.Execute(conn)

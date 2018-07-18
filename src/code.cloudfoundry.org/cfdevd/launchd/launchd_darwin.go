@@ -8,8 +8,6 @@ import (
 	"text/template"
 )
 
-
-
 func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
 	l.remove(spec.Label)

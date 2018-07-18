@@ -183,7 +183,10 @@ var _ = Describe("launchd", func() {
 			})
 
 			It("should unload the daemon and remove the files", func() {
-				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				spec := launchd.DaemonSpec{
+					Label:label,
+				}
+				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 				Expect(plistPath).NotTo(BeAnExistingFile())
 			})
@@ -217,7 +220,10 @@ var _ = Describe("launchd", func() {
 				Expect(os.RemoveAll(plistDir)).To(Succeed())
 			})
 			It("unloads the daemon", func() {
-				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				spec := launchd.DaemonSpec{
+					Label:label,
+				}
+				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			})
 		})
@@ -248,14 +254,20 @@ var _ = Describe("launchd", func() {
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			})
 			It("removes the file", func() {
-				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				spec := launchd.DaemonSpec{
+					Label:label,
+				}
+				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 				Expect(plistPath).NotTo(BeAnExistingFile())
 			})
 		})
 
 		Context("daemon is not loaded and file does not exist", func() {
 			It("succeeds", func() {
-				Expect(lnchd.RemoveDaemon(label)).To(Succeed())
+				spec := launchd.DaemonSpec{
+					Label:label,
+				}
+				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 			})
 		})
 	})
@@ -273,7 +285,10 @@ var _ = Describe("launchd", func() {
 
 		Context("label not loaded", func() {
 			It("returns false", func() {
-				Expect(lnchd.IsRunning("some-service-that-doesnt-exist")).To(BeFalse())
+				spec := launchd.DaemonSpec{
+					Label:"some-service-that-doesnt-exist",
+				}
+				Expect(lnchd.IsRunning(spec)).To(BeFalse())
 			})
 		})
 
@@ -310,7 +325,10 @@ var _ = Describe("launchd", func() {
 			})
 			Context("but not started", func() {
 				It("returns false", func() {
-					Expect(lnchd.IsRunning(label)).To(BeFalse())
+					spec := launchd.DaemonSpec{
+						Label:label,
+					}
+					Expect(lnchd.IsRunning(spec)).To(BeFalse())
 				})
 			})
 			Context("and started", func() {
@@ -318,7 +336,10 @@ var _ = Describe("launchd", func() {
 					Expect(exec.Command("launchctl", "start", label).Run()).To(Succeed())
 				})
 				It("returns true", func() {
-					Expect(lnchd.IsRunning(label)).To(BeTrue())
+					spec := launchd.DaemonSpec{
+						Label:label,
+					}
+					Expect(lnchd.IsRunning(spec)).To(BeTrue())
 				})
 			})
 		})

@@ -11,7 +11,7 @@ type Launchd interface {
 }
 
 type UninstallCommand struct {
-	Launchd *launchd.Launchd
+	Launchd Launchd
 }
 
 func (u *UninstallCommand) Execute(conn *net.UnixConn) error {
