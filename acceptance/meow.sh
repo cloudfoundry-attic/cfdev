@@ -224,17 +224,7 @@ EOF
 
 
   pushd src/github.com/cloudfoundry/cf-acceptance-tests >/dev/null
-    # Apply our patches
-    # Remove this patch when cf-deployment's corresponding cats has
-    # https://github.com/cloudfoundry/cf-acceptance-tests/pull/262
-    git checkout .
-    git apply $script_dir/patches/private-docker-registry-auth.patch
-
     GOPATH=$script_dir ./bin/test -slowSpecThreshold=120 --flakeAttempts=3 ${@:2} .
-
-    # Undo our patches
-    git apply -R $script_dir/patches/private-docker-registry-auth.patch
-
   popd >/dev/null
 }
 
@@ -258,12 +248,7 @@ run_cats $@
 # run_routing_tests $@
 # run_persi_tests $@
 
-# Docker registry will run on a local IP so we
-# allow containers to access internal networks again
-# cf bind-staging-security-group all_access
-# cf bind-running-security-group all_access
-
-# run_docker_registry_tests $@
+run_docker_registry_tests $@
 
 # not enabled for cats
 # include_credhub
