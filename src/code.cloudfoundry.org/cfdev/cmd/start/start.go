@@ -70,8 +70,8 @@ type GardenClient interface {
 	Ping() error
 	DeployBosh() error
 	DeployCloudFoundry([]string) error
-	DeployService(string, string) error
 	GetServices() ([]garden.Service, string, error)
+	DeployServices(garden.UI, []garden.Service) error
 	ReportProgress(garden.UI, string)
 }
 

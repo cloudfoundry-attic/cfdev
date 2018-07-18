@@ -46,6 +46,7 @@ type Service struct {
 	Handle     string `yaml:"handle"`
 	Script     string `yaml:"script"`
 	Deployment string `yaml:"deployment"`
+	IsErrand   bool   `yaml:"errand"`
 }
 
 func (g *Garden) GetServices() ([]Service, string, error) {
@@ -53,6 +54,7 @@ func (g *Garden) GetServices() ([]Service, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
+	defer g.Client.Destroy("get-services")
 	r, err := container.StreamOut(garden.StreamOutSpec{Path: "/var/vcap/cache/metadata.yml"})
 	if err != nil {
 		return nil, "", err

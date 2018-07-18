@@ -45,7 +45,14 @@ func NewWithDirector(dir boshdir.Director) *Bosh {
 	return &Bosh{dir: dir}
 }
 
+const (
+	UploadingReleases = "uploading-releases"
+	Deploying         = "deploying"
+	RunningErrand     = "running-errand"
+)
+
 type VMProgress struct {
+	State    string
 	Releases int
 	Total    int
 	Done     int
@@ -101,4 +108,38 @@ func (b *Bosh) VMProgress(deploymentName string) chan VMProgress {
 	}()
 
 	return ch
+}
+
+func (b *Bosh) GetVMProgress(start time.Time, deploymentName string, isErrand bool) VMProgress {
+	if isErrand {
+		return VMProgress{State: RunningErrand, Duration: time.Now().Sub(start)}
+	}
+
+	var dep boshdir.Deployment
+
+	for {
+		var err error
+		dep, err = b.dir.FindDeployment(deploymentName)
+		if err == nil {
+			break
+		}
+	}
+
+	vmInfos, err := dep.VMInfos()
+	if err != nil || len(vmInfos) == 0 {
+		rels, err := b.dir.Releases()
+		if err == nil {
+			return VMProgress{State: UploadingReleases, Releases: len(rels), Duration: time.Now().Sub(start)}
+		}
+	}
+
+	total := len(vmInfos)
+	numDone := 0
+	for _, v := range vmInfos {
+		if v.ProcessState == "running" && len(v.Processes) > 0 {
+			numDone++
+		}
+	}
+
+	return VMProgress{State: Deploying, Total: total, Done: numDone, Duration: time.Now().Sub(start)}
 }

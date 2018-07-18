@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"path/filepath"
-
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/env"
+	"path/filepath"
+	"code.cloudfoundry.org/cfdev/resource"
 )
 
 func (s *Start) Cmd() *cobra.Command {
@@ -143,12 +142,10 @@ func (s *Start) Execute(args Args) error {
 	if err != nil {
 		return errors.SafeWrap(err, "Failed to get list of services to deploy")
 	}
-	for _, service := range services {
-		s.UI.Say("Deploying %s...", service.Name)
-		s.GardenClient.ReportProgress(s.UI, service.Deployment)
-		if err := s.GardenClient.DeployService(service.Handle, service.Script); err != nil {
-			return errors.SafeWrap(err, fmt.Sprintf("Failed to deploy %s", service.Name))
-		}
+
+	err = s.GardenClient.DeployServices(s.UI, services)
+	if err != nil {
+		return err
 	}
 
 	s.UI.Say(`

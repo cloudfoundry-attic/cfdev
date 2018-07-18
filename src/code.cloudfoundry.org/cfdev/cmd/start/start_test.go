@@ -132,12 +132,21 @@ var _ = Describe("Start", func() {
 							Deployment: "some-other-deployment",
 						},
 					}, "", nil),
-					mockUI.EXPECT().Say("Deploying %s...", "some-service"),
-					mockGardenClient.EXPECT().ReportProgress(mockUI, "some-deployment"),
-					mockGardenClient.EXPECT().DeployService("some-handle", "/path/to/some-script"),
-					mockUI.EXPECT().Say("Deploying %s...", "some-other-service"),
-					mockGardenClient.EXPECT().ReportProgress(mockUI, "some-other-deployment"),
-					mockGardenClient.EXPECT().DeployService("some-other-handle", "/path/to/some-other-script"),
+
+					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
+						{
+							Name:       "some-service",
+							Handle:     "some-handle",
+							Script:     "/path/to/some-script",
+							Deployment: "some-deployment",
+						},
+						{
+							Name:       "some-other-service",
+							Handle:     "some-other-handle",
+							Script:     "/path/to/some-other-script",
+							Deployment: "some-other-deployment",
+						},
+					}),
 
 					//welcome message
 					mockUI.EXPECT().Say(gomock.Any()),
@@ -231,12 +240,21 @@ var _ = Describe("Start", func() {
 							Deployment: "some-other-deployment",
 						},
 					}, "", nil),
-					mockUI.EXPECT().Say("Deploying %s...", "some-service"),
-					mockGardenClient.EXPECT().ReportProgress(mockUI, "some-deployment"),
-					mockGardenClient.EXPECT().DeployService("some-handle", "/path/to/some-script"),
-					mockUI.EXPECT().Say("Deploying %s...", "some-other-service"),
-					mockGardenClient.EXPECT().ReportProgress(mockUI, "some-other-deployment"),
-					mockGardenClient.EXPECT().DeployService("some-other-handle", "/path/to/some-other-script"),
+
+					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
+						{
+							Name:       "some-service",
+							Handle:     "some-handle",
+							Script:     "/path/to/some-script",
+							Deployment: "some-deployment",
+						},
+						{
+							Name:       "some-other-service",
+							Handle:     "some-other-handle",
+							Script:     "/path/to/some-other-script",
+							Deployment: "some-other-deployment",
+						},
+					}),
 
 					//welcome message
 					mockUI.EXPECT().Say(gomock.Any()),
