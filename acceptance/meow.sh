@@ -228,20 +228,6 @@ EOF
   popd >/dev/null
 }
 
-# Remove PCF Dev 'all_access' application security group
-
-export CF_HOME=$(mktemp -d)
-cf api api.$domain --skip-ssl-validation
-cf auth admin admin
-
-cf unbind-staging-security-group all_access
-cf unbind-running-security-group all_access
-
-trap "{ \
-  cf bind-staging-security-group all_access; \
-  cf bind-running-security-group all_access; \
-}" EXIT
-
 
 run_cats $@
 # run_networking_tests $@
