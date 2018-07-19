@@ -36,6 +36,7 @@ var _ = Describe("Start", func() {
 		localExitChan chan string
 		tmpDir        string
 		cacheDir      string
+		depsIsoPath	  string
 	)
 
 	BeforeEach(func() {
@@ -81,6 +82,10 @@ var _ = Describe("Start", func() {
 			LinuxKit:        mockLinuxKit,
 			GardenClient:    mockGardenClient,
 		}
+
+		depsIsoPath = filepath.Join(tmpDir, "path-to-some-deps.iso")
+		_, err = os.Create(depsIsoPath)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	AfterEach(func() {
@@ -197,10 +202,20 @@ var _ = Describe("Start", func() {
 			})
 		})
 
-		Context("when the -f flag is provided", func() {
+		Context("when the -f flag is provided with a non-existing filepath", func() {
+			It("returns an error message and does not execute start command", func(){
+				Expect(startCmd.Execute(start.Args{
+					Cpus:        7,
+					Mem:         6666,
+					DepsIsoPath: "/wrong-path-to-some-deps.iso",
+				})).To(MatchError("no file found at: /wrong-path-to-some-deps.iso"))
+			})
+		})
+
+		Context("when the -f flag is provided with an existing filepath", func() {
 			It("starts the given iso, doesn't download cf-deps.iso, adds the iso name as an analytics property", func() {
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "some-deps.iso"),
+					mockToggle.EXPECT().SetProp("type", "path-to-some-deps.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
@@ -217,7 +232,7 @@ var _ = Describe("Start", func() {
 					mockVpnKit.EXPECT().Start(),
 					mockVpnKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Starting the VM..."),
-					mockLinuxKit.EXPECT().Start(7, 6666, "/path/to/some-deps.iso"),
+					mockLinuxKit.EXPECT().Start(7, 6666, depsIsoPath),
 					mockLinuxKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
 					mockGardenClient.EXPECT().Ping(),
@@ -264,7 +279,7 @@ var _ = Describe("Start", func() {
 				Expect(startCmd.Execute(start.Args{
 					Cpus:        7,
 					Mem:         6666,
-					DepsIsoPath: "/path/to/some-deps.iso",
+					DepsIsoPath: depsIsoPath,
 				})).To(Succeed())
 			})
 		})

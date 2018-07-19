@@ -58,6 +58,10 @@ func (s *Start) Execute(args Args) error {
 		if err != nil {
 			return errors.SafeWrap(err, "determining absolute path to deps iso")
 		}
+		if _, err := os.Stat(depsIsoPath); os.IsNotExist(err) {
+			return fmt.Errorf("no file found at: %s", depsIsoPath)
+		}
+
 	}
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
 	s.Analytics.Event(cfanalytics.START_BEGIN)

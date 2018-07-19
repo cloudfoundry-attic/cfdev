@@ -62,6 +62,10 @@ func (s *Start) Execute(args Args) error {
 		if err != nil {
 			return errors.SafeWrap(err, "determining absolute path to deps iso")
 		}
+		if _, err := os.Stat(depsIsoPath); os.IsNotExist(err) {
+			return fmt.Errorf("no file found at: %s", depsIsoPath)
+		}
+
 		depsToDownload = resource.Catalog{}
 		for _, item := range s.Config.Dependencies.Items {
 			if item.Name != "cf-deps.iso" {
