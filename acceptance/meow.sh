@@ -228,11 +228,26 @@ EOF
   popd >/dev/null
 }
 
+# Remove PCF Dev 'all_access' application security group
+export CF_HOME=$(mktemp -d)
+cf api api.$domain --skip-ssl-validation
+cf auth admin admin
+
+cf unbind-staging-security-group all_access
+cf unbind-running-security-group all_access
 
 run_cats $@
 # run_networking_tests $@
 # run_routing_tests $@
 # run_persi_tests $@
+
+# Re-enable PCF Dev 'all_access' application security group
+export CF_HOME=$(mktemp -d)
+cf api api.$domain --skip-ssl-validation
+cf auth admin admin
+
+cf bind-staging-security-group all_access
+cf bind-running-security-group all_access
 
 run_docker_registry_tests $@
 
