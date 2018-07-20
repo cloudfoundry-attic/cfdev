@@ -27,6 +27,8 @@ type Config struct {
 }
 
 func (l *Launchd) AddDaemon(spec DaemonSpec) error {
+
+
 	serviceDst, executablePath, err := copyBinary(spec)
 	if err != nil {
 		return err
@@ -43,26 +45,31 @@ func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 		return err
 	}
 
+
 	err = cmd.Wait()
 	if err != nil {
 		return err
 	}
+
 
 	return nil
 }
 
 func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
-	_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
+	if isInstalled(spec) {
+		_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
 
-	cmd := exec.Command(executablePath, "uninstall")
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
+		cmd := exec.Command(executablePath, "uninstall")
+		err := cmd.Start()
+		if err != nil {
+			return err
+		}
 
-	err = cmd.Wait()
-	if err != nil {
-		return err
+		err = cmd.Wait()
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	return nil
@@ -71,7 +78,6 @@ func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
 func (l *Launchd) Start(spec DaemonSpec) error {
 	_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
 
-	fmt.Println("executablePath: " + executablePath)
 
 	cmd := exec.Command(executablePath, "start")
 	err := cmd.Start()
@@ -88,17 +94,22 @@ func (l *Launchd) Start(spec DaemonSpec) error {
 }
 
 func (l *Launchd) Stop(spec DaemonSpec) error {
-	_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
+	if running, _ := l.IsRunning(spec); running {
 
-	cmd := exec.Command(executablePath, "stop")
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
+		_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
 
-	err = cmd.Wait()
-	if err != nil {
-		return err
+		cmd := exec.Command(executablePath, "stop")
+		err := cmd.Start()
+		if err != nil {
+			return err
+		}
+
+		err = cmd.Wait()
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	return nil
@@ -168,4 +179,13 @@ func getServicePaths(label string, cfDevHome string) (string, string) {
 	executablePath := filepath.Join(serviceDst, label+".exe")
 
 	return serviceDst, executablePath
+}
+
+func isInstalled(spec DaemonSpec) bool{
+	command := exec.Command("powershell.exe", "-C", fmt.Sprintf(`Get-Service | Where-Object {$_.Name -eq "%s"}`, spec.Label))
+	temp, _ := command.Output()
+	output := strings.TrimSpace(string(temp))
+
+	return output != ""
+
 }

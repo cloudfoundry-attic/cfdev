@@ -1,3 +1,5 @@
+// +build darwin
+
 package cmd
 
 import (

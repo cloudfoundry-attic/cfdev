@@ -1,3 +1,5 @@
+// +build darwin
+
 package start_test
 
 import (

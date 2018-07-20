@@ -37,7 +37,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
 		}
 
-		os.RemoveAll(path.Join(cfdevHome, "analytics"))
+		os.RemoveAll(filepath.Join(cfdevHome, "analytics"))
 	})
 
 	AfterEach(func() {
@@ -45,22 +45,23 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 	})
 
 	It("optout", func() {
-		cmd := exec.Command("/usr/local/bin/cf", "dev", "start")
+		cmd := exec.Command(GetCfPluginPath(), "dev", "start")
 		inWriter, _ := cmd.StdinPipe()
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
-		Eventually(session).Should(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
+		Eventually(session, 10, 1).Should(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
 		fmt.Fprintln(inWriter, "no")
 
 		Eventually(func() ([]byte, error) {
 			return ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
-		}).Should(MatchJSON(`{"enabled":false, "props":{"type":"cf"}}`))
+		}, 10, 1).Should(MatchJSON(`{"enabled":false, "props":{"type":"cf"}}`))
+
 	})
 
 	It("optin", func() {
-		cmd := exec.Command("/usr/local/bin/cf", "dev", "start")
+		cmd := exec.Command(GetCfPluginPath(), "dev", "start")
 		inWriter, _ := cmd.StdinPipe()
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
@@ -80,7 +81,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		err = ioutil.WriteFile(path.Join(cfdevHome, "analytics", "analytics.txt"), []byte("optin"), 0755)
 		Expect(err).ToNot(HaveOccurred())
 
-		cmd := exec.Command("/usr/local/bin/cf", "dev", "start")
+		cmd := exec.Command(GetCfPluginPath(), "dev", "start")
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -90,7 +91,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 	})
 
 	It("allows noninteractive telemetry --off command", func() {
-		cmd := exec.Command("/usr/local/bin/cf", "dev", "telemetry", "--off")
+		cmd := exec.Command(GetCfPluginPath(), "dev", "telemetry", "--off")
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -100,7 +101,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 	})
 
 	It("allows noninteractive telemetry --on command", func() {
-		cmd := exec.Command("/usr/local/bin/cf", "dev", "telemetry", "--on")
+		cmd := exec.Command(GetCfPluginPath(), "dev", "telemetry", "--on")
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 

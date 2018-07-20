@@ -1,4 +1,4 @@
-package launchd
+package launchd_test
 
 import (
 	"math/rand"

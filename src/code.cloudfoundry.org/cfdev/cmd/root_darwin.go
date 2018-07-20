@@ -19,12 +19,12 @@ import (
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
-	"code.cloudfoundry.org/cfdevd/launchd"
 	"github.com/spf13/cobra"
 )
 

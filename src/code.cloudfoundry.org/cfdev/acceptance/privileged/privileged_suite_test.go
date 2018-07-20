@@ -9,8 +9,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"runtime"
 	"os"
+	"runtime"
 )
 
 var pluginPath string
@@ -27,7 +27,7 @@ var _ = BeforeSuite(func() {
 
 	Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
 	RemoveIPAliases(BoshDirectorIP, CFRouterIP)
- 
+
 	var err error
 
 	pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")

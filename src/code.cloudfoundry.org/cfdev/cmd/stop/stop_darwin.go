@@ -1,15 +1,13 @@
 package stop
 
 import (
-	"github.com/spf13/cobra"
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"code.cloudfoundry.org/cfdev/process"
-	"path/filepath"
-	"code.cloudfoundry.org/cfdevd/launchd"
 	"code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/process"
+	"github.com/spf13/cobra"
+	"path/filepath"
 )
-
-
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	s.Analytics.Event(cfanalytics.STOP)

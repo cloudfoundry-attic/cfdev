@@ -15,7 +15,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"

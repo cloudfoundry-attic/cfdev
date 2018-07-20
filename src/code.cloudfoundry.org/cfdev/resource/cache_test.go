@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/resource"
+	"runtime"
 )
 
 type MockProgress struct {
@@ -109,7 +110,7 @@ var _ = Describe("Cache Sync", func() {
 
 		Expect(downloads).To(ContainElement("first-resource-url"))
 		Expect(ioutil.ReadFile(filepath.Join(tmpDir, "first-resource"))).To(Equal([]byte("content")))
-		Expect(fileMode(filepath.Join(tmpDir, "first-resource"))).To(BeEquivalentTo(0755))
+		fileModeCheck(filepath.Join(tmpDir, "first-resource"))
 
 		Expect(mockProgress.Total).To(Equal(uint64(28)))
 	})
@@ -119,7 +120,7 @@ var _ = Describe("Cache Sync", func() {
 
 		Expect(downloads).To(ContainElement("second-resource-url"))
 		Expect(ioutil.ReadFile(filepath.Join(tmpDir, "second-resource"))).To(Equal([]byte("content")))
-		Expect(fileMode(filepath.Join(tmpDir, "second-resource"))).To(BeEquivalentTo(0755))
+		fileModeCheck(filepath.Join(tmpDir, "second-resource"))
 	})
 
 	It("does not re-download valid files and leaves file untouched", func() {
@@ -127,7 +128,7 @@ var _ = Describe("Cache Sync", func() {
 
 		Expect(downloads).NotTo(ContainElement("third-resource-url"))
 		Expect(ioutil.ReadFile(filepath.Join(tmpDir, "third-resource"))).To(Equal([]byte("content")))
-		Expect(fileMode(filepath.Join(tmpDir, "third-resource"))).To(BeEquivalentTo(0755))
+		fileModeCheck(filepath.Join(tmpDir, "third-resource"))
 	})
 
 	It("informs progress", func() {
@@ -139,8 +140,8 @@ var _ = Describe("Cache Sync", func() {
 	It("downloads files as executable", func() {
 		Expect(cache.Sync(catalog)).To(Succeed())
 
-		Expect(fileMode(filepath.Join(tmpDir, "first-resource"))).To(BeEquivalentTo(0755))
-		Expect(fileMode(filepath.Join(tmpDir, "second-resource"))).To(BeEquivalentTo(0755))
+		fileModeCheck(filepath.Join(tmpDir, "first-resource"))
+		fileModeCheck(filepath.Join(tmpDir, "second-resource"))
 	})
 
 	It("resumes partially downloaded files to the target directory", func() {
@@ -196,40 +197,42 @@ var _ = Describe("Cache Sync", func() {
 		})
 	})
 
-	Context("cannot determine if a resources exists", func() {
-		BeforeEach(func() {
-			os.Chmod(tmpDir, 0222) // write only
-		})
-		It("returns an error", func() {
-			err := cache.Sync(catalog)
-			Expect(err).To(HaveOccurred())
-		})
-	})
-
-	Context("cannot determine checksum of a file", func() {
-		BeforeEach(func() {
-			os.Chmod(filepath.Join(tmpDir, "third-resource"), 0222)
-		})
-		It("returns an error", func() {
-			err := cache.Sync(catalog)
-			Expect(err).To(HaveOccurred())
-		})
-	})
-
-	Context("cannot delete corrupt file", func() {
-		BeforeEach(func() {
-			os.Chmod(tmpDir, 0400)
+	if runtime.GOOS != "windows" {
+		Context("cannot determine if a resources exists", func() {
+			BeforeEach(func() {
+				os.Chmod(tmpDir, 0222) // write only
+			})
+			It("returns an error", func() {
+				err := cache.Sync(catalog)
+				Expect(err).To(HaveOccurred())
+			})
 		})
 
-		It("returns an error", func() {
-			err := cache.Sync(catalog)
-			Expect(err).To(HaveOccurred())
+		Context("cannot determine checksum of a file", func() {
+			BeforeEach(func() {
+				os.Chmod(filepath.Join(tmpDir, "third-resource"), 0222)
+			})
+			It("returns an error", func() {
+				err := cache.Sync(catalog)
+				Expect(err).To(HaveOccurred())
+			})
 		})
 
-		It("doesn't attempt the download", func() {
-			Expect(downloads).ToNot(ContainElement("second-resource-url"))
+		Context("cannot delete corrupt file", func() {
+			BeforeEach(func() {
+				os.Chmod(tmpDir, 0400)
+			})
+
+			It("returns an error", func() {
+				err := cache.Sync(catalog)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("doesn't attempt the download", func() {
+				Expect(downloads).ToNot(ContainElement("second-resource-url"))
+			})
 		})
-	})
+	}
 
 	Context("downloading fails", func() {
 		BeforeEach(func() {
@@ -350,4 +353,10 @@ func fileMode(path string) (os.FileMode, error) {
 		return 0, err
 	}
 	return fi.Mode(), nil
+}
+
+func fileModeCheck(filepath string) {
+	if runtime.GOOS != "windows" {
+		Expect(fileMode(filepath)).To(BeEquivalentTo(0755))
+	}
 }

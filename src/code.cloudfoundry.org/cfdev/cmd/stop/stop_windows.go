@@ -3,11 +3,11 @@ package stop
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
 	"os/exec"
 )
-
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	s.Analytics.Event(cfanalytics.STOP)
@@ -17,6 +17,7 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	if err := s.HyperV.Stop("cfdev"); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop the VM")
 	}
+
 
 	if err := s.Launchd.Stop(daemonSpec(process.VpnKitLabel, s.Config.CFDevHome)); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")

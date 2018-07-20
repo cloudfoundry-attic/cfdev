@@ -1,8 +1,10 @@
+// +build darwin
+
 package cmd
 
 import (
 	"net"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 //go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdevd/cmd Launchd

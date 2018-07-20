@@ -1,3 +1,5 @@
+// +build darwin
+
 package acceptance
 
 import (
@@ -14,7 +16,7 @@ import (
 	"regexp"
 	"strings"
 
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"

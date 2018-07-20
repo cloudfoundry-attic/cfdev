@@ -1,3 +1,5 @@
+// +build darwin
+
 package cmd
 
 import (
@@ -5,7 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 type Command interface {

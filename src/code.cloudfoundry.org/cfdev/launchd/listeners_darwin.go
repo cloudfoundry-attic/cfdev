@@ -1,3 +1,5 @@
+// +build darwin
+
 package launchd
 
 // #include <stdlib.h>

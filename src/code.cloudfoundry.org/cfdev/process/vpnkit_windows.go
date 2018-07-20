@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -27,8 +27,6 @@ func (v *VpnKit) Setup() error {
 		return err
 	}
 
-	fmt.Println("VCP A")
-
 	dns, err := exec.Command("powershell.exe", "-Command", "get-dnsclientserveraddress -family ipv4 | select-object -expandproperty serveraddresses").Output()
 	if err != nil {
 		return err
@@ -41,8 +39,6 @@ func (v *VpnKit) Setup() error {
 		dnsFile += fmt.Sprintf("nameserver %s\r\n", line)
 	}
 
-	fmt.Println("VCP B")
-
 	resolvConfPath := filepath.Join(v.Config.CFDevHome, "resolv.conf")
 	if fileExists(resolvConfPath) {
 		os.RemoveAll(resolvConfPath)
@@ -52,8 +48,6 @@ func (v *VpnKit) Setup() error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("VCP C")
 
 	cmd := exec.Command("powershell.exe", "-Command", "get-dnsclient | select-object -expandproperty connectionspecificsuffix")
 	dhcp, err := cmd.Output()
@@ -79,8 +73,6 @@ func (v *VpnKit) Setup() error {
 		}
 	}
 
-	fmt.Println("VCP D")
-
 	dhcpJsonPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
 	if fileExists(dhcpJsonPath) {
 		os.RemoveAll(dhcpJsonPath)
@@ -96,14 +88,9 @@ func (v *VpnKit) Setup() error {
 }
 
 func (v *VpnKit) Start() error {
-
-	fmt.Println("CHECK A")
-
 	if err := v.Setup(); err != nil {
 		return errors.SafeWrap(err, "Failed to setup VPNKit")
 	}
-
-	fmt.Println("CHECK B")
 
 	cmd := exec.Command("powershell.exe", "-Command", "((Get-VM -Name cfdev).Id).Guid")
 	output, err := cmd.Output()
@@ -113,33 +100,14 @@ func (v *VpnKit) Start() error {
 
 	cmd.Wait()
 	vmGuid := strings.TrimSpace(string(output))
-	fmt.Println("CHECK C")
-	fmt.Println("VM GUID: " + string(vmGuid))
 
 	if err := v.Launchd.AddDaemon(v.daemonSpec(vmGuid)); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
 
-	fmt.Println("CHECK D")
-
 	if err := v.Launchd.Start(v.daemonSpec(vmGuid)); err != nil {
 		return errors.SafeWrap(err, "start vpnkit")
 	}
-
-	fmt.Println("CHECK E")
-	//attempt := 0
-	//for {
-	//	conn, err := net.Dial("unix", filepath.Join(v.Config.VpnKitStateDir, "vpnkit_eth.sock"))
-	//	if err == nil {
-	//		conn.Close()
-	//		return nil
-	//	} else if attempt >= retries {
-	//		return errors.SafeWrap(err, "conenct to vpnkit")
-	//	} else {
-	//		time.Sleep(time.Second)
-	//		attempt++
-	//	}
-	//}
 
 	return nil
 }

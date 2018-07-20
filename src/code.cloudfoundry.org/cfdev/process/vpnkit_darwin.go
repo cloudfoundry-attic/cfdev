@@ -14,7 +14,7 @@ import (
 	"path"
 
 	"code.cloudfoundry.org/cfdev/env"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 const retries = 5

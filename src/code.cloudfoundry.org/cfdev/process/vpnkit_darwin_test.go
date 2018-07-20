@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cfdev/process"
-	"code.cloudfoundry.org/cfdevd/launchd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -52,7 +52,7 @@ var _ = Describe("VpnKit", func() {
 	})
 
 	AfterEach(func() {
-		Expect(lctl.RemoveDaemon(launchd.DaemonSpec{Label:process.VpnKitLabel})).To(Succeed())
+		Expect(lctl.RemoveDaemon(launchd.DaemonSpec{Label: process.VpnKitLabel})).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 

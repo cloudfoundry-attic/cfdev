@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 type UI interface {
