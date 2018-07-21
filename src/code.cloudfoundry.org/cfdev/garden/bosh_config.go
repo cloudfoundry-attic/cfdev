@@ -8,6 +8,7 @@ import (
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 	"gopkg.in/yaml.v2"
+	"code.cloudfoundry.org/cfdev/util"
 )
 
 func (g *Garden) FetchBOSHConfig() (bosh.Config, error) {
@@ -31,7 +32,21 @@ func (g *Garden) FetchBOSHConfig() (bosh.Config, error) {
 	if err != nil {
 		return bosh.Config{}, err
 	}
+	defer g.Client.Destroy("fetch-bosh-config")
 
+	var resp yamlResponse
+	err = util.Perform(3, func() error {
+		return g.fetchBOSHConfig(container, &resp)
+	})
+
+	if err != nil {
+		return bosh.Config{}, err
+	}
+
+	return resp.convert()
+}
+
+func (g *Garden) fetchBOSHConfig(container garden.Container, resp *yamlResponse) error {
 	buffer := &bytes.Buffer{}
 	process, err := container.Run(garden.ProcessSpec{
 		Path: "cat",
@@ -43,26 +58,23 @@ func (g *Garden) FetchBOSHConfig() (bosh.Config, error) {
 	})
 
 	if err != nil {
-		return bosh.Config{}, err
+		return err
 	}
 
 	exitCode, err := process.Wait()
 	if err != nil {
-		return bosh.Config{}, err
+		return err
 	}
 
 	if exitCode != 0 {
-		return bosh.Config{}, errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
+		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
 	}
 
-	g.Client.Destroy("fetch-bosh-config")
-
-	var resp yamlResponse
-	if err := yaml.Unmarshal(buffer.Bytes(), &resp); err != nil {
-		return bosh.Config{}, errors.SafeWrap(err, "unable to parse bosh config")
+	if err := yaml.Unmarshal(buffer.Bytes(), resp); err != nil {
+		return errors.SafeWrap(err, "unable to parse bosh config")
 	}
 
-	return resp.convert()
+	return nil
 }
 
 type yamlResponse struct {

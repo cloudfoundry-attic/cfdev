@@ -64,7 +64,7 @@ var _ = Describe("Fetching BOSH Configuration", func() {
 		})
 
 		It("starts to fetch the bosh config", func() {
-			Expect(fakeContainer.RunCallCount()).To(Equal(1))
+			Expect(fakeContainer.RunCallCount()).To(BeNumerically(">", 0))
 
 			spec, _ := fakeContainer.RunArgsForCall(0)
 			Expect(spec).To(Equal(garden.ProcessSpec{
