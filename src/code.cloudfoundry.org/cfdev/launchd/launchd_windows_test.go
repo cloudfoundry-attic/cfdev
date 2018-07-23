@@ -1,7 +1,7 @@
 package launchd_test
 
 import (
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

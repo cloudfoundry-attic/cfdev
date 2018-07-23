@@ -12,7 +12,7 @@ import (
 	"io"
 
 	"code.cloudfoundry.org/cfdevd/cmd"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 const SockName = "ListenSocket"

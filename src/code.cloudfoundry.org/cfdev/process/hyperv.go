@@ -89,7 +89,6 @@ func (h *HyperV) CreateVM(cfDepsIso string) error {
 	if err != nil {
 		return err
 	}
-
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Set-VMComPort "+
 		"-VMName %s "+
 		"-number 1 "+
@@ -104,9 +103,6 @@ func (h *HyperV) CreateVM(cfDepsIso string) error {
 }
 
 func addVhdDrive(isoPath string, vmName string) error {
-
-	fmt.Println(fmt.Sprintf("Add-VMDvdDrive -VMName %s -Path %s", vmName, isoPath))
-
 	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Add-VMDvdDrive -VMName %s -Path %s", vmName, isoPath))
 	err := cmd.Run()
 	if err != nil {

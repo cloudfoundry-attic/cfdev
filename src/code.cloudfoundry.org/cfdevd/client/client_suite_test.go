@@ -1,3 +1,5 @@
+// +build darwin
+
 package client_test
 
 import (

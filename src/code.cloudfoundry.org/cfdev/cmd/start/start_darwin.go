@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"code.cloudfoundry.org/cfdev/errors"
-	"github.com/spf13/cobra"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/env"
-	"path/filepath"
+	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/resource"
+	"github.com/spf13/cobra"
+	"path/filepath"
 )
 
 func (s *Start) Cmd() *cobra.Command {

@@ -9,12 +9,12 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd/stop"
 	"code.cloudfoundry.org/cfdev/cmd/stop/mocks"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/cfdevd/launchd"
 )
 
 var _ = Describe("Stop", func() {

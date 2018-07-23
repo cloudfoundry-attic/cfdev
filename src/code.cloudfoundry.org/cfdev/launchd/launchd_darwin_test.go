@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"code.cloudfoundry.org/cfdevd/launchd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 var _ = Describe("launchd", func() {
@@ -184,7 +184,7 @@ var _ = Describe("launchd", func() {
 
 			It("should unload the daemon and remove the files", func() {
 				spec := launchd.DaemonSpec{
-					Label:label,
+					Label: label,
 				}
 				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
@@ -221,7 +221,7 @@ var _ = Describe("launchd", func() {
 			})
 			It("unloads the daemon", func() {
 				spec := launchd.DaemonSpec{
-					Label:label,
+					Label: label,
 				}
 				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
@@ -255,7 +255,7 @@ var _ = Describe("launchd", func() {
 			})
 			It("removes the file", func() {
 				spec := launchd.DaemonSpec{
-					Label:label,
+					Label: label,
 				}
 				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 				Expect(plistPath).NotTo(BeAnExistingFile())
@@ -265,7 +265,7 @@ var _ = Describe("launchd", func() {
 		Context("daemon is not loaded and file does not exist", func() {
 			It("succeeds", func() {
 				spec := launchd.DaemonSpec{
-					Label:label,
+					Label: label,
 				}
 				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
 			})
@@ -286,7 +286,7 @@ var _ = Describe("launchd", func() {
 		Context("label not loaded", func() {
 			It("returns false", func() {
 				spec := launchd.DaemonSpec{
-					Label:"some-service-that-doesnt-exist",
+					Label: "some-service-that-doesnt-exist",
 				}
 				Expect(lnchd.IsRunning(spec)).To(BeFalse())
 			})
@@ -326,7 +326,7 @@ var _ = Describe("launchd", func() {
 			Context("but not started", func() {
 				It("returns false", func() {
 					spec := launchd.DaemonSpec{
-						Label:label,
+						Label: label,
 					}
 					Expect(lnchd.IsRunning(spec)).To(BeFalse())
 				})
@@ -337,7 +337,7 @@ var _ = Describe("launchd", func() {
 				})
 				It("returns true", func() {
 					spec := launchd.DaemonSpec{
-						Label:label,
+						Label: label,
 					}
 					Expect(lnchd.IsRunning(spec)).To(BeTrue())
 				})

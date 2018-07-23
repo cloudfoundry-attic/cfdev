@@ -18,8 +18,9 @@ import (
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/client"
 	"fmt"
-	. "github.com/onsi/gomega"
 	"runtime"
+
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -41,12 +42,27 @@ func SetupDependencies(cacheDir string) {
 		"qcow-tool",
 	}
 
+	if runtime.GOOS == "windows" {
+		assets = []string{
+			"cfdev-efi.iso",
+			"cf-deps.iso",
+			"vpnkit.exe",
+			"winsw.exe",
+		}
+	}
+
 	err := os.MkdirAll(cacheDir, 0777)
 	Expect(err).ToNot(HaveOccurred())
 
 	for _, asset := range assets {
 		target := filepath.Join(cacheDir, asset)
-		for _, origin := range []string{filepath.Join(gopaths[0], "output", asset), filepath.Join(gopaths[0], "linuxkit", asset), filepath.Join(os.Getenv("HOME"), ".cfdev", "cache", asset)} {
+
+		goPath := gopaths[0]
+		if runtime.GOOS == "windows" {
+			goPath = os.Getenv("GOPATH")
+		}
+
+		for _, origin := range []string{filepath.Join(goPath, "output", asset), filepath.Join(goPath, "linuxkit", asset), filepath.Join(GetCfdevHome(), "cache", asset)} {
 			if exists, _ := FileExists(origin); exists {
 				Expect(os.Symlink(origin, target)).To(Succeed())
 				break
@@ -183,4 +199,25 @@ func GetFile(client client.Client, handle, path string) (string, error) {
 	}
 	b, err := ioutil.ReadAll(tr)
 	return string(b), err
+}
+
+func GetCfdevHome() string {
+	cfdevHome := os.Getenv("CFDEV_HOME")
+	if cfdevHome != "" {
+		return cfdevHome
+	}
+
+	if runtime.GOOS == "windows" {
+		return filepath.Join(os.Getenv("HOMEDRIVE"), os.Getenv("HOMEPATH"), ".cfdev")
+	} else {
+		return filepath.Join(os.Getenv("HOME"), ".cfdev")
+	}
+}
+
+func GetCfPluginPath() string {
+	if runtime.GOOS == "windows" {
+		return "cf"
+	} else {
+		return "/usr/local/bin/cf"
+	}
 }

@@ -1,3 +1,5 @@
+// +build darwin
+
 package cmd_test
 
 import (
@@ -12,7 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdevd/launchd"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 var _ bool = Describe("UninstallCommand", func() {

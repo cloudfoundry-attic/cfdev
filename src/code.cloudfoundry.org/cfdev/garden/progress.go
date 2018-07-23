@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/bosh"
-	"code.cloudfoundry.org/cfdev/singlelinewriter"
 	"code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/cfdev/singlelinewriter"
 	"fmt"
 )
 
@@ -71,8 +71,6 @@ func (g *Garden) report(start time.Time, ui UI, b *bosh.Bosh, service Service, e
 		}
 	}
 }
-
-
 
 func (g *Garden) ReportProgress(ui UI, deploymentName string) {
 	go func() {

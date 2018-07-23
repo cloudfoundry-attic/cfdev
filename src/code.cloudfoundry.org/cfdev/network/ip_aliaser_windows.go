@@ -48,8 +48,11 @@ func (*HostNet) AddLoopbackAliases(addrs ...string) error {
 }
 
 func (*HostNet) RemoveNetworkSwitch() error {
-	command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name cfdev -force")
-	return command.Run()
+	if switchExists() {
+		command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name cfdev -force")
+		return command.Run()
+	}
+	return nil
 }
 
 func createSwitchIfNotExist() error {
@@ -80,4 +83,13 @@ func aliasExists(alias string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func switchExists() bool {
+	command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
+	err := command.Run()
+	if err != nil {
+		return false
+	}
+	return true
 }

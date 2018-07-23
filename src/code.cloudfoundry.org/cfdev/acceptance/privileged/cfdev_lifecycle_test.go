@@ -26,7 +26,7 @@ import (
 )
 
 var _ = Describe("hyperkit lifecycle", func() {
-	
+
 	var (
 		startSession *gexec.Session
 	)
@@ -132,17 +132,15 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 		BeforeEach(func() {
 			var err error
-			assetUrl := "https://s3.amazonaws.com/cfdev-test-assets/test-deps.dev"
+			assetUrl := "https://s3.amazonaws.com/cfdev-test-assets/test-deps.iso"
 			assetDir, err = ioutil.TempDir(os.TempDir(), "asset")
 			Expect(err).ToNot(HaveOccurred())
 			downloadTestAsset(assetDir, assetUrl)
 
-			startSession = cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.dev"))
+			startSession = cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.iso"))
 		})
 
 		AfterEach(func() {
-			hyperkitPid := PidFromFile(hyperkitPidPath)
-
 			startSession.Terminate()
 			Eventually(startSession).Should(gexec.Exit())
 
@@ -150,11 +148,12 @@ var _ = Describe("hyperkit lifecycle", func() {
 			Eventually(session).Should(gexec.Exit(0))
 
 			//ensure pid is not running
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
-			EventuallyProcessStops(hyperkitPid, 5)
+			if !IsWindows() {
+				hyperkitPid := PidFromFile(hyperkitPidPath)
+				Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
+				EventuallyProcessStops(hyperkitPid, 5)
+			}
 			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
-
-			Expect(os.RemoveAll(assetDir)).To(Succeed())
 		})
 
 		It("Custom ISO", func() {
@@ -162,8 +161,9 @@ var _ = Describe("hyperkit lifecycle", func() {
 
 			By("settingup VPNKit dependencies")
 			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 10, 1).Should(BeTrue())
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
-
+			if !IsWindows() {
+				Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
+			}
 			By("waiting for garden to listen")
 			EventuallyShouldListenAt("http://"+GardenIP+":8888", 360)
 
@@ -218,7 +218,7 @@ func RemoveIPAliases(aliases ...string) {
 }
 
 func downloadTestAsset(targetDir string, resourceUrl string) error {
-	out, err := os.Create(filepath.Join(targetDir, "test-deps.dev"))
+	out, err := os.Create(filepath.Join(targetDir, "test-deps.iso"))
 	if err != nil {
 		return err
 	}
