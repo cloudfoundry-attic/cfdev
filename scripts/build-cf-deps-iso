@@ -19,6 +19,8 @@ go run src/builder/main.go $(cat output/STEMCELL.txt) output/cache/*.yml
 ## Write metadata.yml
 cat > output/cache/metadata.yml <<EOF
 ---
+compatibility_version: "v1"
+
 services:
 - name: Mysql
   handle: deploy-mysql
