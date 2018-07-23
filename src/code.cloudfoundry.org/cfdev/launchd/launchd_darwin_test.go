@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 var _ = Describe("launchd", func() {
