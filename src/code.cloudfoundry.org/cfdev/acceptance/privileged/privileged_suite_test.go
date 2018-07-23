@@ -36,9 +36,9 @@ var _ = BeforeSuite(func() {
 	}
 
 	if runtime.GOOS == "windows" {
-		pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev", "-ldflags", `-X code.cloudfoundry.org/cfdev/config.cfdepsUrl=https://s3.amazonaws.com/cfdev-ci/cf-oss-deps/cf-deps-0.78.0.iso
-     -X code.cloudfoundry.org/cfdev/config.cfdepsMd5=4a25c92fc4aa81d13e975049629b383d
-     -X code.cloudfoundry.org/cfdev/config.cfdepsSize=4510406656
+		pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev", "-ldflags", `-X code.cloudfoundry.org/cfdev/config.cfdepsUrl=https://s3.amazonaws.com/cfdev-ci/cf-oss-deps/cf-deps-0.84.0.iso
+     -X code.cloudfoundry.org/cfdev/config.cfdepsMd5=6d5195a452523aed7d494cba696d6a42
+     -X code.cloudfoundry.org/cfdev/config.cfdepsSize=4536268800
      -X code.cloudfoundry.org/cfdev/config.cfdevefiUrl=https://s3.amazonaws.com/cfdev-ci/cfdev-efi/cfdev-efi-windows-0.43.0.iso
      -X code.cloudfoundry.org/cfdev/config.cfdevefiMd5=9728fd7042772a9502093c4970f3a556
      -X code.cloudfoundry.org/cfdev/config.cfdevefiSize=342818816
