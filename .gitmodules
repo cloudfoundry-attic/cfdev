@@ -80,5 +80,11 @@
 	path = src/golang.org/x/sys
 	url = https://go.googlesource.com/sys
 [submodule "src/github.com/inconshreveable/mousetrap"]
-	path = src/github.com/inconshreveable/mousetrap
-	url = git@github.com:inconshreveable/mousetrap.git
+	path = src/github.com/inconshreveable/mousetrap.git
+	url = https://github.com/inconshreveable/mousetrap.git
+[submodule "src/github.com/hooklift/iso9660"]
+	path = src/github.com/hooklift/iso9660
+	url = https://github.com/hooklift/iso9660
+[submodule "src/github.com/c4milo/gotoolkit"]
+	path = src/github.com/c4milo/gotoolkit
+	url = https://github.com/c4milo/gotoolkit
