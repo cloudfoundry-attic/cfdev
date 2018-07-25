@@ -125,54 +125,6 @@ var _ = Describe("hyperkit lifecycle", func() {
 			PushAnApp()
 		})
 	})
-
-	Context("run with -f flag", func() {
-		var assetDir string
-		var startSession *gexec.Session
-
-		BeforeEach(func() {
-			var err error
-			assetUrl := "https://s3.amazonaws.com/cfdev-test-assets/test-deps.iso"
-			assetDir, err = ioutil.TempDir(os.TempDir(), "asset")
-			Expect(err).ToNot(HaveOccurred())
-			downloadTestAsset(assetDir, assetUrl)
-
-			startSession = cf.Cf("dev", "start", "-f", filepath.Join(assetDir, "test-deps.iso"))
-		})
-
-		AfterEach(func() {
-			startSession.Terminate()
-			Eventually(startSession).Should(gexec.Exit())
-
-			session := cf.Cf("dev", "stop")
-			Eventually(session).Should(gexec.Exit(0))
-
-			//ensure pid is not running
-			if !IsWindows() {
-				hyperkitPid := PidFromFile(hyperkitPidPath)
-				Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 5, 1).Should(BeFalse())
-				EventuallyProcessStops(hyperkitPid, 5)
-			}
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
-		})
-
-		It("Custom ISO", func() {
-			Eventually(startSession, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
-
-			By("settingup VPNKit dependencies")
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 10, 1).Should(BeTrue())
-			if !IsWindows() {
-				Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit"), 10, 1).Should(BeTrue())
-			}
-			By("waiting for garden to listen")
-			EventuallyShouldListenAt("http://"+GardenIP+":8888", 360)
-
-			client := client.New(connection.New("tcp", "localhost:8888"))
-			Eventually(func() (string, error) {
-				return GetFile(client, "deploy-bosh", "/var/vcap/cache/test-file-one.txt")
-			}).Should(Equal("testfileone\n"))
-		})
-	})
 })
 
 func EventuallyWeCanTargetTheBOSHDirector() {

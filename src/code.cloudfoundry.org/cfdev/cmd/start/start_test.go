@@ -17,6 +17,7 @@ import (
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/golang/mock/gomock"
+	"io"
 )
 
 var _ = Describe("Start", func() {
@@ -38,7 +39,7 @@ var _ = Describe("Start", func() {
 		localExitChan chan string
 		tmpDir        string
 		cacheDir      string
-		depsIsoPath	  string
+		depsIsoPath   string
 	)
 
 	BeforeEach(func() {
@@ -85,10 +86,17 @@ var _ = Describe("Start", func() {
 			GardenClient:    mockGardenClient,
 		}
 
-		depsIsoPath = filepath.Join(tmpDir, "path-to-some-deps.iso")
-		_, err = os.Create(depsIsoPath)
+		os.MkdirAll(cacheDir, 0777)
+		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
+		currentdir, err := os.Getwd()
 		Expect(err).NotTo(HaveOccurred())
-	})
+
+		fixture := filepath.Join(currentdir, "fixtures", "cf-deps.iso")
+		err = copyFile(fixture, depsIsoPath)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(depsIsoPath).To(BeAnExistingFile())
+		})
 
 	AfterEach(func() {
 		os.RemoveAll(tmpDir)
@@ -125,21 +133,6 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying CF..."),
 					mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
 					mockGardenClient.EXPECT().DeployCloudFoundry(nil),
-					mockGardenClient.EXPECT().GetServices().Return([]garden.Service{
-						{
-							Name:       "some-service",
-							Handle:     "some-handle",
-							Script:     "/path/to/some-script",
-							Deployment: "some-deployment",
-						},
-						{
-							Name:       "some-other-service",
-							Handle:     "some-other-handle",
-							Script:     "/path/to/some-other-script",
-							Deployment: "some-other-deployment",
-						},
-					}, "", nil),
-
 					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
 						{
 							Name:       "some-service",
@@ -205,7 +198,7 @@ var _ = Describe("Start", func() {
 		})
 
 		Context("when the -f flag is provided with a non-existing filepath", func() {
-			It("returns an error message and does not execute start command", func(){
+			It("returns an error message and does not execute start command", func() {
 				Expect(startCmd.Execute(start.Args{
 					Cpus:        7,
 					Mem:         6666,
@@ -217,7 +210,7 @@ var _ = Describe("Start", func() {
 		Context("when the -f flag is provided with an existing filepath", func() {
 			It("starts the given iso, doesn't download cf-deps.iso, adds the iso name as an analytics property", func() {
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "path-to-some-deps.iso"),
+					mockToggle.EXPECT().SetProp("type", "cf-deps.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
@@ -234,6 +227,7 @@ var _ = Describe("Start", func() {
 					mockVpnKit.EXPECT().Start(),
 					mockVpnKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Starting the VM..."),
+
 					mockLinuxKit.EXPECT().Start(7, 6666, depsIsoPath),
 					mockLinuxKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
@@ -243,20 +237,6 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying CF..."),
 					mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
 					mockGardenClient.EXPECT().DeployCloudFoundry(nil),
-					mockGardenClient.EXPECT().GetServices().Return([]garden.Service{
-						{
-							Name:       "some-service",
-							Handle:     "some-handle",
-							Script:     "/path/to/some-script",
-							Deployment: "some-deployment",
-						},
-						{
-							Name:       "some-other-service",
-							Handle:     "some-other-handle",
-							Script:     "/path/to/some-other-script",
-							Deployment: "some-other-deployment",
-						},
-					}, "", nil),
 
 					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
 						{
@@ -300,4 +280,25 @@ var _ = Describe("Start", func() {
 			})
 		})
 	})
+
 })
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Close()
+}

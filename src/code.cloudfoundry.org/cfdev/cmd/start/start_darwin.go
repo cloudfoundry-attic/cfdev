@@ -12,9 +12,8 @@ import (
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/resource"
-	"github.com/spf13/cobra"
-	"path/filepath"
 	"github.com/hooklift/iso9660"
+	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
 	"path/filepath"
@@ -176,11 +175,6 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	//services, message, err := s.GardenClient.GetServices()
-	//if err != nil {
-	//	return errors.SafeWrap(err, "Failed to get list of services to deploy")
-	//}
-
 	err = s.GardenClient.DeployServices(s.UI, services)
 	if err != nil {
 		return err
@@ -306,4 +300,4 @@ func readIsoAndVerifyVersion(isoFile string) ([]garden.Service, string, bool, er
 		}
 	}
 	return nil, "", false, nil
-} 
+}
