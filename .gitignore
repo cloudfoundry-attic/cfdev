@@ -21,7 +21,7 @@
 *.img
 **/*-state
 
-!/src/code.cloudfoundry.org/cfdev/cfdev/cmd/start/fixtures/cf-deps.iso
+!**/start/fixtures/cf-deps.iso
 
 
 /output/
