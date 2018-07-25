@@ -12,7 +12,21 @@ import (
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/garden"
+	"github.com/hooklift/iso9660"
+	"io"
+	"io/ioutil"
+	"gopkg.in/yaml.v2"
+	"code.cloudfoundry.org/cfdev/resource"
 )
+
+var (
+	services     []garden.Service
+	message      string
+	isCompatible bool
+)
+
+const compatibilityVersion = "v1"
 
 func (s *Start) Cmd() *cobra.Command {
 	args := Args{}
@@ -31,7 +45,9 @@ func (s *Start) Cmd() *cobra.Command {
 	pf.StringVarP(&args.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 	pf.IntVarP(&args.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
 	pf.IntVarP(&args.Mem, "memory", "m", 4096, "memory to allocate to vm in MB")
+	pf.BoolVarP(&args.NoProvision, "no-provision", "n", false, "start vm but do not provision")
 
+	pf.MarkHidden("no-provision")
 	return cmd
 }
 
@@ -51,6 +67,7 @@ func (s *Start) Execute(args Args) error {
 
 	depsIsoName := "cf"
 	depsIsoPath := filepath.Join(s.Config.CacheDir, "cf-deps.iso")
+	depsToDownload := s.Config.Dependencies
 	if args.DepsIsoPath != "" {
 		depsIsoName = filepath.Base(args.DepsIsoPath)
 		var err error
@@ -62,7 +79,32 @@ func (s *Start) Execute(args Args) error {
 			return fmt.Errorf("no file found at: %s", depsIsoPath)
 		}
 
+		services, message, isCompatible, err = readIsoAndVerifyVersion(depsIsoPath)
+		if err != nil {
+			return errors.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsIsoName))
+		}
+
+		if !isCompatible {
+			return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsIsoName)
+		}
+
+		depsToDownload = resource.Catalog{}
+		for _, item := range s.Config.Dependencies.Items {
+			if item.Name != "cf-deps.iso" {
+				depsToDownload.Items = append(depsToDownload.Items, item)
+			}
+		}
 	}
+
+	services, message, isCompatible, err := readIsoAndVerifyVersion(depsIsoPath)
+	if err != nil {
+		return errors.SafeWrap(err, "Incompatible iso specified")
+	}
+
+	if !isCompatible {
+		return fmt.Errorf("%s is not a compatible iso file", depsIsoName)
+	}
+
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
 	s.Analytics.Event(cfanalytics.START_BEGIN)
 
@@ -84,11 +126,11 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Downloading Resources...")
-	if err := s.Cache.Sync(s.Config.Dependencies); err != nil {
+	if err := s.Cache.Sync(depsToDownload); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 
-	s.UI.Say("Creating VM...")
+	s.UI.Say("Creating the VM...")
 	if err := s.HyperV.CreateVM(depsIsoPath); err != nil {
 		return errors.SafeWrap(err, "Unable to create VM")
 	}
@@ -98,13 +140,18 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "starting vpnkit")
 	}
 
-	s.UI.Say("Starting VM...")
+	s.UI.Say("Starting the VM...")
 	if err := s.HyperV.Start("cfdev"); err != nil {
 		return errors.SafeWrap(err, "starting vpnkit")
 	}
 
 	s.UI.Say("Waiting for Garden...")
 	s.waitForGarden()
+
+	if args.NoProvision {
+		s.UI.Say("VM will not be provisioned because '-n' (no-provision) flag was specified.")
+		return nil
+	}
 
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := s.GardenClient.DeployBosh(); err != nil {
@@ -115,11 +162,6 @@ func (s *Start) Execute(args Args) error {
 	s.GardenClient.ReportProgress(s.UI, "cf")
 	if err := s.GardenClient.DeployCloudFoundry(registries); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
-	}
-
-	services, message, err := s.GardenClient.GetServices()
-	if err != nil {
-		return errors.SafeWrap(err, "Failed to get list of services to deploy")
 	}
 
 	err = s.GardenClient.DeployServices(s.UI, services)
@@ -185,4 +227,54 @@ func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 		registries = append(registries, u.Host)
 	}
 	return registries, nil
+}
+
+func readIsoAndVerifyVersion(isoFile string) ([]garden.Service, string, bool, error) {
+
+	file, err := os.Open(isoFile)
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	r, err := iso9660.NewReader(file)
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	for {
+		f, err := r.Next()
+		if err == io.EOF {
+			fmt.Println("File not found")
+			return nil, "", false, err
+		}
+
+		if err != nil {
+			return nil, "", false, err
+		}
+
+		if strings.Contains(f.Name(), "metadata.yml") {
+			buf, err := ioutil.ReadAll(f.Sys().(io.Reader))
+			if err != nil {
+				return nil, "", false, err
+			}
+
+			metadata := struct {
+				Version  string           `yaml:"compatibility_version"`
+				Message  string           `yaml:"splash_message"`
+				Services []garden.Service `yaml:"services"`
+			}{}
+
+			err = yaml.Unmarshal(buf, &metadata)
+			if err != nil {
+				return nil, "", false, err
+			}
+
+			if metadata.Version != compatibilityVersion {
+				return nil, "", false, nil
+			}
+
+			return metadata.Services, metadata.Message, true, nil
+		}
+	}
+	return nil, "", false, nil
 }
