@@ -1,63 +1,63 @@
 [submodule "src/code.cloudfoundry.org/cli"]
 	path = src/code.cloudfoundry.org/cli
-	url = git@github.com:cloudfoundry/cli.git
+	url = https://github.com/cloudfoundry/cli.git
 [submodule "src/code.cloudfoundry.org/garden"]
 	path = src/code.cloudfoundry.org/garden
-	url = git@github.com:cloudfoundry/garden.git
+	url = https://github.com/cloudfoundry/garden.git
 [submodule "src/code.cloudfoundry.org/lager"]
 	path = src/code.cloudfoundry.org/lager
-	url = git@github.com:cloudfoundry/lager.git
+	url = https://github.com/cloudfoundry/lager.git
 [submodule "src/github.com/tedsuo/rata"]
 	path = src/github.com/tedsuo/rata
-	url = git@github.com:tedsuo/rata.git
+	url = https://github.com/tedsuo/rata.git
 [submodule "src/github.com/bmizerany/pat"]
 	path = src/github.com/bmizerany/pat
-	url = git@github.com:bmizerany/pat.git
+	url = https://github.com/bmizerany/pat.git
 [submodule "src/github.com/onsi/ginkgo"]
 	path = src/github.com/onsi/ginkgo
-	url = git@github.com:onsi/ginkgo.git
+	url = https://github.com/onsi/ginkgo.git
 [submodule "src/github.com/onsi/gomega"]
 	path = src/github.com/onsi/gomega
-	url = git@github.com:onsi/gomega.git
+	url = https://github.com/onsi/gomega.git
 [submodule "acceptance/src/github.com/cloudfoundry/cf-acceptance-tests"]
 	path = acceptance/src/github.com/cloudfoundry/cf-acceptance-tests
-	url = git@github.com:cloudfoundry/cf-acceptance-tests.git
+	url = https://github.com/cloudfoundry/cf-acceptance-tests.git
 [submodule "src/github.com/golang/protobuf"]
 	path = src/github.com/golang/protobuf
-	url = git@github.com:golang/protobuf.git
+	url = https://github.com/golang/protobuf.git
 [submodule "src/golang.org/x/net"]
 	path = src/golang.org/x/net
-	url = git@github.com:golang/net.git
+	url = https://github.com/golang/net.git
 [submodule "src/golang.org/x/text"]
 	path = src/golang.org/x/text
-	url = git@github.com:golang/text.git
+	url = https://github.com/golang/text.git
 [submodule "src/gopkg.in/yaml.v2"]
 	path = src/gopkg.in/yaml.v2
-	url = git@github.com:go-yaml/yaml.git
+	url = https://github.com/go-yaml/yaml.git
 [submodule "acceptance/src/github.com/cloudfoundry/cf-networking-release"]
 	path = acceptance/src/github.com/cloudfoundry/cf-networking-release
-	url = git@github.com:cloudfoundry/cf-networking-release.git
+	url = https://github.com/cloudfoundry/cf-networking-release.git
 [submodule "acceptance/src/github.com/cloudfoundry-incubator/routing-release"]
 	path = acceptance/src/github.com/cloudfoundry-incubator/routing-release
-	url = git@github.com:cloudfoundry-incubator/routing-release.git
+	url = https://github.com/cloudfoundry-incubator/routing-release.git
 [submodule "linuxkit/pkg/expose-multiple-ports/vendor/github.com/moby/vpnkit"]
 	path = linuxkit/pkg/expose-multiple-ports/vendor/github.com/moby/vpnkit
-	url = git@github.com:pcfdev-forks/vpnkit.git
+	url = https://github.com/pcfdev-forks/vpnkit.git
 [submodule "src/code.cloudfoundry.org/cfdev/vendor/github.com/cloudfoundry-incubator/cf-test-helpers"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/cloudfoundry-incubator/cf-test-helpers
-	url = git@github.com:cloudfoundry-incubator/cf-test-helpers.git
+	url = https://github.com/cloudfoundry-incubator/cf-test-helpers.git
 [submodule "src/code.cloudfoundry.org/cfdev/vendor/github.com/go-plist"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/go-plist
-	url = git@github.com:DHowett/go-plist.git
+	url = https://github.com/DHowett/go-plist.git
 [submodule "src/github.com/golang/mock"]
 	path = src/github.com/golang/mock
-	url = git@github.com:golang/mock.git
+	url = https://github.com/golang/mock.git
 [submodule "src/gopkg.in/segmentio/analytics-go.v3"]
 	path = src/gopkg.in/segmentio/analytics-go.v3
-	url = git@github.com:segmentio/analytics-go.git
+	url = https://github.com/segmentio/analytics-go.git
 [submodule "src/github.com/segmentio/backo-go"]
 	path = src/github.com/segmentio/backo-go
-	url = git@github.com:segmentio/backo-go.git
+	url = https://github.com/segmentio/backo-go.git
 [submodule "src/github.com/denisbrodbeck/machineid"]
 	path = src/github.com/denisbrodbeck/machineid
 	url = https://github.com/denisbrodbeck/machineid.git
@@ -84,7 +84,7 @@
 	url = https://github.com/inconshreveable/mousetrap.git
 [submodule "src/github.com/hooklift/iso9660"]
 	path = src/github.com/hooklift/iso9660
-	url = https://github.com/hooklift/iso9660
+	url = https://github.com/hooklift/iso9660.git
 [submodule "src/github.com/c4milo/gotoolkit"]
 	path = src/github.com/c4milo/gotoolkit
-	url = https://github.com/c4milo/gotoolkit
+	url = https://github.com/c4milo/gotoolkit.git
