@@ -59,8 +59,6 @@ func (s *Start) Execute(args Args) error {
 		case name := <-s.LocalExit:
 			s.UI.Say("ERROR: %s has stopped", name)
 		}
-		//TODO: HYPER-V STOP
-		//s.LinuxKit.Stop()
 		s.VpnKit.Stop()
 		os.Exit(128)
 	}()
@@ -96,15 +94,6 @@ func (s *Start) Execute(args Args) error {
 		}
 	}
 
-	services, message, isCompatible, err := readIsoAndVerifyVersion(depsIsoPath)
-	if err != nil {
-		return errors.SafeWrap(err, "Incompatible iso specified")
-	}
-
-	if !isCompatible {
-		return fmt.Errorf("%s is not a compatible iso file", depsIsoName)
-	}
-
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
 	s.Analytics.Event(cfanalytics.START_BEGIN)
 
@@ -128,6 +117,15 @@ func (s *Start) Execute(args Args) error {
 	s.UI.Say("Downloading Resources...")
 	if err := s.Cache.Sync(depsToDownload); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
+	}
+
+	services, message, isCompatible, err := readIsoAndVerifyVersion(depsIsoPath)
+	if err != nil {
+		return errors.SafeWrap(err, "Incompatible iso specified")
+	}
+
+	if !isCompatible {
+		return fmt.Errorf("%s is not a compatible iso file", depsIsoName)
 	}
 
 	s.UI.Say("Creating the VM...")

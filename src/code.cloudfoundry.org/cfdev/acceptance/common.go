@@ -63,6 +63,7 @@ func SetupDependencies(cacheDir string) {
 		}
 
 		for _, origin := range []string{filepath.Join(goPath, "output", asset), filepath.Join(goPath, "linuxkit", asset), filepath.Join(GetCfdevHome(), "cache", asset)} {
+
 			if exists, _ := FileExists(origin); exists {
 				Expect(os.Symlink(origin, target)).To(Succeed())
 				break

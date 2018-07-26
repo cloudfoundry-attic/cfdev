@@ -25,7 +25,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 )
 
-var _ = Describe("hyperkit lifecycle", func() {
+var _ = Describe("cfdev lifecycle", func() {
 
 	var (
 		startSession *gexec.Session
