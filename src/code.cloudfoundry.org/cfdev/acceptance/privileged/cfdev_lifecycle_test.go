@@ -100,7 +100,7 @@ var _ = Describe("cfdev lifecycle", func() {
 		})
 
 		It("runs the entire vm lifecycle", func() {
-			Eventually(startSession, 20*time.Minute).Should(gbytes.Say("Starting VPNKit"))
+			Eventually(startSession, 1*time.Hour).Should(gbytes.Say("Starting VPNKit"))
 
 			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 30, 1).Should(BeTrue())
 
@@ -115,7 +115,7 @@ var _ = Describe("cfdev lifecycle", func() {
 			EventuallyWeCanTargetTheBOSHDirector()
 
 			By("waiting for cfdev cli to exit when the deploy finished")
-			Eventually(startSession, 2*time.Hour).Should(gexec.Exit(0))
+			Eventually(startSession, 3*time.Hour).Should(gexec.Exit(0))
 
 			By("waiting for cf router to listen")
 			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
