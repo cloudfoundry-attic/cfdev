@@ -26,6 +26,15 @@ type Config struct {
 	StartMode   string   `xml:"startmode"`
 }
 
+func RunCommand(command *exec.Cmd) error {
+	output, err := command.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Failed to execute %s, %v: %s: %s", command.Path, command.Args, err, string(output))
+	}
+
+	return nil
+}
+
 func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 
 
@@ -40,16 +49,11 @@ func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 	}
 
 	cmd := exec.Command(executablePath, "install")
-	err = cmd.Start()
+	err = RunCommand(cmd)
 	if err != nil {
 		return err
 	}
 
-
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
 
 
 	return nil
@@ -60,15 +64,11 @@ func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
 		_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
 
 		cmd := exec.Command(executablePath, "uninstall")
-		err := cmd.Start()
+		err := RunCommand(cmd)
 		if err != nil {
 			return err
 		}
 
-		err = cmd.Wait()
-		if err != nil {
-			return err
-		}
 		return nil
 	}
 
@@ -80,15 +80,11 @@ func (l *Launchd) Start(spec DaemonSpec) error {
 
 
 	cmd := exec.Command(executablePath, "start")
-	err := cmd.Start()
+	err := RunCommand(cmd)
 	if err != nil {
 		return err
 	}
 
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -99,12 +95,7 @@ func (l *Launchd) Stop(spec DaemonSpec) error {
 		_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
 
 		cmd := exec.Command(executablePath, "stop")
-		err := cmd.Start()
-		if err != nil {
-			return err
-		}
-
-		err = cmd.Wait()
+		err := RunCommand(cmd)
 		if err != nil {
 			return err
 		}
