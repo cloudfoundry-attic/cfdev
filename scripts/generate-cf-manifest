@@ -29,7 +29,7 @@ pushd "$cf_deployment"
     \
     -o operations/experimental/skip-consul-cell-registrations.yml \
     -o operations/experimental/skip-consul-locks.yml \
-    -o operations/use-bosh-dns-for-containers.yml \
+    -o operations/experimental/use-bosh-dns-for-containers.yml \
     -o operations/experimental/disable-consul.yml \
     -o operations/bosh-lite.yml \
     -o operations/experimental/disable-consul-bosh-lite.yml \
