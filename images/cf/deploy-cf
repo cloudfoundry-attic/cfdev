@@ -20,14 +20,12 @@ exec 2>&1
 source /var/vcap/director/env
 
 cp "$CACHE_DIR"/deployment.yml "$CF_DIR"
-cp "$CACHE_DIR"/runtime-config.yml "$CF_DIR"
 cp "$CACHE_DIR"/dns.yml "$CF_DIR"
 
 if [ -f "$CACHE_DIR"/cloud-config.yml ]; then
   bosh -n update-cloud-config "$CACHE_DIR"/cloud-config.yml
 fi
 
-bosh -n update-runtime-config "$CF_DIR"/runtime-config.yml --name=cf
 bosh -n update-runtime-config "$CF_DIR"/dns.yml --name=dns \
   -v host_ip="$HOST_IP" \
   --vars-store "${CF_DIR}/vars.yml"

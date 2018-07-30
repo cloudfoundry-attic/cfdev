@@ -16,6 +16,11 @@ echo "GENERATE MANIFESTS"
 echo "MODIFY MANIFESTS"
 go run src/builder/main.go $(cat output/STEMCELL.txt) output/cache/*.yml
 
+echo "COPY ASSETS"
+cp ./images/cf/deploy* output/cache/bin
+cp ./images/cf/app-security-group.json output/cache
+
+
 ## Write metadata.yml
 cat > output/cache/metadata.yml <<EOF
 ---
