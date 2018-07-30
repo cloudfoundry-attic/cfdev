@@ -81,7 +81,7 @@ var _ = Describe("cfdev lifecycle", func() {
 
 			By("deploy finished - stopping...")
 			stopSession := cf.Cf("dev", "stop")
-			Eventually(stopSession).Should(gexec.Exit(0))
+			Eventually(stopSession, 30*time.Second).Should(gexec.Exit(0))
 
 			//ensure pid is not running
 			if IsWindows() {
@@ -213,7 +213,7 @@ func PushAnApp() {
 }
 
 func fakeTcpServer() (net.Listener, int) {
-	server, err := net.Listen("tcp", "0:0")
+	server, err := net.Listen("tcp", "localhost:0")
 	Expect(err).NotTo(HaveOccurred())
 	go func() {
 		for {
