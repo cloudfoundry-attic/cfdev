@@ -19,7 +19,6 @@ for var in cf_deployment; do
 done
 set -x
 
-cp "$imgscf_dir"/configs/dns-runtime-config.yml "$output_dir"/runtime-config.yml
 cp "$imgscf_dir"/app-security-group.json "$output_dir"/app-security-group.json
 cp "$imgscf_dir"/deploy-cf "$output_dir"/bin/deploy-cf
 
