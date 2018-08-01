@@ -2,22 +2,24 @@ package start
 
 import (
 	"fmt"
+	"html/template"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"io"
+	"io/ioutil"
+
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
-	"github.com/spf13/cobra"
 	"code.cloudfoundry.org/cfdev/garden"
-	"github.com/hooklift/iso9660"
-	"io"
-	"io/ioutil"
-	"gopkg.in/yaml.v2"
 	"code.cloudfoundry.org/cfdev/resource"
+	"github.com/hooklift/iso9660"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -185,7 +187,11 @@ func (s *Start) Execute(args Args) error {
 	`)
 
 	if message != "" {
-		s.UI.Say(message)
+		t := template.Must(template.New("message").Parse(message))
+		err := t.Execute(s.UI.Writer(), map[string]string{"SYSTEM_DOMAIN": "v3.pcfdev.io"})
+		if err != nil {
+			return errors.SafeWrap(err, "Failed to print deps file provided message")
+		}
 	}
 
 	s.Analytics.Event(cfanalytics.START_END)
