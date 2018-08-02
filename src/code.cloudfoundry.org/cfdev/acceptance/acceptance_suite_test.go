@@ -35,9 +35,9 @@ var _ = BeforeSuite(func() {
 	pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")
 	if pluginPath == "" {
 		if runtime.GOOS == "windows" {
-			pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev", "-ldflags", `-X code.cloudfoundry.org/cfdev/config.cfdepsUrl=https://s3.amazonaws.com/cfdev-ci/cf-oss-deps/cf-deps-0.84.0.iso
-     -X code.cloudfoundry.org/cfdev/config.cfdepsMd5=6d5195a452523aed7d494cba696d6a42
-     -X code.cloudfoundry.org/cfdev/config.cfdepsSize=4536268800
+			pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev", "-ldflags", `-X code.cloudfoundry.org/cfdev/config.cfdepsUrl=https://s3.amazonaws.com/cfdev-ci/cf-oss-deps/cf-deps-0.87.0.iso
+     -X code.cloudfoundry.org/cfdev/config.cfdepsMd5=ff5d56bc8ead8162e318d6cb46a2340b
+     -X code.cloudfoundry.org/cfdev/config.cfdepsSize=4722335744
      -X code.cloudfoundry.org/cfdev/config.cfdevefiUrl=https://s3.amazonaws.com/cfdev-ci/cfdev-efi/cfdev-efi-windows-0.43.0.iso
      -X code.cloudfoundry.org/cfdev/config.cfdevefiMd5=9728fd7042772a9502093c4970f3a556
      -X code.cloudfoundry.org/cfdev/config.cfdevefiSize=342818816
@@ -66,9 +66,9 @@ var _ = BeforeSuite(func() {
      -X code.cloudfoundry.org/cfdev/config.analyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2
 `)
 		} else {
-			pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev", "-ldflags", `-X code.cloudfoundry.org/cfdev/config.cfdepsUrl=https://s3.amazonaws.com/cfdev-ci/cf-oss-deps/cf-deps-0.84.0.iso
-     -X code.cloudfoundry.org/cfdev/config.cfdepsMd5=6d5195a452523aed7d494cba696d6a42
-     -X code.cloudfoundry.org/cfdev/config.cfdepsSize=4536268800
+			pluginPath, err = gexec.Build("code.cloudfoundry.org/cfdev", "-ldflags", `-X code.cloudfoundry.org/cfdev/config.cfdepsUrl=https://s3.amazonaws.com/cfdev-ci/cf-oss-deps/cf-deps-0.87.0.iso
+     -X code.cloudfoundry.org/cfdev/config.cfdepsMd5=ff5d56bc8ead8162e318d6cb46a2340b
+     -X code.cloudfoundry.org/cfdev/config.cfdepsSize=4722335744
      -X code.cloudfoundry.org/cfdev/config.cfdevefiUrl=https://s3.amazonaws.com/cfdev-ci/cfdev-efi/cfdev-efi-darwin-0.41.0.iso
      -X code.cloudfoundry.org/cfdev/config.cfdevefiMd5=3aee0faeda8c14ecb8536830ae76b612
      -X code.cloudfoundry.org/cfdev/config.cfdevefiSize=330307584
