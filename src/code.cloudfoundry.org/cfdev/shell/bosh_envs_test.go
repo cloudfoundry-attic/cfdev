@@ -11,6 +11,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/shell"
+	"runtime"
 )
 
 var _ = Describe("Formatting BOSH Configuration", func() {
@@ -40,17 +41,33 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 	})
 
 	It("formats BOSH configuration for eval'ing", func() {
-		expectedExports := []string{
-			`export BOSH_ENVIRONMENT="10.245.0.2";`,
-			`export BOSH_CLIENT="admin";`,
-			`export BOSH_CLIENT_SECRET="admin-password";`,
-			`export BOSH_GW_HOST="10.245.0.3";`,
-			`export BOSH_GW_USER="jumpbox";`,
+		var expectedExports []string
+		if runtime.GOOS != "windows" {
+			expectedExports = []string{
+				`export BOSH_ENVIRONMENT="10.245.0.2";`,
+				`export BOSH_CLIENT="admin";`,
+				`export BOSH_CLIENT_SECRET="admin-password";`,
+				`export BOSH_GW_HOST="10.245.0.3";`,
+				`export BOSH_GW_USER="jumpbox";`,
 
-			// The following items will be saved to files so we
-			// ignore the value for now
-			`export BOSH_CA_CERT=`,
-			`export BOSH_GW_PRIVATE_KEY=`,
+				// The following items will be saved to files so we
+				// ignore the value for now
+				`export BOSH_CA_CERT=`,
+				`export BOSH_GW_PRIVATE_KEY=`,
+			}
+		}else{
+			expectedExports = []string{
+				`$env:BOSH_ENVIRONMENT="10.245.0.2";`,
+				`$env:BOSH_CLIENT="admin";`,
+				`$env:BOSH_CLIENT_SECRET="admin-password";`,
+				`$env:BOSH_GW_HOST="10.245.0.3";`,
+				`$env:BOSH_GW_USER="jumpbox";`,
+
+				// The following items will be saved to files so we
+				// ignore the value for now
+				`$env:BOSH_CA_CERT=`,
+				`$env:BOSH_GW_PRIVATE_KEY=`,
+			}
 		}
 
 		exports, err := env.Prepare(config)
@@ -76,7 +93,11 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 		It("unsets any other previously set BOSH environment variables", func() {
 			exports, err := env.Prepare(config)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(exports).To(MatchRegexp(`(?m)^unset BOSH_ALL_PROXY;$`))
+			if runtime.GOOS != "windows" {
+				Expect(exports).To(MatchRegexp(`(?m)^unset BOSH_ALL_PROXY;$`))
+			}else{
+				Expect(exports).To(MatchRegexp(`(?m)^Remove-Item Env:BOSH_ALL_PROXY;$`))
+			}
 		})
 		It("only unsets BOSH_ALL_PROXY if it is currently set", func() {
 			os.Unsetenv("BOSH_ALL_PROXY")

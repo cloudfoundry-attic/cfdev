@@ -8,6 +8,7 @@ import (
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/shell"
 	"github.com/spf13/cobra"
+	"runtime"
 )
 
 type UI interface {
@@ -29,7 +30,11 @@ func (b *Bosh) Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "bosh",
 		Run: func(cmd *cobra.Command, args []string) {
-			b.UI.Say(`Usage: eval $(cf dev bosh env)`)
+			if runtime.GOOS != "windows" {
+				b.UI.Say(`Usage: eval $(cf dev bosh env)`)
+			} else {
+				b.UI.Say(`Usage: cf dev bosh env | Invoke-Expression`)
+			}
 		},
 	}
 	envCmd := &cobra.Command{

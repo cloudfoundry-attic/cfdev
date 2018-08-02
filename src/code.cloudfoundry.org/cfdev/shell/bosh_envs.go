@@ -11,6 +11,7 @@ import (
 
 	"io/ioutil"
 	"path/filepath"
+	"runtime"
 )
 
 type Environment struct {
@@ -56,11 +57,22 @@ func (e *Environment) Prepare(config bosh.Config) (string, error) {
 	for _, envvar := range os.Environ() {
 		if strings.HasPrefix(envvar, "BOSH_") {
 			envvar = strings.Split(envvar, "=")[0]
-			fmt.Fprintf(&output, "unset %s;\n", envvar)
+			if runtime.GOOS != "windows" {
+				fmt.Fprintf(&output, "unset %s;\n", envvar)
+			} else {
+				fmt.Fprintf(&output, "Remove-Item Env:%s;\n", envvar)
+			}
 		}
+
 	}
 	for _, name := range order {
-		fmt.Fprintf(&output, "export %s=\"%s\";\n", name, values[name])
+		if runtime.GOOS != "windows" {
+			fmt.Fprintf(&output, "export %s=\"%s\";\n", name, values[name])
+		} else {
+			fmt.Fprintf(&output, "$env:%s=\"%s\";\n", name, values[name])
+		}
 	}
-	return output.String(), nil
+
+	return strings.TrimSpace(output.String()), nil
+
 }

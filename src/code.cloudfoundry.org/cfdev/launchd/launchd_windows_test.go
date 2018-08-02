@@ -128,7 +128,10 @@ var _ = Describe("launchd windows", func() {
 
 				By("stopping the service")
 				Expect(lnchd.Stop(spec)).To(Succeed())
-				Expect(lnchd.IsRunning(spec)).To(BeFalse())
+				Eventually(func() bool {
+					isRunning, _ := lnchd.IsRunning(spec)
+					return isRunning
+				}, 20, 1).Should(BeFalse())
 			})
 		})
 	})
