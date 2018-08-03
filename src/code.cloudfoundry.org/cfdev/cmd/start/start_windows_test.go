@@ -150,7 +150,6 @@ var _ = Describe("Start", func() {
 					}),
 
 					//welcome message
-					mockUI.EXPECT().Say(gomock.Any()),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
 				)
 
@@ -209,7 +208,6 @@ var _ = Describe("Start", func() {
 					}),
 
 					//welcome message
-					mockUI.EXPECT().Say(gomock.Any()),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
 				)
 
