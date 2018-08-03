@@ -34,7 +34,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 
 ## Install 
 1. _(if needed)_ Uninstall your existing PCF Dev plugin if it is installed `cf uninstall-plugin pcfdev`
-1. Install the CF Dev plugin `cf install-plugin cfdev`.
+1. Install the CF Dev plugin `cf install-plugin -r CF-Community "cfdev"`.
 
 ## Start
 Run CF Dev `cf dev start`.
