@@ -15,7 +15,7 @@ Deploying CF...
              is now running!
 
 To begin using CF Dev, please run:
-    cf login -a https://api.v3.pcfdev.io --skip-ssl-validation
+    cf login -a https://api.dev.cfdev.sh --skip-ssl-validation
 
 Admin user => Email: admin / Password: admin
 Regular user => Email: user / Password: pass

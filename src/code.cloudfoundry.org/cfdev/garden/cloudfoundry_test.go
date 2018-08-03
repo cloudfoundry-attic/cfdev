@@ -60,8 +60,8 @@ var _ = Describe("DeployCloudFoundry", func() {
 	Context("when a list of docker registries is provided", func() {
 		BeforeEach(func() {
 			dockerRegistries = []string{
-				"host.pcfdev.io:5000",
-				"host.pcfdev.io:5001",
+				"host.cfdev.sh:5000",
+				"host.cfdev.sh:5001",
 			}
 		})
 
@@ -79,7 +79,7 @@ var _ = Describe("DeployCloudFoundry", func() {
 			err := yaml.Unmarshal([]byte(result[1]), &registries)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(result[0]).To(Equal("DOCKER_REGISTRIES"))
-			Expect(registries).To(ConsistOf("host.pcfdev.io:5000", "host.pcfdev.io:5001"))
+			Expect(registries).To(ConsistOf("host.cfdev.sh:5000", "host.cfdev.sh:5001"))
 		})
 	})
 

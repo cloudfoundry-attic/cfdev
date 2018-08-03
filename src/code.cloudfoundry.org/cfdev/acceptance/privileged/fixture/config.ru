@@ -13,7 +13,7 @@ class App < Roda
       open('http://example.com').read
     end
     r.get 'host' do
-      TCPSocket.new('host.pcfdev.io', ENV['HOST_SERVER_PORT']).gets
+      TCPSocket.new('host.cfdev.sh', ENV['HOST_SERVER_PORT']).gets
     end
     r.get 'mysql' do
       "Versions: #{DB.fetch('SHOW VARIABLES LIKE "%version%"').all}\n"

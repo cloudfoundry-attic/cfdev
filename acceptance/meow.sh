@@ -3,7 +3,7 @@
 set -e
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-domain=${1-v3.pcfdev.io}
+domain=${1-dev.cfdev.sh}
 
 function run_cats() {
   export CONFIG=$(mktemp -t config.XXXXXXXX)
@@ -209,7 +209,7 @@ cat <<EOF >${CONFIG}
   "include_capi_no_bridge": false,
   "include_docker": true,
   "include_private_docker_registry": true,
-  "private_docker_registry_image": "host.pcfdev.io:5000/diego-docker-app-custom",
+  "private_docker_registry_image": "host.cfdev.sh:5000/diego-docker-app-custom",
   "private_docker_registry_username": "testuser",
   "private_docker_registry_password": "testpassword",
 

@@ -78,7 +78,7 @@ func (v *VpnKit) daemonSpec() launchd.DaemonSpec {
 			"--port", path.Join(v.Config.VpnKitStateDir, "vpnkit_port.sock"),
 			"--vsock-path", path.Join(v.Config.StateDir, "connect"),
 			"--http", path.Join(v.Config.VpnKitStateDir, "http_proxy.json"),
-			"--host-names", "host.pcfdev.io",
+			"--host-names", "host.cfdev.sh",
 		},
 		RunAtLoad:  false,
 		StdoutPath: path.Join(v.Config.CFDevHome, "vpnkit.stdout.log"),

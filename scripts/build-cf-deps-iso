@@ -26,6 +26,22 @@ cat > output/cache/metadata.yml <<EOF
 ---
 compatibility_version: "v1"
 
+splash_message: "
+  \t\n
+  \t  ██████╗███████╗██████╗ ███████╗██╗   ██╗\n
+  \t ██╔════╝██╔════╝██╔══██╗██╔════╝██║   ██║\n
+  \t ██║     █████╗  ██║  ██║█████╗  ██║   ██║\n
+  \t ██║     ██╔══╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝\n
+  \t ╚██████╗██║     ██████╔╝███████╗ ╚████╔╝\n
+  \t  ╚═════╝╚═╝     ╚═════╝ ╚══════╝  ╚═══╝\n
+  \t             is now running!\n
+  \t\n
+  \tTo begin using CF Dev, please run:\n
+  \t    cf login -a https://api.{{.SYSTEM_DOMAIN}} --skip-ssl-validation\n
+  \t\n
+  \tAdmin user => Email: admin / Password: admin\n
+  \tRegular user => Email: user / Password: pass\n"
+
 services:
 - name: Mysql
   handle: deploy-mysql

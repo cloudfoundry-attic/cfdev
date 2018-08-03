@@ -38,10 +38,10 @@ pushd "$cf_mysql_deployment"
     -o "$ops_dir"/single-instances.yml \
     -o <(echo "$stemcell_ops") \
     \
-    -v cf_mysql_external_host=p-mysql.v3.pcfdev.io \
-    -v cf_mysql_host=v3.pcfdev.io \
+    -v cf_mysql_external_host=p-mysql.dev.cfdev.sh \
+    -v cf_mysql_host=dev.cfdev.sh \
     -v cf_admin_password=admin \
-    -v cf_api_url=https://api.v3.pcfdev.io \
+    -v cf_api_url=https://api.dev.cfdev.sh \
     -v cf_skip_ssl_validation=true \
     -v proxy_vm_extension=mysql-proxy-lb \
     \

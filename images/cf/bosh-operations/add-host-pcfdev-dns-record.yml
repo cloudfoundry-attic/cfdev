@@ -1,6 +1,6 @@
 ---
 - type: replace
-  path: /addons/name=bosh-dns/jobs/name=bosh-dns/properties?/aliases?/host.pcfdev.io?
+  path: /addons/name=bosh-dns/jobs/name=bosh-dns/properties?/aliases?/host.cfdev.sh?
   value:
   - ((host_ip))
 

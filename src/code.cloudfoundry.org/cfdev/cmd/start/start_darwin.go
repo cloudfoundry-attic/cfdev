@@ -178,25 +178,9 @@ func (s *Start) Execute(args Args) error {
 		return err
 	}
 
-	s.UI.Say(`
-
-	  ██████╗███████╗██████╗ ███████╗██╗   ██╗
-	 ██╔════╝██╔════╝██╔══██╗██╔════╝██║   ██║
-	 ██║     █████╗  ██║  ██║█████╗  ██║   ██║
-	 ██║     ██╔══╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝
-	 ╚██████╗██║     ██████╔╝███████╗ ╚████╔╝
-	  ╚═════╝╚═╝     ╚═════╝ ╚══════╝  ╚═══╝
-	             is now running!
-
-	To begin using CF Dev, please run:
-	    cf login -a https://api.v3.pcfdev.io --skip-ssl-validation
-
-	Admin user => Email: admin / Password: admin
-	Regular user => Email: user / Password: pass`)
-
 	if message != "" {
 		t := template.Must(template.New("message").Parse(message))
-		err := t.Execute(s.UI.Writer(), map[string]string{"SYSTEM_DOMAIN": "v3.pcfdev.io"})
+		err := t.Execute(s.UI.Writer(), map[string]string{"SYSTEM_DOMAIN": "dev.cfdev.sh"})
 		if err != nil {
 			return errors.SafeWrap(err, "Failed to print deps file provided message")
 		}

@@ -118,7 +118,7 @@ var _ = Describe("cfdev lifecycle", func() {
 			Eventually(startSession, 3*time.Hour).Should(gexec.Exit(0))
 
 			By("waiting for cf router to listen")
-			loginSession := cf.Cf("login", "-a", "https://api.v3.pcfdev.io", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
+			loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 			Eventually(loginSession).Should(gexec.Exit(0))
 
 			By("pushing an app")
@@ -200,16 +200,16 @@ func PushAnApp() {
 	Eventually(cf.Cf("bind-service", "cf-test-app", "mydb"), 120).Should(gexec.Exit(0))
 	Eventually(cf.Cf("start", "cf-test-app"), 120).Should(gexec.Exit(0))
 
-	Expect(httpGet("http://cf-test-app.v3.pcfdev.io")).To(Equal("Hello, world!"))
-	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/external")).To(ContainSubstring("Example Domain"))
-	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/host")).To(Equal("Text From Test Code"))
-	Expect(httpGet("http://cf-test-app.v3.pcfdev.io/mysql")).To(ContainSubstring("innodb"))
+	Expect(httpGet("http://cf-test-app.dev.cfdev.sh")).To(Equal("Hello, world!"))
+	Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external")).To(ContainSubstring("Example Domain"))
+	Expect(httpGet("http://cf-test-app.dev.cfdev.sh/host")).To(Equal("Text From Test Code"))
+	Expect(httpGet("http://cf-test-app.dev.cfdev.sh/mysql")).To(ContainSubstring("innodb"))
 
-	Eventually(cf.Cf("create-shared-domain", "tcp.v3.pcfdev.io", "--router-group", "default-tcp"), 10).Should(gexec.Exit(0))
-	Eventually(cf.Cf("create-route", "cfdev-space", "tcp.v3.pcfdev.io", "--port", "1030"), 10).Should(gexec.Exit(0))
-	Eventually(cf.Cf("map-route", "cf-test-app", "tcp.v3.pcfdev.io", "--port", "1030"), 10).Should(gexec.Exit(0))
+	Eventually(cf.Cf("create-shared-domain", "tcp.dev.cfdev.sh", "--router-group", "default-tcp"), 10).Should(gexec.Exit(0))
+	Eventually(cf.Cf("create-route", "cfdev-space", "tcp.dev.cfdev.sh", "--port", "1030"), 10).Should(gexec.Exit(0))
+	Eventually(cf.Cf("map-route", "cf-test-app", "tcp.dev.cfdev.sh", "--port", "1030"), 10).Should(gexec.Exit(0))
 
-	Eventually(func() (string, error) { return httpGet("http://tcp.v3.pcfdev.io:1030") }, 10).Should(Equal("Hello, world!"))
+	Eventually(func() (string, error) { return httpGet("http://tcp.dev.cfdev.sh:1030") }, 10).Should(Equal("Hello, world!"))
 }
 
 func fakeTcpServer() (net.Listener, int) {

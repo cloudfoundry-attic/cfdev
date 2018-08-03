@@ -4,10 +4,10 @@ set -e
 
 export CACHE_DIR=${CACHE_DIR:-/var/vcap/cache}
 export CF_DIR=/var/vcap/cf
-export CF_DOMAIN=v3.pcfdev.io
+export CF_DOMAIN=dev.cfdev.sh
 export CF_ORG=cfdev-org
 export CF_SPACE=cfdev-space
-export DOCKER_REGISTRIES="${DOCKER_REGISTRIES:-[\"host.pcfdev.io:5000\"]}"
+export DOCKER_REGISTRIES="${DOCKER_REGISTRIES:-[\"host.cfdev.sh:5000\"]}"
 export HOST_IP="${HOST_IP:-192.168.65.2}"
 export LOG_DIR=/var/vcap/logs
 
