@@ -16,6 +16,7 @@ import (
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/hooklift/iso9660"
 	"github.com/spf13/cobra"
@@ -131,7 +132,11 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Creating the VM...")
-	if err := s.HyperV.CreateVM(depsIsoPath); err != nil {
+	if err := s.HyperV.CreateVM(process.VM{
+		DepsIso:  depsIsoPath,
+		MemoryMB: args.Mem,
+		CPUs:     args.Cpus,
+	}); err != nil {
 		return errors.SafeWrap(err, "Unable to create VM")
 	}
 
@@ -142,7 +147,7 @@ func (s *Start) Execute(args Args) error {
 
 	s.UI.Say("Starting the VM...")
 	if err := s.HyperV.Start("cfdev"); err != nil {
-		return errors.SafeWrap(err, "starting vpnkit")
+		return errors.SafeWrap(err, "starting the vm")
 	}
 
 	s.UI.Say("Waiting for Garden...")

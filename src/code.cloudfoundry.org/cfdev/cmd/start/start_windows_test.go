@@ -4,6 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,9 +14,9 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd/start/mocks"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/golang/mock/gomock"
-	"io"
 )
 
 var _ = Describe("Start", func() {
@@ -29,7 +30,6 @@ var _ = Describe("Start", func() {
 		mockCache           *mocks.MockCache
 		mockCFDevD          *mocks.MockCFDevD
 		mockVpnKit          *mocks.MockVpnKit
-		mockLinuxKit        *mocks.MockLinuxKit
 		mockGardenClient    *mocks.MockGardenClient
 		mockHyperV          *mocks.MockHyperV
 
@@ -39,6 +39,7 @@ var _ = Describe("Start", func() {
 		tmpDir        string
 		cacheDir      string
 		depsIsoPath   string
+		fixture       string
 	)
 
 	BeforeEach(func() {
@@ -51,7 +52,6 @@ var _ = Describe("Start", func() {
 		mockCache = mocks.NewMockCache(mockController)
 		mockCFDevD = mocks.NewMockCFDevD(mockController)
 		mockVpnKit = mocks.NewMockVpnKit(mockController)
-		mockLinuxKit = mocks.NewMockLinuxKit(mockController)
 		mockHyperV = mocks.NewMockHyperV(mockController)
 		mockGardenClient = mocks.NewMockGardenClient(mockController)
 
@@ -82,8 +82,7 @@ var _ = Describe("Start", func() {
 			Cache:           mockCache,
 			CFDevD:          mockCFDevD,
 			VpnKit:          mockVpnKit,
-			HyperV:			 mockHyperV,
-			LinuxKit:        mockLinuxKit,
+			HyperV:          mockHyperV,
 			GardenClient:    mockGardenClient,
 		}
 
@@ -92,7 +91,7 @@ var _ = Describe("Start", func() {
 		currentdir, err := os.Getwd()
 		Expect(err).NotTo(HaveOccurred())
 
-		fixture := filepath.Join(currentdir, "fixtures", "cf-deps.iso")
+		fixture = filepath.Join(currentdir, "fixtures", "cf-deps.iso")
 		err = copyFile(fixture, depsIsoPath)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -110,7 +109,6 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					//mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -120,7 +118,11 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockUI.EXPECT().Say("Creating the VM..."),
-					mockHyperV.EXPECT().CreateVM(depsIsoPath),
+					mockHyperV.EXPECT().CreateVM(process.VM{
+						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						MemoryMB: 6666,
+						CPUs:     7,
+					}),
 					mockUI.EXPECT().Say("Starting VPNKit..."),
 					mockVpnKit.EXPECT().Start(),
 					mockUI.EXPECT().Say("Starting the VM..."),
@@ -155,6 +157,66 @@ var _ = Describe("Start", func() {
 				Expect(startCmd.Execute(start.Args{
 					Cpus: 7,
 					Mem:  6666,
+				})).To(Succeed())
+			})
+		})
+
+		Context("-f flag provided", func() {
+			It("starts the vm with provided iso", func() {
+				err := copyFile(fixture, filepath.Join(tmpDir, "custom-deps.iso"))
+				Expect(err).NotTo(HaveOccurred())
+
+				gomock.InOrder(
+					mockToggle.EXPECT().SetProp("type", "custom-deps.iso"),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+					mockUI.EXPECT().Say("Downloading Resources..."),
+					mockCache.EXPECT().Sync(resource.Catalog{
+						Items: []resource.Item{
+							{Name: "some-item"},
+						},
+					}),
+					mockUI.EXPECT().Say("Creating the VM..."),
+					mockHyperV.EXPECT().CreateVM(process.VM{
+						DepsIso:  filepath.Join(tmpDir, "custom-deps.iso"),
+						MemoryMB: 6666,
+						CPUs:     7,
+					}),
+					mockUI.EXPECT().Say("Starting VPNKit..."),
+					mockVpnKit.EXPECT().Start(),
+					mockUI.EXPECT().Say("Starting the VM..."),
+					mockHyperV.EXPECT().Start("cfdev"),
+					mockUI.EXPECT().Say("Waiting for Garden..."),
+					mockGardenClient.EXPECT().Ping(),
+					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+					mockGardenClient.EXPECT().DeployBosh(),
+					mockUI.EXPECT().Say("Deploying CF..."),
+					mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
+					mockGardenClient.EXPECT().DeployCloudFoundry(nil),
+					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
+						{
+							Name:       "some-service",
+							Handle:     "some-handle",
+							Script:     "/path/to/some-script",
+							Deployment: "some-deployment",
+						},
+						{
+							Name:       "some-other-service",
+							Handle:     "some-other-handle",
+							Script:     "/path/to/some-other-script",
+							Deployment: "some-other-deployment",
+						},
+					}),
+
+					//welcome message
+					mockUI.EXPECT().Say(gomock.Any()),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+				)
+
+				Expect(startCmd.Execute(start.Args{
+					DepsIsoPath: filepath.Join(tmpDir, "custom-deps.iso"),
+					Cpus:        7,
+					Mem:         6666,
 				})).To(Succeed())
 			})
 		})
@@ -174,7 +236,11 @@ var _ = Describe("Start", func() {
 					}),
 
 					mockUI.EXPECT().Say("Creating the VM..."),
-					mockHyperV.EXPECT().CreateVM(depsIsoPath),
+					mockHyperV.EXPECT().CreateVM(process.VM{
+						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						MemoryMB: 4096,
+						CPUs:     4,
+					}),
 					mockUI.EXPECT().Say("Starting VPNKit..."),
 					mockVpnKit.EXPECT().Start(),
 					mockUI.EXPECT().Say("Starting the VM..."),
@@ -187,8 +253,8 @@ var _ = Describe("Start", func() {
 				mockUI.EXPECT().Say(gomock.Any())
 
 				Expect(startCmd.Execute(start.Args{
-					Cpus:        7,
-					Mem:         6666,
+					Cpus:        4,
+					Mem:         4096,
 					NoProvision: true,
 				})).To(Succeed())
 			})
@@ -204,60 +270,6 @@ var _ = Describe("Start", func() {
 					Mem:         6666,
 					DepsIsoPath: wrongPath,
 				})).To(MatchError("no file found at: " + wrongPath))
-			})
-		})
-
-		Context("when the -f flag is provided with an existing filepath", func() {
-			It("starts the given iso, doesn't download cf-deps.iso, adds the iso name as an analytics property", func() {
-				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "cf-deps.iso"),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
-					mockUI.EXPECT().Say("Downloading Resources..."),
-					// don't download cf-deps.iso that we won't use
-					mockCache.EXPECT().Sync(resource.Catalog{
-						Items: []resource.Item{
-							{Name: "some-item"},
-						},
-					}),
-					mockUI.EXPECT().Say("Creating the VM..."),
-					mockHyperV.EXPECT().CreateVM(depsIsoPath),
-					mockUI.EXPECT().Say("Starting VPNKit..."),
-					mockVpnKit.EXPECT().Start(),
-					mockUI.EXPECT().Say("Starting the VM..."),
-					mockHyperV.EXPECT().Start("cfdev"),
-					mockUI.EXPECT().Say("Waiting for Garden..."),
-					mockGardenClient.EXPECT().Ping(),
-					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-					mockGardenClient.EXPECT().DeployBosh(),
-					mockUI.EXPECT().Say("Deploying CF..."),
-					mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
-					mockGardenClient.EXPECT().DeployCloudFoundry(nil),
-					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
-						{
-							Name:       "some-service",
-							Handle:     "some-handle",
-							Script:     "/path/to/some-script",
-							Deployment: "some-deployment",
-						},
-						{
-							Name:       "some-other-service",
-							Handle:     "some-other-handle",
-							Script:     "/path/to/some-other-script",
-							Deployment: "some-other-deployment",
-						},
-					}),
-
-					//welcome message
-					mockUI.EXPECT().Say(gomock.Any()),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
-				)
-
-				Expect(startCmd.Execute(start.Args{
-					Cpus: 7,
-					Mem:  6666,
-					DepsIsoPath: depsIsoPath,
-				})).To(Succeed())
 			})
 		})
 	})

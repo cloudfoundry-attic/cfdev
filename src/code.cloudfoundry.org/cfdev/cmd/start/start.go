@@ -8,6 +8,7 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 )
 
@@ -62,7 +63,7 @@ type LinuxKit interface {
 //go:generate mockgen -package mocks -destination mocks/hyperv.go code.cloudfoundry.org/cfdev/cmd/start HyperV
 type HyperV interface {
 	Start(vmName string) error
-	CreateVM(depsIsoPath string) error
+	CreateVM(vm process.VM) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/garden.go code.cloudfoundry.org/cfdev/cmd/start GardenClient

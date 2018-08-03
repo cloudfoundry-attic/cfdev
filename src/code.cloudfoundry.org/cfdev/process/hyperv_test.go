@@ -15,6 +15,7 @@ import (
 	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -55,12 +56,18 @@ var _ = Describe("HyperV process", func() {
 	})
 
 	It("creates hyperv VM", func() {
-		Expect(hyperV.CreateVM("")).To(Succeed())
+		vm := process.VM{
+			MemoryMB: 2000,
+			CPUs:     1,
+		}
+		Expect(hyperV.CreateVM(vm)).To(Succeed())
 
-		cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev")
+		cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev | format-list -Property MemoryStartup,ProcessorCount")
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		Eventually(session, 10, 1).Should(gexec.Exit())
+		Expect(session).To(gbytes.Say("MemoryStartup  : 2097152000"))
+		Expect(session).To(gbytes.Say("ProcessorCount : 1"))
 
 		cmd = exec.Command("powershell.exe", "-Command", "Get-VMHardDiskDrive -VMName cfdev")
 		output, err := cmd.Output()

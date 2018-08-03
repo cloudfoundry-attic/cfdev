@@ -13,11 +13,17 @@ type HyperV struct {
 	Config config.Config
 }
 
-func (h *HyperV) CreateVM(cfDepsIso string) error {
+type VM struct {
+	DepsIso  string
+	MemoryMB int
+	CPUs     int
+}
+
+func (h *HyperV) CreateVM(vm VM) error {
 	var vmName = "cfdev"
 	var cfdevEfiIso = filepath.Join(h.Config.CacheDir, "cfdev-efi.iso")
-	if cfDepsIso == "" {
-		cfDepsIso = filepath.Join(h.Config.CacheDir, "cf-deps.iso")
+	if vm.DepsIso == "" {
+		vm.DepsIso = filepath.Join(h.Config.CacheDir, "cf-deps.iso")
 	}
 	var cfDevVHD = filepath.Join(h.Config.CFDevHome, "cfdev.vhd")
 
@@ -31,9 +37,10 @@ func (h *HyperV) CreateVM(cfDepsIso string) error {
 		"-AutomaticStartAction Nothing "+
 		"-AutomaticStopAction ShutDown "+
 		"-CheckpointType Disabled "+
-		"-MemoryStartupBytes 5GB "+
+		fmt.Sprintf("-MemoryStartupBytes %dMB ", vm.MemoryMB)+
 		"-StaticMemory "+
-		"-ProcessorCount 4", vmName))
+		fmt.Sprintf("-ProcessorCount %d", vm.CPUs),
+		vmName))
 	err = cmd.Run()
 	if err != nil {
 		return err
@@ -44,7 +51,7 @@ func (h *HyperV) CreateVM(cfDepsIso string) error {
 		return err
 	}
 
-	err = addVhdDrive(cfDepsIso, vmName)
+	err = addVhdDrive(vm.DepsIso, vmName)
 	if err != nil {
 		return err
 	}
@@ -114,9 +121,9 @@ func addVhdDrive(isoPath string, vmName string) error {
 
 func (h *HyperV) Start(vmName string) error {
 	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Start-VM -Name %s", vmName))
-	err := cmd.Run()
-	if err != nil {
-		return err
+
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("start-vm: %s : %s", err, string(output))
 	}
 
 	return nil

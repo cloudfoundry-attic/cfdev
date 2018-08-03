@@ -3,9 +3,6 @@ package process
 import (
 	"bufio"
 	"bytes"
-	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/launchd"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +11,10 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/cfdev/launchd"
 )
 
 type VpnKit struct {
@@ -24,12 +25,12 @@ type VpnKit struct {
 func (v *VpnKit) Setup() error {
 	err := v.generateServiceGUIDs()
 	if err != nil {
-		return err
+		return fmt.Errorf("generating service guids: %s", err)
 	}
 
 	dns, err := exec.Command("powershell.exe", "-Command", "get-dnsclientserveraddress -family ipv4 | select-object -expandproperty serveraddresses").Output()
 	if err != nil {
-		return err
+		return fmt.Errorf("getting dns client server addresses: %s", err)
 	}
 
 	dnsFile := ""
@@ -46,13 +47,13 @@ func (v *VpnKit) Setup() error {
 
 	err = ioutil.WriteFile(resolvConfPath, []byte(dnsFile), 0600)
 	if err != nil {
-		return err
+		return fmt.Errorf("writing resolv.conf: %s", err)
 	}
 
 	cmd := exec.Command("powershell.exe", "-Command", "get-dnsclient | select-object -expandproperty connectionspecificsuffix")
 	dhcp, err := cmd.Output()
 	if err != nil {
-		return err
+		return fmt.Errorf("get dns client: %s", err)
 	}
 
 	cmd.Wait()
@@ -80,7 +81,7 @@ func (v *VpnKit) Setup() error {
 
 	file, err := os.Create(dhcpJsonPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating dhcp.json: %s", err)
 	}
 	defer file.Close()
 
@@ -95,7 +96,7 @@ func (v *VpnKit) Start() error {
 	cmd := exec.Command("powershell.exe", "-Command", "((Get-VM -Name cfdev).Id).Guid")
 	output, err := cmd.Output()
 	if err != nil {
-		return err
+		return fmt.Errorf("get vm name: %s", err)
 	}
 
 	cmd.Wait()
@@ -120,22 +121,6 @@ func (v *VpnKit) Watch(exit chan string) {
 }
 
 func (v *VpnKit) generateServiceGUIDs() error {
-	/*
-			for _, serviceName := range []string{"CF Dev VPNkit Ethernet Service", "CF Dev VPNkit Port Service", "CF Dev VPNkit Forwarder Service"} {
-				command := exec.Command(
-					"powershell.exe", "-Command",
-					fmt.Sprintf(`$guid=[guid]::newguid().Guid;
-					  $ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name $guid;
-		             $ethService.SetValue("ElementName", "%s")
-		             `, serviceName),
-				)
-
-				if err := command.Run(); err != nil {
-					return err
-				}
-			}
-	*/
-
 	command := exec.Command(
 		"powershell.exe", "-Command",
 		`$ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name 7207f451-2ca3-4b88-8d01-820a21d78293;
