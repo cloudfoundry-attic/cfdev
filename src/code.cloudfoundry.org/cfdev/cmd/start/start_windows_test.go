@@ -4,7 +4,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd/start/mocks"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/golang/mock/gomock"
@@ -32,6 +32,7 @@ var _ = Describe("Start", func() {
 		mockVpnKit          *mocks.MockVpnKit
 		mockGardenClient    *mocks.MockGardenClient
 		mockHyperV          *mocks.MockHyperV
+		mockIsoReader       *mocks.MockIsoReader
 
 		startCmd      start.Start
 		exitChan      chan struct{}
@@ -39,7 +40,7 @@ var _ = Describe("Start", func() {
 		tmpDir        string
 		cacheDir      string
 		depsIsoPath   string
-		fixture       string
+		metadata      iso.Metadata
 	)
 
 	BeforeEach(func() {
@@ -54,6 +55,7 @@ var _ = Describe("Start", func() {
 		mockVpnKit = mocks.NewMockVpnKit(mockController)
 		mockHyperV = mocks.NewMockHyperV(mockController)
 		mockGardenClient = mocks.NewMockGardenClient(mockController)
+		mockIsoReader = mocks.NewMockIsoReader(mockController)
 
 		localExitChan = make(chan string, 3)
 		tmpDir, err = ioutil.TempDir("", "start-test-home")
@@ -84,18 +86,28 @@ var _ = Describe("Start", func() {
 			VpnKit:          mockVpnKit,
 			HyperV:          mockHyperV,
 			GardenClient:    mockGardenClient,
+			IsoReader:       mockIsoReader,
 		}
 
-		os.MkdirAll(cacheDir, 0777)
 		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
-		currentdir, err := os.Getwd()
-		Expect(err).NotTo(HaveOccurred())
-
-		fixture = filepath.Join(currentdir, "fixtures", "cf-deps.iso")
-		err = copyFile(fixture, depsIsoPath)
-		Expect(err).NotTo(HaveOccurred())
-
-		Expect(depsIsoPath).To(BeAnExistingFile())
+		metadata = iso.Metadata{
+			Version:       "v1",
+			DefaultMemory: 8765,
+			Services: []garden.Service{
+				{
+					Name:       "some-service",
+					Handle:     "some-handle",
+					Script:     "/path/to/some-script",
+					Deployment: "some-deployment",
+				},
+				{
+					Name:       "some-other-service",
+					Handle:     "some-other-handle",
+					Script:     "/path/to/some-other-script",
+					Deployment: "some-other-deployment",
+				},
+			},
+		}
 	})
 
 	AfterEach(func() {
@@ -117,6 +129,7 @@ var _ = Describe("Start", func() {
 							{Name: "cf-deps.iso"},
 						},
 					}),
+					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHyperV.EXPECT().CreateVM(process.VM{
 						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
@@ -162,11 +175,11 @@ var _ = Describe("Start", func() {
 
 		Context("-f flag provided", func() {
 			It("starts the vm with provided iso", func() {
-				err := copyFile(fixture, filepath.Join(tmpDir, "custom-deps.iso"))
-				Expect(err).NotTo(HaveOccurred())
+				customIso := filepath.Join(tmpDir, "custom.iso")
+				ioutil.WriteFile(customIso, []byte{}, 0644)
 
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "custom-deps.iso"),
+					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
@@ -175,9 +188,10 @@ var _ = Describe("Start", func() {
 							{Name: "some-item"},
 						},
 					}),
+					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHyperV.EXPECT().CreateVM(process.VM{
-						DepsIso:  filepath.Join(tmpDir, "custom-deps.iso"),
+						DepsIso:  customIso,
 						MemoryMB: 6666,
 						CPUs:     7,
 					}),
@@ -212,7 +226,7 @@ var _ = Describe("Start", func() {
 				)
 
 				Expect(startCmd.Execute(start.Args{
-					DepsIsoPath: filepath.Join(tmpDir, "custom-deps.iso"),
+					DepsIsoPath: customIso,
 					Cpus:        7,
 					Mem:         6666,
 				})).To(Succeed())
@@ -232,7 +246,7 @@ var _ = Describe("Start", func() {
 							{Name: "cf-deps.iso"},
 						},
 					}),
-
+					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHyperV.EXPECT().CreateVM(process.VM{
 						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
@@ -272,23 +286,3 @@ var _ = Describe("Start", func() {
 		})
 	})
 })
-
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
-	return out.Close()
-}

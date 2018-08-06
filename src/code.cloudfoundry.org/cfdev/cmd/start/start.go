@@ -3,6 +3,8 @@ package start
 import (
 	"io"
 
+	"code.cloudfoundry.org/cfdev/iso"
+
 	"os"
 
 	"code.cloudfoundry.org/cfdev/config"
@@ -76,6 +78,11 @@ type GardenClient interface {
 	ReportProgress(garden.UI, string)
 }
 
+//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start IsoReader
+type IsoReader interface {
+	Read(isoPath string) (iso.Metadata, error)
+}
+
 type Args struct {
 	Registries  string
 	DepsIsoPath string
@@ -89,6 +96,7 @@ type Start struct {
 	LocalExit       chan string
 	UI              UI
 	Config          config.Config
+	IsoReader       IsoReader
 	Analytics       AnalyticsClient
 	AnalyticsToggle Toggle
 	HostNet         HostNet
