@@ -19,6 +19,7 @@ import (
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
@@ -117,6 +118,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, launchd Launchd, a
 			VpnKit:          &process.VpnKit{Config: config, Launchd: launchd},
 			LinuxKit:        &process.LinuxKit{Config: config, Launchd: launchd},
 			GardenClient:    garden.New(),
+			IsoReader:       iso.New(),
 		},
 		&b6.Stop{
 			Config:       config,
