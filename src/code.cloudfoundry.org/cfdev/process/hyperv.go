@@ -30,7 +30,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vmName))
 	err := cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("creating new vm: %s", err)
 	}
 
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Set-VM -Name %s "+
@@ -43,17 +43,17 @@ func (h *HyperV) CreateVM(vm VM) error {
 		vmName))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("setting vm properites (memoryMB:%d, cpus:%d): %s", vm.MemoryMB, vm.CPUs, err)
 	}
 
 	err = addVhdDrive(cfdevEfiIso, vmName)
 	if err != nil {
-		return err
+		return fmt.Errorf("adding dvd drive %s: %s", cfdevEfiIso, err)
 	}
 
 	err = addVhdDrive(vm.DepsIso, vmName)
 	if err != nil {
-		return err
+		return fmt.Errorf("adding dvd drive %s: %s", vm.DepsIso, err)
 	}
 
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VMNetworkAdapter "+
@@ -62,13 +62,13 @@ func (h *HyperV) CreateVM(vm VM) error {
 		vmName))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("removing netowrk adapter: %s", err)
 	}
 
 	if _, err := os.Stat(cfDevVHD); err == nil {
 		err := os.RemoveAll(cfDevVHD)
 		if err != nil {
-			return err
+			return fmt.Errorf("removing any vhds: %s", err)
 		}
 	}
 
@@ -77,14 +77,14 @@ func (h *HyperV) CreateVM(vm VM) error {
 		"-Dynamic", cfDevVHD))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("creating new vhd at path %s : %s", cfDevVHD, err)
 	}
 
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Add-VMHardDiskDrive -VMName %s "+
 		"-Path %s", vmName, cfDevVHD))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("adding vhd %s : %s", cfDevVHD, err)
 	}
 
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Set-VMFirmware "+
@@ -94,7 +94,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 		vmName))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("setting firmware : %s", err)
 	}
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Set-VMComPort "+
 		"-VMName %s "+
@@ -103,7 +103,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 		vmName))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("setting com port : %s", err)
 	}
 
 	return nil

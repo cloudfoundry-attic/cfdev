@@ -109,6 +109,14 @@ func (s *Start) Execute(args Args) error {
 	if isoConfig.Version != compatibilityVersion {
 		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsIsoName)
 	}
+	
+	if args.Mem <= 0 {
+		if isoConfig.DefaultMemory > 0 {
+			args.Mem = isoConfig.DefaultMemory
+		} else {
+			args.Mem = defaultMemory
+		}
+	}
 
 	s.UI.Say("Creating the VM...")
 	if err := s.HyperV.CreateVM(process.VM{
