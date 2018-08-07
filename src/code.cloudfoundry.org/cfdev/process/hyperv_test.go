@@ -47,32 +47,93 @@ var _ = Describe("HyperV process", func() {
 	})
 
 	AfterEach(func() {
-		cmd := exec.Command("powershell.exe", "-Command", "Remove-VM -Name cfdev -Force")
-		err := cmd.Run()
-		Expect(err).ToNot(HaveOccurred())
-
 		err = os.RemoveAll(cfDevHome)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("creates hyperv VM", func() {
-		vm := process.VM{
-			MemoryMB: 2000,
-			CPUs:     1,
-		}
-		Expect(hyperV.CreateVM(vm)).To(Succeed())
+	Describe("CreateVM", func() {
+		AfterEach(func() {
+			cmd := exec.Command("powershell.exe", "-Command", "Remove-VM -Name cfdev -Force")
+			err := cmd.Run()
+			Expect(err).ToNot(HaveOccurred())
+		})
 
-		cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev | format-list -Property MemoryStartup,ProcessorCount")
-		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-		Expect(err).NotTo(HaveOccurred())
-		Eventually(session, 10, 1).Should(gexec.Exit())
-		Expect(session).To(gbytes.Say("MemoryStartup  : 2097152000"))
-		Expect(session).To(gbytes.Say("ProcessorCount : 1"))
+		It("creates hyperv VM", func() {
+			vm := process.VM{
+				MemoryMB: 2000,
+				CPUs:     1,
+			}
+			Expect(hyperV.CreateVM(vm)).To(Succeed())
 
-		cmd = exec.Command("powershell.exe", "-Command", "Get-VMHardDiskDrive -VMName cfdev")
-		output, err := cmd.Output()
-		Expect(err).ToNot(HaveOccurred())
-		Expect(string(output)).ToNot(BeEmpty())
+			cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev | format-list -Property MemoryStartup,ProcessorCount")
+			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(session, 10, 1).Should(gexec.Exit())
+			Expect(session).To(gbytes.Say("MemoryStartup  : 2097152000"))
+			Expect(session).To(gbytes.Say("ProcessorCount : 1"))
+
+			cmd = exec.Command("powershell.exe", "-Command", "Get-VMHardDiskDrive -VMName cfdev")
+			output, err := cmd.Output()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(output)).ToNot(BeEmpty())
+		})
+	})
+
+	Describe("Stop", func() {
+		Context("when the vm exists and is running ", func() {
+			BeforeEach(func() {
+				cmd := exec.Command("powershell.exe", "-Command", "New-VM -Name cfdev -Generation 2 -NoVHD")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+
+				cmd = exec.Command("powershell.exe", "-Command", "Start-VM -Name cfdev")
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+			})
+
+			It("stops and removes the vm", func() {
+				Expect(hyperV.Stop("cfdev")).To(Succeed())
+				cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
+				output, err := cmd.Output()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(output)).To(BeEmpty())
+			})
+		})
+
+		Context("when the vm exists but is stopped ", func() {
+			BeforeEach(func() {
+				cmd := exec.Command("powershell.exe", "-Command", "New-VM -Name cfdev -Generation 2 -NoVHD")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+			})
+
+			It("removes the vm", func() {
+				Expect(hyperV.Stop("cfdev")).To(Succeed())
+				cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
+				output, err := cmd.Output()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(output)).To(BeEmpty())
+			})
+		})
+
+		Context("when the vm does not exist", func() {
+			BeforeEach(func() {
+				cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
+				output, err := cmd.Output()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(output)).To(BeEmpty())
+			})
+			It("succeeds", func() {
+				Expect(hyperV.Stop("cfdev")).To(Succeed())
+				cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
+				output, err := cmd.Output()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(output)).To(BeEmpty())
+			})
+		})
 	})
 })
 
