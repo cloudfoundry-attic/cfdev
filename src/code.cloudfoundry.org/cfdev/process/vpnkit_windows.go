@@ -171,6 +171,7 @@ func (v *VpnKit) daemonSpec(vmGuid string) launchd.DaemonSpec {
 			"--highest-ip 192.168.65.255",
 			"--host-ip 192.168.65.2",
 			"--gateway-ip 192.168.65.1",
+			"--host-names host.cfdev.sh",
 		},
 		RunAtLoad:  false,
 		StdoutPath: path.Join(v.Config.CFDevHome, "vpnkit.stdout.log"),
