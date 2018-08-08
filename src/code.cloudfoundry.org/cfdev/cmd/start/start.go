@@ -244,6 +244,16 @@ func (s *Start) Execute(args Args) error {
 		return nil
 	}
 
+	if err := s.provision(isoConfig, registries); err != nil {
+		return err
+	}
+
+	s.Analytics.Event(cfanalytics.START_END)
+
+	return nil
+}
+
+func(s *Start) provision(isoConfig iso.Metadata, registries []string) error {
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := s.GardenClient.DeployBosh(); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
@@ -255,7 +265,7 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	err = s.GardenClient.DeployServices(s.UI, isoConfig.Services)
+	err := s.GardenClient.DeployServices(s.UI, isoConfig.Services)
 	if err != nil {
 		return err
 	}
@@ -267,9 +277,6 @@ func (s *Start) Execute(args Args) error {
 			return errors.SafeWrap(err, "Failed to print deps file provided message")
 		}
 	}
-
-	s.Analytics.Event(cfanalytics.START_END)
-
 	return nil
 }
 
