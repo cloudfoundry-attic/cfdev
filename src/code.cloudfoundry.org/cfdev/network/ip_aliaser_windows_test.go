@@ -20,7 +20,7 @@ var _ = Describe("HostNet", func() {
 		hostnet = &network.HostNet{}
 	})
 
-	Describe("RemoveNetworkSwitch", func() {
+	Describe("RemoveLoopbackAliases", func() {
 		Context("when the switch exits", func() {
 			BeforeEach(func() {
 				command := exec.Command(
@@ -38,7 +38,7 @@ var _ = Describe("HostNet", func() {
 			})
 
 			It("removes the switch", func() {
-				Expect(hostnet.RemoveNetworkSwitch()).To(Succeed())
+				Expect(hostnet.RemoveLoopbackAliases()).To(Succeed())
 				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
 				output, err := command.Output()
 				Expect(err).NotTo(HaveOccurred())
@@ -55,7 +55,7 @@ var _ = Describe("HostNet", func() {
 			})
 
 			It("succeeds", func() {
-				Expect(hostnet.RemoveNetworkSwitch()).To(Succeed())
+				Expect(hostnet.RemoveLoopbackAliases()).To(Succeed())
 			})
 		})
 	})

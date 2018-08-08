@@ -133,7 +133,7 @@ func (h *HyperV) Stop(vmName string) error {
 	cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
 	output, err := cmd.Output()
 	if err != nil {
-		return err
+		return fmt.Errorf("getting vms: %s", err)
 	}
 
 	if string(output) == "" {
@@ -143,13 +143,13 @@ func (h *HyperV) Stop(vmName string) error {
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Stop-VM -Name %s -Turnoff", vmName))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("stopping vm: %s", err)
 	}
 
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("removing vm: %s", err)
 	}
 
 	return nil

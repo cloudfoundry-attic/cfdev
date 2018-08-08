@@ -25,6 +25,7 @@ var _ = Describe("Stop", func() {
 		mockProcManager  *mocks.MockProcManager
 		mockCfdevdClient *mocks.MockCfdevdClient
 		mockAnalytics    *mocks.MockAnalytics
+		mockHostNet      *mocks.MockHostNet
 		mockController   *gomock.Controller
 		stateDir         string
 		err              error
@@ -36,6 +37,8 @@ var _ = Describe("Stop", func() {
 
 		cfg = config.Config{
 			StateDir: stateDir,
+			CFRouterIP:     "some-cf-router-ip",
+			BoshDirectorIP: "some-bosh-director-ip",
 		}
 
 		mockController = gomock.NewController(GinkgoT())
@@ -43,6 +46,7 @@ var _ = Describe("Stop", func() {
 		mockProcManager = mocks.NewMockProcManager(mockController)
 		mockCfdevdClient = mocks.NewMockCfdevdClient(mockController)
 		mockAnalytics = mocks.NewMockAnalytics(mockController)
+		mockHostNet = mocks.NewMockHostNet(mockController)
 
 		subject := &stop.Stop{
 			Config:       cfg,
@@ -50,6 +54,7 @@ var _ = Describe("Stop", func() {
 			Launchd:      mockLaunchd,
 			ProcManager:  mockProcManager,
 			CfdevdClient: mockCfdevdClient,
+			HostNet:      mockHostNet,
 		}
 		stopCmd = subject.Cmd()
 		stopCmd.SetArgs([]string{})
@@ -61,7 +66,7 @@ var _ = Describe("Stop", func() {
 		os.RemoveAll(stateDir)
 	})
 
-	It("uninstalls linuxkit, vpnkit, and cfdevd, and sends analytics event", func() {
+	It("uninstalls linuxkit, vpnkit, and cfdevd, tears down aliases, and sends analytics event", func() {
 		mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 		mockLaunchd.EXPECT().RemoveDaemon(launchd.DaemonSpec{
 			Label: process.LinuxKitLabel,
@@ -71,6 +76,8 @@ var _ = Describe("Stop", func() {
 		})
 		mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
 		mockCfdevdClient.EXPECT().Uninstall()
+		mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
+
 		Expect(stopCmd.Execute()).To(Succeed())
 	})
 
@@ -85,6 +92,7 @@ var _ = Describe("Stop", func() {
 			}).Return(fmt.Errorf("test"))
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
 			mockCfdevdClient.EXPECT().Uninstall()
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop linuxkit: test"))
 		})
@@ -101,6 +109,8 @@ var _ = Describe("Stop", func() {
 			}).Return(fmt.Errorf("test"))
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
 			mockCfdevdClient.EXPECT().Uninstall()
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
+
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop vpnkit: test"))
 		})
 	})
@@ -116,6 +126,8 @@ var _ = Describe("Stop", func() {
 			})
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit").Return(fmt.Errorf("test"))
 			mockCfdevdClient.EXPECT().Uninstall()
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
+
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to kill hyperkit: test"))
 		})
 	})
@@ -131,8 +143,26 @@ var _ = Describe("Stop", func() {
 			})
 			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
 			mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to uninstall cfdevd: test"))
+		})
+	})
+
+	Context("removing aliases fails", func() {
+		It("stops the others and returns alias error", func() {
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockLaunchd.EXPECT().RemoveDaemon(launchd.DaemonSpec{
+				Label: process.LinuxKitLabel,
+			})
+			mockLaunchd.EXPECT().RemoveDaemon(launchd.DaemonSpec{
+				Label: process.VpnKitLabel,
+			})
+			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
+			mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip").Return(fmt.Errorf("test"))
+
+			Expect(stopCmd.Execute()).To(MatchError(`cf dev stop: failed to remove IP aliases: test`))
 		})
 	})
 })

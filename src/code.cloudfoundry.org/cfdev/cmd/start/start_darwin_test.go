@@ -67,7 +67,9 @@ var _ = Describe("Start", func() {
 				StateDir:       filepath.Join(tmpDir, "some-state-dir"),
 				VpnKitStateDir: filepath.Join(tmpDir, "some-vpnkit-state-dir"),
 				CacheDir:       cacheDir,
-				CFRouterIP:     "some-cf-router-ip", BoshDirectorIP: "some-bosh-director-ip", Dependencies: resource.Catalog{
+				CFRouterIP:     "some-cf-router-ip",
+				BoshDirectorIP: "some-bosh-director-ip",
+				Dependencies: resource.Catalog{
 					Items: []resource.Item{
 						{Name: "some-item"},
 						{Name: "cf-deps.iso"},

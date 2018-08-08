@@ -30,6 +30,10 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to uninstall cfdevd")
 	}
 
+	if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
+		reterr = errors.SafeWrap(err, "failed to remove IP aliases")
+	}
+
 	if reterr != nil {
 		return errors.SafeWrap(reterr, "cf dev stop")
 	}

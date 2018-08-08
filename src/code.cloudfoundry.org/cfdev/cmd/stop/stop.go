@@ -3,7 +3,6 @@ package stop
 import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/launchd"
-	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
 )
@@ -33,6 +32,11 @@ type Analytics interface {
 	Event(event string, data ...map[string]interface{}) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/network.go code.cloudfoundry.org/cfdev/cmd/stop HostNet
+type HostNet interface {
+	RemoveLoopbackAliases(...string) error
+}
+
 type Stop struct {
 	Config       config.Config
 	Launchd      Launchd
@@ -40,7 +44,7 @@ type Stop struct {
 	ProcManager  ProcManager
 	CfdevdClient CfdevdClient
 	Analytics    Analytics
-	HostNet      *network.HostNet
+	HostNet      HostNet
 }
 
 func (s *Stop) Cmd() *cobra.Command {
