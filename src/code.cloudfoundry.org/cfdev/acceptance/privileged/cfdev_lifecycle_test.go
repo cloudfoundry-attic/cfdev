@@ -23,6 +23,7 @@ import (
 	"code.cloudfoundry.org/garden/client/connection"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
+	"runtime"
 )
 
 var _ = Describe("cfdev lifecycle", func() {
@@ -39,7 +40,11 @@ var _ = Describe("cfdev lifecycle", func() {
 
 		cfdevHome = os.Getenv("CFDEV_HOME")
 		if cfdevHome == "" {
-			cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
+			if runtime.GOOS == "windows" {
+				cfdevHome = filepath.Join(os.Getenv("HOMEDRIVE"), os.Getenv("HOMEPATH"), ".cfdev")
+			} else {
+				cfdevHome = filepath.Join(os.Getenv("HOME"), ".cfdev")
+			}
 		}
 		hyperkitPidPath = filepath.Join(cfdevHome, "state", "linuxkit", "hyperkit.pid")
 
