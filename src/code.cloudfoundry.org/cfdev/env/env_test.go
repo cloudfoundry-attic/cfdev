@@ -59,126 +59,92 @@ var _ = Describe("env", func() {
 		})
 	})
 
-	Describe("SetupEnvironment", func() {
-		var dir string
+	Describe("SetupHomeDir", func() {
+		var dir, homeDir, cacheDir, stateDir, vpnkitStateDir string
 		var err error
+		var conf config.Config
 
-		Context("Setup when the paths are writable", func() {
-			BeforeEach(func() {
-				dir, err = ioutil.TempDir(os.TempDir(), "test-space")
-				Expect(err).NotTo(HaveOccurred())
+		BeforeEach(func() {
+			dir, err = ioutil.TempDir(os.TempDir(), "test-space")
+			Expect(err).NotTo(HaveOccurred())
+
+			homeDir = filepath.Join(dir, "some-cfdev-home")
+			cacheDir = filepath.Join(dir, "some-cache-dir")
+			stateDir = filepath.Join(dir, "some-state-dir")
+			vpnkitStateDir = filepath.Join(dir, "some-vpnkit-state-dir")
+
+			conf = config.Config{
+				CFDevHome: homeDir,
+				CacheDir:  cacheDir,
+				StateDir:  stateDir,
+				VpnKitStateDir:  vpnkitStateDir,
+			}
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(dir)
+		})
+
+		It("creates home, state, and cache dirs", func() {
+			Expect(env.SetupHomeDir(conf)).To(Succeed())
+			_, err := os.Stat(homeDir)
+			Expect(err).NotTo(HaveOccurred())
+			_, err = os.Stat(cacheDir)
+			Expect(err).NotTo(HaveOccurred())
+			_, err = os.Stat(stateDir)
+			Expect(err).NotTo(HaveOccurred())
+			_, err = os.Stat(vpnkitStateDir)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		Context("when there is already state in the home dir", func() {
+			var oldFile, oldDir string
+
+			BeforeEach(func(){
+				oldFile = filepath.Join(stateDir, "some-file")
+				oldDir = filepath.Join(stateDir, "some-dir")
+
+				Expect(os.Mkdir(homeDir, 0755)).To(Succeed())
+				Expect(os.Mkdir(cacheDir, 0755)).To(Succeed())
+				Expect(os.Mkdir(stateDir, 0755)).To(Succeed())
+
+				Expect(ioutil.WriteFile(oldFile, []byte{}, 0644)).To(Succeed())
+				Expect(os.Mkdir(oldDir, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(oldDir, "some-other-file"), []byte{}, 0400)).To(Succeed())
 			})
 
-			AfterEach(func() {
-				os.RemoveAll(dir)
-			})
-
-			It("Creates home, state, cache", func() {
-				homeDir := filepath.Join(dir, "some-cfdev-home")
-				cacheDir := filepath.Join(dir, "some-cache-dir")
-				stateDir := filepath.Join(dir, "some-state-dir")
-
-				conf := config.Config{
-					CFDevHome: homeDir,
-					CacheDir:  cacheDir,
-					StateDir:  stateDir,
-				}
-
-				Expect(env.Setup(conf)).To(Succeed())
-				_, err := os.Stat(homeDir)
-				Expect(err).NotTo(HaveOccurred())
-				_, err = os.Stat(cacheDir)
-				Expect(err).NotTo(HaveOccurred())
-				_, err = os.Stat(stateDir)
-				Expect(err).NotTo(HaveOccurred())
+			It("cleans out the state dir", func() {
+				Expect(env.SetupHomeDir(conf)).To(Succeed())
+				_, err := os.Stat(oldFile)
+				Expect(os.IsNotExist(err)).To(BeTrue())
+				_, err = os.Stat(oldDir)
+				Expect(os.IsNotExist(err)).To(BeTrue())
 			})
 		})
 
-		Context("when setup fails", func() {
-			var (
-				dir      string
-				homeDir  string
-				cacheDir string
-				stateDir string
-			)
+		Context("when home dir cannot be created", func() {
 			BeforeEach(func() {
-				dir, err = ioutil.TempDir(os.TempDir(), "test-space")
-				Expect(err).NotTo(HaveOccurred())
-
-				homeDir = filepath.Join(dir, "some-cfdev-hom")
-				cacheDir = filepath.Join(dir, "some-cache-dir")
-				stateDir = filepath.Join(dir, "some-state-dir")
+				ioutil.WriteFile(homeDir, []byte{}, 0400)
 			})
 
-			AfterEach(func() {
-				os.RemoveAll(dir)
+			It("returns an error", func() {
+				err := env.SetupHomeDir(conf)
+				Expect(err.Error()).
+					To(ContainSubstring(fmt.Sprintf("failed to create cfdev home dir: path %s", homeDir)))
+			})
+		})
+
+		Context("when cache dir cannot be created", func() {
+			BeforeEach(func() {
+				ioutil.WriteFile(cacheDir, []byte{}, 0400)
 			})
 
-			Context("when home dir cannot be created", func() {
-				BeforeEach(func() {
-					ioutil.WriteFile(homeDir, []byte{}, 0400)
-				})
-
-				AfterEach(func() {
-					os.RemoveAll(homeDir)
-				})
-
-				It("returns an error", func() {
-					conf := config.Config{
-						CFDevHome: homeDir,
-						CacheDir:  cacheDir,
-						StateDir:  stateDir,
-					}
-
-					err := env.Setup(conf)
-					Expect(err.Error()).
-						To(ContainSubstring(fmt.Sprintf("failed to create cfdevhome dir: path %s", homeDir)))
-				})
-			})
-
-			Context("when cache dir cannot be created", func() {
-				BeforeEach(func() {
-					ioutil.WriteFile(cacheDir, []byte{}, 0400)
-				})
-
-				AfterEach(func() {
-					os.RemoveAll(cacheDir)
-				})
-
-				It("returns an error", func() {
-					conf := config.Config{
-						CFDevHome: homeDir,
-						CacheDir:  cacheDir,
-						StateDir:  stateDir,
-					}
-
-					err := env.Setup(conf)
-					Expect(err.Error()).
-						To(ContainSubstring(fmt.Sprintf("failed to create cache dir: path %s", cacheDir)))
-				})
-			})
-
-			Context("when state dir cannot be created", func() {
-				BeforeEach(func() {
-					ioutil.WriteFile(stateDir, []byte{}, 0400)
-				})
-
-				AfterEach(func() {
-					os.RemoveAll(stateDir)
-				})
-
-				It("returns an error", func() {
-					conf := config.Config{
-						CFDevHome: homeDir,
-						CacheDir:  cacheDir,
-						StateDir:  stateDir,
-					}
-
-					err := env.Setup(conf)
-					Expect(err.Error()).
-						To(ContainSubstring(fmt.Sprintf("failed to create state dir: path %s", stateDir)))
-				})
+			It("returns an error", func() {
+				err := env.SetupHomeDir(conf)
+				Expect(err.Error()).
+					To(ContainSubstring(fmt.Sprintf("failed to create cache dir: path %s", cacheDir)))
 			})
 		})
 	})
 })
+

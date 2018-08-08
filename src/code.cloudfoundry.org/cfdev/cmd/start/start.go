@@ -183,12 +183,8 @@ func (s *Start) Execute(args Args) error {
 		return nil
 	}
 
-	if err := env.Setup(s.Config); err != nil {
-		return errors.SafeWrap(err, "environment setup")
-	}
-
-	if err := cleanupStateDir(s.Config); err != nil {
-		return errors.SafeWrap(err, "cleaning state directory")
+	if err := env.SetupHomeDir(s.Config); err != nil {
+		return errors.SafeWrap(err, "setting up cfdev home dir")
 	}
 
 	if err := s.HostNet.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {

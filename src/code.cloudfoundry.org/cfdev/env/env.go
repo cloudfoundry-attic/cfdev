@@ -48,19 +48,23 @@ func BuildProxyConfig(boshDirectorIp string, cfRouterIp string) ProxyConfig {
 	return proxyConfig
 }
 
-func Setup(config config.Config) error {
+func SetupHomeDir(config config.Config) error {
 	if err := os.MkdirAll(config.CFDevHome, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CFDevHome, err), "failed to create cfdevhome dir")
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CFDevHome, err), "failed to create cfdev home dir")
 	}
 
 	if err := os.MkdirAll(config.CacheDir, 0755); err != nil {
 		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CacheDir, err), "failed to create cache dir")
-
 	}
 
-	if err := os.MkdirAll(config.StateDir, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.StateDir, err), "failed to create state dir")
-
+	for _, dir := range []string{config.StateDir, config.VpnKitStateDir} {
+		//remove any old state
+		if err := os.RemoveAll(dir); err != nil {
+			return errors.SafeWrap(fmt.Errorf("path %s: %s", dir, err), "failed to clean up state dir")
+		}
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return errors.SafeWrap(fmt.Errorf("path %s: %s", dir, err), "failed to create state dir")
+		}
 	}
 
 	return nil
