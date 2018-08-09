@@ -2,7 +2,6 @@ package network
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -25,9 +24,6 @@ func (*HostNet) RemoveLoopbackAliases(addrs ...string) error {
 
 func addAlias(alias string) error {
 	cmd := exec.Command("netsh", "interface", "ip", "add", "address", loopback, alias, "255.255.255.255")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
 
 	if err := cmd.Run(); err != nil {
 		return err
