@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 type UI interface {
@@ -24,10 +24,11 @@ type LinuxKit struct {
 }
 
 type Launchd interface {
-	AddDaemon(launchd.DaemonSpec) error
-	Start(launchd.DaemonSpec) error
-	Stop(launchd.DaemonSpec) error
-	IsRunning(launchd.DaemonSpec) (bool, error)
+	AddDaemon(daemon.DaemonSpec) error
+	RemoveDaemon(spec daemon.DaemonSpec) error
+	Start(daemon.DaemonSpec) error
+	Stop(daemon.DaemonSpec) error
+	IsRunning(daemon.DaemonSpec) (bool, error)
 }
 
 const LinuxKitLabel = "org.cloudfoundry.cfdev.linuxkit"
@@ -44,7 +45,7 @@ func (l *LinuxKit) Start(cpus int, mem int, depsIsoPath string) error {
 }
 
 func (l *LinuxKit) Stop() {
-	daemonSpec := launchd.DaemonSpec{
+	daemonSpec := daemon.DaemonSpec{
 		Label: LinuxKitLabel,
 	}
 	l.Launchd.Stop(daemonSpec)
@@ -52,14 +53,20 @@ func (l *LinuxKit) Stop() {
 	procManager.SafeKill(filepath.Join(l.Config.StateDir, "hyperkit.pid"), "hyperkit")
 }
 
+func (l *LinuxKit) Destroy() error {
+	return l.Launchd.RemoveDaemon(daemon.DaemonSpec{
+		Label: LinuxKitLabel,
+	})
+}
+
 func (l *LinuxKit) IsRunning() (bool, error) {
-	daemonSpec := launchd.DaemonSpec{
+	daemonSpec := daemon.DaemonSpec{
 		Label: LinuxKitLabel,
 	}
 	return l.Launchd.IsRunning(daemonSpec)
 }
 
-func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.DaemonSpec, error) {
+func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonSpec, error) {
 	linuxkit := filepath.Join(l.Config.CacheDir, "linuxkit")
 	hyperkit := filepath.Join(l.Config.CacheDir, "hyperkit")
 	uefi := filepath.Join(l.Config.CacheDir, "UEFI.fd")
@@ -68,7 +75,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.Daemon
 	vpnkitPortSock := filepath.Join(l.Config.VpnKitStateDir, "vpnkit_port.sock")
 
 	if _, err := os.Stat(depsIsoPath); os.IsNotExist(err) {
-		return launchd.DaemonSpec{}, err
+		return daemon.DaemonSpec{}, err
 	}
 
 	osImagePath := filepath.Join(l.Config.CacheDir, "cfdev-efi.iso")
@@ -83,10 +90,9 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.Daemon
 		"qcow-keeperased=262144",
 	}
 
-	return launchd.DaemonSpec{
+	return daemon.DaemonSpec{
 		Label:       LinuxKitLabel,
 		Program:     linuxkit,
-		CfDevHome:   l.Config.CFDevHome,
 		SessionType: "Background",
 		ProgramArguments: []string{
 			linuxkit, "run", "hyperkit",
@@ -111,7 +117,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (launchd.Daemon
 func (l *LinuxKit) Watch(exit chan string) {
 	go func() {
 		for {
-			daemonSpec := launchd.DaemonSpec{
+			daemonSpec := daemon.DaemonSpec{
 				Label: LinuxKitLabel,
 			}
 			running, err := l.Launchd.IsRunning(daemonSpec)

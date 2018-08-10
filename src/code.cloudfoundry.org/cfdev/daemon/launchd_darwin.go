@@ -1,4 +1,4 @@
-package launchd
+package daemon
 
 import (
 	"os"
@@ -7,6 +7,20 @@ import (
 	"strings"
 	"text/template"
 )
+
+type Launchd struct {
+	PListDir string
+}
+
+func New(plistDir string) *Launchd {
+	if plistDir == "" {
+		plistDir = "/Library/LaunchDaemons"
+	}
+
+	return &Launchd{
+		PListDir: plistDir,
+	}
+}
 
 func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")

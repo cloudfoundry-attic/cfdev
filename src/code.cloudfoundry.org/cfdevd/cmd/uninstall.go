@@ -4,12 +4,12 @@ package cmd
 
 import (
 	"net"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 //go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdevd/cmd Launchd
 type Launchd interface {
-	RemoveDaemon(spec launchd.DaemonSpec) error
+	RemoveDaemon(spec daemon.DaemonSpec) error
 }
 
 type UninstallCommand struct {
@@ -17,7 +17,7 @@ type UninstallCommand struct {
 }
 
 func (u *UninstallCommand) Execute(conn *net.UnixConn) error {
-	spec := launchd.DaemonSpec{
+	spec := daemon.DaemonSpec{
 		Label: "org.cloudfoundry.cfdevd",
 	}
 	err := u.Launchd.RemoveDaemon(spec)

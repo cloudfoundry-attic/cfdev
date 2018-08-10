@@ -2,15 +2,15 @@ package stop
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
 )
 
 //go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdev/cmd/stop Launchd
 type Launchd interface {
-	Stop(spec launchd.DaemonSpec) error
-	RemoveDaemon(spec launchd.DaemonSpec) error
+	Stop(spec daemon.DaemonSpec) error
+	RemoveDaemon(spec daemon.DaemonSpec) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/cfdevd_client.go code.cloudfoundry.org/cfdev/cmd/stop CfdevdClient

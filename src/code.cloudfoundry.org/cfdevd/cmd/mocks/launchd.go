@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	launchd "code.cloudfoundry.org/cfdev/launchd"
+	launchd "code.cloudfoundry.org/cfdev/daemon"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

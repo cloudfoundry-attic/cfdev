@@ -1,4 +1,4 @@
-package launchd
+package daemon
 
 import "net"
 

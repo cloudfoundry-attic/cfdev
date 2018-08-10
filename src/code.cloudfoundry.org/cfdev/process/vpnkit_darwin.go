@@ -14,7 +14,7 @@ import (
 	"path"
 
 	"code.cloudfoundry.org/cfdev/env"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 const retries = 5
@@ -66,10 +66,9 @@ func (v *VpnKit) Watch(exit chan string) {
 	}()
 }
 
-func (v *VpnKit) daemonSpec() launchd.DaemonSpec {
-	return launchd.DaemonSpec{
+func (v *VpnKit) daemonSpec() daemon.DaemonSpec {
+	return daemon.DaemonSpec{
 		Label:       VpnKitLabel,
-		CfDevHome:   v.Config.CFDevHome,
 		Program:     path.Join(v.Config.CacheDir, "vpnkit"),
 		SessionType: "Background",
 		ProgramArguments: []string{

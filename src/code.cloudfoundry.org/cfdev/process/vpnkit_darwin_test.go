@@ -9,18 +9,18 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 var _ = Describe("VpnKit", func() {
 	var (
-		lctl           *launchd.Launchd
 		tmpDir         string
 		vpnkitStateDir string
 		vkit           process.VpnKit
+		lctl           *daemon.Launchd
 	)
 
 	BeforeEach(func() {
@@ -36,7 +36,7 @@ var _ = Describe("VpnKit", func() {
 		Expect(os.Mkdir(stateDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(homeDir, 0777)).To(Succeed())
 		downloadVpnKit(cacheDir, "https://s3.amazonaws.com/cfdev-ci/vpnkit/vpnkit-darwin-amd64-0.0.0-build.3")
-		lctl = &launchd.Launchd{
+		lctl = &daemon.Launchd{
 			PListDir: tmpDir,
 		}
 
@@ -52,7 +52,7 @@ var _ = Describe("VpnKit", func() {
 	})
 
 	AfterEach(func() {
-		Expect(lctl.RemoveDaemon(launchd.DaemonSpec{Label: process.VpnKitLabel})).To(Succeed())
+		Expect(lctl.RemoveDaemon(daemon.DaemonSpec{Label: process.VpnKitLabel})).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 

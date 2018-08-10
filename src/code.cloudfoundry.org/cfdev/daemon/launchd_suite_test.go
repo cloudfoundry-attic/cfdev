@@ -1,4 +1,4 @@
-package launchd_test
+package daemon_test
 
 import (
 	"math/rand"

@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	launchd "code.cloudfoundry.org/cfdev/launchd"
+	daemon "code.cloudfoundry.org/cfdev/daemon"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -34,7 +34,7 @@ func (m *MockLaunchd) EXPECT() *MockLaunchdMockRecorder {
 }
 
 // RemoveDaemon mocks base method
-func (m *MockLaunchd) RemoveDaemon(arg0 launchd.DaemonSpec) error {
+func (m *MockLaunchd) RemoveDaemon(arg0 daemon.DaemonSpec) error {
 	ret := m.ctrl.Call(m, "RemoveDaemon", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -46,7 +46,7 @@ func (mr *MockLaunchdMockRecorder) RemoveDaemon(arg0 interface{}) *gomock.Call {
 }
 
 // Stop mocks base method
-func (m *MockLaunchd) Stop(arg0 launchd.DaemonSpec) error {
+func (m *MockLaunchd) Stop(arg0 daemon.DaemonSpec) error {
 	ret := m.ctrl.Call(m, "Stop", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0

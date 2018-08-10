@@ -3,10 +3,10 @@ package stop
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
 	"os/exec"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
@@ -45,9 +45,8 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func daemonSpec(label, cfdevHome string) launchd.DaemonSpec {
-	return launchd.DaemonSpec{
+func daemonSpec(label, cfdevHome string) daemon.DaemonSpec {
+	return daemon.DaemonSpec{
 		Label:     label,
-		CfDevHome: cfdevHome,
 	}
 }

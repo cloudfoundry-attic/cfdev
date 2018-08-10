@@ -14,7 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 var _ bool = Describe("UninstallCommand", func() {
@@ -64,7 +64,7 @@ var _ bool = Describe("UninstallCommand", func() {
 			controller.Finish()
 		})
 		It("removes the correct daemon", func() {
-			spec := launchd.DaemonSpec{
+			spec := daemon.DaemonSpec{
 				Label: "org.cloudfoundry.cfdevd",
 			}
 			mockLaunchd.EXPECT().RemoveDaemon(spec)

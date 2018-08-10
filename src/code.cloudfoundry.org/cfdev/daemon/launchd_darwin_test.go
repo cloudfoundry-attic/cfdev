@@ -1,4 +1,4 @@
-package launchd_test
+package daemon_test
 
 import (
 	"fmt"
@@ -11,19 +11,19 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
-var _ = Describe("launchd", func() {
+var _ = Describe("Launchd", func() {
 	var plistDir string
 	var plistPath string
 	var label string
-	var lnchd launchd.Launchd
+	var lnchd daemon.Launchd
 
 	BeforeEach(func() {
 		label = randomDaemonName()
 		plistDir, _ = ioutil.TempDir("", "plist")
-		lnchd = launchd.Launchd{
+		lnchd = daemon.Launchd{
 			PListDir: plistDir,
 		}
 		plistPath = filepath.Join(plistDir, label+".plist")
@@ -47,7 +47,7 @@ var _ = Describe("launchd", func() {
 
 		It("should write the plist and load the daemon", func() {
 			executableToInstall := filepath.Join(binDir, "some-executable")
-			spec := launchd.DaemonSpec{
+			spec := daemon.DaemonSpec{
 				Label:            label,
 				Program:          executableToInstall,
 				SessionType:      "Background",
@@ -88,7 +88,7 @@ var _ = Describe("launchd", func() {
 
 		It("sets unix socket listeners on plist", func() {
 			executableToInstall := filepath.Join(binDir, "some-executable")
-			spec := launchd.DaemonSpec{
+			spec := daemon.DaemonSpec{
 				Label:            label,
 				Program:          executableToInstall,
 				SessionType:      "Background",
@@ -171,7 +171,7 @@ var _ = Describe("launchd", func() {
   </array>
 </dict>
 </plist>`, label, binPath)), 0644)).To(Succeed())
-				lnchd = launchd.Launchd{
+				lnchd = daemon.Launchd{
 					PListDir: plistDir,
 				}
 
@@ -183,10 +183,7 @@ var _ = Describe("launchd", func() {
 			})
 
 			It("should unload the daemon and remove the files", func() {
-				spec := launchd.DaemonSpec{
-					Label: label,
-				}
-				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
+				Expect(lnchd.RemoveDaemon(daemon.DaemonSpec{Label:label})).To(Succeed())
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 				Expect(plistPath).NotTo(BeAnExistingFile())
 			})
@@ -212,7 +209,7 @@ var _ = Describe("launchd", func() {
   </array>
 </dict>
 </plist>`, label, binPath)), 0644)).To(Succeed())
-				lnchd = launchd.Launchd{
+				lnchd = daemon.Launchd{
 					PListDir: plistDir,
 				}
 				Expect(exec.Command("launchctl", "load", "-S", "Background", "-F", plistPath).Run()).To(Succeed())
@@ -220,10 +217,7 @@ var _ = Describe("launchd", func() {
 				Expect(os.RemoveAll(plistDir)).To(Succeed())
 			})
 			It("unloads the daemon", func() {
-				spec := launchd.DaemonSpec{
-					Label: label,
-				}
-				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
+				Expect(lnchd.RemoveDaemon(daemon.DaemonSpec{Label:label})).To(Succeed())
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			})
 		})
@@ -248,36 +242,30 @@ var _ = Describe("launchd", func() {
   </array>
 </dict>
 </plist>`, label, binPath)), 0644)).To(Succeed())
-				lnchd = launchd.Launchd{
+				lnchd = daemon.Launchd{
 					PListDir: plistDir,
 				}
 				Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
 			})
 			It("removes the file", func() {
-				spec := launchd.DaemonSpec{
-					Label: label,
-				}
-				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
+				Expect(lnchd.RemoveDaemon(daemon.DaemonSpec{Label:label})).To(Succeed())
 				Expect(plistPath).NotTo(BeAnExistingFile())
 			})
 		})
 
 		Context("daemon is not loaded and file does not exist", func() {
 			It("succeeds", func() {
-				spec := launchd.DaemonSpec{
-					Label: label,
-				}
-				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
+				Expect(lnchd.RemoveDaemon(daemon.DaemonSpec{Label:label})).To(Succeed())
 			})
 		})
 	})
 
 	Describe("IsRunning", func() {
 		var tmpDir string
-		var lnchd launchd.Launchd
+		var lnchd daemon.Launchd
 		BeforeEach(func() {
 			tmpDir, _ = ioutil.TempDir("", "plist")
-			lnchd = launchd.Launchd{
+			lnchd = daemon.Launchd{
 				PListDir: tmpDir,
 			}
 		})
@@ -285,7 +273,7 @@ var _ = Describe("launchd", func() {
 
 		Context("label not loaded", func() {
 			It("returns false", func() {
-				spec := launchd.DaemonSpec{
+				spec := daemon.DaemonSpec{
 					Label: "some-service-that-doesnt-exist",
 				}
 				Expect(lnchd.IsRunning(spec)).To(BeFalse())
@@ -314,7 +302,7 @@ var _ = Describe("launchd", func() {
     </array>
   </dict>
   </plist>`, label, tmpDir, tmpDir)), 0644)).To(Succeed())
-				lnchd = launchd.Launchd{
+				lnchd = daemon.Launchd{
 					PListDir: tmpDir,
 				}
 				Expect(exec.Command("launchctl", "load", "-S", "Background", "-F", filepath.Join(tmpDir, "some.plist")).Run()).To(Succeed())
@@ -325,7 +313,7 @@ var _ = Describe("launchd", func() {
 			})
 			Context("but not started", func() {
 				It("returns false", func() {
-					spec := launchd.DaemonSpec{
+					spec := daemon.DaemonSpec{
 						Label: label,
 					}
 					Expect(lnchd.IsRunning(spec)).To(BeFalse())
@@ -336,7 +324,7 @@ var _ = Describe("launchd", func() {
 					Expect(exec.Command("launchctl", "start", label).Run()).To(Succeed())
 				})
 				It("returns true", func() {
-					spec := launchd.DaemonSpec{
+					spec := daemon.DaemonSpec{
 						Label: label,
 					}
 					Expect(lnchd.IsRunning(spec)).To(BeTrue())

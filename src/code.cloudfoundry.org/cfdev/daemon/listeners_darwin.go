@@ -1,6 +1,6 @@
 // +build darwin
 
-package launchd
+package daemon
 
 // #include <stdlib.h>
 // int launch_activate_socket(const char *name, int **fds, size_t *cnt);

@@ -14,7 +14,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 type VpnKit struct {
@@ -151,11 +151,11 @@ func (v *VpnKit) generateServiceGUIDs() error {
 	return nil
 }
 
-func (v *VpnKit) daemonSpec(vmGuid string) launchd.DaemonSpec {
+func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
 	dnsPath := filepath.Join(v.Config.CFDevHome, "resolv.conf")
 	dhcpPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
 
-	return launchd.DaemonSpec{
+	return daemon.DaemonSpec{
 		Label:     VpnKitLabel,
 		Program:   path.Join(v.Config.CacheDir, "vpnkit.exe"),
 		CfDevHome: v.Config.CFDevHome,

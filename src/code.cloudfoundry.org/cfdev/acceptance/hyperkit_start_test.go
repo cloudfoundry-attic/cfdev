@@ -16,7 +16,7 @@ import (
 	"regexp"
 	"strings"
 
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -79,11 +79,11 @@ var _ = Describe("hyperkit start", func() {
 	Context("cfdev linuxkit is already running", func() {
 		var launchdTmpDir string
 		var originalPid string
-		var testDaemonSpec launchd.DaemonSpec
+		var testDaemonSpec daemon.DaemonSpec
 		BeforeEach(func() {
 			launchdTmpDir, _ = ioutil.TempDir("", "cfdev.test.running.")
-			lctl := launchd.New(launchdTmpDir)
-			testDaemonSpec = launchd.DaemonSpec{
+			lctl := daemon.New(launchdTmpDir)
+			testDaemonSpec = daemon.DaemonSpec{
 				Label:            "org.cloudfoundry.cfdev.linuxkit",
 				Program:          "/bin/bash",
 				SessionType:      "Background",

@@ -7,7 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 type Command interface {
@@ -26,7 +26,7 @@ func UnmarshalCommand(conn io.Reader) (Command, error) {
 		return UnmarshalBindCommand(conn)
 	case UninstallType:
 		return &UninstallCommand{
-			Launchd: launchd.New(""),
+			Launchd: daemon.New(""),
 		}, nil
 	default:
 		return &UnimplementedCommand{

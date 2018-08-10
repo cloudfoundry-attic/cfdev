@@ -12,7 +12,7 @@ import (
 	"io"
 
 	"code.cloudfoundry.org/cfdevd/cmd"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 const SockName = "ListenSocket"
@@ -41,9 +41,9 @@ func registerSignalHandler() {
 }
 
 func install(programSrc string) {
-	lctl := launchd.New("")
+	lctl := daemon.New("")
 	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
-	cfdevdSpec := launchd.DaemonSpec{
+	cfdevdSpec := daemon.DaemonSpec{
 		Label:   "org.cloudfoundry.cfdevd",
 		Program: program,
 		ProgramArguments: []string{
@@ -88,9 +88,9 @@ func copyExecutable(src string, dest string) error {
 }
 
 func uninstall(prog string) {
-	lctl := launchd.New("")
+	lctl := daemon.New("")
 	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
-	spec := launchd.DaemonSpec{
+	spec := daemon.DaemonSpec{
 		Label: "org.cloudfoundry.cfdevd",
 	}
 	if err := lctl.RemoveDaemon(spec); err != nil {
@@ -103,7 +103,7 @@ func uninstall(prog string) {
 
 func run() {
 	registerSignalHandler()
-	listeners, err := launchd.Listeners(SockName)
+	listeners, err := daemon.Listeners(SockName)
 	if err != nil || len(listeners) != 1 {
 		log.Fatal("Failed to obtain socket from launchd")
 	}

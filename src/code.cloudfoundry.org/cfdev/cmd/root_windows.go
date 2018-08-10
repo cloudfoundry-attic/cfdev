@@ -20,7 +20,7 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/iso"
-	"code.cloudfoundry.org/cfdev/launchd"
+	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
@@ -34,11 +34,11 @@ type UI interface {
 }
 
 type Launchd interface {
-	AddDaemon(launchd.DaemonSpec) error
-	RemoveDaemon(launchd.DaemonSpec) error
-	Start(launchd.DaemonSpec) error
-	Stop(launchd.DaemonSpec) error
-	IsRunning(launchd.DaemonSpec) (bool, error)
+	AddDaemon(daemon.DaemonSpec) error
+	RemoveDaemon(daemon.DaemonSpec) error
+	Start(daemon.DaemonSpec) error
+	Stop(daemon.DaemonSpec) error
+	IsRunning(daemon.DaemonSpec) (bool, error)
 }
 
 type cmdBuilder interface {
@@ -60,7 +60,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
-	lctl := launchd.NewWinSW(config.CFDevHome)
+	lctl := daemon.NewWinSW(config.CFDevHome)
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)
