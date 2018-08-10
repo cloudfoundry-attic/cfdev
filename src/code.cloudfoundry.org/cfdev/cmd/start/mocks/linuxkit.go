@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	process "code.cloudfoundry.org/cfdev/process"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -30,6 +31,18 @@ func NewMockLinuxKit(ctrl *gomock.Controller) *MockLinuxKit {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockLinuxKit) EXPECT() *MockLinuxKitMockRecorder {
 	return m.recorder
+}
+
+// CreateVM mocks base method
+func (m *MockLinuxKit) CreateVM(arg0 process.VM) error {
+	ret := m.ctrl.Call(m, "CreateVM", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateVM indicates an expected call of CreateVM
+func (mr *MockLinuxKitMockRecorder) CreateVM(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateVM", reflect.TypeOf((*MockLinuxKit)(nil).CreateVM), arg0)
 }
 
 // IsRunning mocks base method
@@ -58,21 +71,13 @@ func (mr *MockLinuxKitMockRecorder) Start(arg0, arg1, arg2 interface{}) *gomock.
 }
 
 // Stop mocks base method
-func (m *MockLinuxKit) Stop() {
-	m.ctrl.Call(m, "Stop")
+func (m *MockLinuxKit) Stop() error {
+	ret := m.ctrl.Call(m, "Stop")
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Stop indicates an expected call of Stop
 func (mr *MockLinuxKitMockRecorder) Stop() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockLinuxKit)(nil).Stop))
-}
-
-// Watch mocks base method
-func (m *MockLinuxKit) Watch(arg0 chan string) {
-	m.ctrl.Call(m, "Watch", arg0)
-}
-
-// Watch indicates an expected call of Watch
-func (mr *MockLinuxKitMockRecorder) Watch(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Watch", reflect.TypeOf((*MockLinuxKit)(nil).Watch), arg0)
 }

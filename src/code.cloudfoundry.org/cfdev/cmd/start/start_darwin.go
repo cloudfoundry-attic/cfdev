@@ -8,7 +8,6 @@ func (s *Start) startVM(args Args, depsIsoPath string) error {
 	if err := s.LinuxKit.Start(args.Cpus, args.Mem, depsIsoPath); err != nil {
 		return err
 	}
-	s.LinuxKit.Watch(s.LocalExit)
 	return nil
 }
 

@@ -9,14 +9,20 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/process"
+	"github.com/golang/mock/gomock"
 )
 
 var _ = Describe("LinuxKit process", func() {
-	var linuxkit process.LinuxKit
+	var (
+		linuxkit       process.LinuxKit
+		mockController *gomock.Controller
+	)
+
 	BeforeEach(func() {
+		mockController = gomock.NewController(GinkgoT())
+
 		linuxkit = process.LinuxKit{
 			Config: config.Config{
 				CFDevHome:      "/home-dir/.cfdev",
@@ -25,6 +31,10 @@ var _ = Describe("LinuxKit process", func() {
 				VpnKitStateDir: "/home-dir/.cfdev/state_vpnkit",
 			},
 		}
+	})
+
+	AfterEach(func(){
+		mockController.Finish()
 	})
 
 	Context("DepsIsoPath exists", func() {
@@ -74,24 +84,3 @@ var _ = Describe("LinuxKit process", func() {
 		})
 	})
 })
-
-// func downloadTestAsset(targetDir string, resourceUrl string) error {
-// 	out, err := os.Create(filepath.Join(targetDir, "test-deps.dev"))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer out.Close()
-
-// 	resp, err := http.Get(resourceUrl)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer resp.Body.Close()
-
-// 	_, err = io.Copy(out, resp.Body)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }

@@ -59,15 +59,15 @@ type CFDevD interface {
 //go:generate mockgen -package mocks -destination mocks/vpnkit.go code.cloudfoundry.org/cfdev/cmd/start VpnKit
 type VpnKit interface {
 	Start() error
-	Stop()
+	Stop() error
 	Watch(chan string)
 }
 
 //go:generate mockgen -package mocks -destination mocks/linuxkit.go code.cloudfoundry.org/cfdev/cmd/start LinuxKit
 type LinuxKit interface {
+	CreateVM(vm process.VM) error
 	Start(int, int, string) error
-	Stop()
-	Watch(chan string)
+	Stop() error
 	IsRunning() (bool, error)
 }
 

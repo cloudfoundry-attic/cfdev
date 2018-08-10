@@ -5,10 +5,9 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	process "code.cloudfoundry.org/cfdev/process"
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
 // MockHyperV is a mock of HyperV interface

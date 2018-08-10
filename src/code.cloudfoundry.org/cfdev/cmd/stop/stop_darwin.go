@@ -3,10 +3,7 @@ package stop
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
-	"path/filepath"
-	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
@@ -14,16 +11,20 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 
 	var reterr error
 
-	if err := s.Launchd.RemoveDaemon(daemonSpec(process.LinuxKitLabel)); err != nil {
+	if err := s.LinuxKit.Stop(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop linuxkit")
 	}
 
-	if err := s.Launchd.RemoveDaemon(daemonSpec(process.VpnKitLabel)); err != nil {
+	if err := s.LinuxKit.Destroy(); err != nil {
+		reterr = errors.SafeWrap(err, "failed to destroy linuxkit")
+	}
+
+	if err := s.VpnKit.Stop(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}
 
-	if err := s.ProcManager.SafeKill(filepath.Join(s.Config.StateDir, "hyperkit.pid"), "hyperkit"); err != nil {
-		reterr = errors.SafeWrap(err, "failed to kill hyperkit")
+	if err := s.VpnKit.Destroy(); err != nil {
+		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
 	}
 
 	if _, err := s.CfdevdClient.Uninstall(); err != nil {
@@ -38,10 +39,4 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		return errors.SafeWrap(reterr, "cf dev stop")
 	}
 	return nil
-}
-
-func daemonSpec(label string) daemon.DaemonSpec {
-	return daemon.DaemonSpec{
-		Label: label,
-	}
 }

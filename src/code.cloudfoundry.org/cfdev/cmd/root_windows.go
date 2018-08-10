@@ -33,14 +33,6 @@ type UI interface {
 	Writer() io.Writer
 }
 
-type Launchd interface {
-	AddDaemon(daemon.DaemonSpec) error
-	RemoveDaemon(daemon.DaemonSpec) error
-	Start(daemon.DaemonSpec) error
-	Stop(daemon.DaemonSpec) error
-	IsRunning(daemon.DaemonSpec) (bool, error)
-}
-
 type cmdBuilder interface {
 	Cmd() *cobra.Command
 }
@@ -61,6 +53,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
 	lctl := daemon.NewWinSW(config.CFDevHome)
+	vpnkit := &process.VpnKit{Config: config, Launchd: lctl}
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)
@@ -115,18 +108,17 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			HostNet:         &network.HostNet{},
 			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			HyperV:          &process.HyperV{Config: config},
-			VpnKit:          &process.VpnKit{Config: config, Launchd: lctl},
+			VpnKit:          vpnkit,
 			LinuxKit:        &process.LinuxKit{Config: config, Launchd: lctl},
 			GardenClient:    garden.New(),
 			IsoReader:       iso.New(),
 		},
 		&b6.Stop{
-			Config:      config,
-			Analytics:   analyticsClient,
-			Launchd:     lctl,
-			HyperV:      &process.HyperV{Config: config},
-			ProcManager: &process.Manager{},
-			HostNet:     &network.HostNet{},
+			Config:    config,
+			Analytics: analyticsClient,
+			HyperV:    &process.HyperV{Config: config},
+			VpnKit:    vpnkit,
+			HostNet:   &network.HostNet{},
 		},
 		&b7.Telemetry{
 			UI:              ui,

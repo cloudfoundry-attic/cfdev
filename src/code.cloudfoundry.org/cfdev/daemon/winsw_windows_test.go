@@ -18,7 +18,6 @@ var (
 	winsw    *daemon.WinSW
 	label    string
 	tmpDir   string
-	assetDir string
 )
 
 var _ = Describe("Winsw", func() {
@@ -42,11 +41,8 @@ var _ = Describe("Winsw", func() {
 	})
 
 	AfterEach(func() {
-		spec := daemon.DaemonSpec{
-			Label: label,
-		}
-		winsw.Stop(spec)
-		winsw.RemoveDaemon(spec)
+		winsw.Stop(label)
+		winsw.RemoveDaemon(label)
 
 		err := os.RemoveAll(tmpDir)
 		Expect(err).To(BeNil())
@@ -78,7 +74,7 @@ var _ = Describe("Winsw", func() {
 			output := getPowerShellOutput("get-service")
 			Expect(output).To(ContainSubstring(label))
 
-			Expect(winsw.RemoveDaemon(spec)).To(Succeed())
+			Expect(winsw.RemoveDaemon(label)).To(Succeed())
 			output = getPowerShellOutput(fmt.Sprintf(`Get-Service | Where-Object { $_.Name -eq "%s" }`, label))
 			Expect(output).To(BeEmpty())
 		})
@@ -110,16 +106,16 @@ var _ = Describe("Winsw", func() {
 			By("starting the service")
 			Expect(winsw.Start(spec)).To(Succeed())
 			Eventually(func() bool {
-				isRunning, _ := winsw.IsRunning(spec)
+				isRunning, _ := winsw.IsRunning(label)
 				return isRunning
 			}, 20, 1).Should(BeTrue())
 
 			Eventually(testFilePath).Should(BeAnExistingFile())
 
 			By("stopping the service")
-			Expect(winsw.Stop(spec)).To(Succeed())
+			Expect(winsw.Stop(label)).To(Succeed())
 			Eventually(func() bool {
-				isRunning, _ := winsw.IsRunning(spec)
+				isRunning, _ := winsw.IsRunning(label)
 				return isRunning
 			}, 20, 1).Should(BeFalse())
 		})

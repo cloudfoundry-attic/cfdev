@@ -113,7 +113,15 @@ func (v *VpnKit) Start() error {
 	return nil
 }
 
-func (v *VpnKit) Stop() {
+func (v *VpnKit) Destroy() error {
+	v.Launchd.RemoveDaemon(VpnKitLabel)
+	registryDeleteCmd := `Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" | ` +
+		`Where-Object { $_.GetValue("ElementName") -match "CF Dev VPNKit" } | ` +
+		`Foreach-Object { Remove-Item (Join-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" $_.PSChildName) }`
+	if err := exec.Command("powershell.exe", "-Command", registryDeleteCmd).Run(); err != nil {
+		return fmt.Errorf("failed to remove service registries: %s", err)
+	}
+	return nil
 }
 
 func (v *VpnKit) Watch(exit chan string) {
@@ -158,7 +166,6 @@ func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
 	return daemon.DaemonSpec{
 		Label:     VpnKitLabel,
 		Program:   path.Join(v.Config.CacheDir, "vpnkit.exe"),
-		CfDevHome: v.Config.CFDevHome,
 		ProgramArguments: []string{
 			fmt.Sprintf("--ethernet hyperv-connect://%s/7207f451-2ca3-4b88-8d01-820a21d78293", vmGuid),
 			fmt.Sprintf("--port hyperv-connect://%s/cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa", vmGuid),

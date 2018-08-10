@@ -65,12 +65,14 @@ func (w *WinSW) AddDaemon(spec DaemonSpec) error {
 		return err
 	}
 
+
+
 	return nil
 }
 
-func (w *WinSW) RemoveDaemon(spec DaemonSpec) error {
-	if isInstalled(spec) {
-		_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
+func (w *WinSW) RemoveDaemon(label string) error {
+	if isInstalled(label) {
+		_, executablePath := getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "uninstall")
 		err := RunCommand(cmd)
@@ -98,10 +100,10 @@ func (w *WinSW) Start(spec DaemonSpec) error {
 	return nil
 }
 
-func (w *WinSW) Stop(spec DaemonSpec) error {
-	if running, _ := w.IsRunning(spec); running {
+func (w *WinSW) Stop(label string) error {
+	if running, _ := w.IsRunning(label); running {
 
-		_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
+		_, executablePath := getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
 		err := RunCommand(cmd)
@@ -115,8 +117,8 @@ func (w *WinSW) Stop(spec DaemonSpec) error {
 	return nil
 }
 
-func (w *WinSW) IsRunning(spec DaemonSpec) (bool, error) {
-	_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
+func (w *WinSW) IsRunning(label string) (bool, error) {
+	_, executablePath := getServicePaths(label, w.ServicesDir)
 	cmd := exec.Command(executablePath, "status")
 
 	output, err := cmd.Output()
@@ -167,11 +169,10 @@ func getServicePaths(label string, servicesDir string) (string, string) {
 	return serviceDst, executablePath
 }
 
-func isInstalled(spec DaemonSpec) bool{
-	command := exec.Command("powershell.exe", "-C", fmt.Sprintf(`Get-Service | Where-Object {$_.Name -eq "%s"}`, spec.Label))
+func isInstalled(label string) bool{
+	command := exec.Command("powershell.exe", "-C", fmt.Sprintf(`Get-Service | Where-Object {$_.Name -eq "%s"}`, label))
 	temp, _ := command.Output()
 	output := strings.TrimSpace(string(temp))
 
 	return output != ""
-
 }

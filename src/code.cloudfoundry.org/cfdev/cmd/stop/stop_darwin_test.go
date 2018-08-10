@@ -9,23 +9,22 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd/stop"
 	"code.cloudfoundry.org/cfdev/cmd/stop/mocks"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/process"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/cfdev/daemon"
+	"errors"
 )
 
 var _ = Describe("Stop", func() {
 	var (
 		cfg              config.Config
 		stopCmd          *cobra.Command
-		mockLaunchd      *mocks.MockLaunchd
-		mockProcManager  *mocks.MockProcManager
 		mockCfdevdClient *mocks.MockCfdevdClient
 		mockAnalytics    *mocks.MockAnalytics
 		mockHostNet      *mocks.MockHostNet
+		mockLinuxkit     *mocks.MockLinuxKit
+		mockVpnkit       *mocks.MockVpnKit
 		mockController   *gomock.Controller
 		stateDir         string
 		err              error
@@ -42,17 +41,17 @@ var _ = Describe("Stop", func() {
 		}
 
 		mockController = gomock.NewController(GinkgoT())
-		mockLaunchd = mocks.NewMockLaunchd(mockController)
-		mockProcManager = mocks.NewMockProcManager(mockController)
 		mockCfdevdClient = mocks.NewMockCfdevdClient(mockController)
 		mockAnalytics = mocks.NewMockAnalytics(mockController)
 		mockHostNet = mocks.NewMockHostNet(mockController)
+		mockLinuxkit = mocks.NewMockLinuxKit(mockController)
+		mockVpnkit = mocks.NewMockVpnKit(mockController)
 
 		subject := &stop.Stop{
+			LinuxKit:     mockLinuxkit,
+			VpnKit:       mockVpnkit,
 			Config:       cfg,
 			Analytics:    mockAnalytics,
-			Launchd:      mockLaunchd,
-			ProcManager:  mockProcManager,
 			CfdevdClient: mockCfdevdClient,
 			HostNet:      mockHostNet,
 		}
@@ -68,13 +67,11 @@ var _ = Describe("Stop", func() {
 
 	It("uninstalls linuxkit, vpnkit, and cfdevd, tears down aliases, and sends analytics event", func() {
 		mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-		mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-			Label: process.LinuxKitLabel,
-		})
-		mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-			Label: process.VpnKitLabel,
-		})
-		mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
+		mockLinuxkit.EXPECT().Stop()
+		mockLinuxkit.EXPECT().Destroy()
+		mockVpnkit.EXPECT().Stop()
+		mockVpnkit.EXPECT().Destroy()
+
 		mockCfdevdClient.EXPECT().Uninstall()
 		mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
@@ -84,13 +81,10 @@ var _ = Describe("Stop", func() {
 	Context("stopping linuxkit fails", func() {
 		It("stops the others and returns linuxkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.VpnKitLabel,
-			})
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.LinuxKitLabel,
-			}).Return(fmt.Errorf("test"))
-			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
+			mockLinuxkit.EXPECT().Stop().Return(errors.New("test"))
+			mockLinuxkit.EXPECT().Destroy()
+			mockVpnkit.EXPECT().Stop()
+			mockVpnkit.EXPECT().Destroy()
 			mockCfdevdClient.EXPECT().Uninstall()
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
@@ -98,16 +92,28 @@ var _ = Describe("Stop", func() {
 		})
 	})
 
+	Context("destroying linuxkit fails", func() {
+		It("stops the others and returns linuxkit error", func() {
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockLinuxkit.EXPECT().Stop()
+			mockLinuxkit.EXPECT().Destroy().Return(errors.New("test"))
+			mockVpnkit.EXPECT().Stop()
+			mockVpnkit.EXPECT().Destroy()
+			mockCfdevdClient.EXPECT().Uninstall()
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
+
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy linuxkit: test"))
+		})
+	})
+
 	Context("stopping vpnkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.LinuxKitLabel,
-			})
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.VpnKitLabel,
-			}).Return(fmt.Errorf("test"))
-			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
+			mockLinuxkit.EXPECT().Stop()
+			mockLinuxkit.EXPECT().Destroy()
+			mockVpnkit.EXPECT().Stop().Return(errors.New("test"))
+			mockVpnkit.EXPECT().Destroy()
+
 			mockCfdevdClient.EXPECT().Uninstall()
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
@@ -115,33 +121,27 @@ var _ = Describe("Stop", func() {
 		})
 	})
 
-	Context("stopping hyperkit fails", func() {
+	Context("destroying vpnkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.LinuxKitLabel,
-			})
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.VpnKitLabel,
-			})
-			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit").Return(fmt.Errorf("test"))
+			mockLinuxkit.EXPECT().Stop()
+			mockLinuxkit.EXPECT().Destroy()
+			mockVpnkit.EXPECT().Stop()
+			mockVpnkit.EXPECT().Destroy().Return(errors.New("test"))
 			mockCfdevdClient.EXPECT().Uninstall()
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
-			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to kill hyperkit: test"))
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy vpnkit: test"))
 		})
 	})
 
 	Context("stopping cfdevd fails", func() {
 		It("stops the others and returns cfdevd error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.LinuxKitLabel,
-			})
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.VpnKitLabel,
-			})
-			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
+			mockLinuxkit.EXPECT().Stop()
+			mockLinuxkit.EXPECT().Destroy()
+			mockVpnkit.EXPECT().Stop()
+			mockVpnkit.EXPECT().Destroy()
 			mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
@@ -152,13 +152,10 @@ var _ = Describe("Stop", func() {
 	Context("removing aliases fails", func() {
 		It("stops the others and returns alias error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.LinuxKitLabel,
-			})
-			mockLaunchd.EXPECT().RemoveDaemon(daemon.DaemonSpec{
-				Label: process.VpnKitLabel,
-			})
-			mockProcManager.EXPECT().SafeKill(gomock.Any(), "hyperkit")
+			mockLinuxkit.EXPECT().Stop()
+			mockLinuxkit.EXPECT().Destroy()
+			mockVpnkit.EXPECT().Stop()
+			mockVpnkit.EXPECT().Destroy()
 			mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip").Return(fmt.Errorf("test"))
 

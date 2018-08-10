@@ -31,14 +31,14 @@ func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 	return l.load(plistPath, spec)
 }
 
-func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
-	plistPath := filepath.Join(l.PListDir, spec.Label+".plist")
-	loaded, err := l.isLoaded(spec.Label)
+func (l *Launchd) RemoveDaemon(label string) error {
+	plistPath := filepath.Join(l.PListDir, label+".plist")
+	loaded, err := l.isLoaded(label)
 	if err != nil {
 		return err
 	}
 	if loaded {
-		if err := l.remove(spec.Label); err != nil {
+		if err := l.remove(label); err != nil {
 			return err
 		}
 	}
@@ -59,11 +59,11 @@ func (l *Launchd) Start(spec DaemonSpec) error {
 	return cmd.Run()
 }
 
-func (l *Launchd) Stop(spec DaemonSpec) error {
-	if running, _ := l.IsRunning(spec); !running {
+func (l *Launchd) Stop(label string) error {
+	if running, _ := l.IsRunning(label); !running {
 		return nil
 	}
-	cmd := exec.Command("launchctl", "stop", spec.Label)
+	cmd := exec.Command("launchctl", "stop", label)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -74,14 +74,14 @@ func (l *Launchd) list() (string, error) {
 	return string(out), err
 }
 
-func (l *Launchd) IsRunning(spec DaemonSpec) (bool, error) {
+func (l *Launchd) IsRunning(label string) (bool, error) {
 	out, err := l.list()
 	if err != nil {
 		return false, err
 	}
 	for _, line := range strings.Split(out, "\n") {
 		cols := strings.Fields(line)
-		if len(cols) >= 3 && cols[2] == spec.Label {
+		if len(cols) >= 3 && cols[2] == label {
 			return cols[0] != "-", nil
 		}
 	}

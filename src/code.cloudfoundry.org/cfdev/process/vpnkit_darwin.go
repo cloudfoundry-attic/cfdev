@@ -49,14 +49,15 @@ func (v *VpnKit) Start() error {
 	}
 }
 
-func (v *VpnKit) Stop() {
-	v.Launchd.Stop(v.daemonSpec())
+func (v *VpnKit) Destroy() error {
+	return v.Launchd.RemoveDaemon(VpnKitLabel)
 }
+
 
 func (v *VpnKit) Watch(exit chan string) {
 	go func() {
 		for {
-			running, err := v.Launchd.IsRunning(v.daemonSpec())
+			running, err := v.Launchd.IsRunning(VpnKitLabel)
 			if !running && err == nil {
 				exit <- "vpnkit"
 				return

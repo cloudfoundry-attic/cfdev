@@ -25,13 +25,17 @@ type LinuxKit struct {
 
 type Launchd interface {
 	AddDaemon(daemon.DaemonSpec) error
-	RemoveDaemon(spec daemon.DaemonSpec) error
+	RemoveDaemon(string) error
 	Start(daemon.DaemonSpec) error
-	Stop(daemon.DaemonSpec) error
-	IsRunning(daemon.DaemonSpec) (bool, error)
+	Stop(string) error
+	IsRunning(string) (bool, error)
 }
 
 const LinuxKitLabel = "org.cloudfoundry.cfdev.linuxkit"
+
+func (l *LinuxKit) CreateVM(VM) error {
+	return nil
+}
 
 func (l *LinuxKit) Start(cpus int, mem int, depsIsoPath string) error {
 	daemonSpec, err := l.DaemonSpec(cpus, mem, depsIsoPath)
@@ -44,26 +48,27 @@ func (l *LinuxKit) Start(cpus int, mem int, depsIsoPath string) error {
 	return l.Launchd.Start(daemonSpec)
 }
 
-func (l *LinuxKit) Stop() {
-	daemonSpec := daemon.DaemonSpec{
-		Label: LinuxKitLabel,
+func (l *LinuxKit) Stop() error{
+	var reterr error
+	if err := l.Launchd.Stop(LinuxKitLabel); err != nil {
+		reterr = err
 	}
-	l.Launchd.Stop(daemonSpec)
 	procManager := &Manager{}
-	procManager.SafeKill(filepath.Join(l.Config.StateDir, "hyperkit.pid"), "hyperkit")
+	if err := procManager.SafeKill(
+		filepath.Join(l.Config.StateDir, "hyperkit.pid"),
+		"hyperkit",
+	); err != nil {
+		reterr = err
+	}
+	return reterr
 }
 
 func (l *LinuxKit) Destroy() error {
-	return l.Launchd.RemoveDaemon(daemon.DaemonSpec{
-		Label: LinuxKitLabel,
-	})
+	return l.Launchd.RemoveDaemon(LinuxKitLabel)
 }
 
 func (l *LinuxKit) IsRunning() (bool, error) {
-	daemonSpec := daemon.DaemonSpec{
-		Label: LinuxKitLabel,
-	}
-	return l.Launchd.IsRunning(daemonSpec)
+	return l.Launchd.IsRunning(LinuxKitLabel)
 }
 
 func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonSpec, error) {
@@ -117,10 +122,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonS
 func (l *LinuxKit) Watch(exit chan string) {
 	go func() {
 		for {
-			daemonSpec := daemon.DaemonSpec{
-				Label: LinuxKitLabel,
-			}
-			running, err := l.Launchd.IsRunning(daemonSpec)
+			running, err := l.Launchd.IsRunning(LinuxKitLabel)
 			if !running && err == nil {
 				exit <- "linuxkit"
 				return

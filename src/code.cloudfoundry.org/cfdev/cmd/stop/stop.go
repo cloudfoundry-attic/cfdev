@@ -2,25 +2,13 @@ package stop
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
 )
 
-//go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdev/cmd/stop Launchd
-type Launchd interface {
-	Stop(spec daemon.DaemonSpec) error
-	RemoveDaemon(spec daemon.DaemonSpec) error
-}
-
 //go:generate mockgen -package mocks -destination mocks/cfdevd_client.go code.cloudfoundry.org/cfdev/cmd/stop CfdevdClient
 type CfdevdClient interface {
 	Uninstall() (string, error)
-}
-
-//go:generate mockgen -package mocks -destination mocks/process_manager.go code.cloudfoundry.org/cfdev/cmd/stop ProcManager
-type ProcManager interface {
-	SafeKill(string, string) error
 }
 
 type UI interface {
@@ -37,11 +25,23 @@ type HostNet interface {
 	RemoveLoopbackAliases(...string) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/linuxkit.go code.cloudfoundry.org/cfdev/cmd/stop LinuxKit
+type LinuxKit interface {
+	Stop() error
+	Destroy() error
+}
+
+//go:generate mockgen -package mocks -destination mocks/vpnkit.go code.cloudfoundry.org/cfdev/cmd/stop VpnKit
+type VpnKit interface {
+	Stop() error
+	Destroy() error
+}
+
 type Stop struct {
+	LinuxKit     LinuxKit
+	VpnKit       VpnKit
 	Config       config.Config
-	Launchd      Launchd
 	HyperV       *process.HyperV
-	ProcManager  ProcManager
 	CfdevdClient CfdevdClient
 	Analytics    Analytics
 	HostNet      HostNet

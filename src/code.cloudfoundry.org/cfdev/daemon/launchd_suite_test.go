@@ -10,9 +10,9 @@ import (
 	"testing"
 )
 
-func TestLaunchd(t *testing.T) {
+func TestDaemon(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Launchd Suite")
+	RunSpecs(t, "Daemon Suite")
 }
 
 var _ = BeforeSuite(func() {

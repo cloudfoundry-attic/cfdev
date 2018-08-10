@@ -140,7 +140,6 @@ var _ = Describe("Start", func() {
 					mockVpnKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockLinuxKit.EXPECT().Start(7, 8765, filepath.Join(cacheDir, "cf-deps.iso")),
-					mockLinuxKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
 					mockGardenClient.EXPECT().Ping(),
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
@@ -197,7 +196,6 @@ var _ = Describe("Start", func() {
 						mockVpnKit.EXPECT().Watch(localExitChan),
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockLinuxKit.EXPECT().Start(7, 4192, filepath.Join(cacheDir, "cf-deps.iso")),
-						mockLinuxKit.EXPECT().Watch(localExitChan),
 						mockUI.EXPECT().Say("Waiting for Garden..."),
 						mockGardenClient.EXPECT().Ping(),
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
@@ -254,7 +252,6 @@ var _ = Describe("Start", func() {
 					mockVpnKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockLinuxKit.EXPECT().Start(7, 6666, filepath.Join(cacheDir, "cf-deps.iso")),
-					mockLinuxKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
 					mockGardenClient.EXPECT().Ping(),
 				)
@@ -336,7 +333,6 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Starting the VM..."),
 
 					mockLinuxKit.EXPECT().Start(7, 6666, customIso),
-					mockLinuxKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
 					mockGardenClient.EXPECT().Ping(),
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),

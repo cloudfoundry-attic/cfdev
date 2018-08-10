@@ -68,6 +68,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		RetryWait:             time.Second,
 		Writer:                writer,
 	}
+	linuxkit := &process.LinuxKit{Config: config, Launchd: lctl}
+	vpnkit := &process.VpnKit{Config: config, Launchd: lctl}
 
 	dev := &cobra.Command{
 		Use:           "dev",
@@ -108,18 +110,18 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			HostNet:         &network.HostNet{},
 			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			HyperV:          &process.HyperV{Config: config},
-			VpnKit:          &process.VpnKit{Config: config, Launchd: lctl},
-			LinuxKit:        &process.LinuxKit{Config: config, Launchd: lctl},
+			VpnKit:          vpnkit,
+			LinuxKit:        linuxkit,
 			GardenClient:    garden.New(),
 			IsoReader:       iso.New(),
 		},
 		&b6.Stop{
 			Config:       config,
 			Analytics:    analyticsClient,
-			Launchd:      lctl,
 			HyperV:       &process.HyperV{Config: config},
-			ProcManager:  &process.Manager{},
 			HostNet:      &network.HostNet{},
+			LinuxKit:     linuxkit,
+			VpnKit:       vpnkit,
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
 		&b7.Telemetry{

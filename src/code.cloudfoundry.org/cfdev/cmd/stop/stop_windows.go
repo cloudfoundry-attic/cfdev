@@ -3,10 +3,7 @@ package stop
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/process"
 	"github.com/spf13/cobra"
-	"os/exec"
-	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
@@ -18,35 +15,20 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to stop the VM")
 	}
 
-
-	if err := s.Launchd.Stop(daemonSpec(process.VpnKitLabel, s.Config.CFDevHome)); err != nil {
+	if err := s.VpnKit.Stop(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}
 
-	if err := s.Launchd.RemoveDaemon(daemonSpec(process.VpnKitLabel, s.Config.CFDevHome)); err != nil {
-		reterr = errors.SafeWrap(err, "failed to uninstall vpnkit")
+	if err := s.VpnKit.Destroy(); err != nil {
+		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
 	}
 
 	if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
 		reterr = errors.SafeWrap(err, "failed to remove network switch")
 	}
 
-	registryDeleteCmd := `Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" | ` +
-		`Where-Object { $_.GetValue("ElementName") -match "CF Dev VPNKit" } | ` +
-		`Foreach-Object { Remove-Item (Join-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" $_.PSChildName) }`
-
-	if err := exec.Command("powershell.exe", "-Command", registryDeleteCmd).Run(); err != nil {
-		reterr = errors.SafeWrap(err, "failed to remove service registries")
-	}
-
 	if reterr != nil {
 		return errors.SafeWrap(reterr, "cf dev stop")
 	}
 	return nil
-}
-
-func daemonSpec(label, cfdevHome string) daemon.DaemonSpec {
-	return daemon.DaemonSpec{
-		Label:     label,
-	}
 }
