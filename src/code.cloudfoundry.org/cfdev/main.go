@@ -15,12 +15,11 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/launchd"
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/spf13/cobra"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type Command interface {
@@ -68,14 +67,12 @@ func main() {
 	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, exitChan, ui)
 	defer analyticsClient.Close()
 
-	lctl := launchd.New(conf.CFDevHome)
-
 	v := conf.CliVersion
 	cfdev := &Plugin{
 		UI:        ui,
 		Config:    conf,
 		Analytics: analyticsClient,
-		Root:      cmd.NewRoot(exitChan, ui, conf, lctl, analyticsClient, analyticsToggle),
+		Root:      cmd.NewRoot(exitChan, ui, conf, analyticsClient, analyticsToggle),
 		Version:   plugin.VersionType{Major: v.Major, Minor: v.Minor, Build: v.Build},
 	}
 

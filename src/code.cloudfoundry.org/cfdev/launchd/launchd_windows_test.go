@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	lnchd    launchd.Launchd
+	winsw    *launchd.WinSW
 	label    string
 	tmpDir   string
 	assetDir string
@@ -37,6 +37,7 @@ var _ = Describe("launchd windows", func() {
 		err = downloadTestAsset(assetPath, "https://github.com/kohsuke/winsw/releases/download/winsw-v2.1.2/WinSW.NET4.exe")
 		Expect(err).To(BeNil())
 		Expect(assetPath).To(BeAnExistingFile())
+		winsw = launchd.NewWinSW(tmpDir)
 	})
 
 	AfterEach(func() {
@@ -46,7 +47,6 @@ var _ = Describe("launchd windows", func() {
 
 	Describe("launchd windows", func() {
 		BeforeEach(func() {
-			lnchd = launchd.Launchd{}
 			label = "some-daemon"
 		})
 
@@ -55,8 +55,8 @@ var _ = Describe("launchd windows", func() {
 				Label:     label,
 				CfDevHome: tmpDir,
 			}
-			lnchd.Stop(spec)
-			lnchd.RemoveDaemon(spec)
+			winsw.Stop(spec)
+			winsw.RemoveDaemon(spec)
 		})
 
 		Describe("AddDaemon", func() {
@@ -68,7 +68,7 @@ var _ = Describe("launchd windows", func() {
 					ProgramArguments: []string{"echo 'hello'"},
 				}
 
-				Expect(lnchd.AddDaemon(spec)).To(Succeed())
+				Expect(winsw.AddDaemon(spec)).To(Succeed())
 				output := getPowerShellOutput(fmt.Sprintf(`Get-Service | Where-Object { $_.Name -eq "%s" }`, label))
 
 				Expect(output).NotTo(BeEmpty())
@@ -83,11 +83,11 @@ var _ = Describe("launchd windows", func() {
 					Program:   "powershell.exe",
 				}
 
-				Expect(lnchd.AddDaemon(spec)).To(Succeed())
+				Expect(winsw.AddDaemon(spec)).To(Succeed())
 				output := getPowerShellOutput("get-service")
 				Expect(output).To(ContainSubstring(label))
 
-				Expect(lnchd.RemoveDaemon(spec)).To(Succeed())
+				Expect(winsw.RemoveDaemon(spec)).To(Succeed())
 				output = getPowerShellOutput(fmt.Sprintf(`Get-Service | Where-Object { $_.Name -eq "%s" }`, label))
 				Expect(output).To(BeEmpty())
 			})
@@ -115,21 +115,21 @@ var _ = Describe("launchd windows", func() {
 						"Start-Sleep -Seconds 20",
 					},
 				}
-				Expect(lnchd.AddDaemon(spec)).To(Succeed())
+				Expect(winsw.AddDaemon(spec)).To(Succeed())
 
 				By("starting the service")
-				Expect(lnchd.Start(spec)).To(Succeed())
+				Expect(winsw.Start(spec)).To(Succeed())
 				Eventually(func() bool {
-					isRunning, _ := lnchd.IsRunning(spec)
+					isRunning, _ := winsw.IsRunning(spec)
 					return isRunning
 				}, 20, 1).Should(BeTrue())
 
 				Eventually(testFilePath).Should(BeAnExistingFile())
 
 				By("stopping the service")
-				Expect(lnchd.Stop(spec)).To(Succeed())
+				Expect(winsw.Stop(spec)).To(Succeed())
 				Eventually(func() bool {
-					isRunning, _ := lnchd.IsRunning(spec)
+					isRunning, _ := winsw.IsRunning(spec)
 					return isRunning
 				}, 20, 1).Should(BeFalse())
 			})

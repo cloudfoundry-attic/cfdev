@@ -11,9 +11,16 @@ import (
 	"strings"
 )
 
-type program struct {
-	executable string
-	args       []string
+type WinSW struct{
+	BinaryPath string
+	ServicesDir string
+}
+
+func NewWinSW(cfDevHome string) *WinSW {
+	return &WinSW{
+		BinaryPath: filepath.Join(cfDevHome, "cache", "winsw.exe"),
+		ServicesDir: filepath.Join(cfDevHome, "winservice"),
+	}
 }
 
 type Config struct {
@@ -35,10 +42,14 @@ func RunCommand(command *exec.Cmd) error {
 	return nil
 }
 
-func (l *Launchd) AddDaemon(spec DaemonSpec) error {
+func (w *WinSW) AddDaemon(spec DaemonSpec) error {
+	serviceDst, executablePath := getServicePaths(spec.Label, w.ServicesDir)
+	err := os.MkdirAll(serviceDst, 0666)
+	if err != nil {
+		return err
+	}
 
-
-	serviceDst, executablePath, err := copyBinary(spec)
+	err = copyBinary(w.BinaryPath, executablePath)
 	if err != nil {
 		return err
 	}
@@ -54,14 +65,12 @@ func (l *Launchd) AddDaemon(spec DaemonSpec) error {
 		return err
 	}
 
-
-
 	return nil
 }
 
-func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
+func (w *WinSW) RemoveDaemon(spec DaemonSpec) error {
 	if isInstalled(spec) {
-		_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
+		_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "uninstall")
 		err := RunCommand(cmd)
@@ -75,8 +84,8 @@ func (l *Launchd) RemoveDaemon(spec DaemonSpec) error {
 	return nil
 }
 
-func (l *Launchd) Start(spec DaemonSpec) error {
-	_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
+func (w *WinSW) Start(spec DaemonSpec) error {
+	_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
 
 
 	cmd := exec.Command(executablePath, "start")
@@ -89,10 +98,10 @@ func (l *Launchd) Start(spec DaemonSpec) error {
 	return nil
 }
 
-func (l *Launchd) Stop(spec DaemonSpec) error {
-	if running, _ := l.IsRunning(spec); running {
+func (w *WinSW) Stop(spec DaemonSpec) error {
+	if running, _ := w.IsRunning(spec); running {
 
-		_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
+		_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
 		err := RunCommand(cmd)
@@ -106,8 +115,8 @@ func (l *Launchd) Stop(spec DaemonSpec) error {
 	return nil
 }
 
-func (l *Launchd) IsRunning(spec DaemonSpec) (bool, error) {
-	_, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
+func (w *WinSW) IsRunning(spec DaemonSpec) (bool, error) {
+	_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
 	cmd := exec.Command(executablePath, "status")
 
 	output, err := cmd.Output()
@@ -119,26 +128,13 @@ func (l *Launchd) IsRunning(spec DaemonSpec) (bool, error) {
 	return isRunning, nil
 }
 
-func copyBinary(spec DaemonSpec) (string, string, error) {
-	serviceDst, executablePath := getServicePaths(spec.Label, spec.CfDevHome)
-
-	err := os.MkdirAll(serviceDst, 0666)
+func copyBinary(src, dst string) error {
+	winswData, err := ioutil.ReadFile(src)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
-	winswPath := filepath.Join(spec.CfDevHome, "cache", "winsw.exe")
-	winswData, err := ioutil.ReadFile(winswPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	err = ioutil.WriteFile(executablePath, winswData, 0666)
-	if err != nil {
-		return "", "", err
-	}
-
-	return serviceDst, executablePath, nil
+	return ioutil.WriteFile(dst, winswData, 0666)
 }
 
 func createXml(serviceDst string, spec DaemonSpec) error {
@@ -164,9 +160,8 @@ func createXml(serviceDst string, spec DaemonSpec) error {
 	return nil
 }
 
-func getServicePaths(label string, cfDevHome string) (string, string) {
-
-	serviceDst := filepath.Join(cfDevHome, "winservice", label)
+func getServicePaths(label string, servicesDir string) (string, string) {
+	serviceDst := filepath.Join(servicesDir, label)
 	executablePath := filepath.Join(serviceDst, label+".exe")
 
 	return serviceDst, executablePath
