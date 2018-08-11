@@ -9,5 +9,5 @@ import (
 
 func TestNetwork(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Cmd Stop Suite")
+	RunSpecs(t, "Network Suite")
 }
