@@ -52,8 +52,8 @@ func (l *Launchd) RemoveDaemon(label string) error {
 	return err
 }
 
-func (l *Launchd) Start(spec DaemonSpec) error {
-	cmd := exec.Command("launchctl", "start", spec.Label)
+func (l *Launchd) Start(label string) error {
+	cmd := exec.Command("launchctl", "start", label)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

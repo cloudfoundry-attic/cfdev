@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/errors"
 )
 
 type VpnKit struct {
@@ -106,7 +106,7 @@ func (v *VpnKit) Start() error {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
 
-	if err := v.Launchd.Start(v.daemonSpec(vmGuid)); err != nil {
+	if err := v.Launchd.Start(VpnKitLabel); err != nil {
 		return errors.SafeWrap(err, "start vpnkit")
 	}
 
@@ -164,8 +164,8 @@ func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
 	dhcpPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
 
 	return daemon.DaemonSpec{
-		Label:     VpnKitLabel,
-		Program:   path.Join(v.Config.CacheDir, "vpnkit.exe"),
+		Label:   VpnKitLabel,
+		Program: path.Join(v.Config.CacheDir, "vpnkit.exe"),
 		ProgramArguments: []string{
 			fmt.Sprintf("--ethernet hyperv-connect://%s/7207f451-2ca3-4b88-8d01-820a21d78293", vmGuid),
 			fmt.Sprintf("--port hyperv-connect://%s/cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa", vmGuid),

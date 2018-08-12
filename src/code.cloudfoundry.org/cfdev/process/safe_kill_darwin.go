@@ -16,7 +16,7 @@ import (
 	"unsafe"
 )
 
-func (m *Manager) SafeKill(pidfile, name string) error {
+func SafeKill(pidfile, name string) error {
 	data, err := ioutil.ReadFile(pidfile)
 	if os.IsNotExist(err) {
 		return nil

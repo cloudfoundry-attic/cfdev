@@ -1,7 +1,10 @@
 package start_test
 
 import (
+	"runtime"
+
 	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -29,7 +32,7 @@ var _ = Describe("Start", func() {
 		mockCache           *mocks.MockCache
 		mockCFDevD          *mocks.MockCFDevD
 		mockVpnKit          *mocks.MockVpnKit
-		mockLinuxKit        *mocks.MockLinuxKit
+		mockHypervisor      *mocks.MockHypervisor
 		mockGardenClient    *mocks.MockGardenClient
 		mockIsoReader       *mocks.MockIsoReader
 
@@ -52,7 +55,7 @@ var _ = Describe("Start", func() {
 		mockCache = mocks.NewMockCache(mockController)
 		mockCFDevD = mocks.NewMockCFDevD(mockController)
 		mockVpnKit = mocks.NewMockVpnKit(mockController)
-		mockLinuxKit = mocks.NewMockLinuxKit(mockController)
+		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockGardenClient = mocks.NewMockGardenClient(mockController)
 		mockIsoReader = mocks.NewMockIsoReader(mockController)
 
@@ -85,7 +88,7 @@ var _ = Describe("Start", func() {
 			Cache:           mockCache,
 			CFDevD:          mockCFDevD,
 			VpnKit:          mockVpnKit,
-			LinuxKit:        mockLinuxKit,
+			Hypervisor:      mockHypervisor,
 			GardenClient:    mockGardenClient,
 			IsoReader:       mockIsoReader,
 		}
@@ -120,10 +123,15 @@ var _ = Describe("Start", func() {
 		Context("when no args are provided", func() {
 			// TODO test splashMessage
 			It("starts the vm with default settings", func() {
+				if runtime.GOOS == "darwin" {
+					mockUI.EXPECT().Say("Installing cfdevd network helper...")
+					mockCFDevD.EXPECT().Install()
+				}
+
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -133,13 +141,17 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
-					mockCFDevD.EXPECT().Install(),
+					mockUI.EXPECT().Say("Creating the VM..."),
+					mockHypervisor.EXPECT().CreateVM(process.VM{
+						CPUs:     7,
+						MemoryMB: 8765,
+						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+					}),
 					mockUI.EXPECT().Say("Starting VPNKit..."),
 					mockVpnKit.EXPECT().Start(),
 					mockVpnKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Starting the VM..."),
-					mockLinuxKit.EXPECT().Start(7, 8765, filepath.Join(cacheDir, "cf-deps.iso")),
+					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
 					mockGardenClient.EXPECT().Ping(),
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
@@ -176,10 +188,15 @@ var _ = Describe("Start", func() {
 				It("starts the vm with a default memory setting", func() {
 					metadata.DefaultMemory = 0
 
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-						mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
+						mockHypervisor.EXPECT().IsRunning().Return(false, nil),
 						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 						mockUI.EXPECT().Say("Downloading Resources..."),
 						mockCache.EXPECT().Sync(resource.Catalog{
@@ -189,13 +206,17 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-						mockUI.EXPECT().Say("Installing cfdevd network helper..."),
-						mockCFDevD.EXPECT().Install(),
+						mockUI.EXPECT().Say("Creating the VM..."),
+						mockHypervisor.EXPECT().CreateVM(process.VM{
+							CPUs:     7,
+							MemoryMB: 4192,
+							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						}),
 						mockUI.EXPECT().Say("Starting VPNKit..."),
 						mockVpnKit.EXPECT().Start(),
 						mockVpnKit.EXPECT().Watch(localExitChan),
 						mockUI.EXPECT().Say("Starting the VM..."),
-						mockLinuxKit.EXPECT().Start(7, 4192, filepath.Join(cacheDir, "cf-deps.iso")),
+						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for Garden..."),
 						mockGardenClient.EXPECT().Ping(),
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
@@ -232,10 +253,15 @@ var _ = Describe("Start", func() {
 
 		Context("when the --no-provision flag is provided", func() {
 			It("starts the VM and garden but does not provision", func() {
+				if runtime.GOOS == "darwin" {
+					mockUI.EXPECT().Say("Installing cfdevd network helper...")
+					mockCFDevD.EXPECT().Install()
+				}
+
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -245,13 +271,17 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
-					mockCFDevD.EXPECT().Install(),
+					mockUI.EXPECT().Say("Creating the VM..."),
+					mockHypervisor.EXPECT().CreateVM(process.VM{
+						CPUs:     7,
+						MemoryMB: 6666,
+						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+					}),
 					mockUI.EXPECT().Say("Starting VPNKit..."),
 					mockVpnKit.EXPECT().Start(),
 					mockVpnKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Starting the VM..."),
-					mockLinuxKit.EXPECT().Start(7, 6666, filepath.Join(cacheDir, "cf-deps.iso")),
+					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
 					mockGardenClient.EXPECT().Ping(),
 				)
@@ -281,13 +311,12 @@ var _ = Describe("Start", func() {
 			It("returns an error message and does not execute start command", func() {
 				customIso := filepath.Join(tmpDir, "custom.iso")
 				ioutil.WriteFile(customIso, []byte{}, 0644)
-
 				metadata.Version = "v100"
 
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
@@ -312,10 +341,15 @@ var _ = Describe("Start", func() {
 				customIso := filepath.Join(tmpDir, "custom.iso")
 				ioutil.WriteFile(customIso, []byte{}, 0644)
 
+				if runtime.GOOS == "darwin" {
+					mockUI.EXPECT().Say("Installing cfdevd network helper...")
+					mockCFDevD.EXPECT().Install()
+				}
+
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockLinuxKit.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
@@ -325,14 +359,17 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
-					mockUI.EXPECT().Say("Installing cfdevd network helper..."),
-					mockCFDevD.EXPECT().Install(),
+					mockUI.EXPECT().Say("Creating the VM..."),
+					mockHypervisor.EXPECT().CreateVM(process.VM{
+						CPUs:     7,
+						MemoryMB: 6666,
+						DepsIso:  customIso,
+					}),
 					mockUI.EXPECT().Say("Starting VPNKit..."),
 					mockVpnKit.EXPECT().Start(),
 					mockVpnKit.EXPECT().Watch(localExitChan),
 					mockUI.EXPECT().Say("Starting the VM..."),
-
-					mockLinuxKit.EXPECT().Start(7, 6666, customIso),
+					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
 					mockGardenClient.EXPECT().Ping(),
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
@@ -373,7 +410,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockLinuxKit.EXPECT().IsRunning().Return(true, nil),
+					mockHypervisor.EXPECT().IsRunning().Return(true, nil),
 					mockUI.EXPECT().Say("CF Dev is already running..."),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true}),
 				)

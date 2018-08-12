@@ -5,22 +5,24 @@ import (
 
 	"code.cloudfoundry.org/cfdev/iso"
 
+	"fmt"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/spf13/cobra"
-	"time"
-	"strings"
-	"net/url"
-	"fmt"
-	"os"
 
 	"path/filepath"
+	"text/template"
+
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/env"
-	"text/template"
 )
 
 //go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cmd/start UI
@@ -63,18 +65,12 @@ type VpnKit interface {
 	Watch(chan string)
 }
 
-//go:generate mockgen -package mocks -destination mocks/linuxkit.go code.cloudfoundry.org/cfdev/cmd/start LinuxKit
-type LinuxKit interface {
+//go:generate mockgen -package mocks -destination mocks/hypervisor.go code.cloudfoundry.org/cfdev/cmd/start Hypervisor
+type Hypervisor interface {
 	CreateVM(vm process.VM) error
-	Start(int, int, string) error
-	Stop() error
-	IsRunning() (bool, error)
-}
-
-//go:generate mockgen -package mocks -destination mocks/hyperv.go code.cloudfoundry.org/cfdev/cmd/start HyperV
-type HyperV interface {
 	Start(vmName string) error
-	CreateVM(vm process.VM) error
+	Stop(vmName string) error
+	IsRunning() (bool, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/garden.go code.cloudfoundry.org/cfdev/cmd/start GardenClient
@@ -112,8 +108,7 @@ type Start struct {
 	Cache           Cache
 	CFDevD          CFDevD
 	VpnKit          VpnKit
-	HyperV          HyperV
-	LinuxKit        LinuxKit
+	Hypervisor      Hypervisor
 	GardenClient    GardenClient
 }
 
@@ -230,6 +225,10 @@ func (s *Start) Execute(args Args) error {
 		return err
 	}
 
+	s.UI.Say("Creating the VM...")
+	if err := s.createVM(args, depsIsoPath); err != nil {
+		return errors.SafeWrap(err, "creating the vm")
+	}
 	s.UI.Say("Starting VPNKit...")
 	if err := s.VpnKit.Start(); err != nil {
 		return errors.SafeWrap(err, "starting vpnkit")
@@ -237,7 +236,7 @@ func (s *Start) Execute(args Args) error {
 	s.VpnKit.Watch(s.LocalExit)
 
 	s.UI.Say("Starting the VM...")
-	if err := s.startVM(args, depsIsoPath); err != nil {
+	if err := s.startVM(); err != nil {
 		return errors.SafeWrap(err, "starting the vm")
 	}
 
@@ -323,4 +322,28 @@ func cleanupStateDir(cfg config.Config) error {
 	}
 
 	return nil
+}
+
+func (s *Start) createVM(args Args, depsIsoPath string) error {
+	if err := s.Hypervisor.CreateVM(process.VM{
+		CPUs:     args.Cpus,
+		MemoryMB: args.Mem,
+		DepsIso:  depsIsoPath,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Start) startVM() error {
+	return s.Hypervisor.Start("cfdev")
+}
+
+func (s *Start) abort() {
+	s.Hypervisor.Stop("cfdev")
+	s.VpnKit.Stop()
+}
+
+func (s *Start) isRunning() (bool, error) {
+	return s.Hypervisor.IsRunning()
 }

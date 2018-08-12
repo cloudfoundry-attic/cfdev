@@ -22,7 +22,6 @@ var _ = Describe("safe kill test", func() {
 		processToKill *gexec.Session
 		tmpDir        string
 		pidFile       string
-		manager       *process.Manager
 	)
 
 	BeforeEach(func() {
@@ -36,7 +35,6 @@ var _ = Describe("safe kill test", func() {
 			[]byte(strconv.Itoa(processToKill.Command.Process.Pid)),
 			0644,
 		)
-		manager = &process.Manager{}
 	})
 
 	AfterEach(func() {
@@ -46,7 +44,7 @@ var _ = Describe("safe kill test", func() {
 
 	Context("process is still running", func() {
 		It("kills the process and clean up the pidfile", func() {
-			Expect(manager.SafeKill(pidFile, "sleep")).To(Succeed())
+			Expect(process.SafeKill(pidFile, "sleep")).To(Succeed())
 			Eventually(processToKill).Should(gexec.Exit())
 			Expect(pidFile).NotTo(BeAnExistingFile())
 		})
@@ -54,7 +52,7 @@ var _ = Describe("safe kill test", func() {
 
 	Context("process is still running with different filename", func() {
 		It("leaves process running and cleans up the pidfile", func() {
-			Expect(manager.SafeKill(pidFile, "other")).To(Succeed())
+			Expect(process.SafeKill(pidFile, "other")).To(Succeed())
 			Expect(pidFile).NotTo(BeAnExistingFile())
 			Expect(processToKill).ShouldNot(gexec.Exit())
 		})
@@ -67,7 +65,7 @@ var _ = Describe("safe kill test", func() {
 		})
 
 		It("cleans up the pidfile", func() {
-			Expect(manager.SafeKill(pidFile, "sleep")).To(Succeed())
+			Expect(process.SafeKill(pidFile, "sleep")).To(Succeed())
 			Eventually(processToKill).Should(gexec.Exit())
 			Expect(pidFile).NotTo(BeAnExistingFile())
 		})

@@ -13,8 +13,8 @@ import (
 	"os"
 	"path"
 
-	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/env"
 )
 
 const retries = 5
@@ -31,7 +31,7 @@ func (v *VpnKit) Start() error {
 	if err := v.Launchd.AddDaemon(v.daemonSpec()); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
-	if err := v.Launchd.Start(v.daemonSpec()); err != nil {
+	if err := v.Launchd.Start(VpnKitLabel); err != nil {
 		return errors.SafeWrap(err, "start vpnkit")
 	}
 	attempt := 0
@@ -52,7 +52,6 @@ func (v *VpnKit) Start() error {
 func (v *VpnKit) Destroy() error {
 	return v.Launchd.RemoveDaemon(VpnKitLabel)
 }
-
 
 func (v *VpnKit) Watch(exit chan string) {
 	go func() {

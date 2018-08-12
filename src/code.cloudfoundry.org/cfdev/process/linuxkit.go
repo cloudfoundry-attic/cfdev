@@ -26,35 +26,31 @@ type LinuxKit struct {
 type Launchd interface {
 	AddDaemon(daemon.DaemonSpec) error
 	RemoveDaemon(string) error
-	Start(daemon.DaemonSpec) error
+	Start(string) error
 	Stop(string) error
 	IsRunning(string) (bool, error)
 }
 
 const LinuxKitLabel = "org.cloudfoundry.cfdev.linuxkit"
 
-func (l *LinuxKit) CreateVM(VM) error {
-	return nil
-}
-
-func (l *LinuxKit) Start(cpus int, mem int, depsIsoPath string) error {
-	daemonSpec, err := l.DaemonSpec(cpus, mem, depsIsoPath)
+func (l *LinuxKit) CreateVM(vm VM) error {
+	daemonSpec, err := l.DaemonSpec(vm.CPUs, vm.MemoryMB, vm.DepsIso)
 	if err != nil {
 		return err
 	}
-	if err := l.Launchd.AddDaemon(daemonSpec); err != nil {
-		return err
-	}
-	return l.Launchd.Start(daemonSpec)
+	return l.Launchd.AddDaemon(daemonSpec)
 }
 
-func (l *LinuxKit) Stop() error{
+func (l *LinuxKit) Start(vmName string) error {
+	return l.Launchd.Start(LinuxKitLabel)
+}
+
+func (l *LinuxKit) Stop(vmName string) error {
 	var reterr error
 	if err := l.Launchd.Stop(LinuxKitLabel); err != nil {
 		reterr = err
 	}
-	procManager := &Manager{}
-	if err := procManager.SafeKill(
+	if err := SafeKill(
 		filepath.Join(l.Config.StateDir, "hyperkit.pid"),
 		"hyperkit",
 	); err != nil {
@@ -63,7 +59,7 @@ func (l *LinuxKit) Stop() error{
 	return reterr
 }
 
-func (l *LinuxKit) Destroy() error {
+func (l *LinuxKit) Destroy(vmName string) error {
 	return l.Launchd.RemoveDaemon(LinuxKitLabel)
 }
 

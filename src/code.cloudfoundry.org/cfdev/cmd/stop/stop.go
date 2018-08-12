@@ -1,8 +1,11 @@
 package stop
 
 import (
+	"runtime"
+
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/process"
+	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -25,10 +28,10 @@ type HostNet interface {
 	RemoveLoopbackAliases(...string) error
 }
 
-//go:generate mockgen -package mocks -destination mocks/linuxkit.go code.cloudfoundry.org/cfdev/cmd/stop LinuxKit
-type LinuxKit interface {
-	Stop() error
-	Destroy() error
+//go:generate mockgen -package mocks -destination mocks/linuxkit.go code.cloudfoundry.org/cfdev/cmd/stop Hypervisor
+type Hypervisor interface {
+	Stop(vmName string) error
+	Destroy(vmName string) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/vpnkit.go code.cloudfoundry.org/cfdev/cmd/stop VpnKit
@@ -38,10 +41,9 @@ type VpnKit interface {
 }
 
 type Stop struct {
-	LinuxKit     LinuxKit
+	Hypervisor   Hypervisor
 	VpnKit       VpnKit
 	Config       config.Config
-	HyperV       *process.HyperV
 	CfdevdClient CfdevdClient
 	Analytics    Analytics
 	HostNet      HostNet
@@ -52,4 +54,43 @@ func (s *Stop) Cmd() *cobra.Command {
 		Use:  "stop",
 		RunE: s.RunE,
 	}
+}
+
+const vmName = "cfdev"
+
+func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
+	s.Analytics.Event(cfanalytics.STOP)
+
+	var reterr error
+
+	if err := s.Hypervisor.Stop(vmName); err != nil {
+		reterr = errors.SafeWrap(err, "failed to stop linuxkit")
+	}
+
+	if err := s.Hypervisor.Destroy(vmName); err != nil {
+		reterr = errors.SafeWrap(err, "failed to destroy linuxkit")
+	}
+
+	if err := s.VpnKit.Stop(); err != nil {
+		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
+	}
+
+	if err := s.VpnKit.Destroy(); err != nil {
+		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
+	}
+
+	if runtime.GOOS == "darwin" {
+		if _, err := s.CfdevdClient.Uninstall(); err != nil {
+			reterr = errors.SafeWrap(err, "failed to uninstall cfdevd")
+		}
+	}
+
+	if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
+		reterr = errors.SafeWrap(err, "failed to remove IP aliases")
+	}
+
+	if reterr != nil {
+		return errors.SafeWrap(reterr, "cf dev stop")
+	}
+	return nil
 }

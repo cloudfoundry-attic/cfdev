@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
+
+	"errors"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cmd/stop"
@@ -13,7 +16,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
-	"errors"
 )
 
 var _ = Describe("Stop", func() {
@@ -23,7 +25,7 @@ var _ = Describe("Stop", func() {
 		mockCfdevdClient *mocks.MockCfdevdClient
 		mockAnalytics    *mocks.MockAnalytics
 		mockHostNet      *mocks.MockHostNet
-		mockLinuxkit     *mocks.MockLinuxKit
+		mockHypervisor   *mocks.MockHypervisor
 		mockVpnkit       *mocks.MockVpnKit
 		mockController   *gomock.Controller
 		stateDir         string
@@ -44,11 +46,11 @@ var _ = Describe("Stop", func() {
 		mockCfdevdClient = mocks.NewMockCfdevdClient(mockController)
 		mockAnalytics = mocks.NewMockAnalytics(mockController)
 		mockHostNet = mocks.NewMockHostNet(mockController)
-		mockLinuxkit = mocks.NewMockLinuxKit(mockController)
+		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockVpnkit = mocks.NewMockVpnKit(mockController)
 
 		subject := &stop.Stop{
-			LinuxKit:     mockLinuxkit,
+			Hypervisor:   mockHypervisor,
 			VpnKit:       mockVpnkit,
 			Config:       cfg,
 			Analytics:    mockAnalytics,
@@ -67,12 +69,14 @@ var _ = Describe("Stop", func() {
 
 	It("uninstalls linuxkit, vpnkit, and cfdevd, tears down aliases, and sends analytics event", func() {
 		mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-		mockLinuxkit.EXPECT().Stop()
-		mockLinuxkit.EXPECT().Destroy()
+		mockHypervisor.EXPECT().Stop("cfdev")
+		mockHypervisor.EXPECT().Destroy("cfdev")
 		mockVpnkit.EXPECT().Stop()
 		mockVpnkit.EXPECT().Destroy()
 
-		mockCfdevdClient.EXPECT().Uninstall()
+		if runtime.GOOS == "darwin" {
+			mockCfdevdClient.EXPECT().Uninstall()
+		}
 		mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 		Expect(stopCmd.Execute()).To(Succeed())
@@ -81,11 +85,13 @@ var _ = Describe("Stop", func() {
 	Context("stopping linuxkit fails", func() {
 		It("stops the others and returns linuxkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLinuxkit.EXPECT().Stop().Return(errors.New("test"))
-			mockLinuxkit.EXPECT().Destroy()
+			mockHypervisor.EXPECT().Stop("cfdev").Return(errors.New("test"))
+			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
-			mockCfdevdClient.EXPECT().Uninstall()
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall()
+			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop linuxkit: test"))
@@ -95,11 +101,13 @@ var _ = Describe("Stop", func() {
 	Context("destroying linuxkit fails", func() {
 		It("stops the others and returns linuxkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLinuxkit.EXPECT().Stop()
-			mockLinuxkit.EXPECT().Destroy().Return(errors.New("test"))
+			mockHypervisor.EXPECT().Stop("cfdev")
+			mockHypervisor.EXPECT().Destroy("cfdev").Return(errors.New("test"))
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
-			mockCfdevdClient.EXPECT().Uninstall()
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall()
+			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy linuxkit: test"))
@@ -109,12 +117,14 @@ var _ = Describe("Stop", func() {
 	Context("stopping vpnkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLinuxkit.EXPECT().Stop()
-			mockLinuxkit.EXPECT().Destroy()
+			mockHypervisor.EXPECT().Stop("cfdev")
+			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop().Return(errors.New("test"))
 			mockVpnkit.EXPECT().Destroy()
 
-			mockCfdevdClient.EXPECT().Uninstall()
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall()
+			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop vpnkit: test"))
@@ -124,11 +134,13 @@ var _ = Describe("Stop", func() {
 	Context("destroying vpnkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLinuxkit.EXPECT().Stop()
-			mockLinuxkit.EXPECT().Destroy()
+			mockHypervisor.EXPECT().Stop("cfdev")
+			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy().Return(errors.New("test"))
-			mockCfdevdClient.EXPECT().Uninstall()
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall()
+			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy vpnkit: test"))
@@ -138,11 +150,13 @@ var _ = Describe("Stop", func() {
 	Context("stopping cfdevd fails", func() {
 		It("stops the others and returns cfdevd error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLinuxkit.EXPECT().Stop()
-			mockLinuxkit.EXPECT().Destroy()
+			mockHypervisor.EXPECT().Stop("cfdev")
+			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
-			mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
+			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to uninstall cfdevd: test"))
@@ -152,8 +166,8 @@ var _ = Describe("Stop", func() {
 	Context("removing aliases fails", func() {
 		It("stops the others and returns alias error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockLinuxkit.EXPECT().Stop()
-			mockLinuxkit.EXPECT().Destroy()
+			mockHypervisor.EXPECT().Stop("cfdev")
+			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
 			mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))

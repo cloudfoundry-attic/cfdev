@@ -1,5 +1,6 @@
 package process
 
-func (m *Manager) SafeKill(pidfile, name string) error {
+func SafeKill(pidfile, name string) error {
+	// not implemented
 	return nil
 }

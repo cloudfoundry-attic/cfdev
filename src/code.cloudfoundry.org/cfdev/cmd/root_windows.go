@@ -18,9 +18,9 @@ import (
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/iso"
-	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
@@ -107,18 +107,17 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         &network.HostNet{},
 			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
-			HyperV:          &process.HyperV{Config: config},
+			Hypervisor:      &process.HyperV{Config: config},
 			VpnKit:          vpnkit,
-			LinuxKit:        &process.LinuxKit{Config: config, Launchd: lctl},
 			GardenClient:    garden.New(),
 			IsoReader:       iso.New(),
 		},
 		&b6.Stop{
-			Config:    config,
-			Analytics: analyticsClient,
-			HyperV:    &process.HyperV{Config: config},
-			VpnKit:    vpnkit,
-			HostNet:   &network.HostNet{},
+			Config:     config,
+			Analytics:  analyticsClient,
+			Hypervisor: &process.HyperV{Config: config},
+			VpnKit:     vpnkit,
+			HostNet:    &network.HostNet{},
 		},
 		&b7.Telemetry{
 			UI:              ui,

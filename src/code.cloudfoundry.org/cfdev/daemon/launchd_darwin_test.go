@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"code.cloudfoundry.org/cfdev/daemon"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 var _ = Describe("Launchd", func() {

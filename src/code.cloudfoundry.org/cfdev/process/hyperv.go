@@ -146,11 +146,20 @@ func (h *HyperV) Stop(vmName string) error {
 		return fmt.Errorf("stopping vm: %s", err)
 	}
 
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
-	err = cmd.Run()
+	return nil
+}
+
+func (h *HyperV) Destroy(vmName string) error {
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
+	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("removing vm: %s", err)
 	}
 
 	return nil
+}
+
+func (h *HyperV) IsRunning() (bool, error) {
+	//TODO implement this
+	return false, nil
 }

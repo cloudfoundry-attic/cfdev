@@ -11,14 +11,14 @@ import (
 	"strings"
 )
 
-type WinSW struct{
-	BinaryPath string
+type WinSW struct {
+	BinaryPath  string
 	ServicesDir string
 }
 
 func NewWinSW(cfDevHome string) *WinSW {
 	return &WinSW{
-		BinaryPath: filepath.Join(cfDevHome, "cache", "winsw.exe"),
+		BinaryPath:  filepath.Join(cfDevHome, "cache", "winsw.exe"),
 		ServicesDir: filepath.Join(cfDevHome, "winservice"),
 	}
 }
@@ -65,8 +65,6 @@ func (w *WinSW) AddDaemon(spec DaemonSpec) error {
 		return err
 	}
 
-
-
 	return nil
 }
 
@@ -86,16 +84,14 @@ func (w *WinSW) RemoveDaemon(label string) error {
 	return nil
 }
 
-func (w *WinSW) Start(spec DaemonSpec) error {
-	_, executablePath := getServicePaths(spec.Label, w.ServicesDir)
-
+func (w *WinSW) Start(label string) error {
+	_, executablePath := getServicePaths(label, w.ServicesDir)
 
 	cmd := exec.Command(executablePath, "start")
 	err := RunCommand(cmd)
 	if err != nil {
 		return err
 	}
-
 
 	return nil
 }
@@ -169,7 +165,7 @@ func getServicePaths(label string, servicesDir string) (string, string) {
 	return serviceDst, executablePath
 }
 
-func isInstalled(label string) bool{
+func isInstalled(label string) bool {
 	command := exec.Command("powershell.exe", "-C", fmt.Sprintf(`Get-Service | Where-Object {$_.Name -eq "%s"}`, label))
 	temp, _ := command.Output()
 	output := strings.TrimSpace(string(temp))
