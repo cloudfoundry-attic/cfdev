@@ -303,7 +303,7 @@ var _ = Describe("Start", func() {
 					Cpus:        7,
 					Mem:         6666,
 					DepsIsoPath: "/wrong-path-to-some-deps.iso",
-				})).To(MatchError("no file found at: /wrong-path-to-some-deps.iso"))
+				}).Error()).To(ContainSubstring("no file found"))
 			})
 		})
 
