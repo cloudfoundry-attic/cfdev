@@ -64,11 +64,11 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	var reterr error
 
 	if err := s.Hypervisor.Stop(vmName); err != nil {
-		reterr = errors.SafeWrap(err, "failed to stop linuxkit")
+		reterr = errors.SafeWrap(err, "failed to stop the VM")
 	}
 
 	if err := s.Hypervisor.Destroy(vmName); err != nil {
-		reterr = errors.SafeWrap(err, "failed to destroy linuxkit")
+		reterr = errors.SafeWrap(err, "failed to destroy the VM")
 	}
 
 	if err := s.VpnKit.Stop(); err != nil {

@@ -20,10 +20,10 @@ type UI interface {
 
 type LinuxKit struct {
 	Config  config.Config
-	Launchd Launchd
+	DaemonRunner DaemonRunner
 }
 
-type Launchd interface {
+type DaemonRunner interface {
 	AddDaemon(daemon.DaemonSpec) error
 	RemoveDaemon(string) error
 	Start(string) error
@@ -38,16 +38,16 @@ func (l *LinuxKit) CreateVM(vm VM) error {
 	if err != nil {
 		return err
 	}
-	return l.Launchd.AddDaemon(daemonSpec)
+	return l.DaemonRunner.AddDaemon(daemonSpec)
 }
 
 func (l *LinuxKit) Start(vmName string) error {
-	return l.Launchd.Start(LinuxKitLabel)
+	return l.DaemonRunner.Start(LinuxKitLabel)
 }
 
 func (l *LinuxKit) Stop(vmName string) error {
 	var reterr error
-	if err := l.Launchd.Stop(LinuxKitLabel); err != nil {
+	if err := l.DaemonRunner.Stop(LinuxKitLabel); err != nil {
 		reterr = err
 	}
 	if err := SafeKill(
@@ -60,11 +60,11 @@ func (l *LinuxKit) Stop(vmName string) error {
 }
 
 func (l *LinuxKit) Destroy(vmName string) error {
-	return l.Launchd.RemoveDaemon(LinuxKitLabel)
+	return l.DaemonRunner.RemoveDaemon(LinuxKitLabel)
 }
 
 func (l *LinuxKit) IsRunning() (bool, error) {
-	return l.Launchd.IsRunning(LinuxKitLabel)
+	return l.DaemonRunner.IsRunning(LinuxKitLabel)
 }
 
 func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonSpec, error) {
@@ -118,7 +118,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonS
 func (l *LinuxKit) Watch(exit chan string) {
 	go func() {
 		for {
-			running, err := l.Launchd.IsRunning(LinuxKitLabel)
+			running, err := l.DaemonRunner.IsRunning(LinuxKitLabel)
 			if !running && err == nil {
 				exit <- "linuxkit"
 				return

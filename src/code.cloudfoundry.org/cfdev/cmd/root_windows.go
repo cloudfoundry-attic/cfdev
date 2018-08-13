@@ -53,7 +53,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
 	lctl := daemon.NewWinSW(config.CFDevHome)
-	vpnkit := &process.VpnKit{Config: config, Launchd: lctl}
+	vpnkit := &process.VpnKit{Config: config, DaemonRunner: lctl}
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)

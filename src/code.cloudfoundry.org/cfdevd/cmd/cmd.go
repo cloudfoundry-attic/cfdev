@@ -26,7 +26,7 @@ func UnmarshalCommand(conn io.Reader) (Command, error) {
 		return UnmarshalBindCommand(conn)
 	case UninstallType:
 		return &UninstallCommand{
-			Launchd: daemon.New(""),
+			DaemonRunner: daemon.New(""),
 		}, nil
 	default:
 		return &UnimplementedCommand{

@@ -47,7 +47,7 @@ var _ = Describe("VpnKit", func() {
 				StateDir:       stateDir,
 				CFDevHome:      homeDir,
 			},
-			Launchd: lctl,
+			DaemonRunner: lctl,
 		}
 	})
 

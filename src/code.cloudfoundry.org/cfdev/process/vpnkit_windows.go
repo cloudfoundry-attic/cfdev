@@ -19,7 +19,7 @@ import (
 
 type VpnKit struct {
 	Config  config.Config
-	Launchd Launchd
+	DaemonRunner DaemonRunner
 }
 
 func (v *VpnKit) Setup() error {
@@ -102,11 +102,11 @@ func (v *VpnKit) Start() error {
 	cmd.Wait()
 	vmGuid := strings.TrimSpace(string(output))
 
-	if err := v.Launchd.AddDaemon(v.daemonSpec(vmGuid)); err != nil {
+	if err := v.DaemonRunner.AddDaemon(v.daemonSpec(vmGuid)); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
 
-	if err := v.Launchd.Start(VpnKitLabel); err != nil {
+	if err := v.DaemonRunner.Start(VpnKitLabel); err != nil {
 		return errors.SafeWrap(err, "start vpnkit")
 	}
 
@@ -114,7 +114,7 @@ func (v *VpnKit) Start() error {
 }
 
 func (v *VpnKit) Destroy() error {
-	v.Launchd.RemoveDaemon(VpnKitLabel)
+	v.DaemonRunner.RemoveDaemon(VpnKitLabel)
 	registryDeleteCmd := `Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" | ` +
 		`Where-Object { $_.GetValue("ElementName") -match "CF Dev VPNKit" } | ` +
 		`Foreach-Object { Remove-Item (Join-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" $_.PSChildName) }`

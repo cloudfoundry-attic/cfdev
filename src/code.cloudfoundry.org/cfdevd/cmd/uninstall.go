@@ -6,17 +6,17 @@ import (
 	"net"
 )
 
-//go:generate mockgen -package mocks -destination mocks/launchd.go code.cloudfoundry.org/cfdevd/cmd Launchd
-type Launchd interface {
+//go:generate mockgen -package mocks -destination mocks/daemonrunner.go code.cloudfoundry.org/cfdevd/cmd DaemonRunner
+type DaemonRunner interface {
 	RemoveDaemon(string) error
 }
 
 type UninstallCommand struct {
-	Launchd Launchd
+	DaemonRunner DaemonRunner
 }
 
 func (u *UninstallCommand) Execute(conn *net.UnixConn) error {
-	err := u.Launchd.RemoveDaemon("org.cloudfoundry.cfdevd")
+	err := u.DaemonRunner.RemoveDaemon("org.cloudfoundry.cfdevd")
 	if err == nil {
 		conn.Write([]byte{0})
 	} else {

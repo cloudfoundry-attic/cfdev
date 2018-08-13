@@ -68,8 +68,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		RetryWait:             time.Second,
 		Writer:                writer,
 	}
-	linuxkit := &process.LinuxKit{Config: config, Launchd: lctl}
-	vpnkit := &process.VpnKit{Config: config, Launchd: lctl}
+	linuxkit := &process.LinuxKit{Config: config, DaemonRunner: lctl}
+	vpnkit := &process.VpnKit{Config: config, DaemonRunner: lctl}
 
 	dev := &cobra.Command{
 		Use:           "dev",

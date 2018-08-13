@@ -21,17 +21,17 @@ const retries = 5
 
 type VpnKit struct {
 	Config  config.Config
-	Launchd Launchd
+	DaemonRunner DaemonRunner
 }
 
 func (v *VpnKit) Start() error {
 	if err := v.setupVPNKit(); err != nil {
 		return errors.SafeWrap(err, "Failed to setup VPNKit")
 	}
-	if err := v.Launchd.AddDaemon(v.daemonSpec()); err != nil {
+	if err := v.DaemonRunner.AddDaemon(v.daemonSpec()); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
-	if err := v.Launchd.Start(VpnKitLabel); err != nil {
+	if err := v.DaemonRunner.Start(VpnKitLabel); err != nil {
 		return errors.SafeWrap(err, "start vpnkit")
 	}
 	attempt := 0
@@ -50,13 +50,13 @@ func (v *VpnKit) Start() error {
 }
 
 func (v *VpnKit) Destroy() error {
-	return v.Launchd.RemoveDaemon(VpnKitLabel)
+	return v.DaemonRunner.RemoveDaemon(VpnKitLabel)
 }
 
 func (v *VpnKit) Watch(exit chan string) {
 	go func() {
 		for {
-			running, err := v.Launchd.IsRunning(VpnKitLabel)
+			running, err := v.DaemonRunner.IsRunning(VpnKitLabel)
 			if !running && err == nil {
 				exit <- "vpnkit"
 				return

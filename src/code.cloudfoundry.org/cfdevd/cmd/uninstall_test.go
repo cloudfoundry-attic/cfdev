@@ -20,7 +20,7 @@ var _ bool = Describe("UninstallCommand", func() {
 	Describe("Execute", func() {
 		var (
 			controller  *gomock.Controller
-			mockLaunchd *mocks.MockLaunchd
+			mockDaemonRunner *mocks.MockDaemonRunner
 			uninstall   *cmd.UninstallCommand
 
 			socketDir  string
@@ -29,9 +29,9 @@ var _ bool = Describe("UninstallCommand", func() {
 		)
 		BeforeEach(func() {
 			controller = gomock.NewController(GinkgoT())
-			mockLaunchd = mocks.NewMockLaunchd(controller)
+			mockDaemonRunner = mocks.NewMockDaemonRunner(controller)
 			uninstall = &cmd.UninstallCommand{
-				Launchd: mockLaunchd,
+				DaemonRunner: mockDaemonRunner,
 			}
 		})
 		BeforeEach(func() {
@@ -63,18 +63,18 @@ var _ bool = Describe("UninstallCommand", func() {
 			controller.Finish()
 		})
 		It("removes the correct daemon", func() {
-			mockLaunchd.EXPECT().RemoveDaemon("org.cloudfoundry.cfdevd")
+			mockDaemonRunner.EXPECT().RemoveDaemon("org.cloudfoundry.cfdevd")
 			Expect(uninstall.Execute(conn)).To(Succeed())
 		})
 		It("sends 0 (success) over the communication socket", func() {
-			mockLaunchd.EXPECT().RemoveDaemon(gomock.Any())
+			mockDaemonRunner.EXPECT().RemoveDaemon(gomock.Any())
 			Expect(uninstall.Execute(conn)).To(Succeed())
 			Expect(<-recvdBytes).To(Equal(uint8(0)))
 		})
 
 		Context("RemoveDaemon fails", func() {
 			BeforeEach(func() {
-				mockLaunchd.EXPECT().RemoveDaemon(gomock.Any()).Return(errors.New("Mega Fail"))
+				mockDaemonRunner.EXPECT().RemoveDaemon(gomock.Any()).Return(errors.New("Mega Fail"))
 			})
 			It("returns the failure from launchd", func() {
 				Expect(uninstall.Execute(conn)).To(Equal(errors.New("Mega Fail")))
