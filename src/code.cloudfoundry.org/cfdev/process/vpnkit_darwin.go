@@ -5,28 +5,18 @@ import (
 	"path/filepath"
 	"time"
 
-	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
 
-	"encoding/json"
-	"io/ioutil"
-	"os"
 	"path"
 
 	"code.cloudfoundry.org/cfdev/daemon"
-	"code.cloudfoundry.org/cfdev/env"
 )
 
 const retries = 5
 
-type VpnKit struct {
-	Config  config.Config
-	DaemonRunner DaemonRunner
-}
-
 func (v *VpnKit) Start() error {
-	if err := v.setupVPNKit(); err != nil {
-		return errors.SafeWrap(err, "Failed to setup VPNKit")
+	if err := v.Setup(); err != nil {
+		return errors.SafeWrap(err, "Failed to Setup VPNKit")
 	}
 	if err := v.DaemonRunner.AddDaemon(v.daemonSpec()); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
@@ -53,19 +43,6 @@ func (v *VpnKit) Destroy() error {
 	return v.DaemonRunner.RemoveDaemon(VpnKitLabel)
 }
 
-func (v *VpnKit) Watch(exit chan string) {
-	go func() {
-		for {
-			running, err := v.DaemonRunner.IsRunning(VpnKitLabel)
-			if !running && err == nil {
-				exit <- "vpnkit"
-				return
-			}
-			time.Sleep(5 * time.Second)
-		}
-	}()
-}
-
 func (v *VpnKit) daemonSpec() daemon.DaemonSpec {
 	return daemon.DaemonSpec{
 		Label:       VpnKitLabel,
@@ -85,26 +62,6 @@ func (v *VpnKit) daemonSpec() daemon.DaemonSpec {
 	}
 }
 
-func (v *VpnKit) setupVPNKit() error {
-	httpProxyPath := filepath.Join(v.Config.VpnKitStateDir, "http_proxy.json")
-
-	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP)
-	proxyContents, err := json.Marshal(proxyConfig)
-	if err != nil {
-		return errors.SafeWrap(err, "Unable to create proxy config")
-	}
-
-	if _, err := os.Stat(httpProxyPath); !os.IsNotExist(err) {
-		err = os.Remove(httpProxyPath)
-		if err != nil {
-			return errors.SafeWrap(err, "Unable to remove 'http_proxy.json'")
-		}
-	}
-
-	httpProxyConfig := []byte(proxyContents)
-	err = ioutil.WriteFile(httpProxyPath, httpProxyConfig, 0777)
-	if err != nil {
-		return err
-	}
-	return nil
+func (v *VpnKit) Setup() error {
+	return v.writeHttpConfig()
 }
