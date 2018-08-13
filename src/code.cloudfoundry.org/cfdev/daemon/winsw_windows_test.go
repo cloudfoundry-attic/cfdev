@@ -1,10 +1,7 @@
 package daemon_test
 
 import (
-	"code.cloudfoundry.org/cfdev/daemon"
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,12 +9,16 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"code.cloudfoundry.org/cfdev/daemon"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var (
-	winsw    *daemon.WinSW
-	label    string
-	tmpDir   string
+	winsw  *daemon.WinSW
+	label  string
+	tmpDir string
 )
 
 var _ = Describe("Winsw", func() {
@@ -104,7 +105,7 @@ var _ = Describe("Winsw", func() {
 			Expect(winsw.AddDaemon(spec)).To(Succeed())
 
 			By("starting the service")
-			Expect(winsw.Start(spec)).To(Succeed())
+			Expect(winsw.Start(label)).To(Succeed())
 			Eventually(func() bool {
 				isRunning, _ := winsw.IsRunning(label)
 				return isRunning
