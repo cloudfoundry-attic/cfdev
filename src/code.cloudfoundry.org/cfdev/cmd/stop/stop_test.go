@@ -67,7 +67,7 @@ var _ = Describe("Stop", func() {
 		os.RemoveAll(stateDir)
 	})
 
-	It("uninstalls linuxkit, vpnkit, and cfdevd, tears down aliases, and sends analytics event", func() {
+	It("destroys the VM, uninstalls vpnkit and cfdevd, tears down aliases, and sends analytics event", func() {
 		mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 		mockHypervisor.EXPECT().Stop("cfdev")
 		mockHypervisor.EXPECT().Destroy("cfdev")
@@ -82,8 +82,8 @@ var _ = Describe("Stop", func() {
 		Expect(stopCmd.Execute()).To(Succeed())
 	})
 
-	Context("stopping linuxkit fails", func() {
-		It("stops the others and returns linuxkit error", func() {
+	Context("stopping the VM fails", func() {
+		It("stops the others and returns VM error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockHypervisor.EXPECT().Stop("cfdev").Return(errors.New("test"))
 			mockHypervisor.EXPECT().Destroy("cfdev")
@@ -94,12 +94,12 @@ var _ = Describe("Stop", func() {
 			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
-			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop linuxkit: test"))
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop the VM: test"))
 		})
 	})
 
-	Context("destroying linuxkit fails", func() {
-		It("stops the others and returns linuxkit error", func() {
+	Context("destroying the VM fails", func() {
+		It("stops the others and returns VM error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev").Return(errors.New("test"))
@@ -110,7 +110,7 @@ var _ = Describe("Stop", func() {
 			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
-			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy linuxkit: test"))
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy the VM: test"))
 		})
 	})
 
