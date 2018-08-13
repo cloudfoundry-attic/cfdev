@@ -147,22 +147,6 @@ var _ = Describe("Stop", func() {
 		})
 	})
 
-	Context("stopping cfdevd fails", func() {
-		It("stops the others and returns cfdevd error", func() {
-			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
-			mockHypervisor.EXPECT().Stop("cfdev")
-			mockHypervisor.EXPECT().Destroy("cfdev")
-			mockVpnkit.EXPECT().Stop()
-			mockVpnkit.EXPECT().Destroy()
-			if runtime.GOOS == "darwin" {
-				mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
-			}
-			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
-
-			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to uninstall cfdevd: test"))
-		})
-	})
-
 	Context("removing aliases fails", func() {
 		It("stops the others and returns alias error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
@@ -170,7 +154,9 @@ var _ = Describe("Stop", func() {
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
-			mockCfdevdClient.EXPECT().Uninstall().Return("test", fmt.Errorf("test"))
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall()
+			}
 			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip").Return(fmt.Errorf("test"))
 
 			Expect(stopCmd.Execute()).To(MatchError(`cf dev stop: failed to remove IP aliases: test`))
