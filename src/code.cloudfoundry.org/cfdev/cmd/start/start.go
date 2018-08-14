@@ -70,7 +70,7 @@ type Hypervisor interface {
 	CreateVM(vm hypervisor.VM) error
 	Start(vmName string) error
 	Stop(vmName string) error
-	IsRunning() (bool, error)
+	IsRunning(vmName string) (bool, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/garden.go code.cloudfoundry.org/cfdev/cmd/start GardenClient
@@ -146,7 +146,8 @@ func (s *Start) Execute(args Args) error {
 		case name := <-s.LocalExit:
 			s.UI.Say("ERROR: %s has stopped", name)
 		}
-		s.abort()
+		s.Hypervisor.Stop("cfdev")
+		s.VpnKit.Stop()
 		os.Exit(128)
 	}()
 
@@ -175,7 +176,7 @@ func (s *Start) Execute(args Args) error {
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
 	s.Analytics.Event(cfanalytics.START_BEGIN)
 
-	if running, err := s.isRunning(); err != nil {
+	if running, err := s.Hypervisor.IsRunning("cfdev"); err != nil {
 		return errors.SafeWrap(err, "is running")
 	} else if running {
 		s.UI.Say("CF Dev is already running...")
@@ -222,7 +223,11 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Creating the VM...")
-	if err := s.createVM(args, depsIsoPath); err != nil {
+	if err := s.Hypervisor.CreateVM(hypervisor.VM{
+		CPUs:     args.Cpus,
+		MemoryMB: args.Mem,
+		DepsIso:  depsIsoPath,
+	}); err != nil {
 		return errors.SafeWrap(err, "creating the vm")
 	}
 	s.UI.Say("Starting VPNKit...")
@@ -232,7 +237,7 @@ func (s *Start) Execute(args Args) error {
 	s.VpnKit.Watch(s.LocalExit)
 
 	s.UI.Say("Starting the VM...")
-	if err := s.startVM(); err != nil {
+	if err := s.Hypervisor.Start("cfdev"); err != nil {
 		return errors.SafeWrap(err, "starting the vm")
 	}
 
@@ -312,28 +317,4 @@ func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 		registries = append(registries, u.Host)
 	}
 	return registries, nil
-}
-
-func (s *Start) createVM(args Args, depsIsoPath string) error {
-	if err := s.Hypervisor.CreateVM(hypervisor.VM{
-		CPUs:     args.Cpus,
-		MemoryMB: args.Mem,
-		DepsIso:  depsIsoPath,
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Start) startVM() error {
-	return s.Hypervisor.Start("cfdev")
-}
-
-func (s *Start) abort() {
-	s.Hypervisor.Stop("cfdev")
-	s.VpnKit.Stop()
-}
-
-func (s *Start) isRunning() (bool, error) {
-	return s.Hypervisor.IsRunning()
 }

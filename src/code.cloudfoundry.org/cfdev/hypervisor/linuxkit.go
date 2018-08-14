@@ -63,7 +63,7 @@ func (l *LinuxKit) Destroy(vmName string) error {
 	return l.DaemonRunner.RemoveDaemon(LinuxKitLabel)
 }
 
-func (l *LinuxKit) IsRunning() (bool, error) {
+func (l *LinuxKit) IsRunning(vmName string) (bool, error) {
 	return l.DaemonRunner.IsRunning(LinuxKitLabel)
 }
 

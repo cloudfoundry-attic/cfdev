@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/config"
+	"strings"
 )
 
 type HyperV struct {
@@ -119,7 +120,22 @@ func addVhdDrive(isoPath string, vmName string) error {
 	return nil
 }
 
+func (h *HyperV) exists(vmName string) (bool, error) {
+	cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("getting vms: %s", err)
+	}
+
+	return string(output) != "", nil
+}
 func (h *HyperV) Start(vmName string) error {
+	if exists, err := h.exists(vmName); err != nil {
+		return err
+	} else if !exists {
+		return fmt.Errorf("hyperv vm with name %s does not exist", vmName)
+	}
+
 	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Start-VM -Name %s", vmName))
 
 	if output, err := cmd.CombinedOutput(); err != nil {
@@ -130,19 +146,14 @@ func (h *HyperV) Start(vmName string) error {
 }
 
 func (h *HyperV) Stop(vmName string) error {
-	cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("getting vms: %s", err)
-	}
-
-	if string(output) == "" {
+	if exists, err := h.exists(vmName); err != nil {
+		return err
+	} else if !exists {
 		return nil
 	}
 
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Stop-VM -Name %s -Turnoff", vmName))
-	err = cmd.Run()
-	if err != nil {
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Stop-VM -Name %s -Turnoff", vmName))
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("stopping vm: %s", err)
 	}
 
@@ -150,26 +161,31 @@ func (h *HyperV) Stop(vmName string) error {
 }
 
 func (h *HyperV) Destroy(vmName string) error {
-	cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("getting vms: %s", err)
-	}
-
-	if string(output) == "" {
+	if exists, err := h.exists(vmName); err != nil {
+		return err
+	} else if !exists {
 		return nil
 	}
 
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
-	err = cmd.Run()
-	if err != nil {
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("removing vm: %s", err)
 	}
 
 	return nil
 }
 
-func (h *HyperV) IsRunning() (bool, error) {
-	//TODO implement this
+func (h *HyperV) IsRunning(vmName string) (bool, error) {
+	if exists, err := h.exists(vmName); err != nil || !exists {
+		return false, err
+	}
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-VM -Name %s | format-list -Property State", vmName))
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	if strings.Contains(string(output), "Running") {
+		return true, nil
+	}
 	return false, nil
 }

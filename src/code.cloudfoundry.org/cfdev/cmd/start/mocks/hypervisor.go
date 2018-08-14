@@ -46,16 +46,16 @@ func (mr *MockHypervisorMockRecorder) CreateVM(arg0 interface{}) *gomock.Call {
 }
 
 // IsRunning mocks base method
-func (m *MockHypervisor) IsRunning() (bool, error) {
-	ret := m.ctrl.Call(m, "IsRunning")
+func (m *MockHypervisor) IsRunning(arg0 string) (bool, error) {
+	ret := m.ctrl.Call(m, "IsRunning", arg0)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // IsRunning indicates an expected call of IsRunning
-func (mr *MockHypervisorMockRecorder) IsRunning() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRunning", reflect.TypeOf((*MockHypervisor)(nil).IsRunning))
+func (mr *MockHypervisorMockRecorder) IsRunning(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRunning", reflect.TypeOf((*MockHypervisor)(nil).IsRunning), arg0)
 }
 
 // Start mocks base method

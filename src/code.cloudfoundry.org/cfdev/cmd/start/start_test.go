@@ -131,7 +131,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -196,7 +196,7 @@ var _ = Describe("Start", func() {
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-						mockHypervisor.EXPECT().IsRunning().Return(false, nil),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 						mockUI.EXPECT().Say("Downloading Resources..."),
 						mockCache.EXPECT().Sync(resource.Catalog{
@@ -261,7 +261,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -316,7 +316,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
@@ -349,7 +349,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockHypervisor.EXPECT().IsRunning().Return(false, nil),
+					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
@@ -410,7 +410,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
-					mockHypervisor.EXPECT().IsRunning().Return(true, nil),
+					mockHypervisor.EXPECT().IsRunning("cfdev").Return(true, nil),
 					mockUI.EXPECT().Say("CF Dev is already running..."),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true}),
 				)

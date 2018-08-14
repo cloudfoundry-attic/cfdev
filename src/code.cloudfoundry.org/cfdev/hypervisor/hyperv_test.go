@@ -19,7 +19,7 @@ import (
 	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
-var _ = Describe("HyperV process", func() {
+var _ = Describe("HyperV", func() {
 	var (
 		hyperV     hypervisor.HyperV
 		cfDevHome  string
@@ -68,7 +68,7 @@ var _ = Describe("HyperV process", func() {
 			cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev | format-list -Property MemoryStartup,ProcessorCount")
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session, 10, 1).Should(gexec.Exit())
+			Eventually(session, 10, 1).Should(gexec.Exit(0))
 			Expect(session).To(gbytes.Say("MemoryStartup  : 2097152000"))
 			Expect(session).To(gbytes.Say("ProcessorCount : 1"))
 
@@ -76,6 +76,56 @@ var _ = Describe("HyperV process", func() {
 			output, err := cmd.Output()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(output)).ToNot(BeEmpty())
+		})
+	})
+
+	Describe("Start", func() {
+		Context("when the vm is already created", func() {
+			BeforeEach(func() {
+				cmd := exec.Command("powershell.exe", "-Command", "New-VM -Name cfdev -Generation 2 -NoVHD")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+			})
+			AfterEach(func() {
+				cmd := exec.Command("powershell.exe", "-Command", "Stop-VM -Name cfdev -Force")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+
+				cmd = exec.Command("powershell.exe", "-Command", "Remove-VM -Name cfdev -Force")
+				session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+			})
+			It("starts the vm", func() {
+				Expect(hyperV.Start("cfdev")).To(Succeed())
+				cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev | format-list -Property State")
+				output, err := cmd.Output()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(output)).To(ContainSubstring("State : Running"))
+
+			})
+			Context("when the vm is already running", func() {
+				BeforeEach(func() {
+					cmd := exec.Command("powershell.exe", "-Command", "Start-VM -Name cfdev")
+					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+					Eventually(session, 10, 1).Should(gexec.Exit())
+					cmd = exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev | format-list -Property State")
+					output, err := cmd.Output()
+					Expect(err).NotTo(HaveOccurred())
+					Expect(string(output)).To(ContainSubstring("State : Running"))
+				})
+				It("succeeds", func() {
+					Expect(hyperV.Start("cfdev")).To(Succeed())
+				})
+			})
+		})
+		Context("when the vm does not exist", func() {
+			It("errors", func() {
+				Expect(hyperV.Start("cfdev")).To(MatchError("hyperv vm with name cfdev does not exist"))
+			})
 		})
 	})
 
@@ -169,6 +219,54 @@ var _ = Describe("HyperV process", func() {
 				Expect(string(output)).To(BeEmpty())
 			})
 		})
+	})
+
+	Describe("IsRunning", func() {
+		Context("when the vm does not exist", func() {
+			It("returns false", func() {
+				Expect(hyperV.IsRunning("cfdev")).To(BeFalse())
+			})
+
+		})
+		Context("when the vm exists", func() {
+			BeforeEach(func() {
+				cmd := exec.Command("powershell.exe", "-Command", "New-VM -Name cfdev -Generation 2 -NoVHD")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+			})
+			AfterEach(func() {
+				cmd := exec.Command("powershell.exe", "-Command", "Remove-VM -Name cfdev -Force")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(session, 10, 1).Should(gexec.Exit())
+			})
+
+			Context("when the vm exists and is not running", func() {
+				It("returns false", func() {
+					Expect(hyperV.IsRunning("cfdev")).To(BeFalse())
+				})
+			})
+			Context("when the vm is running", func() {
+				BeforeEach(func() {
+					cmd := exec.Command("powershell.exe", "-Command", "Start-VM -Name cfdev")
+					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+					Eventually(session, 10, 1).Should(gexec.Exit())
+				})
+				AfterEach(func() {
+					cmd := exec.Command("powershell.exe", "-Command", "Stop-VM -Name cfdev -Force")
+					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+					Eventually(session, 10, 1).Should(gexec.Exit())
+				})
+
+				It("returns true", func() {
+					Expect(hyperV.IsRunning("cfdev")).To(BeTrue())
+				})
+			})
+		})
+
 	})
 })
 
