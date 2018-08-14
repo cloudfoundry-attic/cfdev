@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"runtime"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gexec"
 )
 
 const (
@@ -221,4 +223,38 @@ func GetCfPluginPath() string {
 	} else {
 		return "/usr/local/bin/cf"
 	}
+}
+
+func RemoveIPAliases(aliases ...string) {
+	if IsWindows() {
+		return
+	}
+
+	for _, alias := range aliases {
+		cmd := exec.Command("sudo", "-n", "ifconfig", "lo0", "inet", alias+"/32", "remove")
+		writer := gexec.NewPrefixedWriter("[ifconfig] ", GinkgoWriter)
+		session, err := gexec.Start(cmd, writer, writer)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(session).Should(gexec.Exit())
+	}
+}
+
+func IsWindows() bool {
+	return runtime.GOOS == "windows"
+}
+
+func HasSudoPrivilege() bool {
+	if IsWindows() {
+		return true
+	}
+
+	cmd := exec.Command("sh", "-c", "sudo -n true")
+	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+	Expect(err).NotTo(HaveOccurred())
+	Eventually(session).Should(gexec.Exit())
+
+	if session.ExitCode() == 0 {
+		return true
+	}
+	return false
 }

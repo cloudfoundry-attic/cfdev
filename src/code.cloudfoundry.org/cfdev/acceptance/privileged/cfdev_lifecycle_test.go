@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -160,40 +159,6 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	}
 }
 
-func RemoveIPAliases(aliases ...string) {
-	if IsWindows() {
-		return
-	}
-
-	for _, alias := range aliases {
-		cmd := exec.Command("sudo", "-n", "ifconfig", "lo0", "inet", alias+"/32", "remove")
-		writer := gexec.NewPrefixedWriter("[ifconfig] ", GinkgoWriter)
-		session, err := gexec.Start(cmd, writer, writer)
-		Expect(err).ToNot(HaveOccurred())
-		Eventually(session).Should(gexec.Exit())
-	}
-}
-
-func downloadTestAsset(targetDir string, resourceUrl string) error {
-	out, err := os.Create(filepath.Join(targetDir, "test-deps.iso"))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	resp, err := http.Get(resourceUrl)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func PushAnApp() {
 	server, port := fakeTcpServer()
