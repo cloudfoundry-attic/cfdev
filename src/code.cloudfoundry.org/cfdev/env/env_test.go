@@ -27,10 +27,10 @@ var _ = Describe("env", func() {
 			os.Unsetenv("NO_PROXY")
 		})
 		It("returns the http config", func() {
-			proxyConfig := env.BuildProxyConfig("bosh-ip", "router-ip")
+			proxyConfig := env.BuildProxyConfig("bosh-ip", "router-ip", "host-ip")
 			Expect(proxyConfig.Http).To(Equal("some-http-proxy"))
 			Expect(proxyConfig.Https).To(Equal("some-https-proxy"))
-			Expect(proxyConfig.NoProxy).To(Equal("some-no-proxy,bosh-ip,router-ip"))
+			Expect(proxyConfig.NoProxy).To(Equal("some-no-proxy,bosh-ip,router-ip,host-ip"))
 		})
 	})
 
@@ -52,10 +52,10 @@ var _ = Describe("env", func() {
 			os.Unsetenv("NO_PROXY")
 		})
 		It("returns the http config", func() {
-			proxyConfig := env.BuildProxyConfig("bosh-ip", "router-ip")
+			proxyConfig := env.BuildProxyConfig("bosh-ip", "router-ip", "host-ip")
 			Expect(proxyConfig.Http).To(Equal("upper-some-http-proxy"))
 			Expect(proxyConfig.Https).To(Equal("upper-some-https-proxy"))
-			Expect(proxyConfig.NoProxy).To(Equal("upper-some-no-proxy,bosh-ip,router-ip"))
+			Expect(proxyConfig.NoProxy).To(Equal("upper-some-no-proxy,bosh-ip,router-ip,host-ip"))
 		})
 	})
 

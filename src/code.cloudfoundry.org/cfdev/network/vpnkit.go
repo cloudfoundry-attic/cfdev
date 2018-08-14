@@ -47,7 +47,7 @@ func (v *VpnKit) Watch(exit chan string) {
 func (v *VpnKit) writeHttpConfig() error{
 	httpProxyPath := filepath.Join(v.Config.VpnKitStateDir, "http_proxy.json")
 
-	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP)
+	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP, v.Config.HostIP)
 	proxyContents, err := json.Marshal(proxyConfig)
 	if err != nil {
 		return errors.SafeWrap(err, "Unable to create proxy config")

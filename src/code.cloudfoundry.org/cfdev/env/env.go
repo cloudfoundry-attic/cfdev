@@ -15,7 +15,7 @@ type ProxyConfig struct {
 	NoProxy string `json:"exclude,omitempty"`
 }
 
-func BuildProxyConfig(boshDirectorIp string, cfRouterIp string) ProxyConfig {
+func BuildProxyConfig(boshDirectorIP string, cfRouterIP string, hostIP string) ProxyConfig {
 	httpProxy := os.Getenv("http_proxy")
 	if os.Getenv("HTTP_PROXY") != "" {
 		httpProxy = os.Getenv("HTTP_PROXY")
@@ -31,12 +31,16 @@ func BuildProxyConfig(boshDirectorIp string, cfRouterIp string) ProxyConfig {
 		noProxy = os.Getenv("NO_PROXY")
 	}
 
-	if boshDirectorIp != "" && !strings.Contains(noProxy, boshDirectorIp) {
-		noProxy = strings.Join([]string{noProxy, boshDirectorIp}, ",")
+	if boshDirectorIP != "" && !strings.Contains(noProxy, boshDirectorIP) {
+		noProxy = strings.Join([]string{noProxy, boshDirectorIP}, ",")
 	}
 
-	if cfRouterIp != "" && !strings.Contains(noProxy, cfRouterIp) {
-		noProxy = strings.Join([]string{noProxy, cfRouterIp}, ",")
+	if cfRouterIP != "" && !strings.Contains(noProxy, cfRouterIP) {
+		noProxy = strings.Join([]string{noProxy, cfRouterIP}, ",")
+	}
+
+	if hostIP != "" && !strings.Contains(noProxy, hostIP) {
+		noProxy = strings.Join([]string{noProxy, hostIP}, ",")
 	}
 
 	proxyConfig := ProxyConfig{
