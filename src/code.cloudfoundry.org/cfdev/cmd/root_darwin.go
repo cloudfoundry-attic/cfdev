@@ -27,6 +27,7 @@ import (
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 type UI interface {
@@ -68,7 +69,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		RetryWait:             time.Second,
 		Writer:                writer,
 	}
-	linuxkit := &process.LinuxKit{Config: config, DaemonRunner: lctl}
+	linuxkit := &hypervisor.LinuxKit{Config: config, DaemonRunner: lctl}
 	vpnkit := &process.VpnKit{Config: config, DaemonRunner: lctl}
 
 	dev := &cobra.Command{

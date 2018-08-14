@@ -1,6 +1,6 @@
 // +build darwin
 
-package process_test
+package hypervisor_test
 
 import (
 	"io/ioutil"
@@ -10,20 +10,20 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/process"
 	"github.com/golang/mock/gomock"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 var _ = Describe("LinuxKit process", func() {
 	var (
-		linuxkit       process.LinuxKit
+		linuxkit       hypervisor.LinuxKit
 		mockController *gomock.Controller
 	)
 
 	BeforeEach(func() {
 		mockController = gomock.NewController(GinkgoT())
 
-		linuxkit = process.LinuxKit{
+		linuxkit = hypervisor.LinuxKit{
 			Config: config.Config{
 				CFDevHome:      "/home-dir/.cfdev",
 				StateDir:       "/home-dir/.cfdev/state",

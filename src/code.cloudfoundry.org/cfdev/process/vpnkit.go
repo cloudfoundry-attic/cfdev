@@ -9,6 +9,7 @@ import (
 	"code.cloudfoundry.org/cfdev/errors"
 	"os"
 	"io/ioutil"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 const VpnKitLabel = "org.cloudfoundry.cfdev.vpnkit"
@@ -16,6 +17,14 @@ const VpnKitLabel = "org.cloudfoundry.cfdev.vpnkit"
 type VpnKit struct {
 	Config  config.Config
 	DaemonRunner DaemonRunner
+}
+
+type DaemonRunner interface {
+	AddDaemon(daemon.DaemonSpec) error
+	RemoveDaemon(string) error
+	Start(string) error
+	Stop(string) error
+	IsRunning(string) (bool, error)
 }
 
 func (v *VpnKit) Stop() error {

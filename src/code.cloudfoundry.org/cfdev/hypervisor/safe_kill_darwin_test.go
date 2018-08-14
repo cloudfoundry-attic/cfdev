@@ -1,6 +1,6 @@
 // +build darwin
 
-package process_test
+package hypervisor_test
 
 import (
 	"io/ioutil"
@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"code.cloudfoundry.org/cfdev/process"
 	"github.com/onsi/gomega/gexec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 var _ = Describe("safe kill test", func() {
@@ -44,7 +44,7 @@ var _ = Describe("safe kill test", func() {
 
 	Context("process is still running", func() {
 		It("kills the process and clean up the pidfile", func() {
-			Expect(process.SafeKill(pidFile, "sleep")).To(Succeed())
+			Expect(hypervisor.SafeKill(pidFile, "sleep")).To(Succeed())
 			Eventually(processToKill).Should(gexec.Exit())
 			Expect(pidFile).NotTo(BeAnExistingFile())
 		})
@@ -52,7 +52,7 @@ var _ = Describe("safe kill test", func() {
 
 	Context("process is still running with different filename", func() {
 		It("leaves process running and cleans up the pidfile", func() {
-			Expect(process.SafeKill(pidFile, "other")).To(Succeed())
+			Expect(hypervisor.SafeKill(pidFile, "other")).To(Succeed())
 			Expect(pidFile).NotTo(BeAnExistingFile())
 			Expect(processToKill).ShouldNot(gexec.Exit())
 		})
@@ -65,7 +65,7 @@ var _ = Describe("safe kill test", func() {
 		})
 
 		It("cleans up the pidfile", func() {
-			Expect(process.SafeKill(pidFile, "sleep")).To(Succeed())
+			Expect(hypervisor.SafeKill(pidFile, "sleep")).To(Succeed())
 			Eventually(processToKill).Should(gexec.Exit())
 			Expect(pidFile).NotTo(BeAnExistingFile())
 		})

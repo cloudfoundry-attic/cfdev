@@ -1,5 +1,5 @@
 package start
 
-func (s *Start) osSpecificSetup(args Args, depsIsoPath string) error {
+func (s *Start) osSpecificSetup() error {
 	return nil
 }

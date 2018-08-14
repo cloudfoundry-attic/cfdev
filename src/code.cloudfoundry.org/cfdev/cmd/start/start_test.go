@@ -4,7 +4,6 @@ import (
 	"runtime"
 
 	"code.cloudfoundry.org/cfdev/iso"
-	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -19,6 +18,7 @@ import (
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/golang/mock/gomock"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 var _ = Describe("Start", func() {
@@ -142,7 +142,7 @@ var _ = Describe("Start", func() {
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
-					mockHypervisor.EXPECT().CreateVM(process.VM{
+					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						CPUs:     7,
 						MemoryMB: 8765,
 						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
@@ -207,7 +207,7 @@ var _ = Describe("Start", func() {
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
-						mockHypervisor.EXPECT().CreateVM(process.VM{
+						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							CPUs:     7,
 							MemoryMB: 4192,
 							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
@@ -272,7 +272,7 @@ var _ = Describe("Start", func() {
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
-					mockHypervisor.EXPECT().CreateVM(process.VM{
+					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						CPUs:     7,
 						MemoryMB: 6666,
 						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
@@ -360,7 +360,7 @@ var _ = Describe("Start", func() {
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
-					mockHypervisor.EXPECT().CreateVM(process.VM{
+					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						CPUs:     7,
 						MemoryMB: 6666,
 						DepsIso:  customIso,

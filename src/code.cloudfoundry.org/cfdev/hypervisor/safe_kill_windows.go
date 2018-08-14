@@ -1,4 +1,4 @@
-package process
+package hypervisor
 
 func SafeKill(pidfile, name string) error {
 	// not implemented

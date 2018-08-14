@@ -14,7 +14,6 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/garden"
-	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/spf13/cobra"
 
@@ -23,6 +22,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/env"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 //go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cmd/start UI
@@ -67,7 +67,7 @@ type VpnKit interface {
 
 //go:generate mockgen -package mocks -destination mocks/hypervisor.go code.cloudfoundry.org/cfdev/cmd/start Hypervisor
 type Hypervisor interface {
-	CreateVM(vm process.VM) error
+	CreateVM(vm hypervisor.VM) error
 	Start(vmName string) error
 	Stop(vmName string) error
 	IsRunning() (bool, error)
@@ -217,7 +217,7 @@ func (s *Start) Execute(args Args) error {
 		}
 	}
 
-	if err := s.osSpecificSetup(args, depsIsoPath); err != nil {
+	if err := s.osSpecificSetup(); err != nil {
 		return err
 	}
 
@@ -314,21 +314,8 @@ func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 	return registries, nil
 }
 
-func cleanupStateDir(cfg config.Config) error {
-	for _, dir := range []string{cfg.StateDir, cfg.VpnKitStateDir} {
-		if err := os.RemoveAll(dir); err != nil {
-			return errors.SafeWrap(err, "Unable to clean up .cfdev state directory")
-		}
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return errors.SafeWrap(err, "Unable to create .cfdev state directory")
-		}
-	}
-
-	return nil
-}
-
 func (s *Start) createVM(args Args, depsIsoPath string) error {
-	if err := s.Hypervisor.CreateVM(process.VM{
+	if err := s.Hypervisor.CreateVM(hypervisor.VM{
 		CPUs:     args.Cpus,
 		MemoryMB: args.Mem,
 		DepsIso:  depsIsoPath,

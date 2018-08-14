@@ -1,6 +1,6 @@
 // +build !windows
 
-package process
+package hypervisor
 
 /*
 #include <libproc.h>

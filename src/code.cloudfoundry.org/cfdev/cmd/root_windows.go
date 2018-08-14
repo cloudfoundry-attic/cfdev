@@ -26,6 +26,7 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 type UI interface {
@@ -107,7 +108,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         &network.HostNet{},
 			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
-			Hypervisor:      &process.HyperV{Config: config},
+			Hypervisor:      &hypervisor.HyperV{Config: config},
 			VpnKit:          vpnkit,
 			GardenClient:    garden.New(),
 			IsoReader:       iso.New(),
@@ -115,7 +116,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		&b6.Stop{
 			Config:     config,
 			Analytics:  analyticsClient,
-			Hypervisor: &process.HyperV{Config: config},
+			Hypervisor: &hypervisor.HyperV{Config: config},
 			VpnKit:     vpnkit,
 			HostNet:    &network.HostNet{},
 		},

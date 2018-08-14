@@ -1,6 +1,6 @@
 // +build windows
 
-package process_test
+package hypervisor_test
 
 import (
 	"io"
@@ -12,16 +12,16 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 var _ = Describe("HyperV process", func() {
 	var (
-		hyperV     process.HyperV
+		hyperV     hypervisor.HyperV
 		cfDevHome  string
 		testIsoUrl = "https://s3.amazonaws.com/cfdev-test-assets/test.iso"
 		err        error
@@ -33,7 +33,7 @@ var _ = Describe("HyperV process", func() {
 			log.Fatal(err)
 		}
 
-		hyperV = process.HyperV{
+		hyperV = hypervisor.HyperV{
 			Config: config.Config{
 				CFDevHome: cfDevHome,
 				CacheDir:  filepath.Join(cfDevHome, "cache"),
@@ -59,7 +59,7 @@ var _ = Describe("HyperV process", func() {
 		})
 
 		It("creates hyperv VM", func() {
-			vm := process.VM{
+			vm := hypervisor.VM{
 				MemoryMB: 2000,
 				CPUs:     1,
 			}
