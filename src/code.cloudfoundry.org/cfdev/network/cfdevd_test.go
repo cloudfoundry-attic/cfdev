@@ -1,6 +1,6 @@
 // +build darwin
 
-package process_test
+package network_test
 
 import (
 	"io/ioutil"
@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"code.cloudfoundry.org/cfdev/process"
+	"code.cloudfoundry.org/cfdev/network"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -41,7 +41,7 @@ var _ = Describe("cfdevd", func() {
 
 		Context("installed cfdevd md5 does not match config", func() {
 			It("returns false", func() {
-				Expect(process.IsCFDevDInstalled(sock, bin, "bad-md5")).To(Equal(false))
+				Expect(network.IsCFDevDInstalled(sock, bin, "bad-md5")).To(Equal(false))
 			})
 		})
 
@@ -50,7 +50,7 @@ var _ = Describe("cfdevd", func() {
 				Expect(os.Remove(bin)).To(Succeed())
 			})
 			It("returns false", func() {
-				Expect(process.IsCFDevDInstalled(sock, bin, "an-md5")).To(Equal(false))
+				Expect(network.IsCFDevDInstalled(sock, bin, "an-md5")).To(Equal(false))
 			})
 		})
 
@@ -60,12 +60,12 @@ var _ = Describe("cfdevd", func() {
 				listener := listen(sock)
 				defer listener.Close()
 				go accept(listener)
-				Expect(process.IsCFDevDInstalled(sock, bin, md5)).To(Equal(true))
+				Expect(network.IsCFDevDInstalled(sock, bin, md5)).To(Equal(true))
 			})
 
 			It("returns false if cfdevd is not listening", func() {
 				md5 := "98bf7d8c15784f0a3d63204441e1e2aa"
-				Expect(process.IsCFDevDInstalled(sock, bin, md5)).To(Equal(false))
+				Expect(network.IsCFDevDInstalled(sock, bin, md5)).To(Equal(false))
 			})
 		})
 	})

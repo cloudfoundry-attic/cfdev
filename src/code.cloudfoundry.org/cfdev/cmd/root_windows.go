@@ -22,7 +22,6 @@ import (
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/network"
-	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	"github.com/spf13/cobra"
@@ -54,7 +53,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
 	lctl := daemon.NewWinSW(config.CFDevHome)
-	vpnkit := &process.VpnKit{Config: config, DaemonRunner: lctl}
+	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl}
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)
@@ -107,7 +106,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         &network.HostNet{},
-			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
+			CFDevD:          &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			Hypervisor:      &hypervisor.HyperV{Config: config},
 			VpnKit:          vpnkit,
 			GardenClient:    garden.New(),

@@ -1,4 +1,4 @@
-package process_test
+package network_test
 
 import (
 	"io"
@@ -9,17 +9,17 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/network"
 )
 
 var _ = Describe("VpnKit", func() {
 	var (
 		tmpDir         string
 		vpnkitStateDir string
-		vkit           process.VpnKit
+		vkit           network.VpnKit
 		lctl           *daemon.Launchd
 	)
 
@@ -40,7 +40,7 @@ var _ = Describe("VpnKit", func() {
 			PListDir: tmpDir,
 		}
 
-		vkit = process.VpnKit{
+		vkit = network.VpnKit{
 			Config: config.Config{
 				CacheDir:       cacheDir,
 				VpnKitStateDir: vpnkitStateDir,
@@ -52,7 +52,7 @@ var _ = Describe("VpnKit", func() {
 	})
 
 	AfterEach(func() {
-		Expect(lctl.RemoveDaemon(process.VpnKitLabel)).To(Succeed())
+		Expect(lctl.RemoveDaemon(network.VpnKitLabel)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 

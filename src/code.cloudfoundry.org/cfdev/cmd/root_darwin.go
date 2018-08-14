@@ -22,7 +22,6 @@ import (
 	"code.cloudfoundry.org/cfdev/garden"
 	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/network"
-	"code.cloudfoundry.org/cfdev/process"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
@@ -70,7 +69,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		Writer:                writer,
 	}
 	linuxkit := &hypervisor.LinuxKit{Config: config, DaemonRunner: lctl}
-	vpnkit := &process.VpnKit{Config: config, DaemonRunner: lctl}
+	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl}
 
 	dev := &cobra.Command{
 		Use:           "dev",
@@ -109,7 +108,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         &network.HostNet{},
-			CFDevD:          &process.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
+			CFDevD:          &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			VpnKit:          vpnkit,
 			Hypervisor:      linuxkit,
 			GardenClient:    garden.New(),

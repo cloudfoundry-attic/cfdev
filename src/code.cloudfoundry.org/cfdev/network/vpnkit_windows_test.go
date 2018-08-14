@@ -1,19 +1,19 @@
-package process_test
+package network_test
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/process"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
+	"code.cloudfoundry.org/cfdev/network"
 )
 
 var _ = Describe("VpnKit", func() {
 	var (
-		vpnkit  *process.VpnKit
+		vpnkit  *network.VpnKit
 		tempDir string
 	)
 
@@ -22,7 +22,7 @@ var _ = Describe("VpnKit", func() {
 		tempDir, err = ioutil.TempDir("", "cfdev-test-")
 		Expect(err).NotTo(HaveOccurred())
 
-		vpnkit = &process.VpnKit{
+		vpnkit = &network.VpnKit{
 			Config: config.Config{
 				CFDevHome: tempDir,
 			},
