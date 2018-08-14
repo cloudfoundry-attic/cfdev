@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+set -ex
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+domain=${1-dev.cfdev.sh}
+
 function run_docker_registry_tests() {
   export CONFIG=$(mktemp -t config.XXXXXXXX)
   export REGISTRY_AUTH_FILE=$(mktemp /tmp/registry.auth.XXXXXXXX)
