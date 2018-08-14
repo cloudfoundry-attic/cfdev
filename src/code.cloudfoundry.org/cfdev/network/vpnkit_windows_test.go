@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"code.cloudfoundry.org/cfdev/network"
+	"os"
 )
 
 var _ = Describe("VpnKit", func() {
@@ -38,7 +39,7 @@ var _ = Describe("VpnKit", func() {
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session).Should(gexec.Exit())
-		//os.RemoveAll(tempDir)
+		os.RemoveAll(tempDir)
 	})
 
 	Describe("Setup", func() {
@@ -75,33 +76,4 @@ var _ = Describe("VpnKit", func() {
 			Expect(contents).To(ContainSubstring("CF Dev VPNkit Forwarder Service"))
 		})
 	})
-
-	//Describe("VPNKIT", func() {
-	//	var (
-	//		vmGuid string
-	//		vmName string
-	//	)
-	//
-	//	vmName = "cfdev"
-	//
-	//	BeforeEach(func() {
-	//		cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vmName))
-	//		err := cmd.Run()
-	//		Expect(err).ToNot(HaveOccurred())
-	//
-	//		cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("((Get-VM -Name %s).Id).Guid", vmName))
-	//		output, err := cmd.Output()
-	//		vmGuid = string(output)
-	//	})
-	//
-	//	AfterEach(func() {
-	//		cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
-	//		err := cmd.Run()
-	//		Expect(err).ToNot(HaveOccurred())
-	//	})
-	//
-	//	It("creates proper daemon spec", func() {
-	//		Expect(vpnkit.Start()).To(Succeed())
-	//	})
-	//})
 })
