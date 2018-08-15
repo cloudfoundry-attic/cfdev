@@ -13,6 +13,7 @@ import (
 	"code.cloudfoundry.org/cfdev/daemon"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"time"
 )
 
 var (
@@ -111,7 +112,7 @@ var _ = Describe("Winsw", func() {
 				return isRunning
 			}, 20, 1).Should(BeTrue())
 
-			Eventually(testFilePath).Should(BeAnExistingFile())
+			Eventually(testFilePath, 10*time.Second).Should(BeAnExistingFile())
 
 			By("stopping the service")
 			Expect(winsw.Stop(label)).To(Succeed())
