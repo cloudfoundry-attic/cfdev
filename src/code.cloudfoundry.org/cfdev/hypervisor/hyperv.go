@@ -15,20 +15,20 @@ type HyperV struct {
 }
 
 type VM struct {
+	Name string
 	DepsIso  string
 	MemoryMB int
 	CPUs     int
 }
 
 func (h *HyperV) CreateVM(vm VM) error {
-	var vmName = "cfdev"
 	var cfdevEfiIso = filepath.Join(h.Config.CacheDir, "cfdev-efi.iso")
 	if vm.DepsIso == "" {
 		vm.DepsIso = filepath.Join(h.Config.CacheDir, "cf-deps.iso")
 	}
 	var cfDevVHD = filepath.Join(h.Config.CFDevHome, "cfdev.vhd")
 
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vmName))
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vm.Name))
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("creating new vm: %s", err)
@@ -41,18 +41,18 @@ func (h *HyperV) CreateVM(vm VM) error {
 		fmt.Sprintf("-MemoryStartupBytes %dMB ", vm.MemoryMB)+
 		"-StaticMemory "+
 		fmt.Sprintf("-ProcessorCount %d", vm.CPUs),
-		vmName))
+		vm.Name))
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("setting vm properites (memoryMB:%d, cpus:%d): %s", vm.MemoryMB, vm.CPUs, err)
 	}
 
-	err = addVhdDrive(cfdevEfiIso, vmName)
+	err = addVhdDrive(cfdevEfiIso, vm.Name)
 	if err != nil {
 		return fmt.Errorf("adding dvd drive %s: %s", cfdevEfiIso, err)
 	}
 
-	err = addVhdDrive(vm.DepsIso, vmName)
+	err = addVhdDrive(vm.DepsIso, vm.Name)
 	if err != nil {
 		return fmt.Errorf("adding dvd drive %s: %s", vm.DepsIso, err)
 	}
@@ -60,7 +60,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VMNetworkAdapter "+
 		"-VMName %s "+
 		"-Name 'Network Adapter'",
-		vmName))
+		vm.Name))
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("removing netowrk adapter: %s", err)
@@ -82,7 +82,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 	}
 
 	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Add-VMHardDiskDrive -VMName %s "+
-		"-Path %s", vmName, cfDevVHD))
+		"-Path %s", vm.Name, cfDevVHD))
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("adding vhd %s : %s", cfDevVHD, err)
@@ -92,7 +92,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 		"-VMName %s "+
 		"-EnableSecureBoot Off "+
 		"-FirstBootDevice $cdrom",
-		vmName))
+		vm.Name))
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("setting firmware : %s", err)
@@ -101,7 +101,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 		"-VMName %s "+
 		"-number 1 "+
 		"-Path \\\\.\\pipe\\cfdev-com",
-		vmName))
+		vm.Name))
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("setting com port : %s", err)
@@ -121,7 +121,7 @@ func addVhdDrive(isoPath string, vmName string) error {
 }
 
 func (h *HyperV) exists(vmName string) (bool, error) {
-	cmd := exec.Command("powershell.exe", "-Command", "Get-VM -Name cfdev*")
+	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-VM -Name %s*", vmName))
 	output, err := cmd.Output()
 	if err != nil {
 		return false, fmt.Errorf("getting vms: %s", err)

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"code.cloudfoundry.org/cfdev/network"
 	"os"
+	"time"
 )
 
 var _ = Describe("VpnKit", func() {
@@ -38,7 +39,7 @@ var _ = Describe("VpnKit", func() {
 		command := exec.Command("powershell.exe", "-Command", registryDeleteCmd)
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(session).Should(gexec.Exit())
+		Eventually(session, 10 * time.Second).Should(gexec.Exit())
 		os.RemoveAll(tempDir)
 	})
 
@@ -68,7 +69,7 @@ var _ = Describe("VpnKit", func() {
 			command := exec.Command("powershell.exe", "-Command", `dir "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices"`)
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session).Should(gexec.Exit())
+			Eventually(session, 10 * time.Second).Should(gexec.Exit())
 			contents := string(session.Out.Contents())
 
 			Expect(contents).To(ContainSubstring("CF Dev VPNkit Ethernet Service"))

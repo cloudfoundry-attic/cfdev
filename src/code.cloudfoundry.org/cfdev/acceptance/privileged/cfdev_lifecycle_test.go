@@ -59,9 +59,13 @@ var _ = Describe("cfdev lifecycle", func() {
 
 	Context("starting the default cf dev file", func() {
 		BeforeEach(func() {
+			// stop should succeed even when nothing is running
+			stopSession := cf.Cf("dev", "stop")
+			Eventually(stopSession, 30*time.Second).Should(gexec.Exit(0))
+
 			isoPath := os.Getenv("ISO_PATH")
 			if isoPath != "" {
-				startSession = cf.Cf("dev", "start", "-f", isoPath, "-m", "8192")
+				startSession = cf.Cf("dev", "start", "-f", isoPath)
 			} else {
 				startSession = cf.Cf("dev", "start")
 			}
@@ -127,6 +131,10 @@ var _ = Describe("cfdev lifecycle", func() {
 
 			By("pushing an app")
 			PushAnApp()
+
+			By("rerunning cf dev start")
+			startSession = cf.Cf("dev", "start")
+			Eventually(startSession, 1*time.Hour).Should(gbytes.Say("CF Dev is already running..."))
 		})
 	})
 })

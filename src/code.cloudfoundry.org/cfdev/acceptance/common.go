@@ -1,9 +1,7 @@
 package acceptance
 
 import (
-	"archive/tar"
 	"crypto/tls"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -14,9 +12,6 @@ import (
 	"strings"
 	"syscall"
 
-	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/garden"
-	"code.cloudfoundry.org/garden/client"
 	"fmt"
 	"runtime"
 
@@ -101,11 +96,11 @@ func HttpServerIsListeningAt(url string) error {
 
 func EventuallyProcessStops(pid int, timeoutSec int) {
 	EventuallyWithOffset(1, func() (bool, error) {
-		return ProcessIsRunning(pid)
+		return processIsRunning(pid)
 	}, timeoutSec).Should(BeFalse())
 }
 
-func ProcessIsRunning(pid int) (bool, error) {
+func processIsRunning(pid int) (bool, error) {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
 		return false, err
@@ -117,16 +112,6 @@ func ProcessIsRunning(pid int) (bool, error) {
 
 	return true, nil
 }
-
-//func isProcessRunning(label string) func() (bool, error) {
-//	if runtime.GOOS == "windows" {
-//		return func() (bool, error) {
-//
-//		}
-//	} else {
-//		return IsLaunchdRunning(label)
-//	}
-//}
 
 func IsLaunchdRunning(label string) func() (bool, error) {
 	return func() (bool, error) {
@@ -178,30 +163,6 @@ func FileExists(file string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func GetFile(client client.Client, handle, path string) (string, error) {
-	c, err := client.Lookup(handle)
-	if err != nil {
-		return "", err
-	}
-	fh, err := c.StreamOut(garden.StreamOutSpec{
-		Path: path,
-	})
-	if err != nil {
-		return "", err
-	}
-	tr := tar.NewReader(fh)
-
-	_, err = tr.Next()
-	if err == io.EOF {
-		return "", errors.SafeWrap(nil, "file not found")
-	}
-	if err != nil {
-		return "", err
-	}
-	b, err := ioutil.ReadAll(tr)
-	return string(b), err
 }
 
 func GetCfdevHome() string {

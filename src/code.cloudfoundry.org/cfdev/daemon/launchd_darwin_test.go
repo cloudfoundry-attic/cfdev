@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"time"
 )
 
 var _ = Describe("Launchd", func() {
@@ -21,6 +22,7 @@ var _ = Describe("Launchd", func() {
 	var lnchd daemon.Launchd
 
 	BeforeEach(func() {
+		rand.Seed(time.Now().UTC().UnixNano())
 		label = randomDaemonName()
 		plistDir, _ = ioutil.TempDir("", "plist")
 		lnchd = daemon.Launchd{

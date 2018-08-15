@@ -76,7 +76,7 @@ func waitForAlias(addr string) error {
 	go func() {
 		for {
 			if exists, err := aliasExists(addr); !exists {
-				time.Sleep(1 * time.Second)
+				time.Sleep(3 * time.Second)
 			} else if err != nil {
 				done <- err
 				close(done)
@@ -91,7 +91,7 @@ func waitForAlias(addr string) error {
 	select {
 	case err := <-done:
 		return err
-	case _ = <-time.After(20 * time.Second):
+	case _ = <-time.After(1 * time.Minute):
 		return fmt.Errorf("timed out waiting for alias %s", addr)
 	}
 }

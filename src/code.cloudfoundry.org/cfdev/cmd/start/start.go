@@ -224,6 +224,7 @@ func (s *Start) Execute(args Args) error {
 
 	s.UI.Say("Creating the VM...")
 	if err := s.Hypervisor.CreateVM(hypervisor.VM{
+		Name: "cfdev",
 		CPUs:     args.Cpus,
 		MemoryMB: args.Mem,
 		DepsIso:  depsIsoPath,
