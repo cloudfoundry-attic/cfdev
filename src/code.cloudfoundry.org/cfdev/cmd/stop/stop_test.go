@@ -1,7 +1,6 @@
 package stop_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -75,9 +74,11 @@ var _ = Describe("Stop", func() {
 		mockVpnkit.EXPECT().Destroy()
 
 		if runtime.GOOS == "darwin" {
+			mockCfdevdClient.EXPECT().RemoveIPAlias()
 			mockCfdevdClient.EXPECT().Uninstall()
+		}else{
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 		}
-		mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 		Expect(stopCmd.Execute()).To(Succeed())
 	})
@@ -90,9 +91,11 @@ var _ = Describe("Stop", func() {
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
 			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().RemoveIPAlias()
 				mockCfdevdClient.EXPECT().Uninstall()
+			}else{
+				mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 			}
-			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop the VM: test"))
 		})
@@ -106,9 +109,11 @@ var _ = Describe("Stop", func() {
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
 			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().RemoveIPAlias()
 				mockCfdevdClient.EXPECT().Uninstall()
+			}else{
+				mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 			}
-			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy the VM: test"))
 		})
@@ -123,9 +128,11 @@ var _ = Describe("Stop", func() {
 			mockVpnkit.EXPECT().Destroy()
 
 			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().RemoveIPAlias()
 				mockCfdevdClient.EXPECT().Uninstall()
+			}else{
+				mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 			}
-			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop vpnkit: test"))
 		})
@@ -139,9 +146,11 @@ var _ = Describe("Stop", func() {
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy().Return(errors.New("test"))
 			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().RemoveIPAlias()
 				mockCfdevdClient.EXPECT().Uninstall()
+			}else{
+				mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 			}
-			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
 
 			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy vpnkit: test"))
 		})
@@ -155,9 +164,11 @@ var _ = Describe("Stop", func() {
 			mockVpnkit.EXPECT().Stop()
 			mockVpnkit.EXPECT().Destroy()
 			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().RemoveIPAlias().Return("", errors.New("test"))
 				mockCfdevdClient.EXPECT().Uninstall()
+			}else{
+				mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip").Return("", errors.New("test"))
 			}
-			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip").Return(fmt.Errorf("test"))
 
 			Expect(stopCmd.Execute()).To(MatchError(`cf dev stop: failed to remove IP aliases: test`))
 		})

@@ -23,6 +23,7 @@ func New(clientName, socketPath string) *Client {
 
 const eofReadingExitCodeMsg = "reading errorcode from cfdevd"
 const connectCfdevdMsg = "connecting to cfdevd"
+const removingIPAliasMsg = "removing IP aliases"
 
 // sends command and returns serverName (and error)
 func (c *Client) Send(command uint8) (string, error) {
@@ -36,13 +37,16 @@ func (c *Client) Send(command uint8) (string, error) {
 	if err := binary.Write(conn, binary.LittleEndian, handshake); err != nil {
 		return "", errors.SafeWrap(err, "sending handshake to cfdevd")
 	}
+
 	if err := binary.Read(conn, binary.LittleEndian, handshake); err != nil {
 		return "", errors.SafeWrap(err, "reading handshake from cfdevd")
 	}
+
 	serverName := string(handshake[:5])
 	if err := binary.Write(conn, binary.LittleEndian, []byte{command}); err != nil {
 		return serverName, errors.SafeWrap(err, "sending command to cfdevd")
 	}
+
 	errorCode := make([]byte, 1, 1)
 	if err := binary.Read(conn, binary.LittleEndian, errorCode); err != nil {
 		return serverName, errors.SafeWrap(err, eofReadingExitCodeMsg)
@@ -55,6 +59,17 @@ func (c *Client) Send(command uint8) (string, error) {
 func (c *Client) Uninstall() (string, error) {
 	name, err := c.Send(1)
 	if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), connectCfdevdMsg)) {
+		return name, nil
+	}
+	return name, err
+}
+
+func (c *Client) RemoveIPAlias() (string, error) {
+
+	name, err := c.Send(2)
+
+	if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), removingIPAliasMsg)) {
+
 		return name, nil
 	}
 	return name, err

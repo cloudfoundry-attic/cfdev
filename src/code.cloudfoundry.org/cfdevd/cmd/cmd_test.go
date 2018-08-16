@@ -26,12 +26,12 @@ var _ = Describe("cmd", func() {
 	})
 
 	It("returns an BindCommand when given a 6", func() {
-		badMessage := bytes.NewReader([]byte{uint8(6)})
+		message := bytes.NewReader([]byte{uint8(6)})
 
-		badCommand, err := cmd.UnmarshalCommand(badMessage)
+		command, err := cmd.UnmarshalCommand(message)
 
 		Expect(err).NotTo(HaveOccurred())
-		switch badCommand.(type) {
+		switch command.(type) {
 		case *cmd.BindCommand:
 		default:
 			Fail("wrong type!")
@@ -39,13 +39,26 @@ var _ = Describe("cmd", func() {
 	})
 
 	It("returns an UninstallCommand when given a 1", func() {
-		badMessage := bytes.NewReader([]byte{uint8(1)})
+		message := bytes.NewReader([]byte{uint8(1)})
 
-		badCommand, err := cmd.UnmarshalCommand(badMessage)
+		command, err := cmd.UnmarshalCommand(message)
 
 		Expect(err).NotTo(HaveOccurred())
-		switch badCommand.(type) {
+		switch command.(type) {
 		case *cmd.UninstallCommand:
+		default:
+			Fail("wrong type!")
+		}
+	})
+
+	It("returns a RemoveIPAliasCommand", func(){
+		message := bytes.NewReader([]byte{uint8(2)})
+
+		command, err := cmd.UnmarshalCommand(message)
+
+		Expect(err).NotTo(HaveOccurred())
+		switch command.(type) {
+		case *cmd.RemoveIPAliasCommand:
 		default:
 			Fail("wrong type!")
 		}

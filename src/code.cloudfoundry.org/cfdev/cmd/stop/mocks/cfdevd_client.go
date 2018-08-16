@@ -32,6 +32,19 @@ func (m *MockCfdevdClient) EXPECT() *MockCfdevdClientMockRecorder {
 	return m.recorder
 }
 
+// RemoveIPAlias mocks base method
+func (m *MockCfdevdClient) RemoveIPAlias() (string, error) {
+	ret := m.ctrl.Call(m, "RemoveIPAlias")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveIPAlias indicates an expected call of RemoveIPAlias
+func (mr *MockCfdevdClientMockRecorder) RemoveIPAlias() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveIPAlias", reflect.TypeOf((*MockCfdevdClient)(nil).RemoveIPAlias))
+}
+
 // Uninstall mocks base method
 func (m *MockCfdevdClient) Uninstall() (string, error) {
 	ret := m.ctrl.Call(m, "Uninstall")

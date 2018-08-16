@@ -15,6 +15,7 @@ type Command interface {
 }
 
 const UninstallType = uint8(1)
+const RemoveIPAliasType = uint8(2)
 const BindType = uint8(6)
 
 func UnmarshalCommand(conn io.Reader) (Command, error) {
@@ -28,6 +29,8 @@ func UnmarshalCommand(conn io.Reader) (Command, error) {
 		return &UninstallCommand{
 			DaemonRunner: daemon.New(""),
 		}, nil
+	case RemoveIPAliasType:
+		return &RemoveIPAliasCommand{}, nil
 	default:
 		return &UnimplementedCommand{
 			Instruction: instr,
