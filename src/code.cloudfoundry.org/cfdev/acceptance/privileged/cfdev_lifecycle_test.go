@@ -89,7 +89,7 @@ var _ = Describe("cfdev lifecycle", func() {
 
 			By("deploy finished - stopping...")
 			stopSession := cf.Cf("dev", "stop")
-			Eventually(stopSession, 30*time.Second).Should(gexec.Exit(0))
+			Eventually(stopSession, 2*time.Minute).Should(gexec.Exit(0))
 
 			//ensure pid is not running
 			if IsWindows() {
