@@ -8,6 +8,7 @@ import (
 	"errors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"os"
 )
 
 var _ = Describe("Util", func() {
@@ -17,6 +18,10 @@ var _ = Describe("Util", func() {
 		BeforeEach(func() {
 			tmpDir, _ = ioutil.TempDir("", "cfdev.util.")
 			_ = ioutil.WriteFile(filepath.Join(tmpDir, "dat1"), []byte("contents"), 0644)
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(tmpDir)
 		})
 
 		It("copies file", func() {

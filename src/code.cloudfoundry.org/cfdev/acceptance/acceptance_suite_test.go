@@ -37,7 +37,6 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	gexec.CleanupBuildArtifacts()
-	Expect(os.RemoveAll(tmpDir)).To(Succeed())
 })
 
 var _ = BeforeEach(func() {
@@ -62,6 +61,7 @@ var _ = BeforeEach(func() {
 var _ = AfterEach(func() {
 	session := cf.Cf("dev", "stop")
 	Eventually(session, 30, 1).Should(gexec.Exit())
+	Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	os.Unsetenv("CF_HOME")
 	os.Unsetenv("CFDEV_HOME")
 })

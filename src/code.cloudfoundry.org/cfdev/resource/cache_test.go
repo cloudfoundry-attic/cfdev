@@ -105,6 +105,10 @@ var _ = Describe("Cache Sync", func() {
 		}
 	})
 
+	AfterEach(func() {
+		os.RemoveAll(tmpDir)
+	})
+
 	It("downloads missing items to the target directory", func() {
 		Expect(cache.Sync(catalog)).To(Succeed())
 

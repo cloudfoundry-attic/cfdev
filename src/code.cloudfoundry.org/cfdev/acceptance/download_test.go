@@ -21,12 +21,13 @@ var _ = Describe("download", func() {
 	var (
 		cacheDir string
 		server   *httptest.Server
+		serverAssetsDir string
 	)
 
 	BeforeEach(func() {
 		cacheDir = filepath.Join(cfdevHome, "cache")
 
-		serverAssetsDir := stageServerAssets()
+		serverAssetsDir = stageServerAssets()
 		fileHandler := http.FileServer(http.Dir(serverAssetsDir))
 		server = httptest.NewServer(fileHandler)
 	})
@@ -34,6 +35,7 @@ var _ = Describe("download", func() {
 	AfterEach(func() {
 		gexec.Kill()
 		server.Close()
+		os.RemoveAll(serverAssetsDir)
 	})
 
 	Context("when the catalog is valid", func() {

@@ -31,6 +31,10 @@ var _ = Describe("Launchd", func() {
 		plistPath = filepath.Join(plistDir, label+".plist")
 	})
 
+	AfterEach(func() {
+		os.RemoveAll(plistDir)
+	})
+
 	Describe("AddDaemon", func() {
 		var binDir string
 
@@ -43,7 +47,6 @@ var _ = Describe("Launchd", func() {
 		AfterEach(func() {
 			exec.Command("launchctl", "remove", label).Run()
 			Eventually(loadedDaemons).ShouldNot(ContainSubstring(label))
-			Expect(os.RemoveAll(plistDir)).To(Succeed())
 			Expect(os.RemoveAll(binDir)).To(Succeed())
 		})
 
@@ -149,7 +152,6 @@ var _ = Describe("Launchd", func() {
 		})
 
 		AfterEach(func() {
-			Expect(os.RemoveAll(plistDir)).To(Succeed())
 			Expect(os.RemoveAll(binDir)).To(Succeed())
 		})
 
@@ -271,7 +273,10 @@ var _ = Describe("Launchd", func() {
 				PListDir: tmpDir,
 			}
 		})
-		AfterEach(func() { Expect(os.RemoveAll(tmpDir)).To(Succeed()) })
+
+		AfterEach(func() {
+			Expect(os.RemoveAll(tmpDir)).To(Succeed())
+		})
 
 		Context("label not loaded", func() {
 			It("returns false", func() {

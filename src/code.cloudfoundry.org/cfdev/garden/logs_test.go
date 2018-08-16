@@ -26,6 +26,10 @@ var _ = Describe("Logs", func() {
 		fakeClient.CreateReturns(nil, errors.New("some error"))
 	})
 
+	AfterEach(func() {
+		os.RemoveAll(destinationDir)
+	})
+
 	JustBeforeEach(func() {
 		err = gdn.FetchLogs(fakeClient, destinationDir)
 	})
@@ -59,20 +63,19 @@ var _ = Describe("Logs", func() {
 		BeforeEach(func() {
 			fakeContainer = new(gardenfakes.FakeContainer)
 			fakeClient.CreateReturns(fakeContainer, nil)
+
+			var err error
+			destinationDir, err = ioutil.TempDir("", "cfdev-test-")
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		AfterEach(func() {
-			os.RemoveAll(destinationDir)
-
 			Expect(fakeClient.DestroyCallCount()).To(Equal(1))
 			Expect(fakeClient.DestroyArgsForCall(0)).To(Equal("fetch-logs"))
 		})
 
 		Context("retrieving the logs succeeds", func() {
 			BeforeEach(func() {
-				var err error
-				destinationDir, err = ioutil.TempDir("", "cfdev-test-")
-				Expect(err).NotTo(HaveOccurred())
 
 				fakeContainer.StreamOutReturns(newFakeReadCloser("some-tar-file"), nil)
 			})
@@ -91,9 +94,7 @@ var _ = Describe("Logs", func() {
 
 		Context("retrieving the logs succeeds but destination dir does not exist", func() {
 			BeforeEach(func() {
-				dir, err := ioutil.TempDir("", "cfdev-test-")
-				Expect(err).NotTo(HaveOccurred())
-				destinationDir = filepath.Join(dir, "banana")
+				destinationDir = filepath.Join(destinationDir, "banana")
 
 				fakeContainer.StreamOutReturns(newFakeReadCloser("some-tar-file"), nil)
 			})
