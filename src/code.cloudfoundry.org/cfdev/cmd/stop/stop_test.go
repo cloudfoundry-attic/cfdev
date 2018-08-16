@@ -167,7 +167,7 @@ var _ = Describe("Stop", func() {
 				mockCfdevdClient.EXPECT().RemoveIPAlias().Return("", errors.New("test"))
 				mockCfdevdClient.EXPECT().Uninstall()
 			}else{
-				mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip").Return("", errors.New("test"))
+				mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip").Return(errors.New("test"))
 			}
 
 			Expect(stopCmd.Execute()).To(MatchError(`cf dev stop: failed to remove IP aliases: test`))

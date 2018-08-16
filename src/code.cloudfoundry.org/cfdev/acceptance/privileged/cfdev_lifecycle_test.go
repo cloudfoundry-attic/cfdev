@@ -105,6 +105,10 @@ var _ = Describe("cfdev lifecycle", func() {
 
 			gexec.KillAndWait()
 			RemoveIPAliases(BoshDirectorIP, CFRouterIP)
+
+			if IsWindows() {
+				exec.Command("powershell.exe", "-Command", "Stop-Process -Name cfdev,cf -Force -EA 0").Run()
+			}
 		})
 
 		It("runs the entire vm lifecycle", func() {

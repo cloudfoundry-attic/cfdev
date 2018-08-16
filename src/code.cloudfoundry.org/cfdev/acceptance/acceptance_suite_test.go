@@ -20,6 +20,7 @@ import (
 var (
 	pluginPath                string
 	tmpDir, cfHome, cfdevHome string
+	cfPluginHome              string
 )
 
 func TestCFDev(t *testing.T) {
@@ -33,23 +34,12 @@ var _ = BeforeSuite(func() {
 		Fail("Please set CFDEV_PLUGIN_PATH env var to a fully qualified path to a valid plugin")
 	}
 	SetDefaultEventuallyTimeout(5 * time.Second)
-})
 
-var _ = AfterSuite(func() {
-	gexec.CleanupBuildArtifacts()
-})
-
-var _ = BeforeEach(func() {
 	var err error
-	tmpDir, err = ioutil.TempDir("", "cfdev-acceptance-")
+	cfPluginHome, err = ioutil.TempDir("", "cfdev-plugin-")
 	Expect(err).ToNot(HaveOccurred())
-	cfHome = filepath.Join(tmpDir, "cf_home")
-	Expect(os.Mkdir(cfHome, 0755)).To(Succeed())
-	os.Setenv("CF_HOME", cfHome)
 
-	cfdevHome = filepath.Join(tmpDir, "cfdev_home")
-	Expect(os.Mkdir(cfdevHome, 0755)).To(Succeed())
-	os.Setenv("CFDEV_HOME", cfdevHome)
+	os.Setenv("CF_PLUGIN_HOME", cfPluginHome)
 
 	session := cf.Cf("install-plugin", pluginPath, "-f")
 	Eventually(session).Should(gexec.Exit(0))
@@ -58,10 +48,33 @@ var _ = BeforeEach(func() {
 	Eventually(session).Should(gexec.Exit(0))
 })
 
+var _ = AfterSuite(func() {
+	session := cf.Cf("uninstall-plugin", "cfdev")
+	Eventually(session, 30, 1).Should(gexec.Exit())
+	os.Unsetenv("CF_PLUGIN_HOME")
+	gexec.CleanupBuildArtifacts()
+})
+
+var _ = BeforeEach(func() {
+	var err error
+	tmpDir, err = ioutil.TempDir("", "cfdev-acceptance-")
+	Expect(err).ToNot(HaveOccurred())
+
+	cfHome = filepath.Join(tmpDir, "cf_home")
+	Expect(os.Mkdir(cfHome, 0755)).To(Succeed())
+	os.Setenv("CF_HOME", cfHome)
+
+	cfdevHome = filepath.Join(tmpDir, "cfdev_home")
+	Expect(os.Mkdir(cfdevHome, 0755)).To(Succeed())
+	os.Setenv("CFDEV_HOME", cfdevHome)
+})
+
 var _ = AfterEach(func() {
 	session := cf.Cf("dev", "stop")
 	Eventually(session, 30, 1).Should(gexec.Exit())
+
 	Expect(os.RemoveAll(tmpDir)).To(Succeed())
+
 	os.Unsetenv("CF_HOME")
 	os.Unsetenv("CFDEV_HOME")
 })

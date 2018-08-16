@@ -41,6 +41,10 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 	})
 
 	AfterEach(func() {
+		if IsWindows() {
+			exec.Command("powershell.exe", "-Command", "Stop-Process -Name cfdev,cf -Force -EA 0").Run()
+		}
+
 		session.Kill()
 	})
 
