@@ -84,7 +84,7 @@ var _ = Describe("cfdev lifecycle", func() {
 				Eventually(logsSession).Should(gexec.Exit())
 			}
 
-			startSession.Terminate()
+			startSession.Kill()
 			Eventually(startSession).Should(gexec.Exit())
 
 			By("deploy finished - stopping...")
