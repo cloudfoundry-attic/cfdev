@@ -76,17 +76,14 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}
 
-
 	if err := s.VpnKit.Destroy(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
 	}
-
 
 	if runtime.GOOS == "darwin" {
 		if _, err := s.CfdevdClient.RemoveIPAlias(); err != nil {
 			reterr = errors.SafeWrap(err, "failed to remove IP aliases")
 		}
-
 
 		if _, err := s.CfdevdClient.Uninstall(); err != nil {
 			reterr = errors.SafeWrap(err, "failed to uninstall cfdevd")
@@ -97,7 +94,6 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 			reterr = errors.SafeWrap(err, "failed to remove IP aliases")
 		}
 	}
-
 
 	if reterr != nil {
 		return errors.SafeWrap(reterr, "cf dev stop")

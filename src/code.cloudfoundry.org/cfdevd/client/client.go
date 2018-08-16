@@ -23,7 +23,6 @@ func New(clientName, socketPath string) *Client {
 
 const eofReadingExitCodeMsg = "reading errorcode from cfdevd"
 const connectCfdevdMsg = "connecting to cfdevd"
-const removingIPAliasMsg = "removing IP aliases"
 
 // sends command and returns serverName (and error)
 func (c *Client) Send(command uint8) (string, error) {
@@ -65,11 +64,8 @@ func (c *Client) Uninstall() (string, error) {
 }
 
 func (c *Client) RemoveIPAlias() (string, error) {
-
 	name, err := c.Send(2)
-
-	if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), removingIPAliasMsg)) {
-
+	if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), connectCfdevdMsg)) {
 		return name, nil
 	}
 	return name, err
