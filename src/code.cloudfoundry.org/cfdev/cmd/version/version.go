@@ -1,7 +1,7 @@
 package version
 
 import (
-	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/semver"
 	"github.com/spf13/cobra"
 )
 
@@ -10,17 +10,19 @@ type UI interface {
 }
 
 type Version struct {
-	UI     UI
-	Config config.Config
+	UI      UI
+	Version *semver.Version
 }
 
-func (v *Version) Run(_ *cobra.Command, _rgs []string) {
-	v.UI.Say("Version: %s", v.Config.CliVersion.Original)
+func (v *Version) Execute() {
+	v.UI.Say("Version: %s", v.Version.Original)
 }
 
 func (v *Version) Cmd() *cobra.Command {
 	return &cobra.Command{
 		Use: "version",
-		Run: v.Run,
+		Run: func(_ *cobra.Command, _ []string) {
+			v.Execute()
+		},
 	}
 }

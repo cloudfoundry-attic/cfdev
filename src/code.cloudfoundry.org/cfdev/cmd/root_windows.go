@@ -79,8 +79,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 	for _, cmd := range []cmdBuilder{
 		&b1.Version{
-			UI:     ui,
-			Config: config,
+			UI:      ui,
+			Version: config.CliVersion,
 		},
 		&b2.Bosh{
 			Exit:        exit,

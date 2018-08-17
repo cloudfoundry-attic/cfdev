@@ -17,12 +17,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"runtime"
+
 	. "code.cloudfoundry.org/cfdev/acceptance"
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
-	"runtime"
 )
 
 var _ = Describe("cfdev lifecycle", func() {
@@ -170,7 +171,6 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 		Eventually(boshEnv, time.Minute, 10*time.Second).Should(gexec.Exit(0))
 	}
 }
-
 
 func PushAnApp() {
 	server, port := fakeTcpServer()
