@@ -20,11 +20,15 @@ var _ = Describe("Logs", func() {
 		fakeClient     *gardenfakes.FakeClient
 		err            error
 		destinationDir string
+		controller     *provision.Controller
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
+		controller = &provision.Controller{
+			Client: fakeClient,
+		}
 	})
 
 	AfterEach(func() {
@@ -32,7 +36,7 @@ var _ = Describe("Logs", func() {
 	})
 
 	JustBeforeEach(func() {
-		err = provision.FetchLogs(fakeClient, destinationDir)
+		err = controller.FetchLogs(destinationDir)
 	})
 
 	It("creates a container", func() {

@@ -13,7 +13,7 @@ var (
 	logsContainerHandle = "fetch-logs"
 )
 
-func FetchLogs(client garden.Client, destinationDir string) error {
+func (c *Controller) FetchLogs(destinationDir string) error {
 	containerSpec := garden.ContainerSpec{
 		Handle:     logsContainerHandle,
 		Privileged: true,
@@ -30,11 +30,11 @@ func FetchLogs(client garden.Client, destinationDir string) error {
 		},
 	}
 
-	container, err := client.Create(containerSpec)
+	container, err := c.Client.Create(containerSpec)
 	if err != nil {
 		return err
 	}
-	defer client.Destroy(logsContainerHandle)
+	defer c.Client.Destroy(logsContainerHandle)
 
 	tr, err := container.StreamOut(garden.StreamOutSpec{Path: "/var/vcap/logs"})
 	if err != nil {

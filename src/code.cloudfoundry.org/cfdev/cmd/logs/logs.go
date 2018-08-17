@@ -5,43 +5,48 @@ import (
 
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/provision"
-	"code.cloudfoundry.org/garden/client"
-	"code.cloudfoundry.org/garden/client/connection"
 	"github.com/spf13/cobra"
 )
 
+//go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cmd/logs UI
 type UI interface {
 	Say(message string, args ...interface{})
 }
 
+//go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/logs Provisioner
+type Provisioner interface {
+	FetchLogs(string) error
+}
+
 type Logs struct {
-	UI   UI
-	Args struct {
-		DestDir string
-	}
+	UI          UI
+	Provisioner Provisioner
+}
+
+type Args struct {
+	DestDir string
 }
 
 func (l *Logs) Cmd() *cobra.Command {
+	args := Args{}
 	cmd := &cobra.Command{
-		Use:  "logs",
-		RunE: l.RunE,
+		Use: "logs",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return l.Logs(args)
+		},
 	}
-
-	cmd.PersistentFlags().StringVarP(&l.Args.DestDir, "dir", "d", ".", "Destination directory")
+	cmd.PersistentFlags().StringVarP(&args.DestDir, "dir", "d", ".", "Destination directory")
 	cmd.Hidden = true
 	return cmd
 }
 
-func (l *Logs) RunE(cmd *cobra.Command, args []string) error {
-	gClient := client.New(connection.New("tcp", "localhost:8888"))
-
-	err := provision.FetchLogs(gClient, l.Args.DestDir)
+func (l *Logs) Logs(args Args) error {
+	err := l.Provisioner.FetchLogs(args.DestDir)
 	if err != nil {
 		return errors.SafeWrap(err, "failed to fetch cfdev logs")
 	}
 
-	dir, _ := filepath.Abs(l.Args.DestDir)
-
+	dir, _ := filepath.Abs(args.DestDir)
 	destinationPath := filepath.Join(dir, provision.LogsFileName)
 
 	l.UI.Say("Logs downloaded to " + destinationPath)
