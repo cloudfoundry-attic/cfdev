@@ -63,8 +63,8 @@ func (e *Environment) Prepare(config bosh.Config) (string, error) {
 				fmt.Fprintf(&output, "Remove-Item Env:%s;\n", envvar)
 			}
 		}
-
 	}
+
 	for _, name := range order {
 		if runtime.GOOS != "windows" {
 			fmt.Fprintf(&output, "export %s=\"%s\";\n", name, values[name])
@@ -74,5 +74,4 @@ func (e *Environment) Prepare(config bosh.Config) (string, error) {
 	}
 
 	return strings.TrimSpace(output.String()), nil
-
 }

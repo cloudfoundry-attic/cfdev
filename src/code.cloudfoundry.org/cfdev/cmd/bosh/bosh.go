@@ -12,10 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cmd/bosh UI
 type UI interface {
 	Say(message string, args ...interface{})
 }
 
+//go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/bosh Provisioner
 type Provisioner interface {
 	FetchBOSHConfig() (bosh.Config, error)
 }
@@ -39,14 +41,16 @@ func (b *Bosh) Cmd() *cobra.Command {
 		},
 	}
 	envCmd := &cobra.Command{
-		Use:  "env",
-		RunE: b.RunE,
+		Use: "env",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return b.Env()
+		},
 	}
 	cmd.AddCommand(envCmd)
 	return cmd
 }
 
-func (b *Bosh) RunE(cmd *cobra.Command, args []string) error {
+func (b *Bosh) Env() error {
 	go func() {
 		<-b.Exit
 		os.Exit(128)
