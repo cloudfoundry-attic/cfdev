@@ -13,7 +13,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/spf13/cobra"
 
@@ -73,14 +73,14 @@ type Hypervisor interface {
 	IsRunning(vmName string) (bool, error)
 }
 
-//go:generate mockgen -package mocks -destination mocks/garden.go code.cloudfoundry.org/cfdev/cmd/start GardenClient
-type GardenClient interface {
+//go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/start Provisioner
+type Provisioner interface {
 	Ping() error
 	DeployBosh() error
 	DeployCloudFoundry([]string) error
-	GetServices() ([]garden.Service, string, error)
-	DeployServices(garden.UI, []garden.Service) error
-	ReportProgress(garden.UI, string)
+	GetServices() ([]provision.Service, string, error)
+	DeployServices(provision.UI, []provision.Service) error
+	ReportProgress(provision.UI, string)
 }
 
 //go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start IsoReader
@@ -109,7 +109,7 @@ type Start struct {
 	CFDevD          CFDevD
 	VpnKit          VpnKit
 	Hypervisor      Hypervisor
-	GardenClient    GardenClient
+	Provisioner     Provisioner
 }
 
 const compatibilityVersion = "v1"
@@ -224,7 +224,7 @@ func (s *Start) Execute(args Args) error {
 
 	s.UI.Say("Creating the VM...")
 	if err := s.Hypervisor.CreateVM(hypervisor.VM{
-		Name: "cfdev",
+		Name:     "cfdev",
 		CPUs:     args.Cpus,
 		MemoryMB: args.Mem,
 		DepsIso:  depsIsoPath,
@@ -259,21 +259,20 @@ func (s *Start) Execute(args Args) error {
 	return nil
 }
 
-func(s *Start) provision(isoConfig iso.Metadata, registries []string) error {
+func (s *Start) provision(isoConfig iso.Metadata, registries []string) error {
 	s.UI.Say("Deploying the BOSH Director...")
-	if err := s.GardenClient.DeployBosh(); err != nil {
+	if err := s.Provisioner.DeployBosh(); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
 	}
 
 	s.UI.Say("Deploying CF...")
-	s.GardenClient.ReportProgress(s.UI, "cf")
-	if err := s.GardenClient.DeployCloudFoundry(registries); err != nil {
+	s.Provisioner.ReportProgress(s.UI, "cf")
+	if err := s.Provisioner.DeployCloudFoundry(registries); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	err := s.GardenClient.DeployServices(s.UI, isoConfig.Services)
-	if err != nil {
-		return err
+	if err := s.Provisioner.DeployServices(s.UI, isoConfig.Services); err != nil {
+		return errors.SafeWrap(err, "Failed to deploy services")
 	}
 
 	if isoConfig.Message != "" {
@@ -288,7 +287,7 @@ func(s *Start) provision(isoConfig iso.Metadata, registries []string) error {
 
 func (s *Start) waitForGarden() {
 	for {
-		if err := s.GardenClient.Ping(); err == nil {
+		if err := s.Provisioner.Ping(); err == nil {
 			return
 		}
 		time.Sleep(time.Second)

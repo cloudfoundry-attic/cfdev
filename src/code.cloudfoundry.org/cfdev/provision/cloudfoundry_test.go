@@ -1,4 +1,4 @@
-package garden_test
+package provision_test
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	gdn "code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/gardenfakes"
 	"gopkg.in/yaml.v2"
@@ -18,13 +18,13 @@ var _ = Describe("DeployCloudFoundry", func() {
 		fakeClient       *gardenfakes.FakeClient
 		err              error
 		dockerRegistries []string
-		gclient          *gdn.Garden
+		gclient          *provision.Controller
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
-		gclient = &gdn.Garden{Client: fakeClient}
+		gclient = &provision.Controller{Client: fakeClient}
 	})
 
 	JustBeforeEach(func() {

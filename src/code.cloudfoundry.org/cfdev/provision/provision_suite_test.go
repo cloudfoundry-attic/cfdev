@@ -1,4 +1,4 @@
-package garden_test
+package provision_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestGarden(t *testing.T) {
+func TestProvision(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "cf dev - garden suite")
+	RunSpecs(t, "Provision Suite")
 }

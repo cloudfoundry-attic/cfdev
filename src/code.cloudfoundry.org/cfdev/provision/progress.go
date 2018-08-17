@@ -1,13 +1,14 @@
-package garden
+package provision
 
 import (
 	"io"
 	"time"
 
+	"fmt"
+
 	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/singlelinewriter"
-	"fmt"
 )
 
 type UI interface {
@@ -15,8 +16,8 @@ type UI interface {
 	Writer() io.Writer
 }
 
-func (g *Garden) DeployServices(ui UI, services []Service) error {
-	config, err := g.FetchBOSHConfig()
+func (c *Controller) DeployServices(ui UI, services []Service) error {
+	config, err := c.FetchBOSHConfig()
 	if err != nil {
 		return err
 	}
@@ -33,10 +34,10 @@ func (g *Garden) DeployServices(ui UI, services []Service) error {
 		ui.Say("Deploying %s...", service.Name)
 
 		go func(handle string, script string) {
-			errChan <- g.DeployService(handle, script)
+			errChan <- c.DeployService(handle, script)
 		}(service.Handle, service.Script)
 
-		err := g.report(start, ui, b, service, errChan)
+		err := c.report(start, ui, b, service, errChan)
 		if err != nil {
 			return err
 		}
@@ -45,7 +46,7 @@ func (g *Garden) DeployServices(ui UI, services []Service) error {
 	return nil
 }
 
-func (g *Garden) report(start time.Time, ui UI, b *bosh.Bosh, service Service, errChan chan error) error {
+func (c *Controller) report(start time.Time, ui UI, b *bosh.Bosh, service Service, errChan chan error) error {
 	for {
 		select {
 		case err := <-errChan:
@@ -72,12 +73,12 @@ func (g *Garden) report(start time.Time, ui UI, b *bosh.Bosh, service Service, e
 	}
 }
 
-func (g *Garden) ReportProgress(ui UI, deploymentName string) {
+func (c *Controller) ReportProgress(ui UI, deploymentName string) {
 	go func() {
 		start := time.Now()
 		lineWriter := singlelinewriter.New(ui.Writer())
 		lineWriter.Say("  Uploading Releases")
-		config, err := g.FetchBOSHConfig()
+		config, err := c.FetchBOSHConfig()
 		b, err := bosh.New(config)
 		if err == nil {
 			ch := b.VMProgress(deploymentName)

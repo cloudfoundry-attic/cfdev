@@ -1,17 +1,18 @@
-package garden
+package provision
 
 import (
 	"bytes"
 	"fmt"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/garden"
-	"gopkg.in/yaml.v2"
 	"code.cloudfoundry.org/cfdev/util"
+	"code.cloudfoundry.org/garden"
 )
 
-func (g *Garden) FetchBOSHConfig() (bosh.Config, error) {
+func (c *Controller) FetchBOSHConfig() (bosh.Config, error) {
 	containerSpec := garden.ContainerSpec{
 		Handle:     "fetch-bosh-config",
 		Privileged: true,
@@ -28,15 +29,15 @@ func (g *Garden) FetchBOSHConfig() (bosh.Config, error) {
 		},
 	}
 
-	container, err := g.Client.Create(containerSpec)
+	container, err := c.Client.Create(containerSpec)
 	if err != nil {
 		return bosh.Config{}, err
 	}
-	defer g.Client.Destroy("fetch-bosh-config")
+	defer c.Client.Destroy("fetch-bosh-config")
 
 	var resp yamlResponse
 	err = util.Perform(3, func() error {
-		return g.fetchBOSHConfig(container, &resp)
+		return c.fetchBOSHConfig(container, &resp)
 	})
 
 	if err != nil {
@@ -46,7 +47,7 @@ func (g *Garden) FetchBOSHConfig() (bosh.Config, error) {
 	return resp.convert()
 }
 
-func (g *Garden) fetchBOSHConfig(container garden.Container, resp *yamlResponse) error {
+func (c *Controller) fetchBOSHConfig(container garden.Container, resp *yamlResponse) error {
 	buffer := &bytes.Buffer{}
 	process, err := container.Run(garden.ProcessSpec{
 		Path: "cat",

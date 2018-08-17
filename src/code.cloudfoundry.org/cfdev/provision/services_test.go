@@ -1,4 +1,4 @@
-package garden_test
+package provision_test
 
 import (
 	"errors"
@@ -6,26 +6,26 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	gdn "code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/gardenfakes"
 )
 
-var _ = Describe("DeployBosh", func() {
+var _ = Describe("DeployMysql", func() {
 	var (
 		fakeClient *gardenfakes.FakeClient
 		err        error
-		gclient    *gdn.Garden
+		gclient    *provision.Controller
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
-		gclient = &gdn.Garden{Client: fakeClient}
+		gclient = &provision.Controller{Client: fakeClient}
 	})
 
 	JustBeforeEach(func() {
-		err = gclient.DeployBosh()
+		err = gclient.DeployService("deploy-mysql", "bin/deploy-mysql")
 	})
 
 	It("creates a container", func() {
@@ -33,7 +33,7 @@ var _ = Describe("DeployBosh", func() {
 		spec := fakeClient.CreateArgsForCall(0)
 
 		Expect(spec).To(Equal(garden.ContainerSpec{
-			Handle:     "deploy-bosh",
+			Handle:     "deploy-mysql",
 			Privileged: true,
 			Network:    "10.246.0.0/16",
 			Image: garden.ImageRef{
@@ -65,19 +65,20 @@ var _ = Describe("DeployBosh", func() {
 			fakeClient.CreateReturns(fakeContainer, nil)
 		})
 
-		It("starts to deploy bosh", func() {
+		It("starts to deploy mysql", func() {
 			Expect(fakeContainer.RunCallCount()).To(Equal(1))
 
-			spec, _ := fakeContainer.RunArgsForCall(0)
+			spec, io := fakeContainer.RunArgsForCall(0)
+			Expect(io).To(Equal(garden.ProcessIO{}))
 			Expect(spec).To(Equal(garden.ProcessSpec{
-				ID:   "deploy-bosh",
+				ID:   "deploy-mysql",
 				Path: "/bin/bash",
-				Args: []string{"/var/vcap/cache/bin/deploy-bosh"},
+				Args: []string{"/var/vcap/cache/bin/deploy-mysql"},
 				User: "root",
 			}))
 		})
 
-		Context("when deploying bosh succeeds", func() {
+		Context("when deploying mysql succeeds", func() {
 			BeforeEach(func() {
 				process := new(gardenfakes.FakeProcess)
 				process.WaitReturns(0, nil)
@@ -91,7 +92,7 @@ var _ = Describe("DeployBosh", func() {
 			It("deletes the container", func() {
 				Expect(fakeClient.DestroyCallCount()).To(Equal(1))
 				handle := fakeClient.DestroyArgsForCall(0)
-				Expect(handle).To(Equal("deploy-bosh"))
+				Expect(handle).To(Equal("deploy-mysql"))
 			})
 		})
 

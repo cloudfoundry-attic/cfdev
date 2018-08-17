@@ -1,15 +1,17 @@
-package garden
+package provision
 
 import (
 	"fmt"
+
+	yaml "gopkg.in/yaml.v2"
 
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 )
 
-func (g *Garden) DeployBosh() error {
+func (c *Controller) DeployCloudFoundry(dockerRegistries []string) error {
 	containerSpec := garden.ContainerSpec{
-		Handle:     "deploy-bosh",
+		Handle:     "deploy-cf",
 		Privileged: true,
 		Network:    "10.246.0.0/16",
 		Image: garden.ImageRef{
@@ -29,15 +31,25 @@ func (g *Garden) DeployBosh() error {
 		},
 	}
 
-	container, err := g.Client.Create(containerSpec)
+	if len(dockerRegistries) > 0 {
+		bytes, err := yaml.Marshal(dockerRegistries)
+
+		if err != nil {
+			return err
+		}
+
+		containerSpec.Env = append(containerSpec.Env, "DOCKER_REGISTRIES="+string(bytes))
+	}
+
+	container, err := c.Client.Create(containerSpec)
 	if err != nil {
 		return err
 	}
 
 	process, err := container.Run(garden.ProcessSpec{
-		ID:   "deploy-bosh",
+		ID:   "deploy-cf",
 		Path: "/bin/bash",
-		Args: []string{"/var/vcap/cache/bin/deploy-bosh"},
+		Args: []string{"/var/vcap/cache/bin/deploy-cf"},
 		User: "root",
 	}, garden.ProcessIO{})
 
@@ -51,10 +63,10 @@ func (g *Garden) DeployBosh() error {
 	}
 
 	if exitCode != 0 {
-		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
+		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %d", exitCode))
 	}
 
-	g.Client.Destroy("deploy-bosh")
+	c.Client.Destroy("deploy-cf")
 
 	return nil
 }

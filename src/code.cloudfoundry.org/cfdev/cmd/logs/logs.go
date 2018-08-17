@@ -1,12 +1,13 @@
 package logs
 
 import (
+	"path/filepath"
+
 	"code.cloudfoundry.org/cfdev/errors"
-	gdn "code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
 	"github.com/spf13/cobra"
-	"path/filepath"
 )
 
 type UI interface {
@@ -34,14 +35,14 @@ func (l *Logs) Cmd() *cobra.Command {
 func (l *Logs) RunE(cmd *cobra.Command, args []string) error {
 	gClient := client.New(connection.New("tcp", "localhost:8888"))
 
-	err := gdn.FetchLogs(gClient, l.Args.DestDir)
+	err := provision.FetchLogs(gClient, l.Args.DestDir)
 	if err != nil {
 		return errors.SafeWrap(err, "failed to fetch cfdev logs")
 	}
 
 	dir, _ := filepath.Abs(l.Args.DestDir)
 
-	destinationPath := filepath.Join(dir, gdn.LogsFileName)
+	destinationPath := filepath.Join(dir, provision.LogsFileName)
 
 	l.UI.Say("Logs downloaded to " + destinationPath)
 	return nil

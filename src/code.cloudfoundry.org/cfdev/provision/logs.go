@@ -1,10 +1,11 @@
-package garden
+package provision
 
 import (
-	"code.cloudfoundry.org/garden"
 	"io"
 	"os"
 	"path/filepath"
+
+	"code.cloudfoundry.org/garden"
 )
 
 var (

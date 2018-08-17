@@ -15,7 +15,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd/start"
 	"code.cloudfoundry.org/cfdev/cmd/start/mocks"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/golang/mock/gomock"
 	"code.cloudfoundry.org/cfdev/hypervisor"
@@ -33,7 +33,7 @@ var _ = Describe("Start", func() {
 		mockCFDevD          *mocks.MockCFDevD
 		mockVpnKit          *mocks.MockVpnKit
 		mockHypervisor      *mocks.MockHypervisor
-		mockGardenClient    *mocks.MockGardenClient
+		mockProvisioner     *mocks.MockProvisioner
 		mockIsoReader       *mocks.MockIsoReader
 
 		startCmd      start.Start
@@ -56,7 +56,7 @@ var _ = Describe("Start", func() {
 		mockCFDevD = mocks.NewMockCFDevD(mockController)
 		mockVpnKit = mocks.NewMockVpnKit(mockController)
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
-		mockGardenClient = mocks.NewMockGardenClient(mockController)
+		mockProvisioner = mocks.NewMockProvisioner(mockController)
 		mockIsoReader = mocks.NewMockIsoReader(mockController)
 
 		localExitChan = make(chan string, 3)
@@ -89,7 +89,7 @@ var _ = Describe("Start", func() {
 			CFDevD:          mockCFDevD,
 			VpnKit:          mockVpnKit,
 			Hypervisor:      mockHypervisor,
-			GardenClient:    mockGardenClient,
+			Provisioner:     mockProvisioner,
 			IsoReader:       mockIsoReader,
 		}
 
@@ -97,7 +97,7 @@ var _ = Describe("Start", func() {
 		metadata = iso.Metadata{
 			Version:       "v1",
 			DefaultMemory: 8765,
-			Services: []garden.Service{
+			Services: []provision.Service{
 				{
 					Name:       "some-service",
 					Handle:     "some-handle",
@@ -154,13 +154,13 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
-					mockGardenClient.EXPECT().Ping(),
+					mockProvisioner.EXPECT().Ping(),
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-					mockGardenClient.EXPECT().DeployBosh(),
+					mockProvisioner.EXPECT().DeployBosh(),
 					mockUI.EXPECT().Say("Deploying CF..."),
-					mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
-					mockGardenClient.EXPECT().DeployCloudFoundry(nil),
-					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
+					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+					mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
 						{
 							Name:       "some-service",
 							Handle:     "some-handle",
@@ -220,13 +220,13 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for Garden..."),
-						mockGardenClient.EXPECT().Ping(),
+						mockProvisioner.EXPECT().Ping(),
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-						mockGardenClient.EXPECT().DeployBosh(),
+						mockProvisioner.EXPECT().DeployBosh(),
 						mockUI.EXPECT().Say("Deploying CF..."),
-						mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
-						mockGardenClient.EXPECT().DeployCloudFoundry(nil),
-						mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
+						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
 							{
 								Name:       "some-service",
 								Handle:     "some-handle",
@@ -286,7 +286,7 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
-					mockGardenClient.EXPECT().Ping(),
+					mockProvisioner.EXPECT().Ping(),
 				)
 
 				//no provision message message
@@ -375,14 +375,14 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for Garden..."),
-					mockGardenClient.EXPECT().Ping(),
+					mockProvisioner.EXPECT().Ping(),
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-					mockGardenClient.EXPECT().DeployBosh(),
+					mockProvisioner.EXPECT().DeployBosh(),
 					mockUI.EXPECT().Say("Deploying CF..."),
-					mockGardenClient.EXPECT().ReportProgress(mockUI, "cf"),
-					mockGardenClient.EXPECT().DeployCloudFoundry(nil),
+					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
 
-					mockGardenClient.EXPECT().DeployServices(mockUI, []garden.Service{
+					mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
 						{
 							Name:       "some-service",
 							Handle:     "some-handle",

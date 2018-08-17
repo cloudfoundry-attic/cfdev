@@ -1,11 +1,11 @@
-package garden_test
+package provision_test
 
 import (
 	"errors"
 	"fmt"
 
 	"code.cloudfoundry.org/cfdev/bosh"
-	gdn "code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/garden/gardenfakes"
 
@@ -18,13 +18,13 @@ var _ = Describe("Fetching BOSH Configuration", func() {
 		fakeClient *gardenfakes.FakeClient
 		boshConfig bosh.Config
 		err        error
-		gclient    *gdn.Garden
+		gclient    *provision.Controller
 	)
 
 	BeforeEach(func() {
 		fakeClient = new(gardenfakes.FakeClient)
 		fakeClient.CreateReturns(nil, errors.New("some error"))
-		gclient = &gdn.Garden{Client: fakeClient}
+		gclient = &provision.Controller{Client: fakeClient}
 	})
 
 	JustBeforeEach(func() {

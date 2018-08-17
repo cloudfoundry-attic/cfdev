@@ -1,17 +1,18 @@
-package garden_test
+package provision_test
 
 import (
 	"bytes"
-	gdn "code.cloudfoundry.org/cfdev/garden"
-	"code.cloudfoundry.org/garden"
-	"code.cloudfoundry.org/garden/gardenfakes"
 	"errors"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"code.cloudfoundry.org/cfdev/provision"
+	"code.cloudfoundry.org/garden"
+	"code.cloudfoundry.org/garden/gardenfakes"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Logs", func() {
@@ -31,7 +32,7 @@ var _ = Describe("Logs", func() {
 	})
 
 	JustBeforeEach(func() {
-		err = gdn.FetchLogs(fakeClient, destinationDir)
+		err = provision.FetchLogs(fakeClient, destinationDir)
 	})
 
 	It("creates a container", func() {

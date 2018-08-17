@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"code.cloudfoundry.org/cfdev/garden"
+	"code.cloudfoundry.org/cfdev/provision"
 	"github.com/hooklift/iso9660"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -19,10 +19,10 @@ func New() *Reader {
 }
 
 type Metadata struct {
-	Version       string           `yaml:"compatibility_version"`
-	Message       string           `yaml:"splash_message"`
-	DefaultMemory int              `yaml:"default_memory"`
-	Services      []garden.Service `yaml:"services"`
+	Version       string              `yaml:"compatibility_version"`
+	Message       string              `yaml:"splash_message"`
+	DefaultMemory int                 `yaml:"default_memory"`
+	Services      []provision.Service `yaml:"services"`
 }
 
 func (Reader) Read(isoFile string) (Metadata, error) {

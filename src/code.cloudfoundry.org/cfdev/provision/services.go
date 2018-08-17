@@ -1,17 +1,19 @@
-package garden
+package provision
 
 import (
 	"archive/tar"
-	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/garden"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
+
+	yaml "gopkg.in/yaml.v2"
+
+	"code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/garden"
 )
 
-func (g *Garden) DeployService(handle, script string) error {
-	container, err := g.Client.Create(containerSpec(handle))
+func (c *Controller) DeployService(handle, script string) error {
+	container, err := c.Client.Create(containerSpec(handle))
 	if err != nil {
 		return err
 	}
@@ -36,7 +38,7 @@ func (g *Garden) DeployService(handle, script string) error {
 		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %d", exitCode))
 	}
 
-	g.Client.Destroy(handle)
+	c.Client.Destroy(handle)
 
 	return nil
 }
@@ -49,12 +51,12 @@ type Service struct {
 	IsErrand   bool   `yaml:"errand"`
 }
 
-func (g *Garden) GetServices() ([]Service, string, error) {
-	container, err := g.Client.Create(containerSpec("get-services"))
+func (c *Controller) GetServices() ([]Service, string, error) {
+	container, err := c.Client.Create(containerSpec("get-services"))
 	if err != nil {
 		return nil, "", err
 	}
-	defer g.Client.Destroy("get-services")
+	defer c.Client.Destroy("get-services")
 	r, err := container.StreamOut(garden.StreamOutSpec{Path: "/var/vcap/cache/metadata.yml"})
 	if err != nil {
 		return nil, "", err
