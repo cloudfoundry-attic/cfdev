@@ -85,7 +85,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		&b2.Bosh{
 			Exit:        exit,
 			UI:          ui,
-			Config:      config,
+			StateDir:    config.StateDir,
 			Provisioner: provision.NewController(),
 		},
 		&b3.Catalog{

@@ -6,7 +6,6 @@ import (
 	"runtime"
 
 	"code.cloudfoundry.org/cfdev/bosh"
-	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/shell"
 	"github.com/spf13/cobra"
@@ -25,7 +24,7 @@ type Provisioner interface {
 type Bosh struct {
 	Exit        chan struct{}
 	UI          UI
-	Config      config.Config
+	StateDir    string
 	Provisioner Provisioner
 }
 
@@ -61,7 +60,7 @@ func (b *Bosh) Env() error {
 		return errors.SafeWrap(err, "failed to fetch bosh configuration")
 	}
 
-	env := shell.Environment{StateDir: b.Config.StateDir}
+	env := shell.Environment{StateDir: b.StateDir}
 	shellScript, err := env.Prepare(config)
 	if err != nil {
 		return errors.SafeWrap(err, "failed to prepare bosh configuration")

@@ -10,7 +10,6 @@ import (
 	"code.cloudfoundry.org/cfdev/bosh"
 	cmd "code.cloudfoundry.org/cfdev/cmd/bosh"
 	"code.cloudfoundry.org/cfdev/cmd/bosh/mocks"
-	"code.cloudfoundry.org/cfdev/config"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -35,10 +34,8 @@ var _ = Describe("Bosh", func() {
 		Expect(err).NotTo(HaveOccurred())
 		boshCmd = &cmd.Bosh{
 			Provisioner: mockProvisioner,
-			Config: config.Config{
-				StateDir: tmpDir,
-			},
-			UI: mockUI,
+			StateDir:    tmpDir,
+			UI:          mockUI,
 		}
 	})
 
