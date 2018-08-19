@@ -45,6 +45,6 @@ docker push localhost:5000/diego-docker-app-custom
 "@ | Set-Content -Path $env:CONFIG
 
 Push-Location src/github.com/cloudfoundry/cf-acceptance-tests
-  ginkgo -r -slowSpecThreshold=1200 -flakeAttempts=3 -noisyPendings=false -noisySkippings=false
+  ginkgo -slowSpecThreshold=1200 -flakeAttempts=3 -noisyPendings=false -noisySkippings=false .
   if ($LASTEXITCODE -ne 0) { Exit $LASTEXITCODE }
 Pop-Location
