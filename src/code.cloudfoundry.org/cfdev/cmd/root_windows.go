@@ -124,7 +124,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsToggle: analyticsToggle,
 		},
 		&b8.Logs{
-			UI: ui,
+			Provisioner: provision.NewController(),
+			UI:          ui,
 		},
 	} {
 		dev.AddCommand(cmd.Cmd())
