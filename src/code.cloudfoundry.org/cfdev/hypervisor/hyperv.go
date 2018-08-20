@@ -6,19 +6,13 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"code.cloudfoundry.org/cfdev/config"
 	"strings"
+
+	"code.cloudfoundry.org/cfdev/config"
 )
 
 type HyperV struct {
 	Config config.Config
-}
-
-type VM struct {
-	Name string
-	DepsIso  string
-	MemoryMB int
-	CPUs     int
 }
 
 func (h *HyperV) CreateVM(vm VM) error {
