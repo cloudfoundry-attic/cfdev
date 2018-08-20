@@ -320,11 +320,6 @@ var _ = Describe("Start", func() {
 				ioutil.WriteFile(customIso, []byte{}, 0644)
 				metadata.Version = "v100"
 
-				if runtime.GOOS == "darwin" {
-					mockUI.EXPECT().Say("Installing cfdevd network helper...")
-					mockCFDevD.EXPECT().Install()
-				}
-				
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
