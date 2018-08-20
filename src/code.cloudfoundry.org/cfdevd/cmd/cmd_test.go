@@ -63,4 +63,17 @@ var _ = Describe("cmd", func() {
 			Fail("wrong type!")
 		}
 	})
+
+	It("returns a AddIPAliasCommand", func(){
+		message := bytes.NewReader([]byte{uint8(3)})
+
+		command, err := cmd.UnmarshalCommand(message)
+
+		Expect(err).NotTo(HaveOccurred())
+		switch command.(type) {
+		case *cmd.AddIPAliasCommand:
+		default:
+			Fail("wrong type!")
+		}
+	})
 })

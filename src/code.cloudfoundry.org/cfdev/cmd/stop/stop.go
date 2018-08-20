@@ -80,19 +80,15 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
 	}
 
-	if runtime.GOOS == "darwin" {
-		if _, err := s.CfdevdClient.RemoveIPAlias(); err != nil {
-			reterr = errors.SafeWrap(err, "failed to remove IP aliases")
-		}
+	if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
+		reterr = errors.SafeWrap(err, "failed to remove IP aliases")
+	}
 
+	if runtime.GOOS == "darwin" {
 		if _, err := s.CfdevdClient.Uninstall(); err != nil {
 			reterr = errors.SafeWrap(err, "failed to uninstall cfdevd")
 		}
 
-	} else {
-		if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
-			reterr = errors.SafeWrap(err, "failed to remove IP aliases")
-		}
 	}
 
 	if reterr != nil {

@@ -22,6 +22,7 @@ func handleRequest(conn *net.UnixConn) {
 		fmt.Println("Handshake Error: ", err)
 		return
 	}
+
 	command, err := cmd.UnmarshalCommand(conn)
 	if err != nil {
 		fmt.Println("Command:", err)
@@ -107,6 +108,7 @@ func run() {
 	listener, ok := listeners[0].(*net.UnixListener)
 	if !ok {
 		log.Fatal("Failed to cast listener to unix listener")
+
 	}
 	for {
 		conn, err := listener.AcceptUnix()

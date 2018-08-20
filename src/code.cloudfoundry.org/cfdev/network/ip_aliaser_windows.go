@@ -9,7 +9,7 @@ import (
 
 const loopback = "vEthernet (cfdev)"
 
-func (*HostNet) RemoveLoopbackAliases(addrs ...string) error {
+func (h *HostNet) RemoveLoopbackAliases(addrs ...string) error {
 	exists, err := switchExists()
 	if err != nil {
 		return err
@@ -20,6 +20,32 @@ func (*HostNet) RemoveLoopbackAliases(addrs ...string) error {
 
 	command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name cfdev -force")
 	return command.Run()
+}
+
+func (h *HostNet) AddLoopbackAliases(addrs ...string) error {
+	fmt.Println("Setting up IP aliases for the BOSH Director & CF Router (requires administrator privileges)")
+
+	if err := createInterface(); err != nil {
+		return err
+	}
+
+	for _, addr := range addrs {
+		exists, err := aliasExists(addr)
+
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			continue
+		}
+
+		err = addAlias(addr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func addAlias(alias string) error {

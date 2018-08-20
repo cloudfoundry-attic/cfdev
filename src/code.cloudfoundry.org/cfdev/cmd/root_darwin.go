@@ -107,7 +107,9 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Cache:           cache,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			HostNet:         &network.HostNet{},
+			HostNet:         &network.HostNet{
+				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
+			},
 			CFDevD:          &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			VpnKit:          vpnkit,
 			Hypervisor:      linuxkit,
@@ -118,7 +120,9 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Config:       config,
 			Analytics:    analyticsClient,
 			Hypervisor:   linuxkit,
-			HostNet:      &network.HostNet{},
+			HostNet:      &network.HostNet{
+				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
+			},
 			VpnKit:       vpnkit,
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
