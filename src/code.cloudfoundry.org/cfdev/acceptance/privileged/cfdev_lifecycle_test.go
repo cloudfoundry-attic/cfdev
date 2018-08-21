@@ -148,28 +148,24 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")
 	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 480)
 
-	// Even though the test below is very similar this fails fast when `bosh env`
-	// command is broken
+	var boshCmd *exec.Cmd
 
-	session := cf.Cf("dev", "bosh", "env")
-	Eventually(session, 120, 1).Should(gexec.Exit(0))
-
-	if !IsWindows() {
-		// This test is more representative of how `bosh env` should be invoked
-		w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
-		boshEnv := func() *gexec.Session {
-			boshCmd := exec.Command("/bin/sh",
-				"-e",
-				"-c", fmt.Sprintf(`eval "$(cf dev bosh env)" && bosh env`))
-
-			session, err := gexec.Start(boshCmd, w, w)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session).Should(gexec.Exit())
-			return session
-		}
-
-		Eventually(boshEnv, time.Minute, 10*time.Second).Should(gexec.Exit(0))
+	if IsWindows() {
+		boshCmd = exec.Command("powershell.exe",
+			"-Command",
+			`cf dev bosh env | Invoke-Expression; bosh env`)
+	} else {
+		boshCmd = exec.Command("/bin/sh",
+			"-e",
+			"-c", `eval "$(cf dev bosh env)" && bosh env`)
 	}
+
+	w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
+	Eventually(func() *gexec.Session {
+		session, err := gexec.Start(boshCmd, w, w)
+		Expect(err).ToNot(HaveOccurred())
+		return session
+	}, 5*time.Minute, 10*time.Second).Should(gexec.Exit(0))
 }
 
 func PushAnApp() {
