@@ -1,14 +1,10 @@
 package download
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
-
-	"io/ioutil"
-	"path/filepath"
 
 	"net/http"
 
@@ -53,7 +49,6 @@ func (d *Download) RunE(cmd *cobra.Command, args []string) error {
 }
 
 func CacheSync(dependencies resource.Catalog, cacheDir string, writer io.Writer) error {
-	logCatalog(dependencies, cacheDir)
 	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
 
 	cache := resource.Cache{
@@ -69,8 +64,4 @@ func CacheSync(dependencies resource.Catalog, cacheDir string, writer io.Writer)
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 	return nil
-}
-
-func logCatalog(dependencies resource.Catalog, cacheDir string) {
-	ioutil.WriteFile(filepath.Join(cacheDir, "catalog.txt"), []byte(fmt.Sprintf("%+v", dependencies.Items)), 0644)
 }

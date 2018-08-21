@@ -51,4 +51,51 @@ var _ = Describe("Catalog", func() {
 			})
 		})
 	})
+
+	Describe("Remove", func() {
+		Context("the name exists", func() {
+			It("removes the item", func() {
+				catalog.Remove("second-resource")
+				Expect(catalog).To(Equal(resource.Catalog{
+					Items: []resource.Item{
+						{
+							Name: "first-resource",
+							URL:  "first-resource-url",
+							MD5:  "1234",
+						},
+						{
+							Name: "third-resource",
+							URL:  "third-resource-url",
+							MD5:  "abcd",
+						},
+					},
+				}))
+			})
+		})
+
+		Context("when the name is missing", func() {
+			It("does nothing", func() {
+				catalog.Remove("missing-resource")
+				Expect(catalog).To(Equal(resource.Catalog{
+					Items: []resource.Item{
+						{
+							Name: "first-resource",
+							URL:  "first-resource-url",
+							MD5:  "1234",
+						},
+						{
+							Name: "second-resource",
+							URL:  "second-resource-url",
+							MD5:  "5678",
+						},
+						{
+							Name: "third-resource",
+							URL:  "third-resource-url",
+							MD5:  "abcd",
+						},
+					},
+				}))
+			})
+		})
+	})
 })

@@ -193,11 +193,11 @@ var _ = Describe("Cache Sync", func() {
 		BeforeEach(func() {
 			createFile(tmpDir, "unknown-resource", "unknown-content")
 		})
-		It("deletes the unknown file", func() {
+		It("leaves the unknown file", func() {
 			Expect(cache.Sync(catalog)).To(Succeed())
 
 			filename := filepath.Join(tmpDir, "unknown-resource")
-			Expect(filename).ToNot(BeAnExistingFile())
+			Expect(filename).To(BeAnExistingFile())
 		})
 	})
 

@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -39,7 +38,7 @@ func (c *Cache) Sync(clog Catalog) error {
 		}
 	}
 	c.Progress.End()
-	return c.removeUnknown(clog)
+	return nil
 }
 
 func (c *Cache) total(clog Catalog) uint64 {
@@ -120,25 +119,6 @@ func (c *Cache) downloadHTTP(url, tmpPath string) error {
 		// Possibly full file already downloaded
 	} else {
 		return errors.SafeWrap(fmt.Errorf(resp.Status), "http status")
-	}
-	return nil
-}
-
-func (c *Cache) removeUnknown(clog Catalog) error {
-	known := make(map[string]bool, 0)
-	for _, item := range clog.Items {
-		known[item.Name] = true
-	}
-	files, err := ioutil.ReadDir(c.Dir)
-	if err != nil {
-		return err
-	}
-	for _, fi := range files {
-		if !known[fi.Name()] {
-			if err := os.Remove(filepath.Join(c.Dir, fi.Name())); err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }

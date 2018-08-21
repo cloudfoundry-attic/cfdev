@@ -12,7 +12,7 @@ type Item struct {
 	InUse bool
 }
 
-func (c Catalog) Lookup(name string) *Item {
+func (c *Catalog) Lookup(name string) *Item {
 	for index := range c.Items {
 		item := &c.Items[index]
 		if item.Name == name {
@@ -20,4 +20,15 @@ func (c Catalog) Lookup(name string) *Item {
 		}
 	}
 	return nil
+}
+
+
+func (c *Catalog) Remove(name string) {
+	newItems := make([]Item, 0, len(c.Items))
+	for _, item := range c.Items {
+		if item.Name != name {
+			newItems = append(newItems, item)
+		}
+	}
+	c.Items = newItems
 }

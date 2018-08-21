@@ -159,7 +159,6 @@ func (s *Start) Execute(args Args) error {
 
 	depsIsoName := "cf"
 	depsIsoPath := filepath.Join(s.Config.CacheDir, "cf-deps.iso")
-	depsToDownload := s.Config.Dependencies
 	if args.DepsIsoPath != "" {
 		depsIsoName = filepath.Base(args.DepsIsoPath)
 		var err error
@@ -171,12 +170,7 @@ func (s *Start) Execute(args Args) error {
 			return fmt.Errorf("no file found at: %s", depsIsoPath)
 		}
 
-		depsToDownload = resource.Catalog{}
-		for _, item := range s.Config.Dependencies.Items {
-			if item.Name != "cf-deps.iso" {
-				depsToDownload.Items = append(depsToDownload.Items, item)
-			}
-		}
+		s.Config.Dependencies.Remove("cf-deps.iso")
 	}
 
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
@@ -197,13 +191,31 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "setting up cfdev home dir")
 	}
 
+	if cfdevd := s.Config.Dependencies.Lookup("cfdevd"); cfdevd != nil {
+		s.UI.Say("Downloading Network Helper...")
+		if err := s.Cache.Sync(resource.Catalog{
+			Items: []resource.Item{*cfdevd},
+		}); err != nil {
+			return errors.SafeWrap(err, "Unable to download network helper")
+		}
+		s.Config.Dependencies.Remove("cfdevd")
+	}
+
+	if err := s.osSpecificSetup(); err != nil {
+		return err
+	}
+
+	if err := s.HostNet.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
+		return errors.SafeWrap(err, "adding aliases")
+	}
+
 	registries, err := s.parseDockerRegistriesFlag(args.Registries)
 	if err != nil {
 		return errors.SafeWrap(err, "Unable to parse docker registries")
 	}
 
 	s.UI.Say("Downloading Resources...")
-	if err := s.Cache.Sync(depsToDownload); err != nil {
+	if err := s.Cache.Sync(s.Config.Dependencies); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 
@@ -221,14 +233,6 @@ func (s *Start) Execute(args Args) error {
 		} else {
 			args.Mem = defaultMemory
 		}
-	}
-
-	if err := s.osSpecificSetup(); err != nil {
-		return err
-	}
-
-	if err := s.HostNet.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
-		return errors.SafeWrap(err, "adding aliases")
 	}
 
 	s.UI.Say("Creating the VM...")

@@ -137,6 +137,7 @@ var _ = Describe("Start", func() {
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
@@ -145,7 +146,6 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
@@ -190,6 +190,87 @@ var _ = Describe("Start", func() {
 				})).To(Succeed())
 			})
 
+			Context("when catalog includes cfdevd", func(){
+				BeforeEach(func(){
+					startCmd.Config.Dependencies = resource.Catalog{
+						Items: []resource.Item{
+							{Name: "some-item"},
+							{Name: "cfdevd"},
+							{Name: "cf-deps.iso"},
+						},
+					}
+				})
+				It("downloads cfdevd first", func(){
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockUI.EXPECT().Say("Downloading Network Helper..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "cfdevd"},
+							},
+						}),
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cf-deps.iso"},
+							},
+						}),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockUI.EXPECT().Say("Creating the VM..."),
+						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+							Name: "cfdev",
+							CPUs:     7,
+							MemoryMB: 8765,
+							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						}),
+						mockUI.EXPECT().Say("Starting VPNKit..."),
+						mockVpnKit.EXPECT().Start(),
+						mockVpnKit.EXPECT().Watch(localExitChan),
+						mockUI.EXPECT().Say("Starting the VM..."),
+						mockHypervisor.EXPECT().Start("cfdev"),
+						mockUI.EXPECT().Say("Waiting for Garden..."),
+						mockProvisioner.EXPECT().Ping(),
+						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+						mockProvisioner.EXPECT().DeployBosh(),
+						mockUI.EXPECT().Say("Deploying CF..."),
+						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
+							{
+								Name:       "some-service",
+								Handle:     "some-handle",
+								Script:     "/path/to/some-script",
+								Deployment: "some-deployment",
+							},
+							{
+								Name:       "some-other-service",
+								Handle:     "some-other-handle",
+								Script:     "/path/to/some-other-script",
+								Deployment: "some-other-deployment",
+							},
+						}),
+
+						//welcome message
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+					)
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus: 7,
+						Mem:  0,
+					})).To(Succeed())
+				})
+			})
+
 			Context("when no args are provided AND deps.iso does not have default memory", func() {
 				It("starts the vm with a default memory setting", func() {
 					metadata.DefaultMemory = 0
@@ -205,6 +286,7 @@ var _ = Describe("Start", func() {
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 						mockUI.EXPECT().Say("Downloading Resources..."),
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
@@ -213,8 +295,6 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-
-						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -274,6 +354,7 @@ var _ = Describe("Start", func() {
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
@@ -282,7 +363,6 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
@@ -326,11 +406,17 @@ var _ = Describe("Start", func() {
 				ioutil.WriteFile(customIso, []byte{}, 0644)
 				metadata.Version = "v100"
 
+				if runtime.GOOS == "darwin" {
+					mockUI.EXPECT().Say("Installing cfdevd network helper...")
+					mockCFDevD.EXPECT().Install()
+				}
+
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -364,6 +450,7 @@ var _ = Describe("Start", func() {
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -372,7 +459,6 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
-					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
