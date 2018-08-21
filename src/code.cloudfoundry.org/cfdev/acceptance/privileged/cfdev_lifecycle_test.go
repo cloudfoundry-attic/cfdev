@@ -148,20 +148,21 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")
 	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 480)
 
-	var boshCmd *exec.Cmd
-
-	if IsWindows() {
-		boshCmd = exec.Command("powershell.exe",
-			"-Command",
-			`cf dev bosh env | Invoke-Expression; bosh env`)
-	} else {
-		boshCmd = exec.Command("/bin/sh",
-			"-e",
-			"-c", `eval "$(cf dev bosh env)" && bosh env`)
-	}
-
 	w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
 	Eventually(func() int {
+
+		var boshCmd *exec.Cmd
+
+		if IsWindows() {
+			boshCmd = exec.Command("powershell.exe",
+				"-Command",
+				`cf dev bosh env | Invoke-Expression; bosh env`)
+		} else {
+			boshCmd = exec.Command("/bin/sh",
+				"-e",
+				"-c", `eval "$(cf dev bosh env)" && bosh env`)
+		}
+
 		session, err := gexec.Start(boshCmd, w, w)
 		Expect(err).ToNot(HaveOccurred())
 		<-session.Exited
