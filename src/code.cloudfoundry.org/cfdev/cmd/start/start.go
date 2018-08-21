@@ -48,6 +48,11 @@ type HostNet interface {
 	AddLoopbackAliases(...string) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/host.go code.cloudfoundry.org/cfdev/cmd/start Host
+type Host interface {
+	CheckRequirements() error
+}
+
 //go:generate mockgen -package mocks -destination mocks/cache.go code.cloudfoundry.org/cfdev/cmd/start Cache
 type Cache interface {
 	Sync(resource.Catalog) error
@@ -105,6 +110,7 @@ type Start struct {
 	Analytics       AnalyticsClient
 	AnalyticsToggle Toggle
 	HostNet         HostNet
+	Host            Host
 	Cache           Cache
 	CFDevD          CFDevD
 	VpnKit          VpnKit
@@ -175,6 +181,9 @@ func (s *Start) Execute(args Args) error {
 
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
 	s.Analytics.Event(cfanalytics.START_BEGIN)
+	if err := s.Host.CheckRequirements(); err != nil {
+		return err
+	}
 
 	if running, err := s.Hypervisor.IsRunning("cfdev"); err != nil {
 		return errors.SafeWrap(err, "is running")
@@ -183,7 +192,6 @@ func (s *Start) Execute(args Args) error {
 		s.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true})
 		return nil
 	}
-
 
 	if err := env.SetupHomeDir(s.Config); err != nil {
 		return errors.SafeWrap(err, "setting up cfdev home dir")

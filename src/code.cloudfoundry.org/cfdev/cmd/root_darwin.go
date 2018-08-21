@@ -27,6 +27,7 @@ import (
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/host"
 )
 
 type UI interface {
@@ -107,20 +108,21 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Cache:           cache,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			HostNet:         &network.HostNet{
+			HostNet: &network.HostNet{
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
-			CFDevD:          &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
-			VpnKit:          vpnkit,
-			Hypervisor:      linuxkit,
-			Provisioner:     provision.NewController(),
-			IsoReader:       iso.New(),
+			Host:        &host.Host{},
+			CFDevD:      &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
+			VpnKit:      vpnkit,
+			Hypervisor:  linuxkit,
+			Provisioner: provision.NewController(),
+			IsoReader:   iso.New(),
 		},
 		&b6.Stop{
-			Config:       config,
-			Analytics:    analyticsClient,
-			Hypervisor:   linuxkit,
-			HostNet:      &network.HostNet{
+			Config:     config,
+			Analytics:  analyticsClient,
+			Hypervisor: linuxkit,
+			HostNet: &network.HostNet{
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
 			VpnKit:       vpnkit,

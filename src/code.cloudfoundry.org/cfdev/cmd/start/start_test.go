@@ -29,6 +29,7 @@ var _ = Describe("Start", func() {
 		mockAnalyticsClient *mocks.MockAnalyticsClient
 		mockToggle          *mocks.MockToggle
 		mockHostNet         *mocks.MockHostNet
+		mockHost            *mocks.MockHost
 		mockCache           *mocks.MockCache
 		mockCFDevD          *mocks.MockCFDevD
 		mockVpnKit          *mocks.MockVpnKit
@@ -52,6 +53,7 @@ var _ = Describe("Start", func() {
 		mockAnalyticsClient = mocks.NewMockAnalyticsClient(mockController)
 		mockToggle = mocks.NewMockToggle(mockController)
 		mockHostNet = mocks.NewMockHostNet(mockController)
+		mockHost = mocks.NewMockHost(mockController)
 		mockCache = mocks.NewMockCache(mockController)
 		mockCFDevD = mocks.NewMockCFDevD(mockController)
 		mockVpnKit = mocks.NewMockVpnKit(mockController)
@@ -85,6 +87,7 @@ var _ = Describe("Start", func() {
 			Analytics:       mockAnalyticsClient,
 			AnalyticsToggle: mockToggle,
 			HostNet:         mockHostNet,
+			Host:            mockHost,
 			Cache:           mockCache,
 			CFDevD:          mockCFDevD,
 			VpnKit:          mockVpnKit,
@@ -131,6 +134,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 
 					mockUI.EXPECT().Say("Downloading Resources..."),
@@ -198,6 +202,7 @@ var _ = Describe("Start", func() {
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 
 						mockUI.EXPECT().Say("Downloading Resources..."),
@@ -267,6 +272,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -323,6 +329,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
@@ -355,6 +362,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
@@ -417,6 +425,7 @@ var _ = Describe("Start", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(true, nil),
 					mockUI.EXPECT().Say("CF Dev is already running..."),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true}),
