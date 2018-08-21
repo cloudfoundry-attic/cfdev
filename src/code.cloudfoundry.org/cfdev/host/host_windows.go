@@ -8,10 +8,6 @@ import (
 	"errors"
 )
 
-type Host struct {
-
-}
-
 const admin_role = "[Security.Principal.WindowsBuiltInRole]::Administrator"
 const current_user = "New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())"
 
