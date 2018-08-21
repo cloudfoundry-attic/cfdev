@@ -140,7 +140,7 @@ func catalog() (resource.Catalog, error) {
 				URL:   winswUrl,
 				Name:  "winsw.exe",
 				MD5:   winswMd5,
-				Size:  aToUint64(winswUrl),
+				Size:  aToUint64(winswSize),
 				InUse: true,
 			},
 		},
