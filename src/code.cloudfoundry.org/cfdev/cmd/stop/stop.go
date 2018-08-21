@@ -29,6 +29,11 @@ type HostNet interface {
 	RemoveLoopbackAliases(...string) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/host.go code.cloudfoundry.org/cfdev/cmd/stop Host
+type Host interface {
+	CheckRequirements() error
+}
+
 //go:generate mockgen -package mocks -destination mocks/linuxkit.go code.cloudfoundry.org/cfdev/cmd/stop Hypervisor
 type Hypervisor interface {
 	Stop(vmName string) error
@@ -48,6 +53,7 @@ type Stop struct {
 	CfdevdClient CfdevdClient
 	Analytics    Analytics
 	HostNet      HostNet
+	Host         Host
 }
 
 func (s *Stop) Cmd() *cobra.Command {
@@ -61,6 +67,10 @@ const vmName = "cfdev"
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	s.Analytics.Event(cfanalytics.STOP)
+
+	if err := s.Host.CheckRequirements(); err != nil {
+		return err
+	}
 
 	var reterr error
 

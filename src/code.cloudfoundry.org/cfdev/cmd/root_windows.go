@@ -120,6 +120,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Hypervisor: &hypervisor.HyperV{Config: config},
 			VpnKit:     vpnkit,
 			HostNet:    &network.HostNet{},
+			Host:        &host.Host{},
 		},
 		&b7.Telemetry{
 			UI:              ui,

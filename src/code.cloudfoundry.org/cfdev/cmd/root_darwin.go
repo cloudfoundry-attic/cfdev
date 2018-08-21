@@ -125,6 +125,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			HostNet: &network.HostNet{
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
+			Host:        &host.Host{},
 			VpnKit:       vpnkit,
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},

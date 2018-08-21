@@ -24,6 +24,7 @@ var _ = Describe("Stop", func() {
 		mockCfdevdClient *mocks.MockCfdevdClient
 		mockAnalytics    *mocks.MockAnalytics
 		mockHostNet      *mocks.MockHostNet
+		mockHost         *mocks.MockHost
 		mockHypervisor   *mocks.MockHypervisor
 		mockVpnkit       *mocks.MockVpnKit
 		mockController   *gomock.Controller
@@ -45,6 +46,7 @@ var _ = Describe("Stop", func() {
 		mockCfdevdClient = mocks.NewMockCfdevdClient(mockController)
 		mockAnalytics = mocks.NewMockAnalytics(mockController)
 		mockHostNet = mocks.NewMockHostNet(mockController)
+		mockHost = mocks.NewMockHost(mockController)
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockVpnkit = mocks.NewMockVpnKit(mockController)
 
@@ -55,6 +57,7 @@ var _ = Describe("Stop", func() {
 			Analytics:    mockAnalytics,
 			CfdevdClient: mockCfdevdClient,
 			HostNet:      mockHostNet,
+			Host:         mockHost,
 		}
 		stopCmd = subject.Cmd()
 		stopCmd.SetArgs([]string{})
@@ -68,6 +71,7 @@ var _ = Describe("Stop", func() {
 
 	It("destroys the VM, uninstalls vpnkit and cfdevd, tears down aliases, and sends analytics event", func() {
 		mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+		mockHost.EXPECT().CheckRequirements()
 		mockHypervisor.EXPECT().Stop("cfdev")
 		mockHypervisor.EXPECT().Destroy("cfdev")
 		mockVpnkit.EXPECT().Stop()
@@ -84,6 +88,7 @@ var _ = Describe("Stop", func() {
 	Context("stopping the VM fails", func() {
 		It("stops the others and returns VM error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockHost.EXPECT().CheckRequirements()
 			mockHypervisor.EXPECT().Stop("cfdev").Return(errors.New("test"))
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
@@ -101,6 +106,7 @@ var _ = Describe("Stop", func() {
 	Context("destroying the VM fails", func() {
 		It("stops the others and returns VM error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockHost.EXPECT().CheckRequirements()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev").Return(errors.New("test"))
 			mockVpnkit.EXPECT().Stop()
@@ -118,6 +124,7 @@ var _ = Describe("Stop", func() {
 	Context("stopping vpnkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockHost.EXPECT().CheckRequirements()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop().Return(errors.New("test"))
@@ -135,6 +142,7 @@ var _ = Describe("Stop", func() {
 	Context("destroying vpnkit fails", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockHost.EXPECT().CheckRequirements()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
@@ -152,6 +160,7 @@ var _ = Describe("Stop", func() {
 	Context("removing aliases fails", func() {
 		It("stops the others and returns alias error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockHost.EXPECT().CheckRequirements()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
