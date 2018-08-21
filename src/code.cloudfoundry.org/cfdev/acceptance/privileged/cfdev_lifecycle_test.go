@@ -161,11 +161,12 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	}
 
 	w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
-	Eventually(func() *gexec.Session {
+	Eventually(func() int {
 		session, err := gexec.Start(boshCmd, w, w)
 		Expect(err).ToNot(HaveOccurred())
-		return session
-	}, 5*time.Minute, 10*time.Second).Should(gexec.Exit(0))
+		<-session.Exited
+		return session.ExitCode()
+	}, 5*time.Minute, 10*time.Second).Should(Equal(0))
 }
 
 func PushAnApp() {
