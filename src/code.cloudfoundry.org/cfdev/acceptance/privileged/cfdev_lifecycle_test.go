@@ -149,7 +149,7 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	EventuallyShouldListenAt("https://"+BoshDirectorIP+":25555", 480)
 
 	w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)
-	Eventually(func() int {
+	Eventually(func() error {
 
 		var boshCmd *exec.Cmd
 
@@ -163,11 +163,10 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 				"-c", `eval "$(cf dev bosh env)" && bosh env`)
 		}
 
-		session, err := gexec.Start(boshCmd, w, w)
-		Expect(err).ToNot(HaveOccurred())
-		<-session.Exited
-		return session.ExitCode()
-	}, 5*time.Minute, 10*time.Second).Should(Equal(0))
+		output, err := boshCmd.CombinedOutput()
+		fmt.Fprintln(w, string(output))
+		return err
+	}, 5*time.Minute, 30*time.Second).Should(BeNil())
 }
 
 func PushAnApp() {
