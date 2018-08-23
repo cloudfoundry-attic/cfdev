@@ -8,6 +8,7 @@ import (
 
 type Progress struct {
 	current        uint64
+	currentLastCompleted uint64
 	total          uint64
 	lastPercentage int
 	writer         io.Writer
@@ -33,6 +34,15 @@ func (c *Progress) Write(p []byte) (int, error) {
 func (c *Progress) Add(add uint64) {
 	c.current += add
 	c.display()
+}
+
+func (c *Progress) SetLastCompleted() {
+	c.currentLastCompleted = c.current
+}
+
+func (c *Progress) ResetCurrent() {
+	c.current = c.currentLastCompleted
+	c.lastPercentage = c.lastPercentage + 1 //increment in order to print during retries
 }
 
 func (c *Progress) End() {

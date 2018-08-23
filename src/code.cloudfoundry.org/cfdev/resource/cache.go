@@ -19,6 +19,8 @@ type Progress interface {
 	Start(total uint64)
 	Add(add uint64)
 	End()
+	SetLastCompleted()
+	ResetCurrent()
 }
 
 type Cache struct {
@@ -52,10 +54,11 @@ func (c *Cache) total(clog Catalog) uint64 {
 }
 
 func (c *Cache) download(item *Item) error {
-
 	if !item.InUse {
 		return nil
 	}
+
+	c.Progress.SetLastCompleted()
 
 	if match, err := c.checksumMatches(filepath.Join(c.Dir, item.Name), item.MD5); err != nil {
 		return err
@@ -68,11 +71,13 @@ func (c *Cache) download(item *Item) error {
 		if err := c.copyFile(item); err != nil {
 			return err
 		}
+		c.Progress.Add(item.Size)
 		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
 	} else if strings.HasPrefix(item.URL, "C:") {
 		if err := c.copyFile(item); err != nil {
 			return err
 		}
+		c.Progress.Add(item.Size)
 		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
 	}
 
@@ -107,12 +112,14 @@ func (c *Cache) downloadHTTP(url, tmpPath string) error {
 
 	resp, err := c.HttpDo(req)
 	if err != nil {
+		c.Progress.ResetCurrent()
 		return retry.WrapAsRetryable(err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if _, err = io.Copy(out, io.TeeReader(resp.Body, c.Progress)); err != nil {
+			c.Progress.ResetCurrent()
 			return retry.WrapAsRetryable(err)
 		}
 	} else if resp.StatusCode == 416 {
