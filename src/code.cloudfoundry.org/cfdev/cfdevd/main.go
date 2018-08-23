@@ -11,8 +11,12 @@ import (
 
 	"io"
 
+	"time"
+
 	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
 	"code.cloudfoundry.org/cfdev/daemon"
+
+	"github.com/spf13/cobra"
 )
 
 const SockName = "ListenSocket"
@@ -41,16 +45,16 @@ func registerSignalHandler() {
 	}(sigc)
 }
 
-func install(programSrc string) {
+func install(programSrc string, args []string) {
 	lctl := daemon.New("")
 	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
+	programArgs := []string{program}
+	programArgs = append(programArgs, args...)
 	cfdevdSpec := daemon.DaemonSpec{
-		Label:   "org.cloudfoundry.cfdevd",
-		Program: program,
-		ProgramArguments: []string{
-			program,
-		},
-		RunAtLoad: false,
+		Label:            "org.cloudfoundry.cfdevd",
+		Program:          program,
+		ProgramArguments: programArgs,
+		RunAtLoad:        false,
 		Sockets: map[string]string{
 			SockName: "/var/tmp/cfdevd.socket",
 		},
@@ -88,7 +92,26 @@ func copyExecutable(src string, dest string) error {
 	return err
 }
 
-func run() {
+func timesync(socket string) {
+	for {
+		fmt.Printf("dialing socket %s \n", socket)
+		conn, _ := net.DialUnix("unix", nil, &net.UnixAddr{
+			Net:  "unix",
+			Name: socket,
+		})
+		if conn != nil {
+			conn.CloseWrite()
+		}
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func run(timesyncSocket string) {
+	fmt.Println("SOCKET: ", timesyncSocket)
+	if timesyncSocket != "" {
+		fmt.Println("timesync")
+		go timesync(timesyncSocket)
+	}
 	registerSignalHandler()
 	listeners, err := daemon.Listeners(SockName)
 	if err != nil || len(listeners) != 1 {
@@ -97,7 +120,6 @@ func run() {
 	listener, ok := listeners[0].(*net.UnixListener)
 	if !ok {
 		log.Fatal("Failed to cast listener to unix listener")
-
 	}
 	for {
 		conn, err := listener.AcceptUnix()
@@ -109,15 +131,27 @@ func run() {
 	}
 }
 
+func root() *cobra.Command {
+	root := &cobra.Command{Use: "cfdevd"}
+	flags := root.PersistentFlags()
+	var timesyncSocket string
+	flags.StringVarP(&timesyncSocket, "timesyncSock", "t", "", "path to socket where host-timesync-daemon is listening")
+	root.Run = func(_ *cobra.Command, _ []string) {
+		log.Printf("running cfdevd with timesyncSocket=%s", timesyncSocket)
+		run(timesyncSocket)
+	}
+	return root
+}
+
 func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "install":
-			install(os.Args[0])
+			install(os.Args[0], os.Args[2:])
 		default:
-			log.Fatal("unrecognized command ", os.Args[1])
+			rootCmd := root()
+			rootCmd.SetArgs(os.Args[1:])
+			rootCmd.Execute()
 		}
-	} else {
-		run()
 	}
 }

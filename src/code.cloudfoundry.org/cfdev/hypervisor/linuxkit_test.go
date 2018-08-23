@@ -7,11 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/hypervisor"
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdev/config"
-	"github.com/golang/mock/gomock"
-	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 var _ = Describe("LinuxKit process", func() {
@@ -33,7 +33,7 @@ var _ = Describe("LinuxKit process", func() {
 		}
 	})
 
-	AfterEach(func(){
+	AfterEach(func() {
 		mockController.Finish()
 	})
 
@@ -73,6 +73,7 @@ var _ = Describe("LinuxKit process", func() {
 				"-disk", "file="+depsIsoPath,
 				"-state", "/home-dir/.cfdev/state",
 				"--uefi", "/home-dir/.cfdev/cache/cfdev-efi.iso",
+				"--vsock-ports", "62372",
 			))
 		})
 

@@ -11,6 +11,9 @@ import (
 	"os/exec"
 	"syscall"
 
+	"io/ioutil"
+	"path/filepath"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -20,9 +23,15 @@ const SOCK = "/var/tmp/cfdevd.socket"
 
 var _ = Describe("cfdevd test", func() {
 	var bin string
+	var timesyncSock string
+	var tmpDir string
 
 	BeforeSuite(func() {
 		var err error
+		tmpDir, err = ioutil.TempDir("", "cfdevd-test")
+		Expect(err).NotTo(HaveOccurred())
+		timesyncSock = filepath.Join(tmpDir, "time-sync.socket")
+
 		session, err := gexec.Start(exec.Command("sudo", "--non-interactive", "launchctl", "remove", "org.cloudfoundry.cfdevd"), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(), "You may need to log sudo in")
@@ -30,7 +39,7 @@ var _ = Describe("cfdevd test", func() {
 
 		bin, err = gexec.Build("code.cloudfoundry.org/cfdev/cfdevd")
 		Expect(err).NotTo(HaveOccurred())
-		session, err = gexec.Start(exec.Command("sudo", "--non-interactive", bin, "install"), GinkgoWriter, GinkgoWriter)
+		session, err = gexec.Start(exec.Command("sudo", "--non-interactive", bin, "install", "--timesyncSock", timesyncSock), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
 
@@ -88,6 +97,7 @@ var _ = Describe("cfdevd test", func() {
 
 		gexec.KillAndWait()
 		gexec.CleanupBuildArtifacts()
+		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 
 	var conn *net.UnixConn
@@ -103,56 +113,78 @@ var _ = Describe("cfdevd test", func() {
 		conn.Close()
 	})
 
-	It("binds ports on bosh ip", func() {
-		Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
-		Expect(recvHello(conn)).To(Equal("CFD3V"))
-		Expect(sendBindAddr(conn, "10.245.0.2", 1777)).To(Succeed())
-		ln, _, err := recvBindAddr(conn, "10.245.0.2", 1777)
-		Expect(err).NotTo(HaveOccurred())
-		defer ln.Close()
-
-		msg := "Hello from test"
-		go sendMessage("10.245.0.2:1777", msg)
-		Expect(readFromListener(ln)).To(Equal(msg))
-	})
-
-	It("binds ports on gorouter ip", func() {
-		Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
-		Expect(recvHello(conn)).To(Equal("CFD3V"))
-		Expect(sendBindAddr(conn, "10.144.0.34", 1888)).To(Succeed())
-		ln, _, err := recvBindAddr(conn, "10.144.0.34", 1888)
-		Expect(err).NotTo(HaveOccurred())
-		defer ln.Close()
-
-		msg := "Hello from test"
-		go sendMessage("10.144.0.34:1888", msg)
-		Expect(readFromListener(ln)).To(Equal(msg))
-	})
-
-	It("refuses to bind ports on other interfaces", func() {
-		Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
-		Expect(recvHello(conn)).To(Equal("CFD3V"))
-		Expect(sendBindAddr(conn, "127.0.0.1", 1888)).To(Succeed())
-		_, b, _ := recvBindAddr(conn, "10.245.0.2", 1888)
-		Expect(b[0]).To(Equal(uint8(71)))
-	})
-
-	Context("binding to a bound port", func() {
-		var prior net.Listener
-		BeforeEach(func() {
-			var err error
-			prior, err = net.Listen("tcp", "10.245.0.2:1999")
+	Describe("bind", func() {
+		It("binds ports on bosh ip", func() {
+			Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
+			magic, err := recvHello(conn)
 			Expect(err).NotTo(HaveOccurred())
-		})
-		AfterEach(func() { prior.Close() })
+			Expect(magic).To(Equal("CFD3V"))
+			Expect(sendBindAddr(conn, "10.245.0.2", 1777)).To(Succeed())
+			ln, _, err := recvBindAddr(conn, "10.245.0.2", 1777)
+			Expect(err).NotTo(HaveOccurred())
+			defer ln.Close()
 
-		It("sends an error", func() {
+			msg := "Hello from test"
+			go sendMessage("10.245.0.2:1777", msg)
+			Expect(readFromListener(ln)).To(Equal(msg))
+		})
+
+		It("binds ports on gorouter ip", func() {
 			Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
 			Expect(recvHello(conn)).To(Equal("CFD3V"))
-			Expect(sendBindAddr(conn, "10.245.0.2", 1999)).To(Succeed())
-			_, b, _ := recvBindAddr(conn, "10.245.0.2", 1999)
-			Expect(b[0]).To(Equal(uint8(48)))
+			Expect(sendBindAddr(conn, "10.144.0.34", 1888)).To(Succeed())
+			ln, _, err := recvBindAddr(conn, "10.144.0.34", 1888)
+			Expect(err).NotTo(HaveOccurred())
+			defer ln.Close()
+
+			msg := "Hello from test"
+			go sendMessage("10.144.0.34:1888", msg)
+			Expect(readFromListener(ln)).To(Equal(msg))
 		})
+
+		It("refuses to bind ports on other interfaces", func() {
+			Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
+			Expect(recvHello(conn)).To(Equal("CFD3V"))
+			Expect(sendBindAddr(conn, "127.0.0.1", 1888)).To(Succeed())
+			_, b, _ := recvBindAddr(conn, "10.245.0.2", 1888)
+			Expect(b[0]).To(Equal(uint8(71)))
+		})
+
+		Context("binding to a bound port", func() {
+			var prior net.Listener
+			BeforeEach(func() {
+				var err error
+				prior, err = net.Listen("tcp", "10.245.0.2:1999")
+				Expect(err).NotTo(HaveOccurred())
+			})
+			AfterEach(func() { prior.Close() })
+
+			It("sends an error", func() {
+				Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
+				Expect(recvHello(conn)).To(Equal("CFD3V"))
+				Expect(sendBindAddr(conn, "10.245.0.2", 1999)).To(Succeed())
+				_, b, _ := recvBindAddr(conn, "10.245.0.2", 1999)
+				Expect(b[0]).To(Equal(uint8(48)))
+			})
+		})
+	})
+
+	Describe("timesync", func() {
+		var ln net.Listener
+		BeforeEach(func() {
+			var err error
+			ln, err = net.Listen("unix", timesyncSock)
+			Expect(err).NotTo(HaveOccurred())
+		})
+		AfterEach(func() {
+			ln.Close()
+		})
+		It("connects to the given socket", func(done Done) {
+			conn, err := ln.Accept()
+			Expect(err).NotTo(HaveOccurred())
+			conn.Close()
+			close(done)
+		}, 10)
 	})
 })
 

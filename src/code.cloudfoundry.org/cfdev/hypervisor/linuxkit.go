@@ -19,7 +19,7 @@ type UI interface {
 }
 
 type LinuxKit struct {
-	Config  config.Config
+	Config       config.Config
 	DaemonRunner DaemonRunner
 }
 
@@ -107,6 +107,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonS
 			"-disk", "file=" + depsIsoPath,
 			"-state", l.Config.StateDir,
 			"--uefi",
+			"--vsock-ports", "62372",
 			osImagePath,
 		},
 		RunAtLoad:  false,

@@ -1,15 +1,17 @@
 package network
 
 import (
-	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
+
+	"code.cloudfoundry.org/cfdev/resource"
 )
 
 type CFDevD struct {
 	ExecutablePath string
+	TimeSyncSocket string
 }
 
 func IsCFDevDInstalled(sockPath string, binPath string, expectedMD5 string) bool {
@@ -33,7 +35,11 @@ func IsCFDevDInstalled(sockPath string, binPath string, expectedMD5 string) bool
 
 func (c *CFDevD) Install() error {
 	fmt.Println("Installing networking components (requires root privileges)")
-	cmd := exec.Command("sudo", "-S", c.ExecutablePath, "install")
+	cmd := exec.Command("sudo", "-S",
+		c.ExecutablePath,
+		"install",
+		"--timesyncSock", c.TimeSyncSocket,
+	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

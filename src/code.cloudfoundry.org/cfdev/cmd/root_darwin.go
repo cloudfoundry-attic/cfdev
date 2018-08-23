@@ -111,8 +111,11 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			HostNet: &network.HostNet{
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
-			Host:        &host.Host{},
-			CFDevD:      &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
+			Host: &host.Host{},
+			CFDevD: &network.CFDevD{
+				ExecutablePath: filepath.Join(config.CacheDir, "cfdevd"),
+				TimeSyncSocket: filepath.Join(config.StateDir, "00000003.0000f3a4"),
+			},
 			VpnKit:      vpnkit,
 			Hypervisor:  linuxkit,
 			Provisioner: provision.NewController(),
