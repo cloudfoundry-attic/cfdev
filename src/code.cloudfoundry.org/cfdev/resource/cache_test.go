@@ -21,12 +21,16 @@ type MockProgress struct {
 	Total     uint64
 	Current   uint64
 	EndCalled bool
+	CurrentLastCompleted uint64
+	LastPercentage int
 }
 
 func (m *MockProgress) Write(b []byte) (int, error) { m.Current += uint64(len(b)); return len(b), nil }
 func (m *MockProgress) Start(total uint64)          { m.Current = 0; m.Total = total }
 func (m *MockProgress) Add(add uint64)              { m.Current += add }
 func (m *MockProgress) End()                        { m.EndCalled = true }
+func (m *MockProgress) SetLastCompleted()			{m.CurrentLastCompleted = m.Current}
+func (m *MockProgress) ResetCurrent()			{m.Current = m.CurrentLastCompleted; m.LastPercentage = m.LastPercentage + 1}
 
 var _ = Describe("Cache Sync", func() {
 
