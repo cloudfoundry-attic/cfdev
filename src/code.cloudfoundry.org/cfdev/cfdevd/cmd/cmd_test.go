@@ -4,7 +4,8 @@ package cmd_test
 
 import (
 	"bytes"
-	"code.cloudfoundry.org/cfdevd/cmd"
+
+	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -51,7 +52,7 @@ var _ = Describe("cmd", func() {
 		}
 	})
 
-	It("returns a RemoveIPAliasCommand", func(){
+	It("returns a RemoveIPAliasCommand", func() {
 		message := bytes.NewReader([]byte{uint8(2)})
 
 		command, err := cmd.UnmarshalCommand(message)
@@ -64,7 +65,7 @@ var _ = Describe("cmd", func() {
 		}
 	})
 
-	It("returns a AddIPAliasCommand", func(){
+	It("returns a AddIPAliasCommand", func() {
 		message := bytes.NewReader([]byte{uint8(3)})
 
 		command, err := cmd.UnmarshalCommand(message)

@@ -12,8 +12,8 @@ pkg="code.cloudfoundry.org/cfdev/config"
 export GOOS=darwin
 export GOARCH=amd64
 
-go build code.cloudfoundry.org/cfdevd
-cfdevd="$PWD"/cfdevd
+cfdevd="$PWD"/cfdvd
+go build -o $cfdevd code.cloudfoundry.org/cfdev/cfdevd
 
 cfdepsUrl="$cfdev/output/cf-deps.iso"
 if [ ! -f "$cfdepsUrl" ]; then

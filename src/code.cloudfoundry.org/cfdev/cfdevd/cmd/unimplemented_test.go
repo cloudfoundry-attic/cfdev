@@ -3,13 +3,14 @@
 package cmd_test
 
 import (
-	"code.cloudfoundry.org/cfdevd/cmd"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
+
+	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("UnimplementedCommand", func() {

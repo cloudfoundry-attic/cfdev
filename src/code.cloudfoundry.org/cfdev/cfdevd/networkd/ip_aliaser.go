@@ -2,10 +2,10 @@ package networkd
 
 import (
 	"fmt"
-	"os/exec"
-	"os"
-	"strings"
 	"net"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 const loopback = "lo0"
@@ -52,7 +52,7 @@ func (*HostNetD) RemoveLoopbackAliases(addrs ...string) error {
 }
 
 func addAlias(alias string) error {
-	cmd := exec.Command("sudo", "-S", "ifconfig", loopback, "add", alias+"/32")
+	cmd := exec.Command("ifconfig", loopback, "add", alias+"/32")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -79,11 +79,10 @@ func aliasExists(alias string) (bool, error) {
 }
 
 func removeAlias(alias string) error {
-	cmd := exec.Command("sudo", "-S", "ifconfig", loopback, "inet", alias+"/32", "remove")
+	cmd := exec.Command("ifconfig", loopback, "inet", alias+"/32", "remove")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
 	return cmd.Run()
 }
-

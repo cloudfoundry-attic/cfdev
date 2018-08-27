@@ -9,6 +9,7 @@ import (
 
 	"path/filepath"
 
+	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
@@ -19,15 +20,14 @@ import (
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/host"
 	"code.cloudfoundry.org/cfdev/hypervisor"
 	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
-	cfdevdClient "code.cloudfoundry.org/cfdevd/client"
 	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/cfdev/host"
 )
 
 type UI interface {
@@ -125,7 +125,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			HostNet: &network.HostNet{
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
-			Host:        &host.Host{},
+			Host:         &host.Host{},
 			VpnKit:       vpnkit,
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},

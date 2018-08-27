@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+
 	"code.cloudfoundry.org/cfdev/daemon"
 )
 
@@ -41,7 +42,7 @@ func UnmarshalCommand(conn io.Reader) (Command, error) {
 	default:
 		return &UnimplementedCommand{
 			Instruction: instr,
-			Logger: os.Stdout,
+			Logger:      os.Stdout,
 		}, nil
 	}
 }

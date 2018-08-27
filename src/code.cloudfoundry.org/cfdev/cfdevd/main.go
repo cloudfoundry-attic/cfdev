@@ -11,8 +11,8 @@ import (
 
 	"io"
 
+	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
 	"code.cloudfoundry.org/cfdev/daemon"
-	"code.cloudfoundry.org/cfdevd/cmd"
 )
 
 const SockName = "ListenSocket"

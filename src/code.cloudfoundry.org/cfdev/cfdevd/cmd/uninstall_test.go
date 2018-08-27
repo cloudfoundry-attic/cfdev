@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"code.cloudfoundry.org/cfdevd/cmd"
-	"code.cloudfoundry.org/cfdevd/cmd/mocks"
+	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
+	"code.cloudfoundry.org/cfdev/cfdevd/cmd/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,9 +19,9 @@ import (
 var _ bool = Describe("UninstallCommand", func() {
 	Describe("Execute", func() {
 		var (
-			controller  *gomock.Controller
+			controller       *gomock.Controller
 			mockDaemonRunner *mocks.MockDaemonRunner
-			uninstall   *cmd.UninstallCommand
+			uninstall        *cmd.UninstallCommand
 
 			socketDir  string
 			conn       *net.UnixConn
