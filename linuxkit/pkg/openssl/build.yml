@@ -1,4 +1,0 @@
-image: openssl
-org: pivotal
-network: true
-disable-content-trust: true

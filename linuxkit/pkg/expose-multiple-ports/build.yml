@@ -1,4 +1,0 @@
-image: expose-multiple-ports
-org: pivotal
-network: true
-disable-content-trust: true

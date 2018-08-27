@@ -1,8 +1,0 @@
----
-- type: replace
-  path: /addons/name=bosh-dns/jobs/name=bosh-dns/properties?/aliases?/host.cfdev.sh?
-  value:
-  - ((host_ip))
-
-- type: remove
-  path: /addons/name=bosh-dns-windows
