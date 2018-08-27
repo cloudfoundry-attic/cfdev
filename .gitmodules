@@ -82,3 +82,15 @@
 [submodule "src/github.com/c4milo/gotoolkit"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/c4milo/gotoolkit
 	url = https://github.com/c4milo/gotoolkit.git
+[submodule "src/code.cloudfoundry.org/cfdev/vendor/gopkg.in/segmentio/analytics-go.v3"]
+	path = src/code.cloudfoundry.org/cfdev/vendor/gopkg.in/segmentio/analytics-go.v3
+	url = https://github.com/segmentio/analytics-go.git
+[submodule "src/code.cloudfoundry.org/cfdev/vendor/github.com/jehiah/go-strftime"]
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/jehiah/go-strftime
+	url = https://github.com/jehiah/go-strftime.git
+[submodule "src/code.cloudfoundry.org/cfdev/vendor/https:/github.com/xtgo/uuid.git"]
+	path = src/code.cloudfoundry.org/cfdev/vendor/https:/github.com/xtgo/uuid.git
+	url = https://github.com/xtgo/uuid.git
+[submodule "src/code.cloudfoundry.org/cfdev/vendor/github.com/xtgo/uuid"]
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/xtgo/uuid
+	url = https://github.com/xtgo/uuid.git
