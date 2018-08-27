@@ -11,8 +11,8 @@ import (
 
 	"io"
 
-	"code.cloudfoundry.org/cfdevd/cmd"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdevd/cmd"
 )
 
 const SockName = "ListenSocket"
@@ -88,17 +88,6 @@ func copyExecutable(src string, dest string) error {
 	return err
 }
 
-func uninstall(prog string) {
-	lctl := daemon.New("")
-	program := "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"
-	if err := lctl.RemoveDaemon("org.cloudfoundry.cfdevd"); err != nil {
-		fmt.Println("Failed to uninstall cfdevd: ", err)
-	}
-	if err := os.Remove(program); err != nil {
-		fmt.Println("Failed to delete installed cfdevd:", err)
-	}
-}
-
 func run() {
 	registerSignalHandler()
 	listeners, err := daemon.Listeners(SockName)
@@ -125,8 +114,6 @@ func main() {
 		switch os.Args[1] {
 		case "install":
 			install(os.Args[0])
-		case "uninstall":
-			uninstall(os.Args[0])
 		default:
 			log.Fatal("unrecognized command ", os.Args[1])
 		}
