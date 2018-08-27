@@ -25,6 +25,6 @@ pushd cfdevd > /dev/null
    ginkgo -v -r "$@"
 popd > /dev/null
 
-# pushd acceptance/privileged > /dev/null
-#    ginkgo -v "$@"
-# popd > /dev/null
+pushd acceptance/privileged > /dev/null
+   ginkgo -v "$@"
+popd > /dev/null
