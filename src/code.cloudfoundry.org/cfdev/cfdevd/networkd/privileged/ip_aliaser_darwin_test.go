@@ -3,7 +3,7 @@ package privileged
 import (
 	"os/exec"
 
-	"code.cloudfoundry.org/cfdevd/networkd"
+	"code.cloudfoundry.org/cfdev/cfdevd/networkd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
@@ -86,8 +86,8 @@ var _ = Describe("IP Aliaser - Darwin", func() {
 			})
 		})
 
-		Context("when the aliases do not exist", func(){
-			BeforeEach(func(){
+		Context("when the aliases do not exist", func() {
+			BeforeEach(func() {
 				session, err := gexec.Start(exec.Command("ifconfig", "lo0"), GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session).Should(gexec.Exit(0))
@@ -95,7 +95,7 @@ var _ = Describe("IP Aliaser - Darwin", func() {
 				Expect(string(session.Out.Contents())).NotTo(ContainSubstring("6.6.6.6"))
 			})
 
-			It("succeeds", func(){
+			It("succeeds", func() {
 				Expect(hostnet.RemoveLoopbackAliases("123.123.123.123", "6.6.6.6")).To(Succeed())
 			})
 		})
