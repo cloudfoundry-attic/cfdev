@@ -1,38 +1,38 @@
 [submodule "src/code.cloudfoundry.org/cli"]
-	path = src/code.cloudfoundry.org/cli
+	path = src/code.cloudfoundry.org/cfdev/vendor/code.cloudfoundry.org/cli
 	url = https://github.com/cloudfoundry/cli.git
 [submodule "src/code.cloudfoundry.org/garden"]
-	path = src/code.cloudfoundry.org/garden
+	path = src/code.cloudfoundry.org/cfdev/vendor/code.cloudfoundry.org/garden
 	url = https://github.com/cloudfoundry/garden.git
 [submodule "src/code.cloudfoundry.org/lager"]
-	path = src/code.cloudfoundry.org/lager
+	path = src/code.cloudfoundry.org/cfdev/vendor/code.cloudfoundry.org/lager
 	url = https://github.com/cloudfoundry/lager.git
 [submodule "src/github.com/tedsuo/rata"]
-	path = src/github.com/tedsuo/rata
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/tedsuo/rata
 	url = https://github.com/tedsuo/rata.git
 [submodule "src/github.com/bmizerany/pat"]
-	path = src/github.com/bmizerany/pat
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/bmizerany/pat
 	url = https://github.com/bmizerany/pat.git
 [submodule "src/github.com/onsi/ginkgo"]
-	path = src/github.com/onsi/ginkgo
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/onsi/ginkgo
 	url = https://github.com/onsi/ginkgo.git
 [submodule "src/github.com/onsi/gomega"]
-	path = src/github.com/onsi/gomega
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/onsi/gomega
 	url = https://github.com/onsi/gomega.git
 [submodule "acceptance/src/github.com/cloudfoundry/cf-acceptance-tests"]
 	path = acceptance/src/github.com/cloudfoundry/cf-acceptance-tests
 	url = https://github.com/cloudfoundry/cf-acceptance-tests.git
 [submodule "src/github.com/golang/protobuf"]
-	path = src/github.com/golang/protobuf
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/golang/protobuf
 	url = https://github.com/golang/protobuf.git
 [submodule "src/golang.org/x/net"]
-	path = src/golang.org/x/net
+	path = src/code.cloudfoundry.org/cfdev/vendor/golang.org/x/net
 	url = https://github.com/golang/net.git
 [submodule "src/golang.org/x/text"]
-	path = src/golang.org/x/text
+	path = src/code.cloudfoundry.org/cfdev/vendor/golang.org/x/text
 	url = https://github.com/golang/text.git
 [submodule "src/gopkg.in/yaml.v2"]
-	path = src/gopkg.in/yaml.v2
+	path = src/code.cloudfoundry.org/cfdev/vendor/gopkg.in/yaml.v2
 	url = https://github.com/go-yaml/yaml.git
 [submodule "acceptance/src/github.com/cloudfoundry/cf-networking-release"]
 	path = acceptance/src/github.com/cloudfoundry/cf-networking-release
@@ -47,41 +47,38 @@
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/go-plist
 	url = https://github.com/DHowett/go-plist.git
 [submodule "src/github.com/golang/mock"]
-	path = src/github.com/golang/mock
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/golang/mock
 	url = https://github.com/golang/mock.git
-[submodule "src/gopkg.in/segmentio/analytics-go.v3"]
-	path = src/gopkg.in/segmentio/analytics-go.v3
-	url = https://github.com/segmentio/analytics-go.git
 [submodule "src/github.com/segmentio/backo-go"]
-	path = src/github.com/segmentio/backo-go
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/segmentio/backo-go
 	url = https://github.com/segmentio/backo-go.git
 [submodule "src/github.com/denisbrodbeck/machineid"]
-	path = src/github.com/denisbrodbeck/machineid
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/denisbrodbeck/machineid
 	url = https://github.com/denisbrodbeck/machineid.git
 [submodule "src/github.com/spf13/cobra"]
-	path = src/github.com/spf13/cobra
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/spf13/cobra
 	url = https://github.com/spf13/cobra.git
 [submodule "src/github.com/spf13/pflag"]
-	path = src/github.com/spf13/pflag
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/spf13/pflag
 	url = https://github.com/spf13/pflag.git
 [submodule "src/github.com/cloudfoundry/bosh-cli"]
-	path = src/github.com/cloudfoundry/bosh-cli
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/cloudfoundry/bosh-cli
 	url = https://github.com/cloudfoundry/bosh-cli.git
 [submodule "src/github.com/cppforlife/go-semi-semantic"]
-	path = src/github.com/cppforlife/go-semi-semantic
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/cppforlife/go-semi-semantic
 	url = https://github.com/cppforlife/go-semi-semantic.git
 [submodule "src/github.com/moby/vpnkit"]
-	path = src/github.com/moby/vpnkit
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/moby/vpnkit
 	url = https://github.com/moby/vpnkit.git
 [submodule "src/golang.org/x/sys"]
-	path = src/golang.org/x/sys
+	path = src/code.cloudfoundry.org/cfdev/vendor/golang.org/x/sys
 	url = https://go.googlesource.com/sys
 [submodule "src/github.com/inconshreveable/mousetrap"]
-	path = src/github.com/inconshreveable/mousetrap
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/inconshreveable/mousetrap
 	url = https://github.com/inconshreveable/mousetrap.git
 [submodule "src/github.com/hooklift/iso9660"]
-	path = src/github.com/hooklift/iso9660
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/hooklift/iso9660
 	url = https://github.com/hooklift/iso9660.git
 [submodule "src/github.com/c4milo/gotoolkit"]
-	path = src/github.com/c4milo/gotoolkit
+	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/c4milo/gotoolkit
 	url = https://github.com/c4milo/gotoolkit.git
