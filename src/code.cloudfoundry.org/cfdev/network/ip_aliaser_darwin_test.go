@@ -1,18 +1,18 @@
-package privileged
+package network_test
 
 import (
 	//"os/exec"
 
 	"code.cloudfoundry.org/cfdev/network"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"code.cloudfoundry.org/cfdev/network/mocks"
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("IP Aliaser - Darwin", func() {
 	var (
-		hostnet *network.HostNet
+		hostnet          *network.HostNet
 		mockCfdevdClient *mocks.MockCfdevdClient
 		mockController   *gomock.Controller
 	)

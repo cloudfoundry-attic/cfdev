@@ -21,10 +21,10 @@ cd "$script_dir"
 
 ginkgo -r -skipPackage privileged "$@"
 
-pushd network/privileged > /dev/null
-   ginkgo -v "$@"
+pushd cfdevd > /dev/null
+   ginkgo -v -r "$@"
 popd > /dev/null
 
-pushd acceptance/privileged > /dev/null
-   ginkgo -v "$@"
-popd > /dev/null
+# pushd acceptance/privileged > /dev/null
+#    ginkgo -v "$@"
+# popd > /dev/null

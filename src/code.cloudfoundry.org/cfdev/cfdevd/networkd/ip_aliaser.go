@@ -52,7 +52,7 @@ func (*HostNetD) RemoveLoopbackAliases(addrs ...string) error {
 }
 
 func addAlias(alias string) error {
-	cmd := exec.Command("ifconfig", loopback, "add", alias+"/32")
+	cmd := exec.Command("sudo", "ifconfig", loopback, "add", alias+"/32")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -79,7 +79,7 @@ func aliasExists(alias string) (bool, error) {
 }
 
 func removeAlias(alias string) error {
-	cmd := exec.Command("ifconfig", loopback, "inet", alias+"/32", "remove")
+	cmd := exec.Command("sudo", "ifconfig", loopback, "inet", alias+"/32", "remove")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
