@@ -65,7 +65,7 @@ var _ = Describe("Value", func() {
 		})
 
 		AfterEach(func() {
-			Expect(os.RemoveAll(tmpFile)).To(Succeed())
+			os.RemoveAll(tmpFile)
 		})
 
 		It("reports the versions in the metadata", func() {
