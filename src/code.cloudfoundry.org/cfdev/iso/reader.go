@@ -18,11 +18,17 @@ func New() *Reader {
 	return &Reader{}
 }
 
+type Version struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"version"`
+}
+
 type Metadata struct {
 	Version       string              `yaml:"compatibility_version"`
 	Message       string              `yaml:"splash_message"`
 	DefaultMemory int                 `yaml:"default_memory"`
 	Services      []provision.Service `yaml:"services"`
+	Versions      []Version           `yaml:"versions"`
 }
 
 func (Reader) Read(isoFile string) (Metadata, error) {

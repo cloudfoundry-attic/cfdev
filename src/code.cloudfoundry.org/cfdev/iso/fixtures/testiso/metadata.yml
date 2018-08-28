@@ -10,3 +10,6 @@ services:
   handle: "some-other-handle"
   script: "/path/to/some-other-script"
   deployment: "some-other-deployment"
+versions:
+- name: "some-release"
+  version: "v123-some-version"

@@ -15,6 +15,8 @@ var _ = Describe("Iso", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(metadata.Version).To(Equal("v29"))
 			Expect(metadata.Message).To(Equal("is simply dummy text"))
+			Expect(metadata.Versions[0].Name).To(Equal("some-release"))
+			Expect(metadata.Versions[0].Value).To(Equal("v123-some-version"))
 		})
 	})
 })
