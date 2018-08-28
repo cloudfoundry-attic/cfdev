@@ -1,13 +1,13 @@
 package version
 
 import (
-	"code.cloudfoundry.org/cfdev/semver"
-	"github.com/spf13/cobra"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/semver"
+	"fmt"
+	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
-	"fmt"
 	"strings"
 )
 
@@ -20,23 +20,26 @@ type IsoReader interface {
 	Read(isoPath string) (iso.Metadata, error)
 }
 
-type Version struct {
-	UI      UI
-	Version *semver.Version
-	Config          config.Config
-	IsoReader       IsoReader
+type Args struct {
+	DepsIsoPath string
 }
 
-func (v *Version) Execute() {
-	message := []string{fmt.Sprintf("Value: %s", v.Version.Original)}
+type Version struct {
+	UI        UI
+	Version   *semver.Version
+	Config    config.Config
+	IsoReader IsoReader
+}
 
-	isoPath := filepath.Join(v.Config.CacheDir, "cf-deps.iso")
-	if !exists(isoPath) {
+func (v *Version) Execute(args Args) {
+	message := []string{fmt.Sprintf("CLI: %s", v.Version.Original)}
+
+	if !exists(args.DepsIsoPath) {
 		v.UI.Say(strings.Join(message, "\n"))
 		return
 	}
 
-	metadata, err := v.IsoReader.Read(isoPath)
+	metadata, err := v.IsoReader.Read(args.DepsIsoPath)
 	if err != nil {
 		v.UI.Say(strings.Join(message, "\n"))
 		return
@@ -50,12 +53,23 @@ func (v *Version) Execute() {
 }
 
 func (v *Version) Cmd() *cobra.Command {
-	return &cobra.Command{
+	args := Args{}
+	cmd := &cobra.Command{
 		Use: "version",
 		Run: func(_ *cobra.Command, _ []string) {
-			v.Execute()
+			v.Execute(args)
 		},
 	}
+
+	pf := cmd.PersistentFlags()
+	pf.StringVarP(
+		&args.DepsIsoPath,
+		"file",
+		"f",
+		filepath.Join(v.Config.CacheDir, "cf-deps.iso"),
+		"path to .dev file containing bosh & cf bits",
+	)
+	return cmd
 }
 
 func exists(path string) bool {

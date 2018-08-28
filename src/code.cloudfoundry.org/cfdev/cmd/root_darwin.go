@@ -71,6 +71,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	}
 	linuxkit := &hypervisor.LinuxKit{Config: config, DaemonRunner: lctl}
 	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl}
+	isoReader := iso.New()
 
 	dev := &cobra.Command{
 		Use:           "dev",
@@ -82,8 +83,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 	for _, cmd := range []cmdBuilder{
 		&b1.Version{
-			UI:      ui,
-			Version: config.CliVersion,
+			UI:        ui,
+			Version:   config.CliVersion,
+			Config:    config,
+			IsoReader: isoReader,
 		},
 		&b2.Bosh{
 			Exit:        exit,
@@ -119,7 +122,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			VpnKit:      vpnkit,
 			Hypervisor:  linuxkit,
 			Provisioner: provision.NewController(),
-			IsoReader:   iso.New(),
+			IsoReader:   isoReader,
 		},
 		&b6.Stop{
 			Config:     config,

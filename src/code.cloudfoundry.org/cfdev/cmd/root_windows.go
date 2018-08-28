@@ -55,6 +55,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root.PersistentFlags().Lookup("help").Hidden = true
 	lctl := daemon.NewWinSW(config.CFDevHome)
 	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl}
+	isoReader := iso.New()
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)
@@ -82,6 +83,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		&b1.Version{
 			UI:      ui,
 			Version: config.CliVersion,
+			Config: config,
+			IsoReader: isoReader,
 		},
 		&b2.Bosh{
 			Exit:        exit,
@@ -112,7 +115,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Hypervisor:      &hypervisor.HyperV{Config: config},
 			VpnKit:          vpnkit,
 			Provisioner:     provision.NewController(),
-			IsoReader:       iso.New(),
+			IsoReader:       isoReader,
 		},
 		&b6.Stop{
 			Config:     config,

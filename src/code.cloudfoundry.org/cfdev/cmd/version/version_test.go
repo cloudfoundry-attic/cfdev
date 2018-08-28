@@ -5,7 +5,6 @@ import (
 
 	"code.cloudfoundry.org/cfdev/cmd/start/mocks"
 	"code.cloudfoundry.org/cfdev/cmd/version"
-	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/semver"
 	"github.com/golang/mock/gomock"
@@ -13,7 +12,6 @@ import (
 	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 )
 
 type MockUI struct {
@@ -38,10 +36,9 @@ var _ = Describe("Value", func() {
 		mockUI = MockUI{WasCalledWith: ""}
 
 		verCmd = &version.Version{
-			UI:      &mockUI,
-			Config:  config.Config{CacheDir: "/some-non-existent-dir"},
+			UI:        &mockUI,
 			IsoReader: mockIsoReader,
-			Version: &semver.Version{Original: "1.2.3-rc.4"},
+			Version:   &semver.Version{Original: "1.2.3-rc.4"},
 		}
 	})
 
@@ -49,41 +46,38 @@ var _ = Describe("Value", func() {
 		mockController.Finish()
 	})
 
-	It("prints the version", func() {
-		verCmd.Execute()
-		Expect(mockUI.WasCalledWith).To(Equal("Value: 1.2.3-rc.4"))
+	Context("when the cf-deps iso is not present", func() {
+		It("prints the version", func() {
+			verCmd.Execute(version.Args{DepsIsoPath: "/some-non-existent-file"})
+			Expect(mockUI.WasCalledWith).To(Equal("CLI: 1.2.3-rc.4"))
+		})
 	})
 
-	Context("when the cf-deps iso is present in cache dir", func() {
+	Context("when the cf-deps iso is present", func() {
 		var (
-			tmpDir string
+			tmpFile string
 		)
 
 		BeforeEach(func() {
-			var err error
-			tmpDir, err = ioutil.TempDir("", "cfdev-version-test-")
+			f, err := ioutil.TempFile("", "cfdev-version-test-")
 			Expect(err).NotTo(HaveOccurred())
-
-			verCmd.Config.CacheDir = tmpDir
+			tmpFile = f.Name()
 		})
 
 		AfterEach(func() {
-			Expect(os.RemoveAll(tmpDir)).To(Succeed())
+			Expect(os.RemoveAll(tmpFile)).To(Succeed())
 		})
 
-		FIt("reports the versions in the metadata", func() {
-			_, err := os.Create(filepath.Join(tmpDir, "cf-deps.iso"))
-			Expect(err).NotTo(HaveOccurred())
-
-			mockIsoReader.EXPECT().Read(filepath.Join(tmpDir, "cf-deps.iso")).Return(iso.Metadata{
+		It("reports the versions in the metadata", func() {
+			mockIsoReader.EXPECT().Read(tmpFile).Return(iso.Metadata{
 				Versions: []iso.Version{
 					{Name: "some-release-1", Value: "some-version-1"},
 					{Name: "some-release-2", Value: "some-version-2"},
 				},
 			}, nil)
 
-			verCmd.Execute()
-			Expect(mockUI.WasCalledWith).To(ContainSubstring("Value: 1.2.3-rc.4"))
+			verCmd.Execute(version.Args{DepsIsoPath: tmpFile})
+			Expect(mockUI.WasCalledWith).To(ContainSubstring("CLI: 1.2.3-rc.4"))
 			Expect(mockUI.WasCalledWith).To(ContainSubstring("some-release-1: some-version-1"))
 			Expect(mockUI.WasCalledWith).To(ContainSubstring("some-release-2: some-version-2"))
 		})
