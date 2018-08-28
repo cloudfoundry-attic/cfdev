@@ -9,7 +9,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/provision"
 	"github.com/hooklift/iso9660"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type Reader struct{}
@@ -36,6 +36,7 @@ func (Reader) Read(isoFile string) (Metadata, error) {
 	if err != nil {
 		return Metadata{}, err
 	}
+	defer file.Close()
 
 	r, err := iso9660.NewReader(file)
 	if err != nil {
