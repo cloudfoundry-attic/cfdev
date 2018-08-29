@@ -68,7 +68,7 @@ func (a *AnalyticsD) DaemonSpec() (daemon.DaemonSpec, error) {
 		Label:            AnalyticsDLabel,
 		Program:          analyticsD,
 		SessionType:      "Background",
-		ProgramArguments: []string{"analyticsd"},
+		ProgramArguments: []string{analyticsD},
 		RunAtLoad:        false,
 	}, nil
 }
