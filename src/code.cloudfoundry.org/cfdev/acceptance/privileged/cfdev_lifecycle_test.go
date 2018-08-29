@@ -103,6 +103,7 @@ var _ = Describe("cfdev lifecycle", func() {
 			}
 
 			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit"), 5, 1).Should(BeFalse())
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.analyticsd"), 5, 1).Should(BeFalse())
 
 			gexec.KillAndWait()
 			RemoveIPAliases(BoshDirectorIP, CFRouterIP)
@@ -133,6 +134,8 @@ var _ = Describe("cfdev lifecycle", func() {
 			By("waiting for cf router to listen")
 			loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 			Eventually(loginSession).Should(gexec.Exit(0))
+
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.analyticsd"), 10, 1).Should(BeTrue())
 
 			By("pushing an app")
 			PushAnApp()

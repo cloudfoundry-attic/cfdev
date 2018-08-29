@@ -174,7 +174,7 @@ var _ = Describe("Launchd", func() {
     <string>%s</string>
   </array>
 </dict>
-</plist>`, label, binPath)), 0644)).To(Succeed())
+</plist>`, label, binPath, "")), 0644)).To(Succeed())
 				lnchd = daemon.Launchd{
 					PListDir: plistDir,
 				}
@@ -212,7 +212,7 @@ var _ = Describe("Launchd", func() {
     <string>%s</string>
   </array>
 </dict>
-</plist>`, label, binPath)), 0644)).To(Succeed())
+</plist>`, label, binPath, "")), 0644)).To(Succeed())
 				lnchd = daemon.Launchd{
 					PListDir: plistDir,
 				}
@@ -245,7 +245,7 @@ var _ = Describe("Launchd", func() {
     <string>%s</string>
   </array>
 </dict>
-</plist>`, label, binPath)), 0644)).To(Succeed())
+</plist>`, label, binPath, "")), 0644)).To(Succeed())
 				lnchd = daemon.Launchd{
 					PListDir: plistDir,
 				}

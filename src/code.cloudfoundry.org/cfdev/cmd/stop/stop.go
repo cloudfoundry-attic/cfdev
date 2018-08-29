@@ -46,6 +46,12 @@ type VpnKit interface {
 	Destroy() error
 }
 
+//go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/stop AnalyticsD
+type AnalyticsD interface {
+	Stop() error
+	Destroy() error
+}
+
 type Stop struct {
 	Hypervisor   Hypervisor
 	VpnKit       VpnKit
@@ -53,6 +59,7 @@ type Stop struct {
 	CfdevdClient CfdevdClient
 	Analytics    Analytics
 	HostNet      HostNet
+	AnalyticsD   AnalyticsD
 	Host         Host
 }
 
@@ -73,6 +80,14 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	}
 
 	var reterr error
+
+	if err := s.AnalyticsD.Stop(); err != nil {
+		reterr = errors.SafeWrap(err, "failed to stop analyticsd")
+	}
+
+	if err := s.AnalyticsD.Destroy(); err != nil {
+		reterr = errors.SafeWrap(err, "failed to destroy analyticsd")
+	}
 
 	if err := s.Hypervisor.Stop(vmName); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop the VM")

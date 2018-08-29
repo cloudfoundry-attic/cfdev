@@ -51,6 +51,10 @@ var (
 	cfdevdMd5  string
 	cfdevdSize string
 
+	cfdevdUrl  string
+	cfdevdMd5  string
+	cfdevdSize string
+
 	cliVersion   string
 	analyticsKey string
 )
@@ -141,6 +145,13 @@ func catalog() (resource.Catalog, error) {
 				Name:  "winsw.exe",
 				MD5:   winswMd5,
 				Size:  aToUint64(winswSize),
+				InUse: true,
+			},
+			{
+				URL:   analyticsdUrl,
+				Name:  "analyticsd",
+				MD5:   analyticsdMd5,
+				Size:  aToUint64(analyticsdSize),
 				InUse: true,
 			},
 		},

@@ -9,7 +9,6 @@ import (
 
 	"path/filepath"
 
-	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
@@ -20,14 +19,16 @@ import (
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
-	"code.cloudfoundry.org/cfdev/host"
 	"code.cloudfoundry.org/cfdev/hypervisor"
 	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
+	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
 	"github.com/spf13/cobra"
+	"code.cloudfoundry.org/cfdev/host"
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 )
 
 type UI interface {
@@ -72,6 +73,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	linuxkit := &hypervisor.LinuxKit{Config: config, DaemonRunner: lctl}
 	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl}
 	isoReader := iso.New()
+	analyticsD := &cfanalytics.AnalyticsD{
+		Config: config,
+		DaemonRunner: lctl,
+	}
 
 	dev := &cobra.Command{
 		Use:           "dev",
@@ -120,6 +125,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				TimeSyncSocket: filepath.Join(config.StateDir, "00000003.0000f3a4"),
 			},
 			VpnKit:      vpnkit,
+			AnalyticsD:  analyticsD,
 			Hypervisor:  linuxkit,
 			Provisioner: provision.NewController(),
 			IsoReader:   isoReader,
@@ -131,13 +137,15 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			HostNet: &network.HostNet{
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
-			Host:         &host.Host{},
+			Host:        &host.Host{},
+			AnalyticsD:  analyticsD,
 			VpnKit:       vpnkit,
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
 		&b7.Telemetry{
 			UI:              ui,
 			AnalyticsToggle: analyticsToggle,
+			AnalyticsD:  analyticsD,
 		},
 		&b8.Logs{
 			Provisioner: provision.NewController(),

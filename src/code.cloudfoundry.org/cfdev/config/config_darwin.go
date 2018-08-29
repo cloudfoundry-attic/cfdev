@@ -47,6 +47,10 @@ var (
 	cfdevdMd5  string
 	cfdevdSize string
 
+	analyticsdUrl  string
+	analyticsdMd5  string
+	analyticsdSize string
+
 	cliVersion   string
 	analyticsKey string
 )
@@ -165,6 +169,13 @@ func catalog() (resource.Catalog, error) {
 				Name:  "cfdevd",
 				MD5:   cfdevdMd5,
 				Size:  aToUint64(cfdevdSize),
+				InUse: true,
+			},
+			{
+				URL:   analyticsdUrl,
+				Name:  "analyticsd",
+				MD5:   analyticsdMd5,
+				Size:  aToUint64(analyticsdSize),
 				InUse: true,
 			},
 		},

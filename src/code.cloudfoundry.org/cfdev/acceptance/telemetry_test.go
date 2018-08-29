@@ -22,7 +22,6 @@ import (
 
 var _ = Describe("hyperkit starts and telemetry", func() {
 	var (
-		stateDir string
 		cacheDir string
 		session  *gexec.Session
 		err      error
@@ -30,7 +29,6 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 
 	BeforeEach(func() {
 		cacheDir = filepath.Join(cfdevHome, "cache")
-		stateDir = filepath.Join(cfdevHome, "state")
 
 		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
 			SetupDependencies(cacheDir)

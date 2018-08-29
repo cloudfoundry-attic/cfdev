@@ -26,6 +26,7 @@ var _ = Describe("Stop", func() {
 		mockHostNet      *mocks.MockHostNet
 		mockHost         *mocks.MockHost
 		mockHypervisor   *mocks.MockHypervisor
+		mockAnalyticsD   *mocks.MockAnalyticsD
 		mockVpnkit       *mocks.MockVpnKit
 		mockController   *gomock.Controller
 		stateDir         string
@@ -47,6 +48,7 @@ var _ = Describe("Stop", func() {
 		mockAnalytics = mocks.NewMockAnalytics(mockController)
 		mockHostNet = mocks.NewMockHostNet(mockController)
 		mockHost = mocks.NewMockHost(mockController)
+		mockAnalyticsD = mocks.NewMockAnalyticsD(mockController)
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockVpnkit = mocks.NewMockVpnKit(mockController)
 
@@ -56,6 +58,7 @@ var _ = Describe("Stop", func() {
 			Config:       cfg,
 			Analytics:    mockAnalytics,
 			CfdevdClient: mockCfdevdClient,
+			AnalyticsD:      mockAnalyticsD,
 			HostNet:      mockHostNet,
 			Host:         mockHost,
 		}
@@ -69,9 +72,11 @@ var _ = Describe("Stop", func() {
 		os.RemoveAll(stateDir)
 	})
 
-	It("destroys the VM, uninstalls vpnkit and cfdevd, tears down aliases, and sends analytics event", func() {
+	It("destroys the VM, uninstalls vpnkit, analyticsd, and cfdevd, tears down aliases, and sends analytics event", func() {
 		mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 		mockHost.EXPECT().CheckRequirements()
+		mockAnalyticsD.EXPECT().Stop()
+		mockAnalyticsD.EXPECT().Destroy()
 		mockHypervisor.EXPECT().Stop("cfdev")
 		mockHypervisor.EXPECT().Destroy("cfdev")
 		mockVpnkit.EXPECT().Stop()
@@ -89,6 +94,8 @@ var _ = Describe("Stop", func() {
 		It("stops the others and returns VM error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockHost.EXPECT().CheckRequirements()
+			mockAnalyticsD.EXPECT().Stop()
+			mockAnalyticsD.EXPECT().Destroy()
 			mockHypervisor.EXPECT().Stop("cfdev").Return(errors.New("test"))
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
@@ -107,6 +114,8 @@ var _ = Describe("Stop", func() {
 		It("stops the others and returns VM error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockHost.EXPECT().CheckRequirements()
+			mockAnalyticsD.EXPECT().Stop()
+			mockAnalyticsD.EXPECT().Destroy()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev").Return(errors.New("test"))
 			mockVpnkit.EXPECT().Stop()
@@ -125,6 +134,8 @@ var _ = Describe("Stop", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockHost.EXPECT().CheckRequirements()
+			mockAnalyticsD.EXPECT().Stop()
+			mockAnalyticsD.EXPECT().Destroy()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop().Return(errors.New("test"))
@@ -143,6 +154,8 @@ var _ = Describe("Stop", func() {
 		It("stops the others and returns vpnkit error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockHost.EXPECT().CheckRequirements()
+			mockAnalyticsD.EXPECT().Stop()
+			mockAnalyticsD.EXPECT().Destroy()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()
@@ -157,10 +170,52 @@ var _ = Describe("Stop", func() {
 		})
 	})
 
+	Context("stopping analyticsd fails", func() {
+		It("stops the others and returns analyticsd error", func() {
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockHost.EXPECT().CheckRequirements()
+			mockAnalyticsD.EXPECT().Stop().Return(errors.New("test"))
+			mockAnalyticsD.EXPECT().Destroy()
+			mockHypervisor.EXPECT().Stop("cfdev")
+			mockHypervisor.EXPECT().Destroy("cfdev")
+			mockVpnkit.EXPECT().Stop()
+			mockVpnkit.EXPECT().Destroy()
+
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall()
+			}
+
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to stop analyticsd: test"))
+		})
+	})
+
+	Context("destroying analyticsd fails", func() {
+		It("stops the others and returns analyticsd error", func() {
+			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
+			mockHost.EXPECT().CheckRequirements()
+			mockAnalyticsD.EXPECT().Stop()
+			mockAnalyticsD.EXPECT().Destroy().Return(errors.New("test"))
+			mockHypervisor.EXPECT().Stop("cfdev")
+			mockHypervisor.EXPECT().Destroy("cfdev")
+			mockVpnkit.EXPECT().Stop()
+			mockVpnkit.EXPECT().Destroy()
+
+			mockHostNet.EXPECT().RemoveLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip")
+			if runtime.GOOS == "darwin" {
+				mockCfdevdClient.EXPECT().Uninstall()
+			}
+
+			Expect(stopCmd.Execute()).To(MatchError("cf dev stop: failed to destroy analyticsd: test"))
+		})
+	})
+
 	Context("removing aliases fails", func() {
 		It("stops the others and returns alias error", func() {
 			mockAnalytics.EXPECT().Event(cfanalytics.STOP)
 			mockHost.EXPECT().CheckRequirements()
+			mockAnalyticsD.EXPECT().Stop()
+			mockAnalyticsD.EXPECT().Destroy()
 			mockHypervisor.EXPECT().Stop("cfdev")
 			mockHypervisor.EXPECT().Destroy("cfdev")
 			mockVpnkit.EXPECT().Stop()

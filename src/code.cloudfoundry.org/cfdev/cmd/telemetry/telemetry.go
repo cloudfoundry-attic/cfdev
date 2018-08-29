@@ -13,9 +13,17 @@ type Toggle interface {
 	Set(value bool) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/telemetry AnalyticsD
+type AnalyticsD interface {
+	Start() error
+	Stop() error
+	IsRunning() (bool, error)
+}
+
 type Telemetry struct {
 	UI              UI
 	AnalyticsToggle Toggle
+	AnalyticsD AnalyticsD
 	Args            struct {
 		FlagOff bool
 		FlagOn  bool
@@ -39,9 +47,27 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 		if err := t.AnalyticsToggle.Set(false); err != nil {
 			return errors.SafeWrap(err, "turning off telemetry")
 		}
+		isRunning, err := t.AnalyticsD.IsRunning()
+		if err != nil {
+			return errors.SafeWrap(err,"checking if analyticsd is running")
+		}
+		if isRunning {
+			if err := t.AnalyticsD.Stop(); err != nil {
+				return errors.SafeWrap(err,"turning off analyticsd")
+			}
+		}
 	} else if t.Args.FlagOn {
 		if err := t.AnalyticsToggle.Set(true); err != nil {
 			return errors.SafeWrap(err, "turning on telemetry")
+		}
+		isRunning, err := t.AnalyticsD.IsRunning()
+		if err != nil {
+			return errors.SafeWrap(err,"checking if analyticsd is running")
+		}
+		if !isRunning {
+			if err := t.AnalyticsD.Start(); err != nil {
+				return errors.SafeWrap(err,"turning on analyticsd")
+			}
 		}
 	}
 

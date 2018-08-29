@@ -33,6 +33,7 @@ var _ = Describe("Start", func() {
 		mockCache           *mocks.MockCache
 		mockCFDevD          *mocks.MockCFDevD
 		mockVpnKit          *mocks.MockVpnKit
+		mockAnalyticsD      *mocks.MockAnalyticsD
 		mockHypervisor      *mocks.MockHypervisor
 		mockProvisioner     *mocks.MockProvisioner
 		mockIsoReader       *mocks.MockIsoReader
@@ -57,6 +58,7 @@ var _ = Describe("Start", func() {
 		mockCache = mocks.NewMockCache(mockController)
 		mockCFDevD = mocks.NewMockCFDevD(mockController)
 		mockVpnKit = mocks.NewMockVpnKit(mockController)
+		mockAnalyticsD = mocks.NewMockAnalyticsD(mockController)
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
 		mockIsoReader = mocks.NewMockIsoReader(mockController)
@@ -91,6 +93,7 @@ var _ = Describe("Start", func() {
 			Cache:           mockCache,
 			CFDevD:          mockCFDevD,
 			VpnKit:          mockVpnKit,
+			AnalyticsD:      mockAnalyticsD,
 			Hypervisor:      mockHypervisor,
 			Provisioner:     mockProvisioner,
 			IsoReader:       mockIsoReader,
@@ -180,7 +183,73 @@ var _ = Describe("Start", func() {
 						},
 					}),
 
-					//welcome message
+					mockToggle.EXPECT().Get().Return(true),
+					mockAnalyticsD.EXPECT().Start(),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+				)
+
+				Expect(startCmd.Execute(start.Args{
+					Cpus: 7,
+					Mem:  0,
+				})).To(Succeed())
+			})
+
+			It("starts the vm with analytics toggled off", func() {
+				if runtime.GOOS == "darwin" {
+					mockUI.EXPECT().Say("Installing cfdevd network helper...")
+					mockCFDevD.EXPECT().Install()
+				}
+
+				gomock.InOrder(
+					mockToggle.EXPECT().SetProp("type", "cf"),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockHost.EXPECT().CheckRequirements(),
+					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+
+					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+					mockUI.EXPECT().Say("Downloading Resources..."),
+					mockCache.EXPECT().Sync(resource.Catalog{
+						Items: []resource.Item{
+							{Name: "some-item"},
+							{Name: "cf-deps.iso"},
+						},
+					}),
+					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+					mockUI.EXPECT().Say("Creating the VM..."),
+					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+						Name:     "cfdev",
+						CPUs:     7,
+						MemoryMB: 8765,
+						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+					}),
+					mockUI.EXPECT().Say("Starting VPNKit..."),
+					mockVpnKit.EXPECT().Start(),
+					mockVpnKit.EXPECT().Watch(localExitChan),
+					mockUI.EXPECT().Say("Starting the VM..."),
+					mockHypervisor.EXPECT().Start("cfdev"),
+					mockUI.EXPECT().Say("Waiting for Garden..."),
+					mockProvisioner.EXPECT().Ping(),
+					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+					mockProvisioner.EXPECT().DeployBosh(),
+					mockUI.EXPECT().Say("Deploying CF..."),
+					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+					mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
+						{
+							Name:       "some-service",
+							Handle:     "some-handle",
+							Script:     "/path/to/some-script",
+							Deployment: "some-deployment",
+						},
+						{
+							Name:       "some-other-service",
+							Handle:     "some-other-handle",
+							Script:     "/path/to/some-other-script",
+							Deployment: "some-other-deployment",
+						},
+					}),
+
+					mockToggle.EXPECT().Get().Return(false),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
 				)
 
@@ -260,7 +329,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 
-						//welcome message
+						mockToggle.EXPECT().Get().Return(true),
+						mockAnalyticsD.EXPECT().Start(),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
 					)
 
@@ -330,8 +400,10 @@ var _ = Describe("Start", func() {
 							},
 						}),
 
-						//welcome message
+						mockToggle.EXPECT().Get().Return(true),
+						mockAnalyticsD.EXPECT().Start(),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+
 					)
 
 					Expect(startCmd.Execute(start.Args{
@@ -494,7 +566,8 @@ var _ = Describe("Start", func() {
 						},
 					}),
 
-					//welcome message
+					mockToggle.EXPECT().Get().Return(true),
+					mockAnalyticsD.EXPECT().Start(),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
 				)
 
