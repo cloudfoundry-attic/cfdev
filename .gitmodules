@@ -94,3 +94,6 @@
 [submodule "src/code.cloudfoundry.org/cfdev/vendor/github.com/xtgo/uuid"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/xtgo/uuid
 	url = https://github.com/xtgo/uuid.git
+[submodule "src/code.cloudfoundry.org/cfdev/vendor/golang.org/x/oauth2"]
+	path = src/code.cloudfoundry.org/cfdev/vendor/golang.org/x/oauth2
+	url = https://github.com/golang/oauth2.git
