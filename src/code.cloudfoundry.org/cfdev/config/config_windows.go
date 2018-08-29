@@ -51,9 +51,9 @@ var (
 	cfdevdMd5  string
 	cfdevdSize string
 
-	cfdevdUrl  string
-	cfdevdMd5  string
-	cfdevdSize string
+	analyticsdUrl  string
+	analyticsdMd5  string
+	analyticsdSize string
 
 	cliVersion   string
 	analyticsKey string
