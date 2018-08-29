@@ -142,7 +142,14 @@ var _ = Describe("cfdev lifecycle", func() {
 			Eventually(startSession, 1*time.Hour).Should(gbytes.Say("CF Dev is already running..."))
 
 			By("checking for cf versions")
-			versionSession := cf.Cf("dev", "version")
+			var versionSession *gexec.Session
+
+			if isoPath := os.Getenv("ISO_PATH"); isoPath != "" {
+				versionSession = cf.Cf("dev", "version", "-f", isoPath)
+			} else {
+				versionSession = cf.Cf("dev", "version")
+			}
+
 			<-versionSession.Exited
 			Expect(string(versionSession.Out.Contents())).To(ContainSubstring("CLI:"))
 			Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
