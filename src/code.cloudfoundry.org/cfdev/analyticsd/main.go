@@ -4,6 +4,7 @@ import (
 	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
 	"context"
 	"crypto/tls"
+	"github.com/denisbrodbeck/machineid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"gopkg.in/segmentio/analytics-go.v3"
@@ -12,15 +13,13 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"github.com/denisbrodbeck/machineid"
 )
 
 func main() {
 	var (
 		analyticsKey string
-		userID string
 		clientSecret string
-		tokenUrl string
+		tokenUrl     string
 	)
 
 	cfg := &clientcredentials.Config{
