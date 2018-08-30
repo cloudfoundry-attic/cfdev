@@ -5,15 +5,16 @@ package daemon
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/segmentio/analytics-go.v3"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"runtime"
-	"time"
 	"strings"
+	"time"
+
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 const ccTimeStampFormat = "2006-01-02T15:04:05Z"
@@ -73,6 +74,10 @@ var (
 )
 
 func (d *Daemon) Start() {
+	err := d.do()
+	if err != nil {
+		d.logger.Println(err)
+	}
 	for {
 		select {
 		case <-d.doneChan:
@@ -98,7 +103,7 @@ func (d *Daemon) do() error {
 	}
 
 	params := url.Values{}
-	params.Add("q", "type IN " + eventTypesFilter())
+	params.Add("q", "type IN "+eventTypesFilter())
 
 	lastTimeIsSet := d.lastTime != time.Time{}
 

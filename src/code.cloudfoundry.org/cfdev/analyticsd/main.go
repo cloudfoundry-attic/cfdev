@@ -1,31 +1,30 @@
 package main
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
 	"context"
 	"crypto/tls"
-	"github.com/denisbrodbeck/machineid"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
-	"gopkg.in/segmentio/analytics-go.v3"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
+	"github.com/denisbrodbeck/machineid"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
+)
+
+var (
+	analyticsKey string
 )
 
 func main() {
-	var (
-		analyticsKey string
-		clientSecret string
-		tokenUrl     string
-	)
-
 	cfg := &clientcredentials.Config{
-		ClientID:     "cfdev_analytics",
-		ClientSecret: clientSecret,
-		TokenURL:     tokenUrl,
+		ClientID:     "analytics",
+		ClientSecret: "analytics",
+		TokenURL:     "https://uaa.dev.cfdev.sh/oauth/token",
 	}
 
 	httpClient := &http.Client{

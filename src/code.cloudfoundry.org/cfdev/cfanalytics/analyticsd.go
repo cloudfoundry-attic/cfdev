@@ -2,9 +2,9 @@ package cfanalytics
 
 import (
 	"path/filepath"
-	"code.cloudfoundry.org/cfdev/daemon"
+
 	"code.cloudfoundry.org/cfdev/config"
-	"fmt"
+	"code.cloudfoundry.org/cfdev/daemon"
 )
 
 const AnalyticsDLabel = "org.cloudfoundry.cfdev.cfanalyticsd"
@@ -28,21 +28,12 @@ func (a *AnalyticsD) Start() error {
 		return err
 	}
 
-	fmt.Println("DAEMON SPEC: ", spec)
-
 	err = a.DaemonRunner.AddDaemon(spec)
 	if err != nil {
 		return err
 	}
 
-	err = a.DaemonRunner.Start(AnalyticsDLabel)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("DAEMON ANALYTICS SHOULD BE RUNNING???")
-
-	return err
+	return a.DaemonRunner.Start(AnalyticsDLabel)
 }
 
 func (a *AnalyticsD) Stop() error {

@@ -6,8 +6,6 @@ dir="$( cd "$( dirname "$0" )" && pwd )"
 cfdev="$dir"/../../..
 cache_dir="$HOME"/.cfdev/cache
 analyticskey="WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2"
-clientsecret="cfdev_analytics_secret"
-tokenUrl="https://uaa.dev.cfdev.sh/oauth/token"
 
 export GOPATH="$cfdev"
 pkg="code.cloudfoundry.org/cfdev/config"
@@ -18,16 +16,13 @@ export GOARCH=amd64
 cfdevd="$PWD"/cfdvd
 go build -o $cfdevd code.cloudfoundry.org/cfdev/cfdevd
 
-analyticsdpkg="code.cloudfoundry.org/analyticsd/main"
+analyticsd="$PWD"/analytix
+analyticsdpkg="main"
 go build \
+  -o $analyticsd \
   -ldflags \
-    "-X $analyticsdpkg.analyticsKey=$analyticskey \
-     -X $analyticsdpkg.userID= \
-     -X $analyticsdpkg.clientSecret=$clientsecret \
-     -X $analyticsdpkg.tokenUrl=$tokenUrl" \
-     code.cloudfoundry.org/analyticsd
-
-analyticsd="$PWD"/analyticsd
+    "-X $analyticsdpkg.analyticsKey=$analyticskey" \
+     code.cloudfoundry.org/cfdev/analyticsd
 
 cfdepsUrl="$cfdev/output/cf-deps.iso"
 if [ ! -f "$cfdepsUrl" ]; then
