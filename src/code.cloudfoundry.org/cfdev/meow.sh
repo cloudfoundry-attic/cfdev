@@ -21,6 +21,7 @@ function run_cats() {
     "admin_secret": "admin-client-secret",
     "skip_ssl_validation": true,
     "use_http": true,
+    "use_log_cache": false,
     "backend": "diego",
     "include_apps": true,
     "include_backend_compatibility": false,

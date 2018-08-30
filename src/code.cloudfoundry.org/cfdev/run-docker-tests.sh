@@ -43,6 +43,7 @@ cat <<EOF >${CONFIG}
   "admin_secret": "admin-client-secret",
   "skip_ssl_validation": true,
   "use_http": true,
+  "use_log_cache": false,
   "backend": "diego",
   "include_apps": false,
   "include_detect": false,
