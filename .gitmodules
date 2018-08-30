@@ -19,9 +19,6 @@
 [submodule "src/github.com/onsi/gomega"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/onsi/gomega
 	url = https://github.com/onsi/gomega.git
-[submodule "acceptance/src/github.com/cloudfoundry/cf-acceptance-tests"]
-	path = acceptance/src/github.com/cloudfoundry/cf-acceptance-tests
-	url = https://github.com/cloudfoundry/cf-acceptance-tests.git
 [submodule "src/github.com/golang/protobuf"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/golang/protobuf
 	url = https://github.com/golang/protobuf.git
@@ -34,12 +31,6 @@
 [submodule "src/gopkg.in/yaml.v2"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/gopkg.in/yaml.v2
 	url = https://github.com/go-yaml/yaml.git
-[submodule "acceptance/src/github.com/cloudfoundry/cf-networking-release"]
-	path = acceptance/src/github.com/cloudfoundry/cf-networking-release
-	url = https://github.com/cloudfoundry/cf-networking-release.git
-[submodule "acceptance/src/github.com/cloudfoundry-incubator/routing-release"]
-	path = acceptance/src/github.com/cloudfoundry-incubator/routing-release
-	url = https://github.com/cloudfoundry-incubator/routing-release.git
 [submodule "src/code.cloudfoundry.org/cfdev/vendor/github.com/cloudfoundry-incubator/cf-test-helpers"]
 	path = src/code.cloudfoundry.org/cfdev/vendor/github.com/cloudfoundry-incubator/cf-test-helpers
 	url = https://github.com/cloudfoundry-incubator/cf-test-helpers.git
