@@ -51,9 +51,14 @@ var _ = Describe("cfdev lifecycle", func() {
 		fmt.Println("PLUGIN PATH: " + pluginPath)
 		session := cf.Cf("install-plugin", pluginPath, "-f")
 		Eventually(session).Should(gexec.Exit(0))
+		telemetrySession := cf.Cf("dev", "telemetry", "--on")
+		Eventually(telemetrySession).Should(gexec.Exit(0))
 	})
 
 	AfterEach(func() {
+		telemetrySession := cf.Cf("dev", "telemetry", "--off")
+		Eventually(telemetrySession).Should(gexec.Exit(0))
+
 		session := cf.Cf("uninstall-plugin", "cfdev")
 		Eventually(session).Should(gexec.Exit(0))
 	})
@@ -135,7 +140,18 @@ var _ = Describe("cfdev lifecycle", func() {
 			loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 			Eventually(loginSession).Should(gexec.Exit(0))
 
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd"), 10, 1).Should(BeTrue())
+			By("checking that analyticsd is running")
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
+
+			By("toggling off telemetry")
+			telemetrySession := cf.Cf("dev", "telemetry", "--off")
+			Eventually(telemetrySession).Should(gexec.Exit(0))
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeFalse())
+
+			By("toggling telemetry on")
+			telemetrySession = cf.Cf("dev", "telemetry", "--on")
+			Eventually(telemetrySession).Should(gexec.Exit(0))
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
 
 			By("pushing an app")
 			PushAnApp()
@@ -152,8 +168,8 @@ var _ = Describe("cfdev lifecycle", func() {
 			} else {
 				versionSession = cf.Cf("dev", "version")
 			}
+			Eventually(versionSession, 5*time.Second).Should(gexec.Exit(0))
 
-			<-versionSession.Exited
 			Expect(string(versionSession.Out.Contents())).To(ContainSubstring("CLI:"))
 			Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
 		})

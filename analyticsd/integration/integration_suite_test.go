@@ -14,7 +14,7 @@ func TestIntegration(t *testing.T) {
 
 var fixturePushApp = `
 {
-  "total_results": 1,
+  "total_results": 2,
   "total_pages": 1,
   "prev_url": null,
   "next_url": null,
@@ -58,8 +58,8 @@ var fixturePushApp = `
       "metadata": {
         "guid": "84e40957-9c33-4662-a123-f3c89f0dc254",
         "url": "/v2/events/84e40957-9c33-4662-a123-f3c89f0dc254",
-        "created_at": "2018-08-20T20:20:43Z",
-        "updated_at": "2018-08-20T20:20:43Z"
+        "created_at": "2018-08-20T20:20:44Z",
+        "updated_at": "2018-08-20T20:20:44Z"
       },
       "entity": {
         "type": "audit.app.create",

@@ -51,7 +51,6 @@ func main() {
 		cfg.Client(ctx),
 		analytics.New(analyticsKey),
 		10*time.Minute,
-		time.Time{},
 	)
 
 	sigs := make(chan os.Signal, 1)

@@ -27,11 +27,30 @@ type Daemon struct {
 	ticker          *time.Ticker
 	pollingInterval time.Duration
 	logger          *log.Logger
-	lastTime        time.Time
+	lastTime        *time.Time
 	doneChan        chan bool
 }
 
-func New(ccHost string, UUID string, writer io.Writer, httpClient *http.Client, analyticsClient analytics.Client, pollingInterval time.Duration, lastTime time.Time) *Daemon {
+var buildpackWhitelist = map[string]string{
+	"staticfile_buildpack":  "staticfile",
+	"java_buildpack":        "java",
+	"ruby_buildpack":        "ruby",
+	"dotnet_core_buildpack": "dotnet_core",
+	"nodejs_buildpack":      "nodejs",
+	"go_buildpack":          "go",
+	"python_buildpack":      "python",
+	"php_buildpack":         "php",
+	"binary_buildpack":      "binary",
+}
+
+func New(
+	ccHost string,
+	UUID string,
+	writer io.Writer,
+	httpClient *http.Client,
+	analyticsClient analytics.Client,
+	pollingInterval time.Duration,
+) *Daemon {
 	return &Daemon{
 		ccHost:          ccHost,
 		UUID:            UUID,
@@ -40,7 +59,6 @@ func New(ccHost string, UUID string, writer io.Writer, httpClient *http.Client, 
 		ticker:          time.NewTicker(pollingInterval),
 		pollingInterval: pollingInterval,
 		logger:          log.New(writer, "[ANALYTICSD] ", log.LstdFlags),
-		lastTime:        lastTime,
 		doneChan:        make(chan bool, 1),
 	}
 }
@@ -82,7 +100,7 @@ func (d *Daemon) Start() {
 		select {
 		case <-d.doneChan:
 			return
-		case <-d.ticker.C:
+		case <-time.NewTicker(d.pollingInterval).C:
 			err := d.do()
 
 			if err != nil {
@@ -105,7 +123,7 @@ func (d *Daemon) do() error {
 	params := url.Values{}
 	params.Add("q", "type IN "+eventTypesFilter())
 
-	lastTimeIsSet := d.lastTime != time.Time{}
+	lastTimeIsSet := d.lastTime != nil
 
 	if lastTimeIsSet {
 		params.Add("q", "timestamp>"+d.lastTime.Format(ccTimeStampFormat))
@@ -150,6 +168,10 @@ func (d *Daemon) do() error {
 		return err
 	}
 
+	if len(appResponse.Resources) == 0 {
+		d.saveLatestTime(time.Now())
+	}
+
 	for _, resource := range appResponse.Resources {
 		eventType, ok := eventTypes[resource.Entity.Type]
 		if !ok {
@@ -163,8 +185,12 @@ func (d *Daemon) do() error {
 
 		d.saveLatestTime(t)
 
+		buildpack, ok := buildpackWhitelist[resource.Entity.Metadata.Request.Buildpack]
+		if !ok {
+			buildpack = "custom"
+		}
 		var properties = analytics.Properties{
-			"buildpack": resource.Entity.Metadata.Request.Buildpack,
+			"buildpack": buildpack,
 			"os":        runtime.GOOS,
 		}
 
@@ -195,7 +221,7 @@ func eventTypesFilter() string {
 
 func (d *Daemon) saveLatestTime(t time.Time) {
 	t = t.UTC()
-	if t.After(d.lastTime) {
-		d.lastTime = t
+	if d.lastTime == nil || t.After(*d.lastTime) {
+		d.lastTime = &t
 	}
 }
