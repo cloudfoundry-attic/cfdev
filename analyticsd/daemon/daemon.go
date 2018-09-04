@@ -23,6 +23,7 @@ type Daemon struct {
 	ccHost          string
 	httpClient      *http.Client
 	UUID            string
+	version         string
 	analyticsClient analytics.Client
 	ticker          *time.Ticker
 	pollingInterval time.Duration
@@ -46,6 +47,7 @@ var buildpackWhitelist = map[string]string{
 func New(
 	ccHost string,
 	UUID string,
+	version string,
 	writer io.Writer,
 	httpClient *http.Client,
 	analyticsClient analytics.Client,
@@ -54,6 +56,7 @@ func New(
 	return &Daemon{
 		ccHost:          ccHost,
 		UUID:            UUID,
+		version:         version,
 		httpClient:      httpClient,
 		analyticsClient: analyticsClient,
 		ticker:          time.NewTicker(pollingInterval),
@@ -87,7 +90,7 @@ type Response struct {
 
 var (
 	eventTypes = map[string]string{
-		"audit.app.create": "app push",
+		"audit.app.create": "app created",
 	}
 )
 
@@ -145,6 +148,7 @@ func (d *Daemon) do() error {
 		var properties = analytics.Properties{
 			"message": fmt.Sprintf("failed to contact cc api: [%v] %s", resp.Status, contents),
 			"os":      runtime.GOOS,
+			"version": d.version,
 		}
 
 		err := d.analyticsClient.Enqueue(analytics.Track{
@@ -192,6 +196,7 @@ func (d *Daemon) do() error {
 		var properties = analytics.Properties{
 			"buildpack": buildpack,
 			"os":        runtime.GOOS,
+			"version":   d.version,
 		}
 
 		if lastTimeIsSet {

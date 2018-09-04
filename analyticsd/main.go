@@ -18,6 +18,7 @@ import (
 
 var (
 	analyticsKey string
+	version      string
 )
 
 func main() {
@@ -47,6 +48,7 @@ func main() {
 	analyticsDaemon := daemon.New(
 		"https://api.dev.cfdev.sh",
 		userID,
+		version,
 		os.Stdout,
 		cfg.Client(ctx),
 		analytics.New(analyticsKey),

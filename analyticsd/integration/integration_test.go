@@ -39,6 +39,7 @@ var _ = Describe("Integration", func() {
 		aDaemon = daemon.New(
 			ccServer.URL(),
 			"some-user-uuid",
+			"some-version",
 			buffer,
 			httpClient,
 			mockAnalytics,
@@ -80,60 +81,65 @@ var _ = Describe("Integration", func() {
 
 			Context("when there are subsequent events", func() {
 				BeforeEach(func() {
-					ccServer.AppendHandlers(ghttp.CombineHandlers(
-						ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create&q=timestamp>2018-08-08T08:08:08Z"),
-						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
-							fakePushEvent("2018-08-09T08:08:08Z", "ruby_buildpack"),
-							fakePushEvent("2018-08-08T09:07:08Z", "go_buildpack"),
-						})),
-					))
-					ccServer.AppendHandlers(ghttp.CombineHandlers(
-						ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create&q=timestamp>2018-08-09T08:08:08Z"),
-						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
-							fakePushEvent("2018-08-10T08:08:08Z", "java_buildpack"),
-							fakePushEvent("2018-08-11T08:08:08Z", "nodejs_buildpack"),
-						})),
-					))
+					ccServer.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create&q=timestamp>2018-08-08T08:08:08Z"),
+							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+								fakePushEvent("2018-08-09T08:08:08Z", "ruby_buildpack"),
+								fakePushEvent("2018-08-08T09:07:08Z", "go_buildpack"),
+							})),
+						),
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create&q=timestamp>2018-08-09T08:08:08Z"),
+							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+								fakePushEvent("2018-08-10T08:08:08Z", "java_buildpack"),
+								fakePushEvent("2018-08-11T08:08:08Z", "nodejs_buildpack"),
+							})),
+						))
 				})
 
 				It("sends the events and continues polling", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "ruby",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "go",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 10, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "java",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 11, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "nodejs",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 					startDaemon()
@@ -162,21 +168,23 @@ var _ = Describe("Integration", func() {
 				It("sends the subsequent events", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "ruby",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "go",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 
@@ -198,21 +206,23 @@ var _ = Describe("Integration", func() {
 				It("labels the buildpack as custom", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 10, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "java",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
-						Event:     "app push",
+						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 11, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "custom",
 							"os":        runtime.GOOS,
+							"version":   "some-version",
 						},
 					})
 					startDaemon()

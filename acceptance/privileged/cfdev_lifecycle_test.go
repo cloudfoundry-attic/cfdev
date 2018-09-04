@@ -141,17 +141,17 @@ var _ = Describe("cfdev lifecycle", func() {
 			Eventually(loginSession).Should(gexec.Exit(0))
 
 			By("checking that analyticsd is running")
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd"), 30, 1).Should(BeTrue())
 
 			By("toggling off telemetry")
 			telemetrySession := cf.Cf("dev", "telemetry", "--off")
 			Eventually(telemetrySession).Should(gexec.Exit(0))
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeFalse())
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd"), 30, 1).Should(BeFalse())
 
 			By("toggling telemetry on")
 			telemetrySession = cf.Cf("dev", "telemetry", "--on")
 			Eventually(telemetrySession).Should(gexec.Exit(0))
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
+			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd"), 30, 1).Should(BeTrue())
 
 			By("pushing an app")
 			PushAnApp()
