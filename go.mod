@@ -58,4 +58,4 @@ require (
 	gopkg.in/yaml.v2 v2.2.1
 )
 
-replace github.com/cloudfoundry/bosh-cli => github.com/pcfdev-forks/bosh-cli v2.0.42-0.20180831162148-70729ce5b5db+incompatible
+replace github.com/cloudfoundry/bosh-cli => github.com/pcfdev-forks/bosh-cli v2.0.42-0.20180831162148-70729ce5b5db
