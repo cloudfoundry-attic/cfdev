@@ -25,6 +25,7 @@ require (
 	github.com/golang/mock v1.1.1
 	github.com/hooklift/iso9660 v1.0.0
 	github.com/hpcloud/tail v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
