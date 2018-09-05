@@ -27,6 +27,7 @@ import (
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	"github.com/spf13/cobra"
 	"code.cloudfoundry.org/cfdev/host"
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 )
 
 type UI interface {
@@ -71,6 +72,11 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		Writer:                writer,
 	}
 
+	analyticsD := &cfanalytics.AnalyticsD{
+		Config: config,
+		DaemonRunner: lctl,
+	}
+
 	dev := &cobra.Command{
 		Use:           "dev",
 		Short:         "Start and stop a single vm CF deployment running on your workstation",
@@ -111,6 +117,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         &network.HostNet{},
 			Host:            &host.Host{},
+			AnalyticsD:  analyticsD,
 			CFDevD:          &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			Hypervisor:      &hypervisor.HyperV{Config: config},
 			VpnKit:          vpnkit,
@@ -124,10 +131,12 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			VpnKit:     vpnkit,
 			HostNet:    &network.HostNet{},
 			Host:        &host.Host{},
+			AnalyticsD:  analyticsD,
 		},
 		&b7.Telemetry{
 			UI:              ui,
 			AnalyticsToggle: analyticsToggle,
+			AnalyticsD:  analyticsD,
 		},
 		&b8.Logs{
 			Provisioner: provision.NewController(),
