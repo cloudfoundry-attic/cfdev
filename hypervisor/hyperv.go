@@ -63,7 +63,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 					vm.Name, strings.TrimSpace(name)))
 				err = cmd.Run()
 				if err != nil {
-					fmt.Println("failed to remove netowork adapter: %s", err)
+					fmt.Printf("failed to remove netowork adapter: %s", err)
 				}
 			}
 		}
