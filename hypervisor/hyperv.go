@@ -51,11 +51,11 @@ func (h *HyperV) CreateVM(vm VM) error {
 		return fmt.Errorf("adding dvd drive %s: %s", vm.DepsIso, err)
 	}
 
-	cmd = exec.Command("powershell.exe","-Command", "(Get-VMNetworkAdapter -VMName * | Where-Object -FilterScript {$_.VMName -eq 'cfdev'}).Name")
+	cmd = exec.Command("powershell.exe","-Command", fmt.Sprintf("(Get-VMNetworkAdapter -VMName * | Where-Object -FilterScript {$_.VMName -eq '%s'}).Name", vm.Name))
 	output, err := cmd.Output()
 	if err == nil {
 		if string(output) != "" {
-			adapterNames := strings.Split(string(output), ` `)
+			adapterNames := strings.Split(string(output), "\n")
 			for _, name := range adapterNames {
 				cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VMNetworkAdapter "+
 					"-VMName %s "+
@@ -63,7 +63,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 					vm.Name, strings.TrimSpace(name)))
 				err = cmd.Run()
 				if err != nil {
-					return fmt.Errorf("removing netowrk adapter: %s", err)
+					fmt.Println("failed to remove netowork adapter: %s", err)
 				}
 			}
 		}
