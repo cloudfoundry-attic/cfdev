@@ -1,13 +1,12 @@
 package host_test
 
 import (
+	"os/exec"
+
+	"code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/cfdev/host"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdev/host"
-	"os/exec"
-	"github.com/onsi/gomega/gexec"
-	"time"
-	"code.cloudfoundry.org/cfdev/errors"
 )
 
 var _ = Describe("Host", func() {
@@ -25,22 +24,20 @@ var _ = Describe("Host", func() {
 				BeforeEach(func() {
 					cmd := exec.Command("powershell.exe", "-Command",
 						"Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -NoRestart")
-					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
-					Eventually(session, time.Minute).Should(gexec.Exit(0))
+					output, err := cmd.CombinedOutput()
+					Expect(err).NotTo(HaveOccurred(), string(output))
 				})
 
 				AfterEach(func() {
 					cmd := exec.Command("powershell.exe", "-Command",
 						"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -NoRestart")
-					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
-					Eventually(session, time.Minute).Should(gexec.Exit(0))
+					output, err := cmd.CombinedOutput()
+					Expect(err).NotTo(HaveOccurred(), string(output))
 				})
 
 				It("fails", func() {
 					h := &host.Host{}
-				    err := h.CheckRequirements()
+					err := h.CheckRequirements()
 					Expect(err.Error()).To(ContainSubstring(`Hyper-V disabled: You must first enable Hyper-V on your machine`))
 					Expect(errors.SafeError(err)).To(Equal("Hyper-V disabled"))
 				})
