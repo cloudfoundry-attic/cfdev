@@ -114,6 +114,10 @@ func (w *WinSW) Stop(label string) error {
 }
 
 func (w *WinSW) IsRunning(label string) (bool, error) {
+	if !isInstalled(label) {
+		return false, nil
+	}
+
 	_, executablePath := getServicePaths(label, w.ServicesDir)
 	cmd := exec.Command(executablePath, "status")
 
