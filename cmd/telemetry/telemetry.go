@@ -17,6 +17,7 @@ type Toggle interface {
 type AnalyticsD interface {
 	Start() error
 	Stop() error
+	Destroy() error
 	IsRunning() (bool, error)
 }
 
@@ -54,6 +55,9 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 		if isRunning {
 			if err := t.AnalyticsD.Stop(); err != nil {
 				return errors.SafeWrap(err,"turning off analyticsd")
+			}
+			if err := t.AnalyticsD.Destroy(); err != nil {
+				return errors.SafeWrap(err,"destroying analyticsd")
 			}
 		}
 	} else if t.Args.FlagOn {

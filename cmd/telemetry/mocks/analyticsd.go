@@ -32,6 +32,18 @@ func (m *MockAnalyticsD) EXPECT() *MockAnalyticsDMockRecorder {
 	return m.recorder
 }
 
+// Destroy mocks base method
+func (m *MockAnalyticsD) Destroy() error {
+	ret := m.ctrl.Call(m, "Destroy")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Destroy indicates an expected call of Destroy
+func (mr *MockAnalyticsDMockRecorder) Destroy() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Destroy", reflect.TypeOf((*MockAnalyticsD)(nil).Destroy))
+}
+
 // IsRunning mocks base method
 func (m *MockAnalyticsD) IsRunning() (bool, error) {
 	ret := m.ctrl.Call(m, "IsRunning")

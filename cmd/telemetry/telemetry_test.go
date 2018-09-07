@@ -79,6 +79,7 @@ var _ = Describe("Telemetry", func() {
 
 			mockAnalyticsD.EXPECT().IsRunning().Return(true, nil)
 			mockAnalyticsD.EXPECT().Stop()
+			mockAnalyticsD.EXPECT().Destroy()
 
 			telCmd.SetArgs([]string{"--off"})
 			Expect(telCmd.Execute()).To(Succeed())
