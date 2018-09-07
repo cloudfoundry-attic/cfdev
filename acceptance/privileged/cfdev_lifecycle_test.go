@@ -140,9 +140,6 @@ var _ = Describe("cfdev lifecycle", func() {
 			loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 			Eventually(loginSession).Should(gexec.Exit(0))
 
-			By("checking that analyticsd is running")
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd"), 30, 1).Should(BeTrue())
-
 			By("toggling off telemetry")
 			telemetrySession := cf.Cf("dev", "telemetry", "--off")
 			Eventually(telemetrySession).Should(gexec.Exit(0))
@@ -209,7 +206,7 @@ func PushAnApp() {
 	Eventually(cf.Cf("set-env", "cf-test-app", "HOST_SERVER_PORT", strconv.Itoa(port)), 120).Should(gexec.Exit(0))
 	Eventually(cf.Cf("create-service", "p-mysql", "10mb", "mydb"), 120).Should(gexec.Exit(0))
 	Eventually(cf.Cf("bind-service", "cf-test-app", "mydb"), 120).Should(gexec.Exit(0))
-	Eventually(cf.Cf("start", "cf-test-app"), 120).Should(gexec.Exit(0))
+	Eventually(cf.Cf("start", "cf-test-app"), 10*time.Minute).Should(gexec.Exit(0))
 
 	Expect(httpGet("http://cf-test-app.dev.cfdev.sh")).To(Equal("Hello, world!"))
 	Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external")).To(ContainSubstring("Example Domain"))
