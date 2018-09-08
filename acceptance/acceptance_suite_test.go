@@ -5,14 +5,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"os"
-
-	"time"
 
 	"github.com/onsi/gomega/gexec"
 )
@@ -29,6 +28,8 @@ func TestCFDev(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	SetDefaultEventuallyTimeout(time.Minute)
+
 	pluginPath = os.Getenv("CFDEV_PLUGIN_PATH")
 	if pluginPath == "" {
 		Fail("Please set CFDEV_PLUGIN_PATH env var to a fully qualified path to a valid plugin")
@@ -41,8 +42,6 @@ var _ = BeforeSuite(func() {
 
 	session := cf.Cf("install-plugin", pluginPath, "-f")
 	Eventually(session).Should(gexec.Exit())
-
-	SetDefaultEventuallyTimeout(time.Minute)
 })
 
 var _ = AfterSuite(func() {

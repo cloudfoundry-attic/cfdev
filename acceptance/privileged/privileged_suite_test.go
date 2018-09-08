@@ -1,14 +1,13 @@
 package privileged_test
 
 import (
-	"os"
-	"testing"
-	"time"
-
 	. "code.cloudfoundry.org/cfdev/acceptance"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"os"
+	"testing"
+	"time"
 )
 
 func TestPrivileged(t *testing.T) {
@@ -17,6 +16,8 @@ func TestPrivileged(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	SetDefaultEventuallyTimeout(5 * time.Minute)
+
 	Expect(HasSudoPrivilege()).To(BeTrue(), "Please run 'sudo echo hi' first")
 
 	pluginPath := os.Getenv("CFDEV_PLUGIN_PATH")
@@ -27,7 +28,7 @@ var _ = BeforeSuite(func() {
 	session := cf.Cf("install-plugin", "-f", pluginPath)
 	<-session.Exited
 
-	SetDefaultEventuallyTimeout(5 * time.Minute)
+	os.Unsetenv("BOSH_ALL_PROXY")
 })
 
 var _ = AfterSuite(func() {
