@@ -33,9 +33,9 @@ var _ = Describe("cfdev lifecycle", func() {
 		Eventually(stopSession).Should(gexec.Exit(0))
 
 		if isoPath := os.Getenv("ISO_PATH"); isoPath != "" {
-			startSession = cf.Cf("dev", "start", "-m", "8192", "-f", isoPath)
+			startSession = cf.Cf("dev", "start", "-f", isoPath)
 		} else {
-			startSession = cf.Cf("dev", "start", "-m", "8192")
+			startSession = cf.Cf("dev", "start")
 		}
 	})
 
