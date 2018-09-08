@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"io/ioutil"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -13,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -33,26 +33,21 @@ var _ = BeforeSuite(func() {
 	if pluginPath == "" {
 		Fail("Please set CFDEV_PLUGIN_PATH env var to a fully qualified path to a valid plugin")
 	}
-	SetDefaultEventuallyTimeout(5 * time.Second)
 
 	var err error
 	cfPluginHome, err = ioutil.TempDir("", "cfdev-plugin-")
 	Expect(err).ToNot(HaveOccurred())
-
 	os.Setenv("CF_PLUGIN_HOME", cfPluginHome)
 
 	session := cf.Cf("install-plugin", pluginPath, "-f")
-	Eventually(session).Should(gexec.Exit(0))
-	session = cf.Cf("plugins")
-	Eventually(session).Should(gbytes.Say("cfdev"))
-	Eventually(session).Should(gexec.Exit(0))
+	Eventually(session).Should(gexec.Exit())
+
+	SetDefaultEventuallyTimeout(time.Minute)
 })
 
 var _ = AfterSuite(func() {
-	session := cf.Cf("uninstall-plugin", "cfdev")
-	Eventually(session, 30, 1).Should(gexec.Exit())
+	cf.Cf("uninstall-plugin", "cfdev")
 	os.Unsetenv("CF_PLUGIN_HOME")
-	gexec.CleanupBuildArtifacts()
 })
 
 var _ = BeforeEach(func() {
@@ -71,10 +66,13 @@ var _ = BeforeEach(func() {
 
 var _ = AfterEach(func() {
 	session := cf.Cf("dev", "stop")
-	Eventually(session, 30, 1).Should(gexec.Exit())
+	Eventually(session).Should(gexec.Exit())
+
+	if IsWindows() {
+		exec.Command("powershell.exe", "-Command", "Stop-Process -Name cfdev,cf -Force -EA 0").Run()
+	}
 
 	Expect(os.RemoveAll(tmpDir)).To(Succeed())
-
 	os.Unsetenv("CF_HOME")
 	os.Unsetenv("CFDEV_HOME")
 })

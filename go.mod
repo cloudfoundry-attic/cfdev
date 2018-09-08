@@ -13,6 +13,7 @@ require (
 	github.com/c4milo/gotoolkit v0.0.0-20170704181456-e37eeabad07e // indirect
 	github.com/charlievieth/fs v0.0.0-20170613215519-7dc373669fa1 // indirect
 	github.com/cheggaaa/pb v2.0.6+incompatible // indirect
+	github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180907180103-a863c3d7755a
 	github.com/cloudfoundry/bosh-cli v5.2.1+incompatible
 	github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
@@ -61,4 +62,4 @@ require (
 	gopkg.in/yaml.v2 v2.2.1
 )
 
-replace github.com/cloudfoundry/bosh-cli => github.com/pcfdev-forks/bosh-cli v2.0.42-0.20180831162148-70729ce5b5db
+replace github.com/cloudfoundry/bosh-cli => github.com/pcfdev-forks/bosh-cli v0.0.0-20180831162148-70729ce5b5db

@@ -22,27 +22,15 @@ import (
 
 var _ = Describe("hyperkit starts and telemetry", func() {
 	var (
-		cacheDir string
-		session  *gexec.Session
-		err      error
+		session *gexec.Session
+		err     error
 	)
 
 	BeforeEach(func() {
-		cacheDir = filepath.Join(cfdevHome, "cache")
-
-		if os.Getenv("CFDEV_PLUGIN_PATH") == "" {
-			SetupDependencies(cacheDir)
-			os.Setenv("CFDEV_SKIP_ASSET_CHECK", "true")
-		}
-
 		os.RemoveAll(filepath.Join(cfdevHome, "analytics"))
 	})
 
 	AfterEach(func() {
-		if IsWindows() {
-			exec.Command("powershell.exe", "-Command", "Stop-Process -Name cfdev,cf -Force -EA 0").Run()
-		}
-
 		session.Kill()
 	})
 
@@ -52,13 +40,13 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
-		Eventually(session, 10, 1).Should(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
+		Eventually(session).Should(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
 		fmt.Fprintln(inWriter, "no")
 
 		Eventually(func() ([]byte, error) {
 			return ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))
-		}, 10, 1).Should(MatchJSON(`{"enabled":false, "props":{"type":"cf"}}`))
+		}).Should(MatchJSON(`{"enabled":false, "props":{"type":"cf"}}`))
 
 	})
 
@@ -80,6 +68,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 	It("is already opted in", func() {
 		err := os.MkdirAll(path.Join(cfdevHome, "analytics"), 0755)
 		Expect(err).ToNot(HaveOccurred())
+
 		err = ioutil.WriteFile(path.Join(cfdevHome, "analytics", "analytics.txt"), []byte("optin"), 0755)
 		Expect(err).ToNot(HaveOccurred())
 

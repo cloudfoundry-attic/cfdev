@@ -2,18 +2,17 @@ package acceptance
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
-
-	"fmt"
-	"runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -68,12 +67,6 @@ func SetupDependencies(cacheDir string) {
 		}
 		Expect(target).To(BeAnExistingFile())
 	}
-}
-
-func EventuallyShouldListenAt(url string, timeoutSec int) {
-	Eventually(func() error {
-		return HttpServerIsListeningAt(url)
-	}, timeoutSec, 1).ShouldNot(HaveOccurred())
 }
 
 func HttpServerIsListeningAt(url string) error {

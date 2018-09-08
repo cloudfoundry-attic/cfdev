@@ -1,11 +1,9 @@
 package acceptance
 
 import (
-	"os/exec"
-	"time"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"os/exec"
 
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -17,10 +15,9 @@ var _ = Describe("help", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(0))
 		Expect(session).To(gbytes.Say("Usage:"))
 		Expect(session).To(gbytes.Say("Available Commands:"))
-		Expect(session).To(gexec.Exit())
 	})
 
 	It("running 'cf dev help' provides help", func() {
@@ -28,9 +25,8 @@ var _ = Describe("help", func() {
 		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
-		Eventually(session, 10*time.Second).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(0))
 		Expect(session).To(gbytes.Say("Usage:"))
 		Expect(session).To(gbytes.Say("Available Commands:"))
-		Expect(session).To(gexec.Exit())
 	})
 })

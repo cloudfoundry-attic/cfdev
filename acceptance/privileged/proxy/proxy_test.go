@@ -12,6 +12,11 @@ import (
 	"net/http"
 	"io/ioutil"
 	"os"
+	"time"
+)
+
+var (
+	proxyName string
 )
 
 var _ = Describe("cf dev proxy settings", func() {
@@ -24,20 +29,20 @@ var _ = Describe("cf dev proxy settings", func() {
 
 	Context("when the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables are set", func() {
 	  It("an app respect proxy environment variables", func() {
-	  	  Eventually(cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space"), 120).Should(gexec.Exit(0))
-		  Eventually(cf.Cf("push", "cf-test-app", "-p", "../fixture", "-b", "ruby_buildpack"), 120).Should(gexec.Exit(0))
+          Eventually(cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space"), 5*time.Minute).Should(gexec.Exit(0))
+		  Eventually(cf.Cf("push", "cf-test-app", "-p", "../fixture", "-b", "ruby_buildpack"), 5*time.Minute).Should(gexec.Exit(0))
 
 		  By("making HTTP requests")
 		  Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external")).To(ContainSubstring("Example Domain"))
-		  Eventually(fetchProxyLogs(proxyName), 10, 1).Should(gbytes.Say(`Established connection to host ".*"`))
+		  Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`Established connection to host ".*"`))
 
 		  By("making HTTPS requests")
 		  Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external_https")).To(ContainSubstring("Example Domain"))
-		  Eventually(fetchProxyLogs(proxyName), 10, 1).Should(gbytes.Say(`CONNECT .*:443 HTTP/1.1`))
+		  Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`CONNECT .*:443 HTTP/1.1`))
 
 		  By("making a request from a site in the NO_PROXY list")
 		  Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external_no_proxy")).To(ContainSubstring("www.google.com"))
-		  Consistently(fetchProxyLogs(proxyName), 10, 1).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
+		  Consistently(fetchProxyLogs(proxyName)).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
 	  })
 	})
 
@@ -52,15 +57,15 @@ var _ = Describe("cf dev proxy settings", func() {
 		It("BOSH respect proxy environment variables", func() {
 			By("making HTTP requests")
 			boshCurl("http://example.com")
-			Eventually(fetchProxyLogs(proxyName), 10, 1).Should(gbytes.Say(`Established connection to host ".*"`))
+			Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`Established connection to host ".*"`))
 
 			By("making HTTPS requests")
 			boshCurl("https://example.com")
-			Eventually(fetchProxyLogs(proxyName), 10, 1).Should(gbytes.Say(`CONNECT .*:443 HTTP/1.1`))
+			Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`CONNECT .*:443 HTTP/1.1`))
 
 			By("making a request from a site in the NO_PROXY list")
 			boshCurl("http://google.com")
-			Consistently(fetchProxyLogs(proxyName), 10, 1).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
+			Consistently(fetchProxyLogs(proxyName)).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
 		})
 	})
 
