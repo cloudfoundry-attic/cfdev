@@ -14,7 +14,7 @@ var _ = Describe("Host", func() {
 	var (
 		mockController *gomock.Controller
 		mockPowershell *mocks.MockPowershell
-		h			   *host.Host
+		h              *host.Host
 
 		adminQueryStr = `(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)`
 	)
@@ -47,18 +47,7 @@ var _ = Describe("Host", func() {
 				It("succeeds", func() {
 					gomock.InOrder(
 						mockPowershell.EXPECT().Output(adminQueryStr).Return("True", nil),
-						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online).State`).Return("Enabled", nil),
-					)
-
-					Expect(h.CheckRequirements()).To(Succeed())
-				})
-			})
-
-			Context("Hyper-V is enabled on a Windows Server 2016 Machine", func() {
-				It("succeeds", func() {
-					gomock.InOrder(
-						mockPowershell.EXPECT().Output(adminQueryStr).Return("True", nil),
-						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online).State`).Return("Disabled", nil),
+						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online).State`).Return("Enabled", nil),
 						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-Management-PowerShell -Online).State`).Return("Enabled", nil),
 					)
 
@@ -66,17 +55,31 @@ var _ = Describe("Host", func() {
 				})
 			})
 
-			Context("Hyper-V is disabled", func() {
+			Context("Microsoft-Hyper-V is disabled", func() {
 				It("returns an error", func() {
 					gomock.InOrder(
 						mockPowershell.EXPECT().Output(adminQueryStr).Return("True", nil),
-						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online).State`).Return("Disabled", nil),
+						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online).State`).Return("Disabled", nil),
+						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-Management-PowerShell -Online).State`).Return("Enabled", nil),
+					)
+
+					err := h.CheckRequirements()
+					Expect(err.Error()).To(ContainSubstring(`Microsoft-Hyper-V disabled: You must first enable Hyper-V on your machine`))
+					Expect(errors.SafeError(err)).To(Equal("Microsoft-Hyper-V disabled"))
+				})
+			})
+
+			Context("Microsoft-Hyper-V-Management-PowerShell is disabled", func() {
+				It("returns an error", func() {
+					gomock.InOrder(
+						mockPowershell.EXPECT().Output(adminQueryStr).Return("True", nil),
+						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online).State`).Return("Enabled", nil),
 						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-Management-PowerShell -Online).State`).Return("Disabled", nil),
 					)
 
 					err := h.CheckRequirements()
-					Expect(err.Error()).To(ContainSubstring(`Hyper-V disabled: You must first enable Hyper-V on your machine`))
-					Expect(errors.SafeError(err)).To(Equal("Hyper-V disabled"))
+					Expect(err.Error()).To(ContainSubstring(`Microsoft-Hyper-V-Management-PowerShell disabled: You must first enable Hyper-V on your machine`))
+					Expect(errors.SafeError(err)).To(Equal("Microsoft-Hyper-V-Management-PowerShell disabled"))
 				})
 			})
 		})

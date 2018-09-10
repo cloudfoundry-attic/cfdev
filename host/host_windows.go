@@ -1,16 +1,17 @@
 package host
 
 import (
-	safeerr "code.cloudfoundry.org/cfdev/errors"
 	"errors"
 	"fmt"
 	"strings"
+
+	safeerr "code.cloudfoundry.org/cfdev/errors"
 )
 
 const (
 	admin_role            = "[Security.Principal.WindowsBuiltInRole]::Administrator"
 	current_user          = "New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())"
-	hyperv_disabled_error =`You must first enable Hyper-V on your machine before you run CF Dev. Please use the following tutorial to enable this functionality on your machine
+	hyperv_disabled_error = `You must first enable Hyper-V on your machine before you run CF Dev. Please use the following tutorial to enable this functionality on your machine
 
 https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v`
 )
@@ -33,31 +34,29 @@ func (h *Host) hasAdminPrivileged() error {
 		return nil
 	}
 
-	return safeerr.SafeWrap(errors.New("You must run cf dev with an admin privileged powershell"),"Running without admin privileges")
+	return safeerr.SafeWrap(errors.New("You must run cf dev with an admin privileged powershell"), "Running without admin privileges")
 }
 
 func (h *Host) hypervEnabled() error {
-	// Check HyperV on Windows 10
-	status, err := h.hypervStatus("Microsoft-Hyper-V-All")
+	// The Microsoft-Hyper-V and the Microsoft-Hyper-V-Management-PowerShell are required.
+	status, err := h.hypervStatus("Microsoft-Hyper-V")
 	if err != nil {
 		return err
 	}
 
-	if strings.Contains(strings.ToLower(status), "enabled") {
-		return nil
+	if !strings.Contains(strings.ToLower(status), "enabled") {
+		return safeerr.SafeWrap(errors.New(hyperv_disabled_error), "Microsoft-Hyper-V disabled")
 	}
 
-	// Check HyperV on Windows Server 2016
 	status, err = h.hypervStatus("Microsoft-Hyper-V-Management-PowerShell")
 	if err != nil {
 		return err
 	}
 
-	if strings.Contains(strings.ToLower(status), "enabled") {
-		return nil
+	if !strings.Contains(strings.ToLower(status), "enabled") {
+		return safeerr.SafeWrap(errors.New(hyperv_disabled_error), "Microsoft-Hyper-V-Management-PowerShell disabled")
 	}
-
-	return safeerr.SafeWrap(errors.New(hyperv_disabled_error),"Hyper-V disabled")
+	return nil
 }
 
 func (h *Host) hypervStatus(featureName string) (string, error) {
