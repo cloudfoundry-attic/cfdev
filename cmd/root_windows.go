@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"code.cloudfoundry.org/cfdev/runner"
 	"io"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"path/filepath"
 
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
@@ -19,6 +21,7 @@ import (
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/host"
 	"code.cloudfoundry.org/cfdev/hypervisor"
 	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/network"
@@ -26,8 +29,6 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
 	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/cfdev/host"
-	"code.cloudfoundry.org/cfdev/cfanalytics"
 )
 
 type UI interface {
@@ -55,7 +56,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
 	lctl := daemon.NewWinSW(config.CFDevHome)
-	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl}
+	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl, Powershell: runner.Powershell{}}
 	isoReader := iso.New()
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
@@ -73,7 +74,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	}
 
 	analyticsD := &cfanalytics.AnalyticsD{
-		Config: config,
+		Config:       config,
 		DaemonRunner: lctl,
 	}
 
@@ -87,9 +88,9 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 	for _, cmd := range []cmdBuilder{
 		&b1.Version{
-			UI:      ui,
-			Version: config.CliVersion,
-			Config: config,
+			UI:        ui,
+			Version:   config.CliVersion,
+			Config:    config,
 			IsoReader: isoReader,
 		},
 		&b2.Bosh{
@@ -115,28 +116,42 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Cache:           cache,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			HostNet:         &network.HostNet{},
-			Host:            &host.Host{},
+			HostNet: &network.HostNet{
+				Powershell: runner.Powershell{},
+			},
+			Host: &host.Host{
+				Powershell: runner.Powershell{},
+			},
 			AnalyticsD:  analyticsD,
-			CFDevD:          &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
-			Hypervisor:      &hypervisor.HyperV{Config: config},
-			VpnKit:          vpnkit,
-			Provisioner:     provision.NewController(),
-			IsoReader:       isoReader,
+			CFDevD:      &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
+			Hypervisor:  &hypervisor.HyperV{
+				Config: config,
+				Powershell: runner.Powershell{},
+			},
+			VpnKit:      vpnkit,
+			Provisioner: provision.NewController(),
+			IsoReader:   isoReader,
 		},
 		&b6.Stop{
 			Config:     config,
 			Analytics:  analyticsClient,
-			Hypervisor: &hypervisor.HyperV{Config: config},
+			Hypervisor: &hypervisor.HyperV{
+				Config: config,
+				Powershell: runner.Powershell{},
+			},
 			VpnKit:     vpnkit,
-			HostNet:    &network.HostNet{},
-			Host:        &host.Host{},
-			AnalyticsD:  analyticsD,
+			HostNet:    &network.HostNet{
+				Powershell: runner.Powershell{},
+			},
+			Host:       &host.Host{
+				Powershell: runner.Powershell{},
+			},
+			AnalyticsD: analyticsD,
 		},
 		&b7.Telemetry{
 			UI:              ui,
 			AnalyticsToggle: analyticsToggle,
-			AnalyticsD:  analyticsD,
+			AnalyticsD:      analyticsD,
 		},
 		&b8.Logs{
 			Provisioner: provision.NewController(),

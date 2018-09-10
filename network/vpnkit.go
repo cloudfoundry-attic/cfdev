@@ -2,21 +2,23 @@ package network
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
-	"time"
-	"path/filepath"
-	"code.cloudfoundry.org/cfdev/env"
-	"encoding/json"
-	"code.cloudfoundry.org/cfdev/errors"
-	"os"
-	"io/ioutil"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/env"
+	"code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/cfdev/runner"
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 const VpnKitLabel = "org.cloudfoundry.cfdev.vpnkit"
 
 type VpnKit struct {
-	Config  config.Config
+	Config       config.Config
 	DaemonRunner DaemonRunner
+	Powershell   runner.Powershell
 }
 
 type DaemonRunner interface {
@@ -44,7 +46,7 @@ func (v *VpnKit) Watch(exit chan string) {
 	}()
 }
 
-func (v *VpnKit) writeHttpConfig() error{
+func (v *VpnKit) writeHttpConfig() error {
 	httpProxyPath := filepath.Join(v.Config.VpnKitStateDir, "http_proxy.json")
 
 	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP, v.Config.HostIP)
@@ -67,4 +69,3 @@ func (v *VpnKit) writeHttpConfig() error{
 	}
 	return nil
 }
-

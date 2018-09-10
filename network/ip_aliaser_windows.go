@@ -10,7 +10,7 @@ import (
 const loopback = "vEthernet (cfdev)"
 
 func (h *HostNet) RemoveLoopbackAliases(addrs ...string) error {
-	exists, err := switchExists()
+	exists, err := h.switchExists()
 	if err != nil {
 		return err
 	}
@@ -18,19 +18,19 @@ func (h *HostNet) RemoveLoopbackAliases(addrs ...string) error {
 		return nil
 	}
 
-	command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name cfdev -force")
-	return command.Run()
+	_, err = h.Powershell.Output("Remove-VMSwitch -Name cfdev -force")
+	return err
 }
 
 func (h *HostNet) AddLoopbackAliases(addrs ...string) error {
 	fmt.Println("Setting up IP aliases for the BOSH Director & CF Router (requires administrator privileges)")
 
-	if err := createInterface(); err != nil {
+	if err := h.createSwitchIfNotExist(); err != nil {
 		return err
 	}
 
 	for _, addr := range addrs {
-		exists, err := aliasExists(addr)
+		exists, err := h.aliasExists(addr)
 
 		if err != nil {
 			return err
@@ -40,7 +40,7 @@ func (h *HostNet) AddLoopbackAliases(addrs ...string) error {
 			continue
 		}
 
-		err = addAlias(addr)
+		err = h.addAlias(addr)
 		if err != nil {
 			return err
 		}
@@ -48,32 +48,27 @@ func (h *HostNet) AddLoopbackAliases(addrs ...string) error {
 	return nil
 }
 
-func addAlias(alias string) error {
+func (h *HostNet) addAlias(alias string) error {
 	cmd := exec.Command("netsh", "interface", "ip", "add", "address", loopback, alias, "255.255.255.255")
 
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	return waitForAlias(alias)
+	return h.waitForAlias(alias)
 }
 
-func createInterface() error {
-	return createSwitchIfNotExist()
-}
-
-func aliasExists(alias string) (bool, error) {
-	command := exec.Command("powershell.exe", "-Command", "ipconfig")
-	output, err := command.Output()
+func (h *HostNet) aliasExists(alias string) (bool, error) {
+	output, err := h.Powershell.Output("ipconfig")
 	if err != nil {
 		return false, err
 	}
 
-	return strings.Contains(string(output), alias), nil
+	return strings.Contains(output, alias), nil
 }
 
-func createSwitchIfNotExist() error {
-	exists, err := switchExists()
+func (h *HostNet) createSwitchIfNotExist() error {
+	exists, err := h.switchExists()
 	if err != nil {
 		return err
 	}
@@ -81,27 +76,26 @@ func createSwitchIfNotExist() error {
 		return nil
 	}
 
-	command := exec.Command("powershell.exe", "-Command", "New-VMSwitch -Name cfdev -SwitchType Internal -Notes 'Switch for CF Dev Networking'")
-	return command.Run()
+	_, err = h.Powershell.Output("New-VMSwitch -Name cfdev -SwitchType Internal -Notes 'Switch for CF Dev Networking'")
+	return err
 }
 
-func switchExists() (bool, error) {
-	command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
-	output, err := command.Output()
+func (h *HostNet) switchExists() (bool, error) {
+	output, err := h.Powershell.Output("Get-VMSwitch cfdev*")
 	if err != nil {
 		return false, err
-	} else if string(output) == "" {
+	} else if output == "" {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func waitForAlias(addr string) error {
+func (h *HostNet) waitForAlias(addr string) error {
 	done := make(chan error)
 	go func() {
 		for {
-			if exists, err := aliasExists(addr); !exists {
+			if exists, err := h.aliasExists(addr); !exists {
 				time.Sleep(3 * time.Second)
 			} else if err != nil {
 				done <- err
@@ -121,5 +115,3 @@ func waitForAlias(addr string) error {
 		return fmt.Errorf("timed out waiting for alias %s", addr)
 	}
 }
-
-

@@ -1,9 +1,9 @@
 package hypervisor
 
 import (
+	"code.cloudfoundry.org/cfdev/runner"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"strings"
@@ -12,7 +12,8 @@ import (
 )
 
 type HyperV struct {
-	Config config.Config
+	Config     config.Config
+	Powershell runner.Powershell
 }
 
 func (h *HyperV) CreateVM(vm VM) error {
@@ -22,46 +23,47 @@ func (h *HyperV) CreateVM(vm VM) error {
 	}
 	var cfDevVHD = filepath.Join(h.Config.CFDevHome, "cfdev.vhd")
 
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vm.Name))
-	err := cmd.Run()
+	command := fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vm.Name)
+	_, err := h.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("creating new vm: %s", err)
 	}
 
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Set-VM -Name %s "+
+	command = fmt.Sprintf("Set-VM -Name %s "+
 		"-AutomaticStartAction Nothing "+
 		"-AutomaticStopAction ShutDown "+
 		"-CheckpointType Disabled "+
 		fmt.Sprintf("-MemoryStartupBytes %dMB ", vm.MemoryMB)+
 		"-StaticMemory "+
 		fmt.Sprintf("-ProcessorCount %d", vm.CPUs),
-		vm.Name))
-	err = cmd.Run()
+		vm.Name)
+	_, err = h.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("setting vm properites (memoryMB:%d, cpus:%d): %s", vm.MemoryMB, vm.CPUs, err)
 	}
 
-	err = addVhdDrive(cfdevEfiIso, vm.Name)
+	err = h.addVhdDrive(cfdevEfiIso, vm.Name)
 	if err != nil {
 		return fmt.Errorf("adding dvd drive %s: %s", cfdevEfiIso, err)
 	}
 
-	err = addVhdDrive(vm.DepsIso, vm.Name)
+	err = h.addVhdDrive(vm.DepsIso, vm.Name)
 	if err != nil {
 		return fmt.Errorf("adding dvd drive %s: %s", vm.DepsIso, err)
 	}
 
-	cmd = exec.Command("powershell.exe","-Command", fmt.Sprintf("(Get-VMNetworkAdapter -VMName * | Where-Object -FilterScript {$_.VMName -eq '%s'}).Name", vm.Name))
-	output, err := cmd.Output()
+	command = fmt.Sprintf("(Get-VMNetworkAdapter -VMName * | Where-Object -FilterScript {$_.VMName -eq '%s'}).Name", vm.Name)
+	output, err := h.Powershell.Output(command)
 	if err == nil {
-		if string(output) != "" {
-			adapterNames := strings.Split(string(output), "\n")
+		if output != "" {
+			adapterNames := strings.Split(output, "\n")
 			for _, name := range adapterNames {
-				cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VMNetworkAdapter "+
+				command = fmt.Sprintf("Remove-VMNetworkAdapter "+
 					"-VMName %s "+
 					"-Name '%s'",
-					vm.Name, strings.TrimSpace(name)))
-				err = cmd.Run()
+					vm.Name, strings.TrimSpace(name))
+
+				_, err = h.Powershell.Output(command)
 				if err != nil {
 					fmt.Printf("failed to remove netowork adapter: %s", err)
 				}
@@ -76,36 +78,37 @@ func (h *HyperV) CreateVM(vm VM) error {
 		}
 	}
 
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("New-VHD -Path %s "+
+	command = fmt.Sprintf(`New-VHD -Path "%s" `+
 		"-SizeBytes '200000000000' "+
-		"-Dynamic", cfDevVHD))
-	err = cmd.Run()
+		"-Dynamic", cfDevVHD)
+	_, err = h.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("creating new vhd at path %s : %s", cfDevVHD, err)
 	}
 
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Add-VMHardDiskDrive -VMName %s "+
-		"-Path %s", vm.Name, cfDevVHD))
-	err = cmd.Run()
+	command = fmt.Sprintf("Add-VMHardDiskDrive -VMName %s "+
+		`-Path "%s"`, vm.Name, cfDevVHD)
+	_, err = h.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("adding vhd %s : %s", cfDevVHD, err)
 	}
 
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Set-VMFirmware "+
+	command = fmt.Sprintf("Set-VMFirmware "+
 		"-VMName %s "+
 		"-EnableSecureBoot Off "+
 		"-FirstBootDevice $cdrom",
-		vm.Name))
-	err = cmd.Run()
+		vm.Name)
+	_, err = h.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("setting firmware : %s", err)
 	}
-	cmd = exec.Command("powershell.exe", "-Command", fmt.Sprintf("Set-VMComPort "+
+
+	command = fmt.Sprintf("Set-VMComPort "+
 		"-VMName %s "+
 		"-number 1 "+
 		"-Path \\\\.\\pipe\\cfdev-com",
-		vm.Name))
-	err = cmd.Run()
+		vm.Name)
+	_, err = h.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("setting com port : %s", err)
 	}
@@ -113,9 +116,9 @@ func (h *HyperV) CreateVM(vm VM) error {
 	return nil
 }
 
-func addVhdDrive(isoPath string, vmName string) error {
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Add-VMDvdDrive -VMName %s -Path %s", vmName, isoPath))
-	err := cmd.Run()
+func (h *HyperV) addVhdDrive(isoPath string, vmName string) error {
+	command := fmt.Sprintf(`Add-VMDvdDrive -VMName %s -Path "%s"`, vmName, isoPath)
+	_, err := h.Powershell.Output(command)
 	if err != nil {
 		return err
 	}
@@ -124,13 +127,13 @@ func addVhdDrive(isoPath string, vmName string) error {
 }
 
 func (h *HyperV) exists(vmName string) (bool, error) {
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-VM -Name %s*", vmName))
-	output, err := cmd.Output()
+	command := fmt.Sprintf("Get-VM -Name %s*", vmName)
+	output, err := h.Powershell.Output(command)
 	if err != nil {
 		return false, fmt.Errorf("getting vms: %s", err)
 	}
 
-	return string(output) != "", nil
+	return output != "", nil
 }
 func (h *HyperV) Start(vmName string) error {
 	if exists, err := h.exists(vmName); err != nil {
@@ -139,10 +142,9 @@ func (h *HyperV) Start(vmName string) error {
 		return fmt.Errorf("hyperv vm with name %s does not exist", vmName)
 	}
 
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Start-VM -Name %s", vmName))
-
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("start-vm: %s : %s", err, string(output))
+	command := fmt.Sprintf("Start-VM -Name %s", vmName)
+	if _, err := h.Powershell.Output(command); err != nil {
+		return fmt.Errorf("start-vm: %s", err)
 	}
 
 	return nil
@@ -155,8 +157,8 @@ func (h *HyperV) Stop(vmName string) error {
 		return nil
 	}
 
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Stop-VM -Name %s -Turnoff", vmName))
-	if err := cmd.Run(); err != nil {
+	command := fmt.Sprintf("Stop-VM -Name %s -Turnoff", vmName)
+	if _, err := h.Powershell.Output(command); err != nil {
 		return fmt.Errorf("stopping vm: %s", err)
 	}
 
@@ -170,8 +172,8 @@ func (h *HyperV) Destroy(vmName string) error {
 		return nil
 	}
 
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-VM -Name %s -Force", vmName))
-	if err := cmd.Run(); err != nil {
+	command := fmt.Sprintf("Remove-VM -Name %s -Force", vmName)
+	if _, err := h.Powershell.Output(command); err != nil {
 		return fmt.Errorf("removing vm: %s", err)
 	}
 
@@ -182,13 +184,16 @@ func (h *HyperV) IsRunning(vmName string) (bool, error) {
 	if exists, err := h.exists(vmName); err != nil || !exists {
 		return false, err
 	}
-	cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-VM -Name %s | format-list -Property State", vmName))
-	output, err := cmd.Output()
+
+	command :=  fmt.Sprintf("Get-VM -Name %s | format-list -Property State", vmName)
+	output, err := h.Powershell.Output(command)
 	if err != nil {
 		return false, err
 	}
+
 	if strings.Contains(string(output), "Running") {
 		return true, nil
 	}
+
 	return false, nil
 }

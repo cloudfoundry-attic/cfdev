@@ -33,15 +33,6 @@ type Config struct {
 	StartMode   string   `xml:"startmode"`
 }
 
-func RunCommand(command *exec.Cmd) error {
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Failed to execute %s, %v: %s: %s", command.Path, command.Args, err, string(output))
-	}
-
-	return nil
-}
-
 func (w *WinSW) AddDaemon(spec DaemonSpec) error {
 	serviceDst, executablePath := getServicePaths(spec.Label, w.ServicesDir)
 	err := os.MkdirAll(serviceDst, 0666)
@@ -60,7 +51,7 @@ func (w *WinSW) AddDaemon(spec DaemonSpec) error {
 	}
 
 	cmd := exec.Command(executablePath, "install")
-	err = RunCommand(cmd)
+	err = runCommand(cmd)
 	if err != nil {
 		return err
 	}
@@ -73,7 +64,7 @@ func (w *WinSW) RemoveDaemon(label string) error {
 		_, executablePath := getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "uninstall")
-		err := RunCommand(cmd)
+		err := runCommand(cmd)
 		if err != nil {
 			return err
 		}
@@ -88,7 +79,7 @@ func (w *WinSW) Start(label string) error {
 	_, executablePath := getServicePaths(label, w.ServicesDir)
 
 	cmd := exec.Command(executablePath, "start")
-	err := RunCommand(cmd)
+	err := runCommand(cmd)
 	if err != nil {
 		return err
 	}
@@ -102,7 +93,7 @@ func (w *WinSW) Stop(label string) error {
 		_, executablePath := getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
-		err := RunCommand(cmd)
+		err := runCommand(cmd)
 		if err != nil {
 			return err
 		}
@@ -175,4 +166,13 @@ func isInstalled(label string) bool {
 	output := strings.TrimSpace(string(temp))
 
 	return output != ""
+}
+
+func runCommand(command *exec.Cmd) error {
+	output, err := command.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Failed to execute %s, %v: %s: %s", command.Path, command.Args, err, string(output))
+	}
+
+	return nil
 }

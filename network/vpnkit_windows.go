@@ -3,17 +3,15 @@ package network
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"bufio"
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/errors"
-	"bufio"
-	"bytes"
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 )
 
 const ethernetGUID = "7207f451-2ca3-4b88-8d01-820a21d78293"
@@ -25,14 +23,12 @@ func (v *VpnKit) Start() error {
 		return errors.SafeWrap(err, "Failed to Setup VPNKit")
 	}
 
-	cmd := exec.Command("powershell.exe", "-Command", "((Get-VM -Name cfdev).Id).Guid")
-	output, err := cmd.Output()
+	output, err := v.Powershell.Output("((Get-VM -Name cfdev).Id).Guid")
 	if err != nil {
 		return fmt.Errorf("get vm name: %s", err)
 	}
 
-	cmd.Wait()
-	vmGuid := strings.TrimSpace(string(output))
+	vmGuid := strings.TrimSpace(output)
 
 	if err := v.DaemonRunner.AddDaemon(v.daemonSpec(vmGuid)); err != nil {
 		return errors.SafeWrap(err, "install vpnkit")
@@ -47,12 +43,16 @@ func (v *VpnKit) Start() error {
 
 func (v *VpnKit) Destroy() error {
 	v.DaemonRunner.RemoveDaemon(VpnKitLabel)
+
 	registryDeleteCmd := `Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" | ` +
 		`Where-Object { $_.GetValue("ElementName") -match "CF Dev VPNKit" } | ` +
 		`Foreach-Object { Remove-Item (Join-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" $_.PSChildName) }`
-	if err := exec.Command("powershell.exe", "-Command", registryDeleteCmd).Run(); err != nil {
+
+	_, err := v.Powershell.Output(registryDeleteCmd)
+	if err != nil {
 		return fmt.Errorf("failed to remove service registries: %s", err)
 	}
+
 	return nil
 }
 
@@ -115,22 +115,22 @@ func (v *VpnKit) registerServiceGUIDs() error {
 }
 
 func (v *VpnKit) registerGUID(guid, name string) error {
-	command := exec.Command(
-		"powershell.exe", "-Command",
-		fmt.Sprintf(`$ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name %s;
-             $ethService.SetValue("ElementName", "CF Dev VPNkit %s Service" )`, guid, name))
+	command := fmt.Sprintf(`$ethService = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name %s;
+             $ethService.SetValue("ElementName", "CF Dev VPNkit %s Service" )`, guid, name)
 
-	return command.Run()
+	_, err := v.Powershell.Output(command)
+	return err
 }
 
 func (v *VpnKit) writeResolvConf() error{
-	dns, err := exec.Command("powershell.exe", "-Command", "get-dnsclientserveraddress -family ipv4 | select-object -expandproperty serveraddresses").Output()
+	command := "get-dnsclientserveraddress -family ipv4 | select-object -expandproperty serveraddresses"
+	dns, err := v.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("getting dns client server addresses: %s", err)
 	}
 
 	dnsFile := ""
-	scanner := bufio.NewScanner(bytes.NewReader(dns))
+	scanner := bufio.NewScanner(strings.NewReader(dns))
 	for scanner.Scan() {
 		line := scanner.Text()
 		dnsFile += fmt.Sprintf("nameserver %s\r\n", line)
@@ -145,20 +145,18 @@ func (v *VpnKit) writeResolvConf() error{
 }
 
 func (v *VpnKit) writeDHCPJSON() error{
-	cmd := exec.Command("powershell.exe", "-Command", "get-dnsclient | select-object -expandproperty connectionspecificsuffix")
-	dhcp, err := cmd.Output()
+	command := "get-dnsclient | select-object -expandproperty connectionspecificsuffix"
+	dhcp, err := v.Powershell.Output(command)
 	if err != nil {
 		return fmt.Errorf("get dns client: %s", err)
 	}
-
-	cmd.Wait()
 
 	var output struct {
 		SearchDomains []string `json:"searchDomains"`
 		DomainName    string   `json:"domainName"`
 	}
 
-	scanner := bufio.NewScanner(bytes.NewReader(dhcp))
+	scanner := bufio.NewScanner(strings.NewReader(dhcp))
 	for scanner.Scan() {
 		if line := scanner.Text(); strings.TrimSpace(line) != "" {
 			output.SearchDomains = append(output.SearchDomains, line)
