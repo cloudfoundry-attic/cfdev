@@ -116,18 +116,13 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Cache:           cache,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			HostNet: &network.HostNet{
-				Powershell: runner.Powershell{},
-			},
+			HostNet: &network.HostNet{},
 			Host: &host.Host{
-				Powershell: runner.Powershell{},
+				Powershell: &runner.Powershell{},
 			},
 			AnalyticsD:  analyticsD,
 			CFDevD:      &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
-			Hypervisor:  &hypervisor.HyperV{
-				Config: config,
-				Powershell: runner.Powershell{},
-			},
+			Hypervisor:  &hypervisor.HyperV{Config: config},
 			VpnKit:      vpnkit,
 			Provisioner: provision.NewController(),
 			IsoReader:   isoReader,
@@ -135,16 +130,11 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		&b6.Stop{
 			Config:     config,
 			Analytics:  analyticsClient,
-			Hypervisor: &hypervisor.HyperV{
-				Config: config,
-				Powershell: runner.Powershell{},
-			},
+			Hypervisor: &hypervisor.HyperV{Config: config},
 			VpnKit:     vpnkit,
-			HostNet:    &network.HostNet{
-				Powershell: runner.Powershell{},
-			},
+			HostNet:    &network.HostNet{},
 			Host:       &host.Host{
-				Powershell: runner.Powershell{},
+				Powershell: &runner.Powershell{},
 			},
 			AnalyticsD: analyticsD,
 		},
