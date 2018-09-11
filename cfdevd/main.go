@@ -27,6 +27,8 @@ func handleRequest(conn *net.UnixConn) {
 		return
 	}
 
+	defer conn.Close()
+
 	command, err := cmd.UnmarshalCommand(conn)
 	if err != nil {
 		fmt.Println("Command:", err)
@@ -126,7 +128,6 @@ func run(timesyncSocket string) {
 		if err != nil {
 			continue
 		}
-		defer conn.Close()
 		go handleRequest(conn)
 	}
 }
