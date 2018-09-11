@@ -138,7 +138,7 @@ func (d *Daemon) do(isFirstTime bool) error {
 
 	params := url.Values{}
 	params.Add("q", "type IN "+eventTypesFilter())
-	if !isFirstTime && d.lastTime != nil {
+	if !isFirstTime {
 		params.Add("q", "timestamp>"+d.lastTime.Format(ccTimeStampFormat))
 	}
 
