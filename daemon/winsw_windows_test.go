@@ -12,6 +12,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/daemon"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"time"
 )
 
