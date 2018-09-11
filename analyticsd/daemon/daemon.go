@@ -28,7 +28,7 @@ type Daemon struct {
 	ticker          *time.Ticker
 	pollingInterval time.Duration
 	logger          *log.Logger
-	lastTime        *time.Time
+	lastTime        time.Time
 	doneChan        chan bool
 }
 
@@ -257,7 +257,7 @@ func eventTypesFilter() string {
 
 func (d *Daemon) saveLatestTime(t time.Time) {
 	t = t.UTC()
-	if d.lastTime == nil || t.After(*d.lastTime) {
-		d.lastTime = &t
+	if t.After(d.lastTime) {
+		d.lastTime = t
 	}
 }
