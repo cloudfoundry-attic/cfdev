@@ -60,7 +60,6 @@ var _ = Describe("Host", func() {
 					gomock.InOrder(
 						mockPowershell.EXPECT().Output(adminQueryStr).Return("True", nil),
 						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online).State`).Return("Disabled", nil),
-						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-Management-PowerShell -Online).State`).Return("Enabled", nil),
 					)
 
 					err := h.CheckRequirements()
@@ -73,7 +72,7 @@ var _ = Describe("Host", func() {
 				It("returns an error", func() {
 					gomock.InOrder(
 						mockPowershell.EXPECT().Output(adminQueryStr).Return("True", nil),
-						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online).State`).Return("Enabled", nil),
+						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online).State`).Return("Enabled", nil),
 						mockPowershell.EXPECT().Output(`(Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-Management-PowerShell -Online).State`).Return("Disabled", nil),
 					)
 
