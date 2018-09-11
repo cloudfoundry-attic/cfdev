@@ -12,7 +12,6 @@ import (
 
 	"code.cloudfoundry.org/cfdev/daemon"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"time"
 )
 
@@ -131,7 +130,11 @@ func downloadTestAsset(filepath string, url string) error {
 	}
 	defer out.Close()
 
-	resp, err := http.Get(url)
+	var netClient = &http.Client{
+		Timeout: time.Second * 30,
+	}
+
+	resp, err := netClient.Get(url)
 	if err != nil {
 		return err
 	}
