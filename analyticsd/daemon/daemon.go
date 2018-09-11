@@ -28,7 +28,7 @@ type Daemon struct {
 	ticker          *time.Ticker
 	pollingInterval time.Duration
 	logger          *log.Logger
-	lastTime        time.Time
+	lastTime        *time.Time
 	doneChan        chan bool
 }
 
@@ -138,7 +138,7 @@ func (d *Daemon) do(isFirstTime bool) error {
 
 	params := url.Values{}
 	params.Add("q", "type IN "+eventTypesFilter())
-	if !isFirstTime {
+	if !isFirstTime && d.lastTime != nil {
 		params.Add("q", "timestamp>"+d.lastTime.Format(ccTimeStampFormat))
 	}
 
@@ -257,7 +257,7 @@ func eventTypesFilter() string {
 
 func (d *Daemon) saveLatestTime(t time.Time) {
 	t = t.UTC()
-	if t.After(d.lastTime) {
-		d.lastTime = t
+	if d.lastTime == nil || t.After(*d.lastTime) {
+		d.lastTime = &t
 	}
 }
