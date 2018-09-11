@@ -1,6 +1,8 @@
 package cfanalytics
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/config"
@@ -23,12 +25,9 @@ type DaemonRunner interface {
 }
 
 func (a *AnalyticsD) Start() error {
-	spec, err := a.DaemonSpec()
-	if err != nil {
-		return err
-	}
+	spec := a.DaemonSpec()
 
-	err = a.DaemonRunner.AddDaemon(spec)
+	err := a.DaemonRunner.AddDaemon(spec)
 	if err != nil {
 		return err
 	}
@@ -52,14 +51,16 @@ func (a *AnalyticsD) IsRunning() (bool, error) {
 	return a.DaemonRunner.IsRunning(AnalyticsDLabel)
 }
 
-func (a *AnalyticsD) DaemonSpec() (daemon.DaemonSpec, error) {
+func (a *AnalyticsD) DaemonSpec() daemon.DaemonSpec {
 	analyticsD := filepath.Join(a.Config.CacheDir, "analyticsd")
 
 	return daemon.DaemonSpec{
 		Label:            AnalyticsDLabel,
 		Program:          analyticsD,
 		SessionType:      "Background",
-		ProgramArguments: []string{analyticsD},
+		ProgramArguments: []string{analyticsD, os.Getenv("CFDEV_MODE")},
 		RunAtLoad:        false,
-	}, nil
+		StdoutPath:       path.Join(a.Config.CFDevHome, "analyticsd.stdout.log"),
+		StderrPath:       path.Join(a.Config.CFDevHome, "analyticsd.stderr.log"),
+	}
 }

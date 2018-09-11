@@ -193,6 +193,58 @@ var _ = Describe("Integration", func() {
 				})
 			})
 
+			Context("when there are multiple pages of results", func() {
+				BeforeEach(func() {
+					ccServer.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+								fakePushEvent("2018-08-08T08:08:08Z", "ruby_buildpack"),
+							}, "/v546/events?page=2&some_key=some_value")),
+						),
+
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+							func(w http.ResponseWriter, req *http.Request) {
+								values := req.URL.Query()
+								Expect(values.Get("page")).To(Equal("2"))
+								Expect(values.Get("some_key")).To(Equal("some_value"))
+							},
+							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+								fakePushEvent("2018-08-09T09:07:08Z", "go_buildpack"),
+							})),
+						),
+					)
+				})
+
+				It("retrieves events from all available pages", func() {
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app created",
+						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"buildpack": "ruby",
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app created",
+						Timestamp: time.Date(2018, 8, 9, 9, 7, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"buildpack": "go",
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+
+					startDaemon()
+					<-time.After(1030 * time.Millisecond)
+				})
+			})
+
 			Context("when events reference a non-whitelisted buildpack", func() {
 				BeforeEach(func() {
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
@@ -221,6 +273,43 @@ var _ = Describe("Integration", func() {
 						Timestamp: time.Date(2018, 8, 11, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"buildpack": "custom",
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+					startDaemon()
+					<-time.After(1030 * time.Millisecond)
+				})
+			})
+
+			Context("when events reference an app push without a specified buildpack", func() {
+				BeforeEach(func() {
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+							fakePushEvent("2018-08-10T08:08:08Z", "java_buildpack"),
+							fakePushEvent("2018-08-11T08:08:08Z", ""),
+						})),
+					))
+				})
+				It("labels the buildpack as 'unspecified'", func() {
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app created",
+						Timestamp: time.Date(2018, 8, 10, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"buildpack": "java",
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app created",
+						Timestamp: time.Date(2018, 8, 11, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"buildpack": "unspecified",
 							"os":        runtime.GOOS,
 							"version":   "some-version",
 						},
@@ -341,10 +430,17 @@ func fakePushEvent(timestamp, buildpack string) string {
 
 var responseTemplate = `
 {
+    "next_url": %s,
 	"resources": [%s]
 }
 `
 
-func fakeResponse(events []string) string {
-	return fmt.Sprintf(responseTemplate, strings.Join(events, ","))
+func fakeResponse(events []string, args ...string) string {
+	nextURL := "null"
+
+	if len(args) > 0 {
+		nextURL = fmt.Sprintf(`"%s"`, args[0])
+	}
+
+	return fmt.Sprintf(responseTemplate, nextURL, strings.Join(events, ","))
 }

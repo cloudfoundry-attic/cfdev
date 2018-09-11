@@ -42,6 +42,7 @@ var buildpackWhitelist = map[string]string{
 	"python_buildpack":      "python",
 	"php_buildpack":         "php",
 	"binary_buildpack":      "binary",
+	"": "unspecified",
 }
 
 func New(
@@ -85,6 +86,7 @@ type Resource struct {
 }
 
 type Response struct {
+	NextURL *string `json:"next_url"`
 	Resources []Resource
 }
 
@@ -95,7 +97,7 @@ var (
 )
 
 func (d *Daemon) Start() {
-	err := d.do()
+	err := d.do(true)
 	if err != nil {
 		d.logger.Println(err)
 	}
@@ -104,7 +106,7 @@ func (d *Daemon) Start() {
 		case <-d.doneChan:
 			return
 		case <-time.NewTicker(d.pollingInterval).C:
-			err := d.do()
+			err := d.do(false)
 
 			if err != nil {
 				d.logger.Println(err)
@@ -117,19 +119,94 @@ func (d *Daemon) Stop() {
 	d.doneChan <- true
 }
 
-func (d *Daemon) do() error {
-	req, err := http.NewRequest(http.MethodGet, d.ccHost+"/v2/events", nil)
+func (d *Daemon) do(isFirstTime bool) error {
+	var (
+		nextURL *string = nil
+		resources []Resource
+		fetch = func(params url.Values) error {
+			var appResponse Response
+			err := d.fetch(params, &appResponse)
+			if err != nil {
+				return err
+			}
+
+			resources = append(resources, appResponse.Resources...)
+			nextURL = appResponse.NextURL
+			return nil
+		}
+	)
+
+	params := url.Values{}
+	params.Add("q", "type IN "+eventTypesFilter())
+	if !isFirstTime {
+		params.Add("q", "timestamp>"+d.lastTime.Format(ccTimeStampFormat))
+	}
+
+	err := fetch(params)
 	if err != nil {
 		return err
 	}
 
-	params := url.Values{}
-	params.Add("q", "type IN "+eventTypesFilter())
+	for nextURL != nil {
+		t, err := url.Parse(*nextURL)
+		if err != nil {
+			return fmt.Errorf("failed to parse params out of %s: %s", nextURL, err)
+		}
 
-	lastTimeIsSet := d.lastTime != nil
+		err = fetch(t.Query())
+		if err != nil {
+			return err
+		}
+	}
 
-	if lastTimeIsSet {
-		params.Add("q", "timestamp>"+d.lastTime.Format(ccTimeStampFormat))
+	if len(resources) == 0 {
+		d.saveLatestTime(time.Now())
+	}
+
+	for _, resource := range resources {
+		eventType, ok := eventTypes[resource.Entity.Type]
+		if !ok {
+			continue
+		}
+
+		t, err := time.Parse(time.RFC3339, resource.Entity.Timestamp)
+		if err != nil {
+			return err
+		}
+
+		d.saveLatestTime(t)
+
+		buildpack, ok := buildpackWhitelist[resource.Entity.Metadata.Request.Buildpack]
+		if !ok {
+			buildpack = "custom"
+		}
+		var properties = analytics.Properties{
+			"buildpack": buildpack,
+			"os":        runtime.GOOS,
+			"version":   d.version,
+		}
+
+		if !isFirstTime {
+			err = d.analyticsClient.Enqueue(analytics.Track{
+				UserId:     d.UUID,
+				Event:      eventType,
+				Timestamp:  t,
+				Properties: properties,
+			})
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to send analytics: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func (d *Daemon) fetch(params url.Values, dest interface{}) error {
+	req, err := http.NewRequest(http.MethodGet, d.ccHost+"/v2/events", nil)
+	if err != nil {
+		return err
 	}
 
 	req.URL.RawQuery = params.Encode()
@@ -162,58 +239,12 @@ func (d *Daemon) do() error {
 			return fmt.Errorf("failed to send analytics: %v", err)
 		}
 
+		//think about logging error anyway if failed to contact cc
+		//instead of return nil
 		return nil
 	}
 
-	var appResponse Response
-
-	err = json.Unmarshal(contents, &appResponse)
-	if err != nil {
-		return err
-	}
-
-	if len(appResponse.Resources) == 0 {
-		d.saveLatestTime(time.Now())
-	}
-
-	for _, resource := range appResponse.Resources {
-		eventType, ok := eventTypes[resource.Entity.Type]
-		if !ok {
-			continue
-		}
-
-		t, err := time.Parse(time.RFC3339, resource.Entity.Timestamp)
-		if err != nil {
-			return err
-		}
-
-		d.saveLatestTime(t)
-
-		buildpack, ok := buildpackWhitelist[resource.Entity.Metadata.Request.Buildpack]
-		if !ok {
-			buildpack = "custom"
-		}
-		var properties = analytics.Properties{
-			"buildpack": buildpack,
-			"os":        runtime.GOOS,
-			"version":   d.version,
-		}
-
-		if lastTimeIsSet {
-			err = d.analyticsClient.Enqueue(analytics.Track{
-				UserId:     d.UUID,
-				Event:      eventType,
-				Timestamp:  t,
-				Properties: properties,
-			})
-		}
-
-		if err != nil {
-			return fmt.Errorf("failed to send analytics: %v", err)
-		}
-	}
-
-	return nil
+	return json.Unmarshal(contents, dest)
 }
 
 func eventTypesFilter() string {
