@@ -46,6 +46,7 @@ github.com/golang/mock v1.1.1 h1:G5FRp8JnTd7RQH5kemVNlMeyXQAztQ3mOWV95KxsXH8=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/hooklift/assert v0.0.0-20170704181755-9d1defd6d214 h1:WgfvpuKg42WVLkxNwzfFraXkTXPK36bMqXvMFN67clI=
 github.com/hooklift/assert v0.0.0-20170704181755-9d1defd6d214/go.mod h1:kj6hFWqfwSjFjLnYW5PK1DoxZ4O0uapwHRmd9jhln4E=
 github.com/hooklift/iso9660 v1.0.0 h1:GYN0ejrqTl1qtB+g+ics7xxWHp7J2B1zmr25O9EyG3c=
 github.com/hooklift/iso9660 v1.0.0/go.mod h1:sOC47ru8lB0DlU0EZ7BJ0KCP5rDqOvx0c/5K5ADm8H0=

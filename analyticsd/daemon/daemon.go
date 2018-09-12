@@ -97,7 +97,7 @@ var (
 )
 
 func (d *Daemon) Start() {
-	err := d.do(true)
+	err := d.do(false)
 	if err != nil {
 		d.logger.Println(err)
 	}
@@ -106,7 +106,8 @@ func (d *Daemon) Start() {
 		case <-d.doneChan:
 			return
 		case <-time.NewTicker(d.pollingInterval).C:
-			err := d.do(false)
+			isTimestampSet := d.lastTime != nil
+			err := d.do(isTimestampSet)
 
 			if err != nil {
 				d.logger.Println(err)
@@ -119,7 +120,7 @@ func (d *Daemon) Stop() {
 	d.doneChan <- true
 }
 
-func (d *Daemon) do(isFirstTime bool) error {
+func (d *Daemon) do(isTimestampSet bool) error {
 	var (
 		nextURL *string = nil
 		resources []Resource
@@ -138,10 +139,9 @@ func (d *Daemon) do(isFirstTime bool) error {
 
 	params := url.Values{}
 	params.Add("q", "type IN "+eventTypesFilter())
-	if !isFirstTime {
+	if isTimestampSet {
 		params.Add("q", "timestamp>"+d.lastTime.Format(ccTimeStampFormat))
 	}
-
 	err := fetch(params)
 	if err != nil {
 		return err
@@ -186,7 +186,7 @@ func (d *Daemon) do(isFirstTime bool) error {
 			"version":   d.version,
 		}
 
-		if !isFirstTime {
+		if isTimestampSet {
 			err = d.analyticsClient.Enqueue(analytics.Track{
 				UserId:     d.UUID,
 				Event:      eventType,
@@ -199,10 +199,8 @@ func (d *Daemon) do(isFirstTime bool) error {
 			return fmt.Errorf("failed to send analytics: %v", err)
 		}
 	}
-
 	return nil
 }
-
 func (d *Daemon) fetch(params url.Values, dest interface{}) error {
 	req, err := http.NewRequest(http.MethodGet, d.ccHost+"/v2/events", nil)
 	if err != nil {
