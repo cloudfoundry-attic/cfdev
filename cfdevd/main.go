@@ -118,7 +118,7 @@ func syncTime(socket string) {
 			})
 
 			if err != nil {
-				log.Printf("[WHOOPS] we have an error %s\n", err)
+				log.Printf("Timesync Error: %s\n", err)
 				continue
 			}
 
