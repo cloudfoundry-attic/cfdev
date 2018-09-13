@@ -56,7 +56,6 @@ func (c *Client) Send(command uint8) (string, error) {
 }
 
 func (c *Client) Uninstall() (string, error) {
-
 	name, err := c.Send(1)
 	if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), connectCfdevdMsg)) {
 		return name, nil
@@ -65,7 +64,6 @@ func (c *Client) Uninstall() (string, error) {
 }
 
 func (c *Client) RemoveIPAlias() (string, error) {
-
 	name, err := c.Send(2)
 	if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), connectCfdevdMsg)) {
 		return name, nil
@@ -74,14 +72,8 @@ func (c *Client) RemoveIPAlias() (string, error) {
 }
 
 func (c *Client) AddIPAlias() (string, error) {
-
 	name, err := c.Send(3)
-	//if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), connectCfdevdMsg)) {
-	//	return name, nil
-	//}
-
 	if err != nil && (strings.HasPrefix(err.Error(), eofReadingExitCodeMsg) || strings.HasPrefix(err.Error(), connectCfdevdMsg)) {
-
 		return name, nil
 	}
 	return name, err

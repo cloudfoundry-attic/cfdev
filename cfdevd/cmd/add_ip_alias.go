@@ -10,7 +10,6 @@ type AddIPAliasCommand struct {
 }
 
 func (u *AddIPAliasCommand) Execute(conn *net.UnixConn) error {
-
 	hostNet := &networkd.HostNetD{}
 
 	err := hostNet.AddLoopbackAliases(BOSH_IP, GOROUTER_IP)

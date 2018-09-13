@@ -26,18 +26,14 @@ func UnmarshalCommand(conn io.Reader) (Command, error) {
 
 	switch instr {
 	case BindType:
-
 		return UnmarshalBindCommand(conn)
 	case UninstallType:
-
 		return &UninstallCommand{
 			DaemonRunner: daemon.New(""),
 		}, nil
 	case RemoveIPAliasType:
-
 		return &RemoveIPAliasCommand{}, nil
 	case AddIPAliasType:
-
 		return &AddIPAliasCommand{}, nil
 	default:
 		return &UnimplementedCommand{
