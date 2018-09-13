@@ -113,7 +113,6 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		if _, err := s.CfdevdClient.Uninstall(); err != nil {
 			reterr = errors.SafeWrap(err, "failed to uninstall cfdevd")
 		}
-
 	}
 
 	if reterr != nil {

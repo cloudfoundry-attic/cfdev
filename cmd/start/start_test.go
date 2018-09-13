@@ -37,6 +37,7 @@ var _ = Describe("Start", func() {
 		mockHypervisor      *mocks.MockHypervisor
 		mockProvisioner     *mocks.MockProvisioner
 		mockIsoReader       *mocks.MockIsoReader
+		mockStop			*mocks.MockStop
 
 		startCmd      start.Start
 		exitChan      chan struct{}
@@ -62,6 +63,7 @@ var _ = Describe("Start", func() {
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
 		mockIsoReader = mocks.NewMockIsoReader(mockController)
+		mockStop = mocks.NewMockStop(mockController)
 
 		localExitChan = make(chan string, 3)
 		tmpDir, err = ioutil.TempDir("", "start-test-home")
@@ -97,6 +99,7 @@ var _ = Describe("Start", func() {
 			Hypervisor:      mockHypervisor,
 			Provisioner:     mockProvisioner,
 			IsoReader:       mockIsoReader,
+			Stop: 			 mockStop,
 		}
 
 		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
@@ -139,6 +142,7 @@ var _ = Describe("Start", func() {
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockStop.EXPECT().RunE(nil, nil),
 
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
@@ -205,6 +209,7 @@ var _ = Describe("Start", func() {
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockStop.EXPECT().RunE(nil, nil),
 
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
@@ -280,6 +285,7 @@ var _ = Describe("Start", func() {
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
 						mockUI.EXPECT().Say("Downloading Network Helper..."),
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
@@ -355,6 +361,7 @@ var _ = Describe("Start", func() {
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
 
 						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 						mockUI.EXPECT().Say("Downloading Resources..."),
@@ -426,6 +433,7 @@ var _ = Describe("Start", func() {
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockStop.EXPECT().RunE(nil, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					mockCache.EXPECT().Sync(resource.Catalog{
@@ -488,6 +496,7 @@ var _ = Describe("Start", func() {
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockStop.EXPECT().RunE(nil, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use
@@ -522,6 +531,7 @@ var _ = Describe("Start", func() {
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+					mockStop.EXPECT().RunE(nil, nil),
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
 					// don't download cf-deps.iso that we won't use

@@ -129,6 +129,18 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Hypervisor:  linuxkit,
 			Provisioner: provision.NewController(),
 			IsoReader:   isoReader,
+			Stop: &b6.Stop {
+				Config:     config,
+				Analytics:  analyticsClient,
+				Hypervisor: linuxkit,
+				HostNet: &network.HostNet{
+					CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
+				},
+				Host:        &host.Host{},
+				AnalyticsD:  analyticsD,
+				VpnKit:       vpnkit,
+				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
+			},
 		},
 		&b6.Stop{
 			Config:     config,

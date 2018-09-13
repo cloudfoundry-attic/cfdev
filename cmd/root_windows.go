@@ -126,6 +126,17 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			VpnKit:      vpnkit,
 			Provisioner: provision.NewController(),
 			IsoReader:   isoReader,
+			Stop: &b6.Stop{
+				Config:     config,
+				Analytics:  analyticsClient,
+				Hypervisor: &hypervisor.HyperV{Config: config},
+				VpnKit:     vpnkit,
+				HostNet:    &network.HostNet{},
+				Host:       &host.Host{
+					Powershell: &runner.Powershell{},
+				},
+				AnalyticsD: analyticsD,
+			},
 		},
 		&b6.Stop{
 			Config:     config,

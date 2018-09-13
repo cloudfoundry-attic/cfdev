@@ -100,6 +100,12 @@ type IsoReader interface {
 	Read(isoPath string) (iso.Metadata, error)
 }
 
+//go:generate mockgen -package mocks -destination mocks/stop.go code.cloudfoundry.org/cfdev/cmd/start Stop
+type Stop interface {
+	RunE(cmd *cobra.Command, args []string) error
+}
+
+
 type Args struct {
 	Registries  string
 	DepsIsoPath string
@@ -124,6 +130,7 @@ type Start struct {
 	AnalyticsD      AnalyticsD
 	Hypervisor      Hypervisor
 	Provisioner     Provisioner
+	Stop            Stop
 }
 
 const compatibilityVersion = "v1"
@@ -193,6 +200,10 @@ func (s *Start) Execute(args Args) error {
 		s.UI.Say("CF Dev is already running...")
 		s.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true})
 		return nil
+	}
+
+	if err := s.Stop.RunE(nil,nil); err != nil {
+		return errors.SafeWrap(err, "stopping cfdev")
 	}
 
 	if err := env.SetupHomeDir(s.Config); err != nil {
