@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -49,10 +49,6 @@ func main() {
 
 	if len(os.Args) > 1 && os.Args[1] == "debug" {
 		pollingInterval = 10*time.Second
-		fmt.Printf("[DEBUG] analyticsKey: %q\n", analyticsKey)
-		fmt.Printf("[DEBUG] userID: %q\n", userID)
-		fmt.Printf("[DEBUG] pollingInterval: %v\n", pollingInterval)
-		fmt.Printf("[DEBUG] version %q\n", version)
 	}
 
 	analyticsDaemon := daemon.New(
@@ -72,5 +68,7 @@ func main() {
 		analyticsDaemon.Stop()
 	}()
 
+	log.Printf("[ANALYTICSD] apiKeyLoaded: %t, userID: %q, pollingInterval: %v, version: %q\n",
+		analyticsKey != "", userID, pollingInterval, version)
 	analyticsDaemon.Start()
 }
