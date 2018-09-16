@@ -7,7 +7,6 @@ cfdev="$dir"/../../..
 cache_dir="$HOME"/.cfdev/cache
 analyticskey="WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2"
 
-export GOPATH="$cfdev"
 pkg="code.cloudfoundry.org/cfdev/config"
 
 export GOOS=darwin
