@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"gopkg.in/segmentio/analytics-go.v3"
 	"log"
 	"net/http"
 	"os"
