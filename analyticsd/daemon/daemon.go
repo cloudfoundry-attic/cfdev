@@ -56,6 +56,7 @@ var (
 	eventTypes = map[string]string{
 		"audit.app.create":              "app created",
 		"audit.service_instance.create": "service created",
+		"audit.service_binding.create":  "app bound to service",
 	}
 )
 
@@ -139,10 +140,12 @@ func (d *Daemon) do(isTimestampSet bool) error {
 
 		d.saveLatestTime(t)
 
-		cmd := CreateHandleResponseCommand(resource , isTimestampSet , eventType , t, d.version, d.UUID, d.CcHost, d.httpClient, d.analyticsClient)
-		err = cmd.HandleResponse()
-		if err != nil {
-			return err
+		cmd := cmd.CreateHandleResponseCommand(resource, isTimestampSet, eventType, t, d.version, d.UUID, d.CcHost, d.httpClient, d.analyticsClient)
+		if cmd != nil {
+			err = cmd.HandleResponse()
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -165,36 +168,4 @@ func (d *Daemon) saveLatestTime(t time.Time) {
 
 type ResponseCommand interface {
 	HandleResponse() error
-}
-
-func CreateHandleResponseCommand(resource cmd.Resource, isTimestampSet bool, eventType string, t time.Time, version string, uuid string, ccHost string, httpClient *http.Client,
-analyticsClient analytics.Client) ResponseCommand {
-	switch eventType {
-	case "app created":
-		return  &cmd.AppCreatedCmd {
-			Resource: resource,
-			IsTimestampSet: isTimestampSet,
-			Version: version,
-			Uuid: uuid,
-			EventType: eventType,
-			T: t,
-			CcHost: ccHost,
-			HttpClient: httpClient,
-			AnalyticsClient:analyticsClient,
-		}
-	case "service created":
-		return &cmd.ServiceCreatedCmd {
-			Resource: resource,
-			IsTimestampSet: isTimestampSet,
-			Version: version,
-			Uuid: uuid,
-			EventType: eventType,
-			T: t,
-			CcHost: ccHost,
-			HttpClient: httpClient,
-			AnalyticsClient:analyticsClient,
-		}
-	}
-
-	return nil
 }

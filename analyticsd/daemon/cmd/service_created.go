@@ -12,6 +12,11 @@ import (
 type Request struct {
 	Buildpack       string
 	ServicePlanGUID string `json:"service_plan_guid"`
+	Relationships Relationships
+}
+
+type Relationships struct {
+	ServiceInstance ServiceInstance `json:"service_instance"`
 }
 
 type Metadata struct {
@@ -47,6 +52,14 @@ type ServiceResponse struct {
 
 type ServiceEntity struct {
 	ServiceLabel string `json:"label"`
+}
+
+type ServiceInstance struct {
+	Data Data `json:"data"`
+}
+
+type Data struct {
+	Guid string `json:"guid"`
 }
 
 type ServiceCreatedCmd struct {

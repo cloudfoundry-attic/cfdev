@@ -1,7 +1,6 @@
 package cmd_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
 	"code.cloudfoundry.org/cfdev/analyticsd/daemon/cmd"
 	"code.cloudfoundry.org/cfdev/analyticsd/daemon/mocks"
 	"github.com/golang/mock/gomock"
@@ -30,16 +29,6 @@ var _ = Describe("HandleServiceCreatedCommand", func() {
 	})
 
 	It("Handles Service Created Event", func() {
-		var mockResource = cmd.Resource{
-			Entity: cmd.Entity{
-				Metadata: cmd.Metadata{
-					Request: cmd.Request{
-						ServicePlanGUID: "myPlan",
-					},
-				},
-			},
-		}
-
 		var mockServicePlanResponse = `
 			{
 				"entity": {
@@ -68,6 +57,16 @@ var _ = Describe("HandleServiceCreatedCommand", func() {
 			),
 		)
 
+		var mockResource = cmd.Resource{
+			Entity: cmd.Entity{
+				Metadata: cmd.Metadata{
+					Request: cmd.Request{
+						ServicePlanGUID: "myPlan",
+					},
+				},
+			},
+		}
+
 		mockAnalytics.EXPECT().Enqueue(analytics.Track{
 			UserId:    "some-user-uuid",
 			Event:     "service created",
@@ -79,7 +78,7 @@ var _ = Describe("HandleServiceCreatedCommand", func() {
 			},
 		})
 
-		cmd := daemon.CreateHandleResponseCommand(mockResource, true, "service created", t, "some-version", "some-user-uuid", ccServer.URL(), httpClient, mockAnalytics)
-		cmd.HandleResponse()
+		command := cmd.CreateHandleResponseCommand(mockResource, true, "service created", t, "some-version", "some-user-uuid", ccServer.URL(), httpClient, mockAnalytics)
+		command.HandleResponse()
 	})
 })

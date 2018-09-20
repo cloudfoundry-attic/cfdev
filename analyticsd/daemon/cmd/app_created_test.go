@@ -1,7 +1,6 @@
 package cmd_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
 	"code.cloudfoundry.org/cfdev/analyticsd/daemon/cmd"
 	"code.cloudfoundry.org/cfdev/analyticsd/daemon/mocks"
 	"github.com/golang/mock/gomock"
@@ -53,8 +52,8 @@ var _ = Describe("HandleAppCreated", func() {
 				},
 			}
 
-			cmd := daemon.CreateHandleResponseCommand(mockResource, true, "app created", t, "some-version", "some-user-uuid", ccServer.URL(), httpClient, mockAnalytics)
-			cmd.HandleResponse()
+			command := cmd.CreateHandleResponseCommand(mockResource, true, "app created", t, "some-version", "some-user-uuid", ccServer.URL(), httpClient, mockAnalytics)
+			command.HandleResponse()
 		})
 	})
 })
