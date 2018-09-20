@@ -105,7 +105,6 @@ type Stop interface {
 	RunE(cmd *cobra.Command, args []string) error
 }
 
-
 type Args struct {
 	Registries  string
 	DepsIsoPath string

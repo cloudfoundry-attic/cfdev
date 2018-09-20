@@ -24,10 +24,8 @@ require (
 	github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/mock v1.1.1
-	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/hooklift/assert v0.0.0-20170704181755-9d1defd6d214 // indirect
 	github.com/hooklift/iso9660 v1.0.0
-	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
@@ -35,7 +33,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.3 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/onsi/ginkgo v1.6.0
-	github.com/onsi/gomega v1.4.1
+	github.com/onsi/gomega v1.4.2
 	github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20 // indirect
 	github.com/segmentio/backo-go v0.0.0-20160424052352-204274ad699c // indirect
 	github.com/sirupsen/logrus v1.0.6 // indirect
@@ -45,20 +43,17 @@ require (
 	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.0.0-20180830192347-182538f80094 // indirect
-	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d // indirect
+	golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3 // indirect
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
-	golang.org/x/sys v0.0.0-20180831094639-fa5fdf94c789 // indirect
-	golang.org/x/text v0.3.0 // indirect
 	gopkg.in/VividCortex/ewma.v1 v1.1.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.25 // indirect
 	gopkg.in/cheggaaa/pb.v2 v2.0.6 // indirect
 	gopkg.in/fatih/color.v1 v1.7.0 // indirect
-	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/mattn/go-colorable.v0 v0.0.9 // indirect
 	gopkg.in/mattn/go-isatty.v0 v0.0.4 // indirect
 	gopkg.in/mattn/go-runewidth.v0 v0.0.3 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.0.0
-	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.1
 )
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ import (
 )
 
 var _ = Describe("Integration", func() {
+
 	var (
 		aDaemon        *daemon.Daemon
 		ccServer       *ghttp.Server
@@ -29,6 +31,7 @@ var _ = Describe("Integration", func() {
 	)
 
 	BeforeEach(func() {
+
 		ccServer = ghttp.NewServer()
 
 		mockController = gomock.NewController(GinkgoT())
@@ -66,7 +69,12 @@ var _ = Describe("Integration", func() {
 		Context("when there are historical events (events found on first request)", func() {
 			BeforeEach(func() {
 				ccServer.AppendHandlers(ghttp.CombineHandlers(
-					ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create"),
+					ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+
+					func(w http.ResponseWriter, req *http.Request) {
+						urlContains(req.URL.Query(), []string{"audit.service_instance.create", "audit.app.create"})
+					},
+
 					ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
 						fakePushEvent("2018-08-08T08:08:08Z", "some-buildpack"),
 						fakePushEvent("2018-08-08T08:08:07Z", "some-other-buildpack"),
@@ -83,14 +91,26 @@ var _ = Describe("Integration", func() {
 				BeforeEach(func() {
 					ccServer.AppendHandlers(
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create&q=timestamp>2018-08-08T08:08:08Z"),
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+							func(w http.ResponseWriter, req *http.Request) {
+								rawQuery := req.URL.RawQuery
+								Expect(rawQuery).To(ContainSubstring("audit.app.create"))
+								Expect(rawQuery).To(ContainSubstring("audit.service_instance.create"))
+								Expect(rawQuery).To(ContainSubstring("timestamp%3E2018-08-08T08%3A08%3A08Z"))
+							},
 							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
 								fakePushEvent("2018-08-09T08:08:08Z", "ruby_buildpack"),
 								fakePushEvent("2018-08-08T09:07:08Z", "go_buildpack"),
 							})),
 						),
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create&q=timestamp>2018-08-09T08:08:08Z"),
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+							func(w http.ResponseWriter, req *http.Request) {
+								rawQuery := req.URL.RawQuery
+								Expect(rawQuery).To(ContainSubstring("audit.app.create"))
+								Expect(rawQuery).To(ContainSubstring("audit.service_instance.create"))
+								Expect(rawQuery).To(ContainSubstring("timestamp%3E2018-08-09T08%3A08%3A08Z"))
+							},
 							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
 								fakePushEvent("2018-08-10T08:08:08Z", "java_buildpack"),
 								fakePushEvent("2018-08-11T08:08:08Z", "nodejs_buildpack"),
@@ -151,7 +171,12 @@ var _ = Describe("Integration", func() {
 		Describe("when there are no historical events", func() {
 			BeforeEach(func() {
 				ccServer.AppendHandlers(ghttp.CombineHandlers(
-					ghttp.VerifyRequest(http.MethodGet, "/v2/events", "q=type%20IN%20audit.app.create"),
+					ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+
+					func(w http.ResponseWriter, req *http.Request) {
+						urlContains(req.URL.Query(), []string{"audit.service_instance.create", "audit.app.create"})
+					},
+
 					ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
 				))
 			})
@@ -205,11 +230,13 @@ var _ = Describe("Integration", func() {
 
 						ghttp.CombineHandlers(
 							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+
 							func(w http.ResponseWriter, req *http.Request) {
 								values := req.URL.Query()
 								Expect(values.Get("page")).To(Equal("2"))
 								Expect(values.Get("some_key")).To(Equal("some_value"))
 							},
+
 							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
 								fakePushEvent("2018-08-09T09:07:08Z", "go_buildpack"),
 							})),
@@ -404,6 +431,10 @@ var _ = Describe("Integration", func() {
 			})
 		})
 	})
+
+	Describe("HandleServiceCreated", func() {
+
+	})
 })
 
 var pushAppEventTemplate = `
@@ -443,4 +474,10 @@ func fakeResponse(events []string, args ...string) string {
 	}
 
 	return fmt.Sprintf(responseTemplate, nextURL, strings.Join(events, ","))
+}
+
+func urlContains(values url.Values, matches []string) {
+	for _, match := range matches {
+		Expect(values.Get("q")).To(ContainSubstring(match))
+	}
 }

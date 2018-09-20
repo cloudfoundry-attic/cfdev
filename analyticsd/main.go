@@ -14,13 +14,12 @@ import (
 	"github.com/denisbrodbeck/machineid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 var (
 	analyticsKey    string
 	version         string
-	pollingInterval = 10*time.Minute
+	pollingInterval = 10 * time.Minute
 )
 
 func main() {
@@ -48,7 +47,7 @@ func main() {
 	}
 
 	if len(os.Args) > 1 && os.Args[1] == "debug" {
-		pollingInterval = 10*time.Second
+		pollingInterval = 10 * time.Second
 	}
 
 	analyticsDaemon := daemon.New(
