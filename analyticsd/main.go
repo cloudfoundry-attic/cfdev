@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"gopkg.in/segmentio/analytics-go.v3"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -68,7 +68,7 @@ func main() {
 		analyticsDaemon.Stop()
 	}()
 
-	log.Printf("[ANALYTICSD] apiKeyLoaded: %t, userID: %q, pollingInterval: %v, version: %q\n",
-		analyticsKey != "", userID, pollingInterval, version)
+	fmt.Printf("[ANALYTICSD] apiKeyLoaded: %t, pollingInterval: %v, version: %q, time: %v, userID: %q\n",
+		analyticsKey != "", pollingInterval, version, time.Now(), userID)
 	analyticsDaemon.Start()
 }
