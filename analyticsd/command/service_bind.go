@@ -10,7 +10,7 @@ import (
 )
 
 type ServiceBind struct {
-	CCclient        CloudControllerClient
+	CCClient        CloudControllerClient
 	AnalyticsClient analytics.Client
 	TimeStamp       time.Time
 	UUID            string
@@ -40,7 +40,7 @@ func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
 	}
 
 	path := "/v2/service_instances/" + metadata.Request.Relationships.ServiceInstance.Data.Guid
-	err := c.CCclient.Fetch(path, nil, &urlResp)
+	err := c.CCClient.Fetch(path, nil, &urlResp)
 	if err != nil {
 		return fmt.Errorf("failed to make request to: %s: %s", path, err)
 	}
@@ -52,7 +52,7 @@ func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
 	}
 
 	path = urlResp.Entity.ServiceURL
-	err = c.CCclient.Fetch(path, nil, &labelResp)
+	err = c.CCClient.Fetch(path, nil, &labelResp)
 	if err != nil {
 		return fmt.Errorf("failed to make request to: %s: %s", path, err)
 	}

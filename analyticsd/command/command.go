@@ -33,34 +33,34 @@ func New(
 		logger.Printf("Detected event for %q\n", event)
 
 		return &AppCreate{
-			CCclient: ccClient,
+			CCClient:        ccClient,
 			AnalyticsClient: analyticsClient,
-			TimeStamp: timeStamp,
-			UUID: UUID,
-			Version: version,
-			Logger: logger,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			Logger:          logger,
 		}, true
 	case "audit.service_instance.create":
 		logger.Printf("Detected event for %q\n", event)
 
 		return &ServiceCreate{
-			CCclient: ccClient,
+			CCClient:        ccClient,
 			AnalyticsClient: analyticsClient,
-			TimeStamp: timeStamp,
-			UUID: UUID,
-			Version: version,
-			Logger: logger,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			Logger:          logger,
 		}, true
 	case "audit.service_binding.create":
 		logger.Printf("Detected event for %q\n", event)
 
 		return &ServiceBind{
-			CCclient: ccClient,
+			CCClient:        ccClient,
 			AnalyticsClient: analyticsClient,
-			TimeStamp: timeStamp,
-			UUID: UUID,
-			Version: version,
-			Logger: logger,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			Logger:          logger,
 		}, true
 	default:
 		return nil, false

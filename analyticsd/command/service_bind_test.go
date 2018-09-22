@@ -17,17 +17,17 @@ var _ = Describe("ServiceBind", func() {
 		cmd        *command.ServiceBind
 		mockController *gomock.Controller
 		mockAnalytics  *mocks.MockClient
-		mockCCclient   *mocks.MockCloudControllerClient
+		mockCCClient   *mocks.MockCloudControllerClient
 	)
 
 	BeforeEach(func() {
 		mockController = gomock.NewController(GinkgoT())
 		mockAnalytics = mocks.NewMockClient(mockController)
-		mockCCclient = mocks.NewMockCloudControllerClient(mockController)
+		mockCCClient = mocks.NewMockCloudControllerClient(mockController)
 
 		cmd = &command.ServiceBind{
 			Logger: log.New(ioutil.Discard, "", log.LstdFlags),
-			CCclient: mockCCclient,
+			CCClient: mockCCClient,
 			AnalyticsClient: mockAnalytics,
 			TimeStamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 			UUID: "some-user-uuid",
@@ -41,7 +41,7 @@ var _ = Describe("ServiceBind", func() {
 
 	Context("when the service instance is whitelisted", func() {
 		It("sends the service information to segment.io", func() {
-			MatchFetch(mockCCclient, "/v2/service_instances/some-service-instance-guid", `
+			MatchFetch(mockCCClient, "/v2/service_instances/some-service-instance-guid", `
 				{
             		"entity": {
 						"service_url": "/v2/some_service_url"
@@ -49,7 +49,7 @@ var _ = Describe("ServiceBind", func() {
 				}
 				`)
 
-			MatchFetch(mockCCclient, "/v2/some_service_url", `
+			MatchFetch(mockCCClient, "/v2/some_service_url", `
 				{
             		"entity": {
 						"label": "mysql"

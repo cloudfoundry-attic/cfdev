@@ -10,7 +10,7 @@ import (
 )
 
 type AppCreate struct {
-	CCclient        CloudControllerClient
+	CCClient        CloudControllerClient
 	AnalyticsClient analytics.Client
 	TimeStamp       time.Time
 	UUID            string

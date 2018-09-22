@@ -16,8 +16,8 @@ func TestCommand(t *testing.T) {
 	RunSpecs(t, "Command Suite")
 }
 
-func MatchFetch(mockCCclient *mocks.MockCloudControllerClient, expectedPath, result string) {
-	mockCCclient.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(path string, params url.Values, dest interface{}) error {
+func MatchFetch(mockCCClient *mocks.MockCloudControllerClient, expectedPath, result string) {
+	mockCCClient.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(path string, params url.Values, dest interface{}) error {
 		Expect(path).To(Equal(expectedPath))
 		return json.Unmarshal([]byte(result), dest)
 	})
