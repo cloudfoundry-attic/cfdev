@@ -3,20 +3,23 @@ package cloud_controller_test
 import (
 	"code.cloudfoundry.org/cfdev/analyticsd/cloud_controller"
 	"code.cloudfoundry.org/cfdev/analyticsd/cloud_controller/mocks"
+	"encoding/json"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
+	"gopkg.in/segmentio/analytics-go.v3"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
 var _ = Describe("Cloud Controller Client", func() {
 	var (
-		server         *ghttp.Server
 		client         *cloud_controller.Client
+		server         *ghttp.Server
 		mockController *gomock.Controller
 		mockAnalytics  *mocks.MockClient
 	)
@@ -87,7 +90,7 @@ var _ = Describe("Cloud Controller Client", func() {
 
 		Context("when there is an error retrieving the timestamp", func() {
 			It("returns a current timestamp", func() {
-				mockAnalytics.EXPECT().Enqueue(gomock.Any()).AnyTimes()
+				mockAnalytics.EXPECT().Enqueue(gomock.Any())
 
 				server.AppendHandlers(ghttp.CombineHandlers(
 					ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
@@ -125,9 +128,9 @@ var _ = Describe("Cloud Controller Client", func() {
 
 				Expect(events).To(Equal([]cloud_controller.Event{
 					{
-						Type: "some-event-type",
+						Type:      "some-event-type",
 						Timestamp: time.Date(2016, 6, 6, 6, 6, 6, 0, time.UTC),
-						Metadata: []byte(`"some-metadata"`),
+						Metadata:  json.RawMessage(`"some-metadata"`),
 					},
 				}))
 			})
@@ -138,6 +141,11 @@ var _ = Describe("Cloud Controller Client", func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						func(w http.ResponseWriter, req *http.Request) {
+							values := req.URL.Query()
+							Expect(values["q"][0]).To(ContainSubstring("type IN"))
+							Expect(values["q"][1]).To(ContainSubstring("timestamp"))
+						},
 						ghttp.RespondWith(http.StatusOK, `
 						{
 							"next_url": "/v546/events?page=2&some_key=some_value",
@@ -176,16 +184,59 @@ var _ = Describe("Cloud Controller Client", func() {
 
 				Expect(events).To(Equal([]cloud_controller.Event{
 					{
-						Type: "some-event-type",
+						Type:      "some-event-type",
 						Timestamp: time.Date(2016, 6, 6, 6, 6, 6, 0, time.UTC),
-						Metadata: []byte(`"some-metadata"`),
+						Metadata:  json.RawMessage(`"some-metadata"`),
 					},
 					{
-						Type: "some-other-event-type",
+						Type:      "some-other-event-type",
 						Timestamp: time.Date(2016, 7, 7, 7, 7, 7, 0, time.UTC),
-						Metadata: []byte(`"some-other-metadata"`),
+						Metadata:  json.RawMessage(`"some-other-metadata"`),
 					},
 				}))
+			})
+		})
+	})
+
+	Describe("Fetch", func() {
+		Context("when supplied params and destination", func() {
+			It("makes a request and unmarshals the response", func() {
+				server.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest(http.MethodGet, "/v2/some-endpoint", "q=banana&page=4"),
+					ghttp.RespondWith(http.StatusOK, `{"message": "some-success-message"}`),
+				))
+
+				var result struct {
+					Message string
+				}
+
+				params := url.Values{}
+				params.Add("q", "banana")
+				params.Add("page", "4")
+
+				err := client.Fetch("/v2/some-endpoint", params, &result)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Message).To(Equal("some-success-message"))
+			})
+		})
+
+		Context("when cloud controller returns error status", func() {
+			It("sends the error to segment.io", func() {
+				server.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest(http.MethodGet, "/v2/some-endpoint"),
+					ghttp.RespondWith(http.StatusForbidden, `some-failure-message`),
+				))
+
+				mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(message analytics.Track) {
+					Expect(message.Event).To(Equal("analytics error"))
+					Expect(message.UserId).To(Equal("some-user-id"))
+					Expect(message.Properties).To(HaveKeyWithValue(
+						"message", "failed to contact cc api: [403 Forbidden] some-failure-message",
+					))
+				})
+
+				err := client.Fetch("/v2/some-endpoint", nil, nil)
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 	})

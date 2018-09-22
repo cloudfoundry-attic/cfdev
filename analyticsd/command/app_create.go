@@ -10,12 +10,12 @@ import (
 )
 
 type AppCreate struct {
-	CCclient CloudControllerClient
+	CCclient        CloudControllerClient
 	AnalyticsClient analytics.Client
-	TimeStamp time.Time
-	UUID string
-	Version string
-	Logger *log.Logger
+	TimeStamp       time.Time
+	UUID            string
+	Version         string
+	Logger          *log.Logger
 }
 
 var buildpackWhitelist = map[string]string{
