@@ -19,7 +19,8 @@ type CloudControllerClient interface {
 	Fetch(path string, params url.Values, dest interface{}) error
 }
 
-func New(event string,
+func New(
+	event string,
 	ccClient CloudControllerClient,
 	analyticsClient analytics.Client,
 	timeStamp time.Time,

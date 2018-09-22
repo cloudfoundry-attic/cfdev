@@ -15,6 +15,8 @@ import (
 
 const ccTimeStampFormat = "2006-01-02T15:04:05Z"
 
+//go:generate mockgen -package mocks -destination mocks/analytics.go gopkg.in/segmentio/analytics-go.v3 Client
+
 type Client struct {
 	host            string
 	logger          *log.Logger
@@ -32,7 +34,7 @@ type Event struct {
 
 type eventResponse struct {
 	NextURL   *string `json:"next_url"`
-	Resources []struct{
+	Resources []struct {
 		Entity struct {
 			Type      string
 			Timestamp string
@@ -49,20 +51,49 @@ var eventTypes = []string{
 
 func New(host string, logger *log.Logger, httpClient *http.Client, analyticsClient analytics.Client, userUUID string, version string) *Client {
 	return &Client{
-		host: host,
-		logger: logger,
-		httpClient: httpClient,
+		host:            host,
+		logger:          logger,
+		httpClient:      httpClient,
 		analyticsClient: analyticsClient,
-		userUUID: userUUID,
-		version: version,
+		userUUID:        userUUID,
+		version:         version,
 	}
+}
+
+func (c *Client) FetchLatestTime() time.Time {
+	params := url.Values{}
+	params.Add("order-by", "timestamp")
+	params.Add("order-direction", "desc")
+
+	var result struct {
+		Resources []struct {
+			Entity struct {
+				Timestamp string
+			}
+		}
+	}
+
+	c.logger.Println("Fetching latest timestamp from Cloud Controller...")
+
+	err := c.Fetch("/v2/events", params, &result)
+	if err != nil {
+		return time.Now().UTC()
+	}
+
+	if len(result.Resources) == 0 {
+		return time.Now().UTC()
+	}
+
+	t, _ := time.Parse(time.RFC3339, result.Resources[0].Entity.Timestamp)
+	c.logger.Printf("Using timestamp of %v to mark new events\n", t)
+	return t
 }
 
 func (c *Client) FetchEvents(timeStamp time.Time) ([]Event, error) {
 	var (
+		events  []Event
 		nextURL *string = nil
-		events []Event
-		fetch = func(params url.Values) error {
+		fetch   = func(params url.Values) error {
 			var response eventResponse
 			err := c.Fetch("/v2/events", params, &response)
 			if err != nil {
@@ -73,9 +104,9 @@ func (c *Client) FetchEvents(timeStamp time.Time) ([]Event, error) {
 				t, _ := time.Parse(time.RFC3339, resource.Entity.Timestamp)
 
 				events = append(events, Event{
-					Type: resource.Entity.Type,
+					Type:      resource.Entity.Type,
 					Timestamp: t,
-					Metadata: resource.Entity.Metadata,
+					Metadata:  resource.Entity.Metadata,
 				})
 			}
 
@@ -109,7 +140,7 @@ func (c *Client) FetchEvents(timeStamp time.Time) ([]Event, error) {
 }
 
 func (c *Client) Fetch(path string, params url.Values, dest interface{}) error {
-	url := c.host+path
+	url := c.host + path
 
 	c.logger.Printf("Making request to %q with params: %v...\n", url, params)
 
@@ -144,6 +175,8 @@ func (c *Client) Fetch(path string, params url.Values, dest interface{}) error {
 
 	c.logger.Println("Sending an error to segment.io...")
 
+	// Still not sure if sending every error to segment
+	// is preferred behavior
 	err = c.analyticsClient.Enqueue(analytics.Track{
 		UserId:     c.userUUID,
 		Event:      "analytics error",
