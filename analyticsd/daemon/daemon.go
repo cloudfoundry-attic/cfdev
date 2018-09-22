@@ -78,7 +78,7 @@ func (d *Daemon) do() error {
 	for _, event := range events {
 		d.saveLatestTime(event.Timestamp)
 
-		cmd, exists := command.New(event.Type, d.ccClient, d.analyticsClient, d.lastTime, d.UUID, d.version, d.logger)
+		cmd, exists := command.New(event.Type, d.ccClient, d.analyticsClient, event.Timestamp, d.UUID, d.version, d.logger)
 		if !exists {
 			continue
 		}
