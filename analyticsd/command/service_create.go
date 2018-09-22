@@ -10,12 +10,12 @@ import (
 )
 
 type ServiceCreate struct {
-	CCclient CloudControllerClient
+	CCclient        CloudControllerClient
 	AnalyticsClient analytics.Client
-	TimeStamp time.Time
-	UUID string
-	Version string
-	Logger *log.Logger
+	TimeStamp       time.Time
+	UUID            string
+	Version         string
+	Logger          *log.Logger
 }
 
 func (c *ServiceCreate) HandleResponse(body json.RawMessage) error {
@@ -33,7 +33,7 @@ func (c *ServiceCreate) HandleResponse(body json.RawMessage) error {
 		}
 	}
 
-	path := "/v2/service_plans/"+metadata.Request.ServicePlanGuid
+	path := "/v2/service_plans/" + metadata.Request.ServicePlanGuid
 	err := c.CCclient.Fetch(path, nil, &urlResp)
 	if err != nil {
 		return fmt.Errorf("failed to make request to: %s: %s", path, err)

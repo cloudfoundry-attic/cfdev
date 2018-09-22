@@ -64,6 +64,7 @@ func (c *Client) FetchLatestTime() time.Time {
 	params := url.Values{}
 	params.Add("order-by", "timestamp")
 	params.Add("order-direction", "desc")
+	// consider limiting the results with 'results-per-page'
 
 	var result struct {
 		Resources []struct {
