@@ -1,6 +1,7 @@
 package bosh
 
 import (
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"os"
 
 	"runtime"
@@ -16,6 +17,12 @@ type UI interface {
 	Say(message string, args ...interface{})
 }
 
+//go:generate mockgen -package mocks -destination mocks/analytics_client.go code.cloudfoundry.org/cfdev/cmd/bosh AnalyticsClient
+type AnalyticsClient interface {
+	Event(event string, data ...map[string]interface{}) error
+	PromptOptIn() error
+}
+
 //go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/bosh Provisioner
 type Provisioner interface {
 	FetchBOSHConfig() (bosh.Config, error)
@@ -26,6 +33,7 @@ type Bosh struct {
 	UI          UI
 	StateDir    string
 	Provisioner Provisioner
+	Analytics   AnalyticsClient
 }
 
 func (b *Bosh) Cmd() *cobra.Command {
@@ -59,6 +67,8 @@ func (b *Bosh) Env() error {
 	if err != nil {
 		return errors.SafeWrap(err, "failed to fetch bosh configuration")
 	}
+
+	b.Analytics.Event(cfanalytics.BOSH_ENV)
 
 	env := shell.Environment{StateDir: b.StateDir}
 	shellScript, err := env.Prepare(config)

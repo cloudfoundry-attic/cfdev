@@ -14,6 +14,7 @@ const (
 	START_BEGIN = "start_begin"
 	START_END   = "start_end"
 	STOP        = "stop"
+	BOSH_ENV    = "bosh"
 	ERROR       = "error"
 	UNINSTALL   = "uninstall"
 )

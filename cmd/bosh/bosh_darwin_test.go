@@ -1,6 +1,7 @@
 package bosh_test
 
 import (
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -17,16 +18,18 @@ import (
 
 var _ = Describe("Bosh", func() {
 	var (
-		mockController  *gomock.Controller
-		mockProvisioner *mocks.MockProvisioner
-		mockUI          *mocks.MockUI
-		tmpDir          string
-		boshCmd         *cmd.Bosh
+		mockController      *gomock.Controller
+		mockProvisioner     *mocks.MockProvisioner
+		mockUI              *mocks.MockUI
+		tmpDir              string
+		boshCmd             *cmd.Bosh
+		mockAnalyticsClient *mocks.MockAnalyticsClient
 	)
 
 	BeforeEach(func() {
 		mockController = gomock.NewController(GinkgoT())
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
+		mockAnalyticsClient = mocks.NewMockAnalyticsClient(mockController)
 		mockUI = mocks.NewMockUI(mockController)
 
 		var err error
@@ -36,6 +39,7 @@ var _ = Describe("Bosh", func() {
 			Provisioner: mockProvisioner,
 			StateDir:    tmpDir,
 			UI:          mockUI,
+			Analytics:   mockAnalyticsClient,
 		}
 	})
 
@@ -65,6 +69,9 @@ var _ = Describe("Bosh", func() {
 					GatewayPrivateKey: "some-gateway-private-key",
 					GatewayUsername:   "some-gateway-username",
 				}, nil)
+
+				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
+
 				mockUI.EXPECT().Say(fmt.Sprintf(
 					`export BOSH_ENVIRONMENT="some-director-address";
 export BOSH_CLIENT="some-admin-username";
@@ -111,6 +118,7 @@ export BOSH_GW_USER="some-gateway-username";`,
 					GatewayPrivateKey: "some-gateway-private-key",
 					GatewayUsername:   "some-gateway-username",
 				}, nil)
+				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
 				mockUI.EXPECT().Say(fmt.Sprintf(
 					`unset BOSH_SOME_VAR;
 unset BOSH_SOME_OTHER_VAR;
@@ -126,6 +134,7 @@ export BOSH_GW_USER="some-gateway-username";`,
 				),
 				)
 				Expect(boshCmd.Env()).To(Succeed())
+
 				contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "bosh-ca-cert"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(contents)).To(Equal("some-ca-cert"))
