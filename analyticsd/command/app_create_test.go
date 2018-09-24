@@ -1,8 +1,8 @@
 package command_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/command/mocks"
 	"code.cloudfoundry.org/cfdev/analyticsd/command"
+	"code.cloudfoundry.org/cfdev/analyticsd/command/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	"gopkg.in/segmentio/analytics-go.v3"
@@ -24,11 +24,11 @@ var _ = Describe("AppCreate", func() {
 		mockAnalytics = mocks.NewMockClient(mockController)
 
 		cmd = &command.AppCreate{
-			Logger: log.New(ioutil.Discard, "", log.LstdFlags),
+			Logger:          log.New(ioutil.Discard, "", log.LstdFlags),
 			AnalyticsClient: mockAnalytics,
-			TimeStamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
-			UUID: "some-user-uuid",
-			Version: "some-version",
+			TimeStamp:       time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
+			UUID:            "some-user-uuid",
+			Version:         "some-version",
 		}
 	})
 

@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("ServiceBind", func() {
 	var (
-		cmd        *command.ServiceBind
+		cmd            *command.ServiceBind
 		mockController *gomock.Controller
 		mockAnalytics  *mocks.MockClient
 		mockCCClient   *mocks.MockCloudControllerClient
@@ -26,12 +26,12 @@ var _ = Describe("ServiceBind", func() {
 		mockCCClient = mocks.NewMockCloudControllerClient(mockController)
 
 		cmd = &command.ServiceBind{
-			Logger: log.New(ioutil.Discard, "", log.LstdFlags),
-			CCClient: mockCCClient,
+			Logger:          log.New(ioutil.Discard, "", log.LstdFlags),
+			CCClient:        mockCCClient,
 			AnalyticsClient: mockAnalytics,
-			TimeStamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
-			UUID: "some-user-uuid",
-			Version: "some-version",
+			TimeStamp:       time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
+			UUID:            "some-user-uuid",
+			Version:         "some-version",
 		}
 	})
 
@@ -62,9 +62,9 @@ var _ = Describe("ServiceBind", func() {
 				Event:     "app bound to service",
 				Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 				Properties: map[string]interface{}{
-					"service":   "mysql",
-					"os":        runtime.GOOS,
-					"version":   "some-version",
+					"service": "mysql",
+					"os":      runtime.GOOS,
+					"version": "some-version",
 				},
 			})
 

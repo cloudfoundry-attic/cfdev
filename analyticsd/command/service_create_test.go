@@ -26,12 +26,12 @@ var _ = Describe("ServiceCreate", func() {
 		mockCCClient = mocks.NewMockCloudControllerClient(mockController)
 
 		cmd = &command.ServiceCreate{
-			Logger: log.New(ioutil.Discard, "", log.LstdFlags),
-			CCClient: mockCCClient,
+			Logger:          log.New(ioutil.Discard, "", log.LstdFlags),
+			CCClient:        mockCCClient,
 			AnalyticsClient: mockAnalytics,
-			TimeStamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
-			UUID: "some-user-uuid",
-			Version: "some-version",
+			TimeStamp:       time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
+			UUID:            "some-user-uuid",
+			Version:         "some-version",
 		}
 	})
 
@@ -62,9 +62,9 @@ var _ = Describe("ServiceCreate", func() {
 				Event:     "created service",
 				Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 				Properties: map[string]interface{}{
-					"service":   "mysql",
-					"os":        runtime.GOOS,
-					"version":   "some-version",
+					"service": "mysql",
+					"os":      runtime.GOOS,
+					"version": "some-version",
 				},
 			})
 

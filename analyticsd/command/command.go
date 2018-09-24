@@ -42,6 +42,17 @@ func New(
 			Version:         version,
 			Logger:          logger,
 		}, true
+	case "app.crash":
+		logger.Printf("Detected event for %q\n", event)
+
+		return &AppCrash{
+			CCClient:        ccClient,
+			AnalyticsClient: analyticsClient,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			Logger:          logger,
+		}, true
 	case "audit.service_instance.create":
 		logger.Printf("Detected event for %q\n", event)
 
