@@ -3,7 +3,6 @@ package command
 import (
 	"code.cloudfoundry.org/cfdev/analyticsd/config"
 	"encoding/json"
-	"fmt"
 	"gopkg.in/segmentio/analytics-go.v3"
 	"log"
 	"net/url"
@@ -71,8 +70,6 @@ func New(
 }
 
 func serviceIsWhiteListed(serviceLabel string) bool {
-	fmt.Printf("SERVICE LABEL: %v", serviceLabel)
-
 	for _, listedLabel := range config.SERVICE_WHITELIST {
 		sl, ll := strings.ToLower(serviceLabel), strings.ToLower(listedLabel)
 		if strings.Contains(ll, sl) {
