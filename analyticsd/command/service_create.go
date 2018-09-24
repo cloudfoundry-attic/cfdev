@@ -59,7 +59,7 @@ func (c *ServiceCreate) HandleResponse(body json.RawMessage) error {
 
 	err = c.AnalyticsClient.Enqueue(analytics.Track{
 		UserId:     c.UUID,
-		Event:      "app bound to service",
+		Event:      "created service",
 		Timestamp:  c.TimeStamp,
 		Properties: properties,
 	})

@@ -59,7 +59,7 @@ var _ = Describe("ServiceCreate", func() {
 
 			mockAnalytics.EXPECT().Enqueue(analytics.Track{
 				UserId:    "some-user-uuid",
-				Event:     "app bound to service",
+				Event:     "created service",
 				Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 				Properties: map[string]interface{}{
 					"service":   "mysql",
