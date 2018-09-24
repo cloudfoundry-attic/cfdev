@@ -1,3 +1,4 @@
+![ci.pcfdev.io](http://ci.pcfdev.io/api/v1/teams/main/pipelines/cfdev/jobs/build/badge)
 ```
 $ cf dev start
 Downloading Resources...
