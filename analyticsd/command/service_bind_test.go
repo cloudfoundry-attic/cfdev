@@ -84,4 +84,39 @@ var _ = Describe("ServiceBind", func() {
 			cmd.HandleResponse(body)
 		})
 	})
+
+	Context("when the service instance is NOT whitelisted", func() {
+		It("does not send the service information to segment.io", func() {
+			MatchFetch(mockCCClient, "/v2/service_instances/some-service-instance-guid", `
+				{
+            		"entity": {
+						"service_url": "/v2/some_service_url"
+                    }
+				}
+				`)
+
+			MatchFetch(mockCCClient, "/v2/some_service_url", `
+				{
+            		"entity": {
+						"label": "non-white-listed-service"
+                    }
+				}
+				`)
+
+			body := []byte(`
+			{
+				"request": {
+					"relationships": {
+						"service_instance": {
+							"data": {
+								"guid": "some-service-instance-guid"
+							}
+						}
+                    }
+				}
+			}`)
+
+			cmd.HandleResponse(body)
+		})
+	})
 })

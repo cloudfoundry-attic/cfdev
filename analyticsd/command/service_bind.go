@@ -57,6 +57,10 @@ func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
 		return fmt.Errorf("failed to make request to: %s: %s", path, err)
 	}
 
+	if !serviceIsWhiteListed(labelResp.Entity.Label){
+		return nil
+	}
+
 	var properties = analytics.Properties{
 		"service": labelResp.Entity.Label,
 		"os":      runtime.GOOS,

@@ -78,4 +78,33 @@ var _ = Describe("ServiceCreate", func() {
 			cmd.HandleResponse(body)
 		})
 	})
+
+	Context("when the service instance is NOT whitelisted", func() {
+		It("does not send the service information to NOT segment.io", func() {
+			MatchFetch(mockCCClient, "/v2/service_plans/some-service-plan-guid", `
+				{
+            		"entity": {
+						"service_url": "/v2/some_service_url"
+                    }
+				}
+				`)
+
+			MatchFetch(mockCCClient, "/v2/some_service_url", `
+				{
+            		"entity": {
+						"label": "my-special-sql"
+                    }
+				}
+				`)
+
+			body := []byte(`
+			{
+				"request": {
+					"service_plan_guid": "some-service-plan-guid" 
+				}
+			}`)
+
+			cmd.HandleResponse(body)
+		})
+	})
 })
