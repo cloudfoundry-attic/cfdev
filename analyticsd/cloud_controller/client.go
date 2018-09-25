@@ -45,6 +45,7 @@ type eventResponse struct {
 
 var eventTypes = []string{
 	"audit.app.create",
+	"app.crash",
 	"audit.service_instance.create",
 	"audit.service_binding.create",
 }

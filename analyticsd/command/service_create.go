@@ -46,14 +46,16 @@ func (c *ServiceCreate) HandleResponse(body json.RawMessage) error {
 	}
 
 	path = urlResp.Entity.ServiceURL
+	fmt.Printf("DEBUG: BEFORE FETCH: path is: %s\n", path)
 	err = c.CCClient.Fetch(path, nil, &labelResp)
 	if err != nil {
 		return fmt.Errorf("failed to make request to: %s: %s", path, err)
 	}
-
+	fmt.Printf("DEBUG: Service Label is: %s\n", labelResp.Entity.Label)
 	if !serviceIsWhiteListed(labelResp.Entity.Label) {
 		return nil
 	}
+	fmt.Println("DEBUG: PAST THE WHITELISTING")
 
 	var properties = analytics.Properties{
 		"service": labelResp.Entity.Label,

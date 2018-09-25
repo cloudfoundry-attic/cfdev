@@ -170,7 +170,7 @@ var _ = Describe("Integration", func() {
 					ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
 				))
 			})
-			Context("when there are subsequent events", func() {
+			Context("when there are subsequent app push events", func() {
 				BeforeEach(func() {
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
 						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
@@ -180,7 +180,7 @@ var _ = Describe("Integration", func() {
 						})),
 					))
 				})
-				It("sends the subsequent events", func() {
+				It("sends the subsequent app push events", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
 						Event:     "app created",
@@ -208,6 +208,107 @@ var _ = Describe("Integration", func() {
 				})
 			})
 
+			Context("when there is a subsequent app crash event", func() {
+				BeforeEach(func() {
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+							fakeCrashEvent("2018-08-09T08:08:08Z"),
+						})),
+					))
+				})
+				It("sends the crash event", func() {
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app push failed",
+						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+
+					startDaemon()
+					<-time.After(1030 * time.Millisecond)
+				})
+			})
+
+			Context("when there is a subsequent service create event", func() {
+				BeforeEach(func() {
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+							fakeServiceCreateEvent("2018-08-09T08:08:08Z", "some-service-plan-guid"),
+						})),
+					))
+
+
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/service_plans/some-service-plan-guid"),
+						ghttp.RespondWith(http.StatusOK, fakeUrlResponse("some-service-url")),
+					))
+
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "some-service-url"),
+						ghttp.RespondWith(http.StatusOK, fakeLabelResponse("p-circuit-breaker-dashboard")),
+					))
+
+
+				})
+				FIt("sends the service create event", func() {
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "created service",
+						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"service": "p-circuit-breaker-dashboard",
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+
+					startDaemon()
+					<-time.After(1030 * time.Millisecond)
+				})
+			})
+
+			Context("when there is a subsequent service bind event", func() {
+				BeforeEach(func() {
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+							fakeServiceBindEvent("2018-08-09T08:08:08Z", "some-guid"),
+						})),
+					))
+				})
+				It("sends the service bind event", func() {
+				//	mockAnalytics.EXPECT().Enqueue(analytics.Track{
+				//		UserId:    "some-user-uuid",
+				//		Event:     "app created",
+				//		Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
+				//		Properties: map[string]interface{}{
+				//			"buildpack": "ruby",
+				//			"os":        runtime.GOOS,
+				//			"version":   "some-version",
+				//		},
+				//	})
+
+				//	mockAnalytics.EXPECT().Enqueue(analytics.Track{
+				//		UserId:    "some-user-uuid",
+				//		Event:     "app created",
+				//		Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
+				//		Properties: map[string]interface{}{
+				//			"buildpack": "go",
+				//			"os":        runtime.GOOS,
+				//			"version":   "some-version",
+				//		},
+				//	})
+
+					startDaemon()
+					<-time.After(1030 * time.Millisecond)
+				})
+			})
+
 			Context("unexpected event types", func() {
 				BeforeEach(func() {
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
@@ -227,10 +328,6 @@ var _ = Describe("Integration", func() {
 			})
 		})
 	})
-
-	Describe("HandleServiceCreated", func() {
-
-	})
 })
 
 var pushAppEventTemplate = `
@@ -247,6 +344,68 @@ var pushAppEventTemplate = `
 }
 `
 
+var serviceBindEventTemplate = `
+{
+	"entity": {
+		"type": "audit.service_binding.create",
+		"timestamp": "%s",
+		"metadata": {
+			"request": {
+				"relationships": {
+					"service_instance": {
+						"data": {
+							"guid": "%s"
+						}	
+					}
+				}
+			}
+		}
+	}
+}
+`
+
+var serviceCreateEventTemplate = `
+{
+	"entity": {
+		"type": "audit.service_instance.create",
+		"timestamp": "%s",
+		"metadata": {
+			"request": {
+				"service_plan_guid": "%s"
+			}
+		}
+	}
+}
+`
+
+var crashAppEventTemplate = `
+{
+	"entity": {
+		"type": "app.crash",
+		"timestamp": "%s",
+		"metadata": {
+			}
+		}
+	}
+}
+`
+
+var urlResponseTemplate = `
+{
+	"entity": {
+		"service_url": "%s"
+	}
+}
+`
+
+var labelResponseTemplate = `
+{
+	"entity": {
+		"label": "%s"
+	}
+}
+`
+
 func fakeEvent(eventType, timestamp, buildpack string) string {
 	return fmt.Sprintf(pushAppEventTemplate, eventType, timestamp, buildpack)
 }
@@ -254,6 +413,27 @@ func fakeEvent(eventType, timestamp, buildpack string) string {
 func fakePushEvent(timestamp, buildpack string) string {
 	return fakeEvent("audit.app.create", timestamp, buildpack)
 }
+
+func fakeServiceCreateEvent(timestamp, servicePlanGUID string) string {
+	return fmt.Sprintf(serviceCreateEventTemplate, timestamp, servicePlanGUID)
+}
+
+func fakeServiceBindEvent(timestamp, guid string) string {
+	return fmt.Sprintf(serviceBindEventTemplate, timestamp, guid)
+}
+
+func fakeCrashEvent(timestamp string) string {
+	return fmt.Sprintf(crashAppEventTemplate, timestamp)
+}
+
+func fakeUrlResponse(serviceURL string) string {
+	return fmt.Sprintf(urlResponseTemplate, serviceURL)
+}
+
+func fakeLabelResponse(label string) string {
+	return fmt.Sprintf(labelResponseTemplate, label)
+}
+
 
 var responseTemplate = `
 {
