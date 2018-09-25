@@ -44,8 +44,8 @@ var _ = Describe("Fetching BOSH Configuration", func() {
 			},
 			BindMounts: []garden.BindMount{
 				{
-					SrcPath: "/var/vcap/director",
-					DstPath: "/var/vcap/director",
+					SrcPath: "/var/vcap/cf",
+					DstPath: "/var/vcap/cf",
 					Mode:    garden.BindMountModeRW,
 				},
 			},
@@ -69,7 +69,7 @@ var _ = Describe("Fetching BOSH Configuration", func() {
 			spec, _ := fakeContainer.RunArgsForCall(0)
 			Expect(spec).To(Equal(garden.ProcessSpec{
 				Path: "cat",
-				Args: []string{"/var/vcap/director/creds.yml"},
+				Args: []string{"/var/vcap/cf/vars.yml"},
 				User: "root",
 			}))
 		})

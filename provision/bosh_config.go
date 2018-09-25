@@ -22,8 +22,8 @@ func (c *Controller) FetchBOSHConfig() (bosh.Config, error) {
 		},
 		BindMounts: []garden.BindMount{
 			{
-				SrcPath: "/var/vcap/director",
-				DstPath: "/var/vcap/director",
+				SrcPath: "/var/vcap/cf",
+				DstPath: "/var/vcap/cf",
 				Mode:    garden.BindMountModeRW,
 			},
 		},
@@ -51,7 +51,7 @@ func (c *Controller) fetchBOSHConfig(container garden.Container, resp *yamlRespo
 	buffer := &bytes.Buffer{}
 	process, err := container.Run(garden.ProcessSpec{
 		Path: "cat",
-		Args: []string{"/var/vcap/director/creds.yml"},
+		Args: []string{"/var/vcap/cf/vars.yml"},
 		User: "root",
 	}, garden.ProcessIO{
 		Stdout: buffer,
