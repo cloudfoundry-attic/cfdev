@@ -31,6 +31,17 @@ func New(
 	logger *log.Logger) (Command, bool) {
 
 	switch event {
+	case "audit.app.restage":
+		logger.Printf("Detected event for %q\n", event)
+
+		return &AppRestage{
+			CCClient:        ccClient,
+			AnalyticsClient: analyticsClient,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			Logger:          logger,
+		}, true
 	case "audit.app.create":
 		logger.Printf("Detected event for %q\n", event)
 

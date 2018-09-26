@@ -308,6 +308,31 @@ var _ = Describe("Integration", func() {
 				})
 			})
 
+			Context("when there is a subsequent restage events", func() {
+				BeforeEach(func() {
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+							fakeRestageEvent("2018-08-08T08:08:08Z"),
+						})),
+					))
+				})
+				It("sends the restage event", func() {
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app restage",
+						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+
+					startDaemon()
+					<-time.After(1030 * time.Millisecond)
+				})
+			})
+
 			Context("unexpected event types", func() {
 				BeforeEach(func() {
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
@@ -342,6 +367,17 @@ var pushAppEventTemplate = `
 	}
 }
 `
+
+var restageAppEventTemplate = `
+{
+	"entity": {
+		"type": "audit.app.restage",
+		"timestamp": "%s",
+		"metadata": {}
+	}
+}
+`
+
 
 var serviceBindEventTemplate = `
 {
@@ -418,6 +454,10 @@ func fakeServiceCreateEvent(timestamp, servicePlanGUID string) string {
 
 func fakeServiceBindEvent(timestamp, guid string) string {
 	return fmt.Sprintf(serviceBindEventTemplate, timestamp, guid)
+}
+
+func fakeRestageEvent(timestamp string) string {
+	return fmt.Sprintf(restageAppEventTemplate, timestamp)
 }
 
 func fakeCrashEvent(timestamp string) string {
