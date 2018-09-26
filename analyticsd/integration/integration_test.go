@@ -245,17 +245,17 @@ var _ = Describe("Integration", func() {
 
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
 						ghttp.VerifyRequest(http.MethodGet, "/v2/service_plans/some-service-plan-guid"),
-						ghttp.RespondWith(http.StatusOK, fakeUrlResponse("some-service-url")),
+						ghttp.RespondWith(http.StatusOK, fakeUrlResponse("/some-service-url")),
 					))
 
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
-						ghttp.VerifyRequest(http.MethodGet, "some-service-url"),
+						ghttp.VerifyRequest(http.MethodGet, "/some-service-url"),
 						ghttp.RespondWith(http.StatusOK, fakeLabelResponse("p-circuit-breaker-dashboard")),
 					))
 
 
 				})
-				FIt("sends the service create event", func() {
+				It("sends the service create event", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
 						Event:     "created service",
@@ -280,29 +280,28 @@ var _ = Describe("Integration", func() {
 							fakeServiceBindEvent("2018-08-09T08:08:08Z", "some-guid"),
 						})),
 					))
+
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/service_instances/some-guid"),
+						ghttp.RespondWith(http.StatusOK, fakeUrlResponse("/some-service-url")),
+					))
+
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/some-service-url"),
+						ghttp.RespondWith(http.StatusOK, fakeLabelResponse("p-circuit-breaker-dashboard")),
+					))
 				})
 				It("sends the service bind event", func() {
-				//	mockAnalytics.EXPECT().Enqueue(analytics.Track{
-				//		UserId:    "some-user-uuid",
-				//		Event:     "app created",
-				//		Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
-				//		Properties: map[string]interface{}{
-				//			"buildpack": "ruby",
-				//			"os":        runtime.GOOS,
-				//			"version":   "some-version",
-				//		},
-				//	})
-
-				//	mockAnalytics.EXPECT().Enqueue(analytics.Track{
-				//		UserId:    "some-user-uuid",
-				//		Event:     "app created",
-				//		Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
-				//		Properties: map[string]interface{}{
-				//			"buildpack": "go",
-				//			"os":        runtime.GOOS,
-				//			"version":   "some-version",
-				//		},
-				//	})
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app bound to service",
+						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"service": "p-circuit-breaker-dashboard",
+							"os":      runtime.GOOS,
+							"version": "some-version",
+						},
+					}) 
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
@@ -383,8 +382,7 @@ var crashAppEventTemplate = `
 	"entity": {
 		"type": "app.crash",
 		"timestamp": "%s",
-		"metadata": {
-			}
+		"metadata": { 
 		}
 	}
 }
