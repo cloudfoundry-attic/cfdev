@@ -27,6 +27,7 @@ require (
 	github.com/hooklift/assert v0.0.0-20170704181755-9d1defd6d214 // indirect
 	github.com/hooklift/iso9660 v1.0.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect

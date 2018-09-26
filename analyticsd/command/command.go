@@ -83,7 +83,7 @@ func New(
 func serviceIsWhiteListed(serviceLabel string) bool {
 	for _, listedLabel := range config.SERVICE_WHITELIST {
 		sl, ll := strings.ToLower(serviceLabel), strings.ToLower(listedLabel)
-		if strings.Contains(ll, sl) {
+		if sl == ll {
 			return true
 		}
 	}
