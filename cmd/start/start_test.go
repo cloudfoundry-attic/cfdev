@@ -104,7 +104,7 @@ var _ = Describe("Start", func() {
 
 		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
 		metadata = iso.Metadata{
-			Version:       "v1",
+			Version:       "v2",
 			DefaultMemory: 8765,
 			Services: []provision.Service{
 				{

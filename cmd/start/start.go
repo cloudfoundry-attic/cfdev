@@ -132,7 +132,7 @@ type Start struct {
 	Stop            Stop
 }
 
-const compatibilityVersion = "v1"
+const compatibilityVersion = "v2"
 const defaultMemory = 4192
 
 func (s *Start) Cmd() *cobra.Command {
