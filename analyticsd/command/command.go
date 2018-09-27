@@ -28,6 +28,7 @@ func New(
 	timeStamp time.Time,
 	UUID string,
 	version string,
+	osVersion string,
 	logger *log.Logger) (Command, bool) {
 
 	switch event {
@@ -40,6 +41,7 @@ func New(
 			TimeStamp:       timeStamp,
 			UUID:            UUID,
 			Version:         version,
+			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
 	case "audit.app.create":
@@ -51,6 +53,7 @@ func New(
 			TimeStamp:       timeStamp,
 			UUID:            UUID,
 			Version:         version,
+			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
 	case "app.crash":
@@ -62,6 +65,7 @@ func New(
 			TimeStamp:       timeStamp,
 			UUID:            UUID,
 			Version:         version,
+			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
 	case "audit.service_instance.create":
@@ -73,6 +77,7 @@ func New(
 			TimeStamp:       timeStamp,
 			UUID:            UUID,
 			Version:         version,
+			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
 	case "audit.service_binding.create":
@@ -84,6 +89,7 @@ func New(
 			TimeStamp:       timeStamp,
 			UUID:            UUID,
 			Version:         version,
+			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
 	case "audit.user_provided_service_instance.create":
@@ -95,6 +101,7 @@ func New(
 			TimeStamp:       timeStamp,
 			UUID:            UUID,
 			Version:         version,
+			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
 	default:

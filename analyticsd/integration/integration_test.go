@@ -41,6 +41,7 @@ var _ = Describe("Integration", func() {
 			ccServer.URL(),
 			"some-user-uuid",
 			"some-version",
+			"some-os-version",
 			buffer,
 			httpClient,
 			mockAnalytics,
@@ -118,9 +119,10 @@ var _ = Describe("Integration", func() {
 						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"buildpack": "ruby",
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"buildpack":      "ruby",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -129,9 +131,10 @@ var _ = Describe("Integration", func() {
 						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"buildpack": "go",
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"buildpack":      "go",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -140,9 +143,10 @@ var _ = Describe("Integration", func() {
 						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 10, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"buildpack": "java",
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"buildpack":      "java",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -151,9 +155,10 @@ var _ = Describe("Integration", func() {
 						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 11, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"buildpack": "nodejs",
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"buildpack":      "nodejs",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 					startDaemon()
@@ -186,9 +191,10 @@ var _ = Describe("Integration", func() {
 						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"buildpack": "ruby",
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"buildpack":      "ruby",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -197,9 +203,10 @@ var _ = Describe("Integration", func() {
 						Event:     "app created",
 						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"buildpack": "go",
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"buildpack":      "go",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -223,8 +230,9 @@ var _ = Describe("Integration", func() {
 						Event:     "app push failed",
 						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -242,7 +250,6 @@ var _ = Describe("Integration", func() {
 						})),
 					))
 
-
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
 						ghttp.VerifyRequest(http.MethodGet, "/v2/service_plans/some-service-plan-guid"),
 						ghttp.RespondWith(http.StatusOK, fakeUrlResponse("/some-service-url")),
@@ -253,7 +260,6 @@ var _ = Describe("Integration", func() {
 						ghttp.RespondWith(http.StatusOK, fakeLabelResponse("p-circuit-breaker-dashboard")),
 					))
 
-
 				})
 				It("sends the service create event", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
@@ -261,9 +267,10 @@ var _ = Describe("Integration", func() {
 						Event:     "created service",
 						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"service": "p-circuit-breaker-dashboard",
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"service":        "p-circuit-breaker-dashboard",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -297,11 +304,12 @@ var _ = Describe("Integration", func() {
 						Event:     "app bound to service",
 						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"service": "p-circuit-breaker-dashboard",
-							"os":      runtime.GOOS,
-							"version": "some-version",
+							"service":        "p-circuit-breaker-dashboard",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
-					}) 
+					})
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
@@ -323,8 +331,9 @@ var _ = Describe("Integration", func() {
 						Event:     "app restage",
 						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -348,8 +357,9 @@ var _ = Describe("Integration", func() {
 						Event:     "created user provided service",
 						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
-							"os":        runtime.GOOS,
-							"version":   "some-version",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
 						},
 					})
 
@@ -402,7 +412,6 @@ var restageAppEventTemplate = `
 	}
 }
 `
-
 
 var serviceBindEventTemplate = `
 {
@@ -510,7 +519,6 @@ func fakeLabelResponse(label string) string {
 func fakeUserProvidedServiceEvent(timestamp string) string {
 	return fmt.Sprintf(userProvidedServiceEventTemplate, timestamp)
 }
-
 
 var responseTemplate = `
 {

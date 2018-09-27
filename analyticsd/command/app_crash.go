@@ -15,13 +15,15 @@ type AppCrash struct {
 	TimeStamp       time.Time
 	UUID            string
 	Version         string
+	OSVersion       string
 	Logger          *log.Logger
 }
 
 func (c *AppCrash) HandleResponse(body json.RawMessage) error {
 	var properties = analytics.Properties{
-		"os":      runtime.GOOS,
-		"version": c.Version,
+		"os":             runtime.GOOS,
+		"plugin_version": c.Version,
+		"os_version":     c.OSVersion,
 	}
 
 	err := c.AnalyticsClient.Enqueue(analytics.Track{

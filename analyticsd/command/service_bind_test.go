@@ -32,6 +32,7 @@ var _ = Describe("ServiceBind", func() {
 			TimeStamp:       time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 			UUID:            "some-user-uuid",
 			Version:         "some-version",
+			OSVersion:       "some-os-version",
 		}
 	})
 
@@ -64,7 +65,8 @@ var _ = Describe("ServiceBind", func() {
 				Properties: map[string]interface{}{
 					"service": "mysql",
 					"os":      runtime.GOOS,
-					"version": "some-version",
+					"plugin_version": "some-version",
+					"os_version": "some-os-version",
 				},
 			})
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code.cloudfoundry.org/cfdev/analyticsd/runner"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
+	analyticsdos "code.cloudfoundry.org/cfdev/analyticsd/os"
 	"github.com/denisbrodbeck/machineid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -47,6 +49,12 @@ func main() {
 		userID = "UNKNOWN_ID"
 	}
 
+	analyticsdos :=  &analyticsdos.OS{Runner: &runner.Runner{}}
+	osVersion, err := analyticsdos.Version()
+	if err != nil {
+		osVersion = "unknown-os-version"
+	}
+
 	if len(os.Args) > 1 && os.Args[1] == "debug" {
 		pollingInterval = 10 * time.Second
 	}
@@ -55,6 +63,7 @@ func main() {
 		"https://api.dev.cfdev.sh",
 		userID,
 		version,
+		osVersion,
 		os.Stdout,
 		cfg.Client(ctx),
 		analytics.New(analyticsKey),

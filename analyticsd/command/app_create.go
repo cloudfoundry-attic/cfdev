@@ -15,6 +15,7 @@ type AppCreate struct {
 	TimeStamp       time.Time
 	UUID            string
 	Version         string
+	OSVersion       string
 	Logger          *log.Logger
 }
 
@@ -46,9 +47,10 @@ func (c *AppCreate) HandleResponse(body json.RawMessage) error {
 	}
 
 	var properties = analytics.Properties{
-		"buildpack": buildpack,
-		"os":        runtime.GOOS,
-		"version":   c.Version,
+		"buildpack":      buildpack,
+		"os":             runtime.GOOS,
+		"plugin_version": c.Version,
+		"os_version":     c.OSVersion,
 	}
 
 	err := c.AnalyticsClient.Enqueue(analytics.Track{

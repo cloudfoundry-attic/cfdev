@@ -29,6 +29,7 @@ var _ = Describe("AppCrash", func() {
 			TimeStamp:       time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 			UUID:            "some-user-uuid",
 			Version:         "some-version",
+			OSVersion:       "some-os-version",
 		}
 	})
 
@@ -43,8 +44,9 @@ var _ = Describe("AppCrash", func() {
 				Event:     "app push failed",
 				Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 				Properties: map[string]interface{}{
-					"os":      runtime.GOOS,
-					"version": "some-version",
+					"os":             runtime.GOOS,
+					"plugin_version": "some-version",
+					"os_version":     "some-os-version",
 				},
 			})
 

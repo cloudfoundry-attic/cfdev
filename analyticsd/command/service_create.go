@@ -15,6 +15,7 @@ type ServiceCreate struct {
 	TimeStamp       time.Time
 	UUID            string
 	Version         string
+	OSVersion       string
 	Logger          *log.Logger
 }
 
@@ -53,12 +54,13 @@ func (c *ServiceCreate) HandleResponse(body json.RawMessage) error {
 
 	if !serviceIsWhiteListed(labelResp.Entity.Label) {
 		return nil
-	} 
+	}
 
 	var properties = analytics.Properties{
-		"service": labelResp.Entity.Label,
-		"os":      runtime.GOOS,
-		"version": c.Version,
+		"service":        labelResp.Entity.Label,
+		"os":             runtime.GOOS,
+		"plugin_version": c.Version,
+		"os_version":     c.OSVersion,
 	}
 
 	err = c.AnalyticsClient.Enqueue(analytics.Track{

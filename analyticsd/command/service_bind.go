@@ -15,6 +15,7 @@ type ServiceBind struct {
 	TimeStamp       time.Time
 	UUID            string
 	Version         string
+	OSVersion       string
 	Logger          *log.Logger
 }
 
@@ -62,9 +63,10 @@ func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
 	}
 
 	var properties = analytics.Properties{
-		"service": labelResp.Entity.Label,
-		"os":      runtime.GOOS,
-		"version": c.Version,
+		"service":        labelResp.Entity.Label,
+		"os":             runtime.GOOS,
+		"plugin_version": c.Version,
+		"os_version":     c.OSVersion,
 	}
 
 	err = c.AnalyticsClient.Enqueue(analytics.Track{
