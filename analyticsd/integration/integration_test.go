@@ -308,7 +308,7 @@ var _ = Describe("Integration", func() {
 				})
 			})
 
-			Context("when there is a subsequent restage events", func() {
+			Context("when there is a subsequent restage event", func() {
 				BeforeEach(func() {
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
 						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
@@ -321,6 +321,31 @@ var _ = Describe("Integration", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
 						UserId:    "some-user-uuid",
 						Event:     "app restage",
+						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"os":        runtime.GOOS,
+							"version":   "some-version",
+						},
+					})
+
+					startDaemon()
+					<-time.After(1030 * time.Millisecond)
+				})
+			})
+
+			Context("when there is a subsequent user-provided-service event", func() {
+				BeforeEach(func() {
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
+							fakeUserProvidedServiceEvent("2018-08-08T08:08:08Z"),
+						})),
+					))
+				})
+				It("sends the user-provided-service event", func() {
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "created user provided service",
 						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 						Properties: map[string]interface{}{
 							"os":        runtime.GOOS,
@@ -412,6 +437,16 @@ var serviceCreateEventTemplate = `
 	}
 }
 `
+var userProvidedServiceEventTemplate = `
+{
+	"entity": {
+		"type": "audit.user_provided_service_instance.create",
+		"timestamp": "%s",
+		"metadata": {
+		}
+	}
+}
+`
 
 var crashAppEventTemplate = `
 {
@@ -470,6 +505,10 @@ func fakeUrlResponse(serviceURL string) string {
 
 func fakeLabelResponse(label string) string {
 	return fmt.Sprintf(labelResponseTemplate, label)
+}
+
+func fakeUserProvidedServiceEvent(timestamp string) string {
+	return fmt.Sprintf(userProvidedServiceEventTemplate, timestamp)
 }
 
 

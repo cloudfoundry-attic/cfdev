@@ -86,6 +86,17 @@ func New(
 			Version:         version,
 			Logger:          logger,
 		}, true
+	case "audit.user_provided_service_instance.create":
+		logger.Printf("Detected event for %q\n", event)
+
+		return &UserProvidedServiceCreate{
+			CCClient:        ccClient,
+			AnalyticsClient: analyticsClient,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			Logger:          logger,
+		}, true
 	default:
 		return nil, false
 	}
