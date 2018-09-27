@@ -1,6 +1,9 @@
 package main
 
-import _ "code.cloudfoundry.org/cfdev/unset-bosh-all-proxy"
+import (
+	"code.cloudfoundry.org/cfdev/host"
+	_ "code.cloudfoundry.org/cfdev/unset-bosh-all-proxy"
+)
 import (
 	"io/ioutil"
 	"log"
@@ -64,7 +67,13 @@ func main() {
 	baseAnalyticsClient, _ := analytics.NewWithConfig(conf.AnalyticsKey, analytics.Config{
 		Logger: analytics.StdLogger(log.New(ioutil.Discard, "", 0)),
 	})
-	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, exitChan, ui)
+
+	h := host.Host{}
+	osVersion, err := h.Version()
+	if err != nil {
+		osVersion = "unknown-os-version"
+	}
+	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, exitChan, ui)
 	defer analyticsClient.Close()
 
 	v := conf.CliVersion

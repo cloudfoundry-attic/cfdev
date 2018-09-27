@@ -29,7 +29,7 @@ var _ = Describe("Analytics", func() {
 		mockToggle = mocks.NewMockToggle(mockController)
 		mockUI = mocks.NewMockUI(mockController)
 		exitChan = make(chan struct{}, 1)
-		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test", exitChan, mockUI)
+		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test", "some-os-version", exitChan, mockUI)
 	})
 	AfterEach(func() {
 		mockController.Finish()
@@ -117,7 +117,8 @@ var _ = Describe("Analytics", func() {
 						"Timestamp": BeTemporally(">=", time.Now().Add(-1*time.Minute)),
 						"Properties": BeEquivalentTo(map[string]interface{}{
 							"os":      runtime.GOOS,
-							"version": "4.5.6-unit-test",
+							"plugin_version": "4.5.6-unit-test",
+							"os_version": "some-os-version",
 							"type":    "cf.1.2.3.iso",
 							"mykey":   "myval",
 						}),

@@ -3,6 +3,7 @@ package host
 import (
 	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	safeerr "code.cloudfoundry.org/cfdev/errors"
@@ -21,6 +22,11 @@ func (h *Host) CheckRequirements() error {
 		return err
 	}
 	return h.hypervEnabled()
+}
+
+func (h *Host) Version() (string, error) {
+	output, err := exec.Command("powershell.exe", "-Command", "[System.Environment]::OSVersion.VersionString").Output()
+	return strings.TrimSpace(string(output)), err
 }
 
 func (h *Host) hasAdminPrivileged() error {
