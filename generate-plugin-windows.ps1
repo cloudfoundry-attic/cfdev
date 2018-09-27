@@ -4,7 +4,13 @@ $cache_dir="$HOME\.cfdev\cache"
 $pkg="code.cloudfoundry.org/cfdev/config"
 $cfdepsUrl="$cache_dir\cf-deps.iso"
 $cfdevefiUrl="$cache_dir\cfdev-efi.iso"
-$cfAnalyticsdUrl="$cache_dir\analyticsd.exe"
+$cfAnalyticsdUrl="$PWD\analytix"
+
+go build -ldflags `
+  "-X $main.version=0.0.$date
+   -X $main.analyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" `
+   -o $cfAnalyticsdUrl `
+   code.cloudfoundry.org/cfdev/analyticsd
 
 $date=(Get-Date -Format FileDate)
 

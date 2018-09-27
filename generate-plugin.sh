@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
 set -exo pipefail
 
-cfdev="/Users/pivotal/workspace/cfdev"
 dir="$( cd "$( dirname "$0" )" && pwd )"
-cfdev="$dir"/../../..
 cache_dir="$HOME"/.cfdev/cache
 analyticskey="WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2"
-
-pkg="code.cloudfoundry.org/cfdev/config"
 
 export GOOS=darwin
 export GOARCH=amd64
@@ -20,17 +16,13 @@ analyticsdpkg="main"
 go build \
   -o $analyticsd \
   -ldflags \
-    "-X $analyticsdpkg.analyticsKey=$analyticskey" \
+    "-X $analyticsdpkg.analyticsKey=$analyticskey
+     -X $analyticsdpkg.version=0.0.$(date +%Y%m%d-%H%M%S)" \
      code.cloudfoundry.org/cfdev/analyticsd
 
-cfdepsUrl="$cfdev/output/cf-deps.iso"
-if [ ! -f "$cfdepsUrl" ]; then
-  cfdepsUrl="$cache_dir/cf-deps.iso"
-fi
-cfdevefiUrl="$cfdev/output/cfdev-efi.iso"
-if [ ! -f "$cfdevefiUrl" ]; then
-  cfdevefiUrl="$cache_dir/cfdev-efi.iso"
-fi
+cfdepsUrl="$cache_dir/cf-deps.iso"
+cfdevefiUrl="$cache_dir/cfdev-efi.iso"
+pkg="code.cloudfoundry.org/cfdev/config"
 
 go build \
   -ldflags \
