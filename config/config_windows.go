@@ -149,7 +149,7 @@ func catalog() (resource.Catalog, error) {
 			},
 			{
 				URL:   analyticsdUrl,
-				Name:  "analyticsd",
+				Name:  "analyticsd.exe",
 				MD5:   analyticsdMd5,
 				Size:  aToUint64(analyticsdSize),
 				InUse: true,
