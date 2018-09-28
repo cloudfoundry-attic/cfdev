@@ -1,15 +1,18 @@
 package privileged_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/denisbrodbeck/machineid"
 	"net"
 	"os"
 	"os/exec"
 	"strconv"
-
+	"github.com/minio/minio-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"strings"
 
 	"time"
 
@@ -79,9 +82,6 @@ var _ = Describe("cfdev lifecycle", func() {
 		loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 		Eventually(loginSession).Should(gexec.Exit(0))
 
-		By("pushing an app")
-		PushAnApp()
-
 		By("toggling off telemetry")
 		telemetrySession := cf.Cf("dev", "telemetry", "--off")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
@@ -91,6 +91,11 @@ var _ = Describe("cfdev lifecycle", func() {
 		telemetrySession = cf.Cf("dev", "telemetry", "--on")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
 		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
+
+		By("pushing an app")
+		PushAnApp()
+
+		EventuallyWeSeeAnalyticsBeingSent()
 
 		By("rerunning cf dev start")
 		startSession = cf.Cf("dev", "start")
@@ -110,6 +115,71 @@ var _ = Describe("cfdev lifecycle", func() {
 		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
 	})
 })
+
+func EventuallyWeSeeAnalyticsBeingSent() {
+	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
+	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+
+	if accessKeyID == "" || secretAccessKey == "" {
+		fmt.Fprintln(GinkgoWriter, "AWS keys not detected. Skipping assertions for analytics...")
+		return
+	}
+
+	By("querying for analytics")
+
+	minioClient, err := minio.New("s3.amazonaws.com", accessKeyID, secretAccessKey, true)
+	Expect(err).NotTo(HaveOccurred())
+
+	userID, _ := machineid.ProtectedID("cfdev")
+
+	Eventually(func() bool {
+		return hasFoundAnalyticsFor(minioClient, userID, "app created")
+	}, 10*time.Minute, 5*time.Second).Should(BeTrue())
+}
+
+func hasFoundAnalyticsFor(client *minio.Client, userID string, event string) bool {
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	objHasEvent := func(obj minio.ObjectInfo) bool {
+		reader, err := client.GetObject("cfdev-analytics", obj.Key, minio.GetObjectOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		contents, err := ioutil.ReadAll(reader)
+		Expect(err).NotTo(HaveOccurred())
+
+		j := strings.Replace(string(contents), `}{`, "}\n{", -1)
+		for _, line := range strings.Split(j, "\n") {
+			results := map[string]interface{}{}
+
+			err := json.Unmarshal([]byte(line), &results)
+			Expect(err).NotTo(HaveOccurred(), "invalid json received: "+ line)
+
+			if results["event"] == event && results["userId"] == userID {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	objectCh := client.ListObjectsV2("cfdev-analytics", "kinesis-stream", true, doneCh)
+	for object := range objectCh {
+		tenMinutesAgo := time.Now().UTC().Add(-10*time.Minute)
+
+		if object.Err != nil {
+			continue
+		}
+
+		if object.LastModified.After(tenMinutesAgo) {
+			if objHasEvent(object) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")

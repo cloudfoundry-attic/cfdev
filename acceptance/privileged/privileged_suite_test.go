@@ -28,9 +28,11 @@ var _ = BeforeSuite(func() {
 	session := cf.Cf("install-plugin", "-f", pluginPath)
 	<-session.Exited
 
+	os.Setenv("CFDEV_MODE", "debug")
 	os.Unsetenv("BOSH_ALL_PROXY")
 })
 
 var _ = AfterSuite(func() {
+	os.Unsetenv("CFDEV_MODE")
 	cf.Cf("uninstall-plugin", "cfdev")
 })

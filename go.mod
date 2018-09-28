@@ -13,7 +13,7 @@ require (
 	github.com/c4milo/gotoolkit v0.0.0-20170704181456-e37eeabad07e // indirect
 	github.com/charlievieth/fs v0.0.0-20170613215519-7dc373669fa1 // indirect
 	github.com/cheggaaa/pb v2.0.6+incompatible // indirect
-	github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180907180103-a863c3d7755a
+	github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180918235445-a410f25137fb
 	github.com/cloudfoundry/bosh-cli v5.2.1+incompatible
 	github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
@@ -23,6 +23,7 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.0
 	github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d // indirect
 	github.com/fatih/color v1.7.0 // indirect
+	github.com/go-ini/ini v1.38.2 // indirect
 	github.com/golang/mock v1.1.1
 	github.com/hooklift/assert v0.0.0-20170704181755-9d1defd6d214 // indirect
 	github.com/hooklift/iso9660 v1.0.0
@@ -32,6 +33,8 @@ require (
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
+	github.com/minio/minio-go v6.0.7+incompatible // indirect
+	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/onsi/ginkgo v1.6.0
 	github.com/onsi/gomega v1.4.2

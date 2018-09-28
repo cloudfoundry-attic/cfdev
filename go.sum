@@ -24,6 +24,8 @@ github.com/cheggaaa/pb v2.0.6+incompatible h1:sutSx+mRaNbeJUMCAtyqNWU/tQ0B/xBm+h
 github.com/cheggaaa/pb v2.0.6+incompatible/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180907180103-a863c3d7755a h1:2rj5HHfcV5fmt3HgAtaDeaK7Myg/B+SB/gpxIvhdL3c=
 github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180907180103-a863c3d7755a/go.mod h1:I21tkmFwW9F06eYcQm5GTUzNV+pc1Q5NVZ1qhWOGGx0=
+github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180918235445-a410f25137fb h1:Kd1IvtC7a1DWLSKiba4Zb7oeb5mFOImQGzREz34XBOo=
+github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180918235445-a410f25137fb/go.mod h1:I21tkmFwW9F06eYcQm5GTUzNV+pc1Q5NVZ1qhWOGGx0=
 github.com/cloudfoundry/bosh-cli v5.2.1+incompatible h1:vCwOg9+NPO2cwEE0Py6PjFR0bB27FZ7xTX4vZ2XIWZg=
 github.com/cloudfoundry/bosh-cli v5.2.1+incompatible/go.mod h1:rzIB+e1sn7wQL/TJ54bl/FemPKRhXby5BIMS3tLuWFM=
 github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455 h1:iLnjvzwYY8s8m6dAHpn8F0wmHEGk+sOP0NIi8SBmVZM=
@@ -43,6 +45,8 @@ github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d/go.mod h1:Htrtb
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
+github.com/go-ini/ini v1.38.2 h1:6Hl/z3p3iFkA0dlDfzYxuFuUGD+kaweypF6btsR2/Q4=
+github.com/go-ini/ini v1.38.2/go.mod h1:ByCAeIL28uOIIG0E3PJtZPDL8WnHpFKFOtgjp+3Ies8=
 github.com/golang/mock v1.1.1 h1:G5FRp8JnTd7RQH5kemVNlMeyXQAztQ3mOWV95KxsXH8=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=
@@ -68,6 +72,10 @@ github.com/mattn/go-isatty v0.0.4 h1:bnP0vzxcAdeI1zdubAl5PjU6zsERjGZb7raWodagDYs
 github.com/mattn/go-isatty v0.0.4/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/minio/minio-go v6.0.7+incompatible h1:nWABqotkiT/3aLgFnG30doQiwFkDMM9xnGGQnS+Ao6M=
+github.com/minio/minio-go v6.0.7+incompatible/go.mod h1:7guKYtitv8dktvNUGrhzmNlA5wrAABTQXCoesZdFQO8=
+github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnGC8aR0=
+github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d h1:VhgPp6v9qf9Agr/56bj7Y/xa04UccTW04VP0Qed4vnQ=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d/go.mod h1:YUTz3bUH2ZwIWBy3CJBeOBEugqcmXREj14T+iG/4k4U=
 github.com/onsi/ginkgo v1.6.0 h1:Ix8l273rp3QzYgXSR+c8d1fTG7UPgYkOSELPhiY/YGw=
