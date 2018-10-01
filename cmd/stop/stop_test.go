@@ -58,7 +58,7 @@ var _ = Describe("Stop", func() {
 			Config:       cfg,
 			Analytics:    mockAnalytics,
 			CfdevdClient: mockCfdevdClient,
-			AnalyticsD:      mockAnalyticsD,
+			AnalyticsD:   mockAnalyticsD,
 			HostNet:      mockHostNet,
 			Host:         mockHost,
 		}

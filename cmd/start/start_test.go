@@ -15,10 +15,10 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd/start"
 	"code.cloudfoundry.org/cfdev/cmd/start/mocks"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/hypervisor"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"github.com/golang/mock/gomock"
-	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 var _ = Describe("Start", func() {
@@ -37,7 +37,7 @@ var _ = Describe("Start", func() {
 		mockHypervisor      *mocks.MockHypervisor
 		mockProvisioner     *mocks.MockProvisioner
 		mockIsoReader       *mocks.MockIsoReader
-		mockStop			*mocks.MockStop
+		mockStop            *mocks.MockStop
 
 		startCmd      start.Start
 		exitChan      chan struct{}
@@ -48,6 +48,24 @@ var _ = Describe("Start", func() {
 		metadata      iso.Metadata
 	)
 
+	services := []provision.Service{
+		{
+			Name:          "some-service",
+			Flagname:      "some-service-flagname",
+			DefaultDeploy: true,
+			Handle:        "some-handle",
+			Script:        "/path/to/some-script",
+			Deployment:    "some-deployment",
+		},
+		{
+			Name:          "some-other-service",
+			Flagname:      "some-other-service-flagname",
+			DefaultDeploy: false,
+			Handle:        "some-other-handle",
+			Script:        "/path/to/some-other-script",
+			Deployment:    "some-other-deployment",
+		},
+	}
 	BeforeEach(func() {
 		var err error
 		mockController = gomock.NewController(GinkgoT())
@@ -99,27 +117,14 @@ var _ = Describe("Start", func() {
 			Hypervisor:      mockHypervisor,
 			Provisioner:     mockProvisioner,
 			IsoReader:       mockIsoReader,
-			Stop: 			 mockStop,
+			Stop:            mockStop,
 		}
 
 		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
 		metadata = iso.Metadata{
 			Version:       "v2",
 			DefaultMemory: 8765,
-			Services: []provision.Service{
-				{
-					Name:       "some-service",
-					Handle:     "some-handle",
-					Script:     "/path/to/some-script",
-					Deployment: "some-deployment",
-				},
-				{
-					Name:       "some-other-service",
-					Handle:     "some-other-handle",
-					Script:     "/path/to/some-other-script",
-					Deployment: "some-other-deployment",
-				},
-			},
+			Services:      services,
 		}
 	})
 
@@ -172,20 +177,8 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying CF..."),
 					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
 					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
-					mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
-						{
-							Name:       "some-service",
-							Handle:     "some-handle",
-							Script:     "/path/to/some-script",
-							Deployment: "some-deployment",
-						},
-						{
-							Name:       "some-other-service",
-							Handle:     "some-other-handle",
-							Script:     "/path/to/some-other-script",
-							Deployment: "some-other-deployment",
-						},
-					}),
+					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+					mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
 					mockToggle.EXPECT().Get().Return(true),
 					mockAnalyticsD.EXPECT().Start(),
@@ -239,20 +232,8 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying CF..."),
 					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
 					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
-					mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
-						{
-							Name:       "some-service",
-							Handle:     "some-handle",
-							Script:     "/path/to/some-script",
-							Deployment: "some-deployment",
-						},
-						{
-							Name:       "some-other-service",
-							Handle:     "some-other-handle",
-							Script:     "/path/to/some-other-script",
-							Deployment: "some-other-deployment",
-						},
-					}),
+					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+					mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
 					mockToggle.EXPECT().Get().Return(false),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
@@ -264,8 +245,8 @@ var _ = Describe("Start", func() {
 				})).To(Succeed())
 			})
 
-			Context("when catalog includes cfdevd", func(){
-				BeforeEach(func(){
+			Context("when catalog includes cfdevd", func() {
+				BeforeEach(func() {
 					startCmd.Config.Dependencies = resource.Catalog{
 						Items: []resource.Item{
 							{Name: "some-item"},
@@ -274,7 +255,7 @@ var _ = Describe("Start", func() {
 						},
 					}
 				})
-				It("downloads cfdevd first", func(){
+				It("downloads cfdevd first", func() {
 					if runtime.GOOS == "darwin" {
 						mockUI.EXPECT().Say("Installing cfdevd network helper...")
 						mockCFDevD.EXPECT().Install()
@@ -303,7 +284,7 @@ var _ = Describe("Start", func() {
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
-							Name: "cfdev",
+							Name:     "cfdev",
 							CPUs:     7,
 							MemoryMB: 8765,
 							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
@@ -320,20 +301,8 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Deploying CF..."),
 						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
 						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
-						mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
-							{
-								Name:       "some-service",
-								Handle:     "some-handle",
-								Script:     "/path/to/some-script",
-								Deployment: "some-deployment",
-							},
-							{
-								Name:       "some-other-service",
-								Handle:     "some-other-handle",
-								Script:     "/path/to/some-other-script",
-								Deployment: "some-other-deployment",
-							},
-						}),
+						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+						mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
 						mockToggle.EXPECT().Get().Return(true),
 						mockAnalyticsD.EXPECT().Start(),
@@ -392,31 +361,169 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Deploying CF..."),
 						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
 						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
-						mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
-							{
-								Name:       "some-service",
-								Handle:     "some-handle",
-								Script:     "/path/to/some-script",
-								Deployment: "some-deployment",
-							},
-							{
-								Name:       "some-other-service",
-								Handle:     "some-other-handle",
-								Script:     "/path/to/some-other-script",
-								Deployment: "some-other-deployment",
-							},
-						}),
+						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+						mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
 						mockToggle.EXPECT().Get().Return(true),
 						mockAnalyticsD.EXPECT().Start(),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
-
 					)
 
 					Expect(startCmd.Execute(start.Args{
 						Cpus: 7,
 						Mem:  0,
 					})).To(Succeed())
+				})
+			})
+		})
+
+		Context("when the -s flag is provided", func() {
+			Context("arg is all", func() {
+				It("deploys all the services", func() {
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
+
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cf-deps.iso"},
+							},
+						}),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockUI.EXPECT().Say("Creating the VM..."),
+						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+							Name:     "cfdev",
+							CPUs:     7,
+							MemoryMB: 8765,
+							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						}),
+						mockUI.EXPECT().Say("Starting VPNKit..."),
+						mockVpnKit.EXPECT().Start(),
+						mockVpnKit.EXPECT().Watch(localExitChan),
+						mockUI.EXPECT().Say("Starting the VM..."),
+						mockHypervisor.EXPECT().Start("cfdev"),
+						mockUI.EXPECT().Say("Waiting for Garden..."),
+						mockProvisioner.EXPECT().Ping(),
+						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+						mockProvisioner.EXPECT().DeployBosh(),
+						mockUI.EXPECT().Say("Deploying CF..."),
+						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().WhiteListServices("all", services).Return(services, nil),
+						mockProvisioner.EXPECT().DeployServices(mockUI, services),
+
+						mockToggle.EXPECT().Get().Return(true),
+						mockAnalyticsD.EXPECT().Start(),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+					)
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus:                7,
+						Mem:                 0,
+						DeploySingleService: "all",
+					})).To(Succeed())
+				})
+			})
+
+			Context("arg is some-other-service-flagname", func() {
+				It("WhiteListServices is called with some-other-service-flagname", func() {
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
+
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cf-deps.iso"},
+							},
+						}),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockUI.EXPECT().Say("Creating the VM..."),
+						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+							Name:     "cfdev",
+							CPUs:     7,
+							MemoryMB: 8765,
+							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						}),
+						mockUI.EXPECT().Say("Starting VPNKit..."),
+						mockVpnKit.EXPECT().Start(),
+						mockVpnKit.EXPECT().Watch(localExitChan),
+						mockUI.EXPECT().Say("Starting the VM..."),
+						mockHypervisor.EXPECT().Start("cfdev"),
+						mockUI.EXPECT().Say("Waiting for Garden..."),
+						mockProvisioner.EXPECT().Ping(),
+						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+						mockProvisioner.EXPECT().DeployBosh(),
+						mockUI.EXPECT().Say("Deploying CF..."),
+						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().WhiteListServices("some-other-service-flagname", services).Return(services[1:], nil),
+						mockProvisioner.EXPECT().DeployServices(mockUI, services[1:]),
+
+						mockToggle.EXPECT().Get().Return(true),
+						mockAnalyticsD.EXPECT().Start(),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+					)
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus:                7,
+						Mem:                 0,
+						DeploySingleService: "some-other-service-flagname",
+					})).To(Succeed())
+				})
+			})
+
+			Context("arg is an unsupported service", func() {
+				It("returns an error message and does not execute start command", func() {
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
+
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cf-deps.iso"},
+							},
+						}),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+					)
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus:        7,
+						Mem:         6666,
+						DeploySingleService: "non-existent-service",
+					}).Error()).To(ContainSubstring("is not supported"))
 				})
 			})
 		})
@@ -560,21 +667,8 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying CF..."),
 					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
 					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
-
-					mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{
-						{
-							Name:       "some-service",
-							Handle:     "some-handle",
-							Script:     "/path/to/some-script",
-							Deployment: "some-deployment",
-						},
-						{
-							Name:       "some-other-service",
-							Handle:     "some-other-handle",
-							Script:     "/path/to/some-other-script",
-							Deployment: "some-other-deployment",
-						},
-					}),
+					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+					mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
 					mockToggle.EXPECT().Get().Return(true),
 					mockAnalyticsD.EXPECT().Start(),

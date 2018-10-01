@@ -104,3 +104,16 @@ func (m *MockProvisioner) ReportProgress(arg0 provision.UI, arg1 string) {
 func (mr *MockProvisionerMockRecorder) ReportProgress(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportProgress", reflect.TypeOf((*MockProvisioner)(nil).ReportProgress), arg0, arg1)
 }
+
+// WhiteListServices mocks base method
+func (m *MockProvisioner) WhiteListServices(arg0 string, arg1 []provision.Service) ([]provision.Service, error) {
+	ret := m.ctrl.Call(m, "WhiteListServices", arg0, arg1)
+	ret0, _ := ret[0].([]provision.Service)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WhiteListServices indicates an expected call of WhiteListServices
+func (mr *MockProvisionerMockRecorder) WhiteListServices(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WhiteListServices", reflect.TypeOf((*MockProvisioner)(nil).WhiteListServices), arg0, arg1)
+}

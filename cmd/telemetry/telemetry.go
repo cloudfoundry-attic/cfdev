@@ -24,7 +24,7 @@ type AnalyticsD interface {
 type Telemetry struct {
 	UI              UI
 	AnalyticsToggle Toggle
-	AnalyticsD AnalyticsD
+	AnalyticsD      AnalyticsD
 	Args            struct {
 		FlagOff bool
 		FlagOn  bool
@@ -50,14 +50,14 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 		}
 		isRunning, err := t.AnalyticsD.IsRunning()
 		if err != nil {
-			return errors.SafeWrap(err,"checking if analyticsd is running")
+			return errors.SafeWrap(err, "checking if analyticsd is running")
 		}
 		if isRunning {
 			if err := t.AnalyticsD.Stop(); err != nil {
-				return errors.SafeWrap(err,"turning off analyticsd")
+				return errors.SafeWrap(err, "turning off analyticsd")
 			}
 			if err := t.AnalyticsD.Destroy(); err != nil {
-				return errors.SafeWrap(err,"destroying analyticsd")
+				return errors.SafeWrap(err, "destroying analyticsd")
 			}
 		}
 	} else if t.Args.FlagOn {

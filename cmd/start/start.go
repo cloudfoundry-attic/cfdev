@@ -91,6 +91,7 @@ type Provisioner interface {
 	DeployBosh() error
 	DeployCloudFoundry([]string) error
 	GetServices() ([]provision.Service, string, error)
+	WhiteListServices(string, []provision.Service) ([]provision.Service, error)
 	DeployServices(provision.UI, []provision.Service) error
 	ReportProgress(provision.UI, string)
 }
@@ -106,11 +107,12 @@ type Stop interface {
 }
 
 type Args struct {
-	Registries  string
-	DepsIsoPath string
-	NoProvision bool
-	Cpus        int
-	Mem         int
+	Registries          string
+	DeploySingleService string
+	DepsIsoPath         string
+	NoProvision         bool
+	Cpus                int
+	Mem                 int
 }
 
 type Start struct {
@@ -153,6 +155,7 @@ func (s *Start) Cmd() *cobra.Command {
 	pf.IntVarP(&args.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
 	pf.IntVarP(&args.Mem, "memory", "m", 0, "memory to allocate to vm in MB")
 	pf.BoolVarP(&args.NoProvision, "no-provision", "n", false, "start vm but do not provision")
+	pf.StringVarP(&args.DeploySingleService, "white-listed-services", "s", "", "list of supported services to deploy")
 
 	pf.MarkHidden("no-provision")
 	return cmd
@@ -201,7 +204,7 @@ func (s *Start) Execute(args Args) error {
 		return nil
 	}
 
-	if err := s.Stop.RunE(nil,nil); err != nil {
+	if err := s.Stop.RunE(nil, nil); err != nil {
 		return errors.SafeWrap(err, "stopping cfdev")
 	}
 
@@ -245,6 +248,12 @@ func (s *Start) Execute(args Args) error {
 		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsIsoName)
 	}
 
+	if args.DeploySingleService != "" {
+		if !s.isServiceSupported(args.DeploySingleService, isoConfig.Services) {
+			return errors.SafeWrap(err, fmt.Sprintf("Service: '%v' is not supported", args.DeploySingleService))
+		}
+	}
+
 	if args.Mem <= 0 {
 		if isoConfig.DefaultMemory > 0 {
 			args.Mem = isoConfig.DefaultMemory
@@ -281,7 +290,7 @@ func (s *Start) Execute(args Args) error {
 		return nil
 	}
 
-	if err := s.provision(isoConfig, registries); err != nil {
+	if err := s.provision(isoConfig, registries, args.DeploySingleService); err != nil {
 		return err
 	}
 
@@ -294,7 +303,7 @@ func (s *Start) Execute(args Args) error {
 	return nil
 }
 
-func (s *Start) provision(isoConfig iso.Metadata, registries []string) error {
+func (s *Start) provision(isoConfig iso.Metadata, registries []string, deploySingleService string) error {
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := s.Provisioner.DeployBosh(); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
@@ -306,7 +315,12 @@ func (s *Start) provision(isoConfig iso.Metadata, registries []string) error {
 		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	if err := s.Provisioner.DeployServices(s.UI, isoConfig.Services); err != nil {
+	services, err := s.Provisioner.WhiteListServices(deploySingleService, isoConfig.Services)
+	if err != nil {
+		return errors.SafeWrap(err, "Failed to whitelist services")
+	}
+
+	if err := s.Provisioner.DeployServices(s.UI, services); err != nil {
 		return errors.SafeWrap(err, "Failed to deploy services")
 	}
 
@@ -352,4 +366,18 @@ func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
 		registries = append(registries, u.Host)
 	}
 	return registries, nil
+}
+
+func (s *Start) isServiceSupported(service string, services []provision.Service) bool {
+	if strings.ToLower(service) == "all" || strings.ToLower(service) == "none" {
+		return true
+	}
+
+	for _, s := range services {
+		if strings.ToLower(s.Flagname) == strings.ToLower(service) {
+			return true
+		}
+	}
+
+	return false
 }

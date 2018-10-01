@@ -3,8 +3,9 @@ package provision
 import (
 	"io"
 	"time"
-
+	"strings"
 	"fmt"
+	e "errors"
 
 	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/errors"
@@ -14,6 +15,46 @@ import (
 type UI interface {
 	Say(message string, args ...interface{})
 	Writer() io.Writer
+}
+
+func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]Service, error) {
+	if services == nil {
+		return nil, e.New("Error whitelisting services")
+	}
+
+	if strings.ToLower(whiteList) == "all" {
+		return services, nil
+	}
+
+	var whiteListed []Service
+
+	if whiteList == "none" {
+		for _, service := range services {
+			if service.Flagname == "always-include" {
+				whiteListed = append(whiteListed, service)
+			}
+		}
+
+		return whiteListed, nil
+	}
+
+	if whiteList == "" {
+		for _, service := range services {
+			if service.DefaultDeploy {
+				whiteListed = append(whiteListed, service)
+			}
+		}
+
+		return whiteListed, nil
+	}
+
+	for _, service := range services {
+		if (strings.ToLower(whiteList) == strings.ToLower(service.Flagname)) || (strings.ToLower(service.Flagname) == "always-include") {
+			whiteListed = append(whiteListed, service)
+		}
+	}
+
+	return whiteListed, nil
 }
 
 func (c *Controller) DeployServices(ui UI, services []Service) error {

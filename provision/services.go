@@ -44,11 +44,13 @@ func (c *Controller) DeployService(handle, script string) error {
 }
 
 type Service struct {
-	Name       string `yaml:"name"`
-	Handle     string `yaml:"handle"`
-	Script     string `yaml:"script"`
-	Deployment string `yaml:"deployment"`
-	IsErrand   bool   `yaml:"errand"`
+	Name          string `yaml:"name"`
+	Flagname      string `yaml:"flag_name"`
+	DefaultDeploy bool   `yaml:"default_deploy"`
+	Handle        string `yaml:"handle"`
+	Script        string `yaml:"script"`
+	Deployment    string `yaml:"deployment"`
+	IsErrand      bool   `yaml:"errand"`
 }
 
 func (c *Controller) GetServices() ([]Service, string, error) {
