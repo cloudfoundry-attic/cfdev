@@ -33,7 +33,7 @@ require (
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
-	github.com/minio/minio-go v6.0.7+incompatible // indirect
+	github.com/minio/minio-go v6.0.7+incompatible
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/onsi/ginkgo v1.6.0

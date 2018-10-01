@@ -21,6 +21,7 @@ var _ = Describe("VpnKit", func() {
 		vpnkitStateDir string
 		vkit           network.VpnKit
 		lctl           *daemon.Launchd
+		label 		   = "some-vpnkit-label"
 	)
 
 	BeforeEach(func() {
@@ -48,11 +49,12 @@ var _ = Describe("VpnKit", func() {
 				CFDevHome:      homeDir,
 			},
 			DaemonRunner: lctl,
+			Label: label,
 		}
 	})
 
 	AfterEach(func() {
-		Expect(lctl.RemoveDaemon(network.VpnKitLabel)).To(Succeed())
+		Expect(lctl.RemoveDaemon(label)).To(Succeed())
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 

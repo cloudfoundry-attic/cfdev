@@ -19,6 +19,7 @@ type VpnKit struct {
 	Config       config.Config
 	DaemonRunner DaemonRunner
 	Powershell   runner.Powershell
+	Label string
 }
 
 type DaemonRunner interface {
@@ -30,13 +31,13 @@ type DaemonRunner interface {
 }
 
 func (v *VpnKit) Stop() error {
-	return v.DaemonRunner.Stop(VpnKitLabel)
+	return v.DaemonRunner.Stop(v.Label)
 }
 
 func (v *VpnKit) Watch(exit chan string) {
 	go func() {
 		for {
-			running, err := v.DaemonRunner.IsRunning(VpnKitLabel)
+			running, err := v.DaemonRunner.IsRunning(v.Label)
 			if !running && err == nil {
 				exit <- "vpnkit"
 				return

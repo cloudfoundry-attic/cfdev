@@ -71,7 +71,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		Writer:                writer,
 	}
 	linuxkit := &hypervisor.LinuxKit{Config: config, DaemonRunner: lctl}
-	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl}
+	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl, Label: network.VpnKitLabel}
 	isoReader := iso.New()
 	analyticsD := &cfanalytics.AnalyticsD{
 		Config: config,
