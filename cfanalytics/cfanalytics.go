@@ -13,6 +13,7 @@ import (
 const (
 	START_BEGIN = "start_begin"
 	START_END   = "start_end"
+	SELECTED_SERVICE = "selected_service"
 	STOP        = "stop"
 	BOSH_ENV    = "bosh"
 	ERROR       = "error"

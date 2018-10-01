@@ -341,7 +341,6 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -401,6 +400,9 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "all"}),
+
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -459,6 +461,9 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "some-other-service-flagname"}),
+
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -550,6 +555,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
@@ -648,6 +654,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
+
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",

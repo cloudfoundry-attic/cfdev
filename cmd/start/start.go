@@ -252,6 +252,7 @@ func (s *Start) Execute(args Args) error {
 		if !s.isServiceSupported(args.DeploySingleService, isoConfig.Services) {
 			return errors.SafeWrap(err, fmt.Sprintf("Service: '%v' is not supported", args.DeploySingleService))
 		}
+		s.Analytics.Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": args.DeploySingleService})
 	}
 
 	if args.Mem <= 0 {
