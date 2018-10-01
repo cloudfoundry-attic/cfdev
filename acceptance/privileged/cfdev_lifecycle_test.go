@@ -134,7 +134,7 @@ func EventuallyWeSeeAnalyticsBeingSent() {
 
 	Eventually(func() bool {
 		return hasFoundAnalyticsFor(minioClient, userID, "app created")
-	}, 10*time.Minute, 5*time.Second).Should(BeTrue())
+	}, 20*time.Minute, 10*time.Second).Should(BeTrue())
 }
 
 func hasFoundAnalyticsFor(client *minio.Client, userID string, event string) bool {
