@@ -202,8 +202,8 @@ func (s *Start) Execute(args Args) error {
 	aMem, _ := s.Profiler.GetAvailableMemory()
 	tMem, _ := s.Profiler.GetTotalMemory()
 	s.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{
-		"available memory":      tMem,
-		"available free memory": aMem,
+		"total memory":      tMem,
+		"available memory": aMem,
 	})
 	if err := s.Host.CheckRequirements(); err != nil {
 		return err
