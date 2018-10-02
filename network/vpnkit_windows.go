@@ -34,7 +34,7 @@ func (v *VpnKit) Start() error {
 		return errors.SafeWrap(err, "install vpnkit")
 	}
 
-	if err := v.DaemonRunner.Start(VpnKitLabel); err != nil {
+	if err := v.DaemonRunner.Start(v.Label); err != nil {
 		return errors.SafeWrap(err, "start vpnkit")
 	}
 
@@ -42,7 +42,7 @@ func (v *VpnKit) Start() error {
 }
 
 func (v *VpnKit) Destroy() error {
-	v.DaemonRunner.RemoveDaemon(VpnKitLabel)
+	v.DaemonRunner.RemoveDaemon(v.Label)
 
 	registryDeleteCmd := `Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" | ` +
 		`Where-Object { $_.GetValue("ElementName") -match "CF Dev VPNKit" } | ` +
@@ -61,7 +61,7 @@ func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
 	dhcpPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
 
 	return daemon.DaemonSpec{
-		Label:   VpnKitLabel,
+		Label:   v.Label,
 		Program: path.Join(v.Config.CacheDir, "vpnkit.exe"),
 		ProgramArguments: []string{
 			fmt.Sprintf("--ethernet hyperv-connect://%s/%s", vmGuid, ethernetGUID),

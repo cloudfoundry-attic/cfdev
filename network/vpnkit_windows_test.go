@@ -25,6 +25,7 @@ var _ = Describe("VpnKit", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		vpnkit = &network.VpnKit{
+			Label: "some-vpnkit-label",
 			Config: config.Config{
 				CFDevHome: tempDir,
 			},

@@ -4,7 +4,7 @@ $cache_dir="$HOME\.cfdev\cache"
 $pkg="code.cloudfoundry.org/cfdev/config"
 $cfdepsUrl="$cache_dir\cf-deps.iso"
 $cfdevefiUrl="$cache_dir\cfdev-efi.iso"
-$cfAnalyticsdUrl="$PWD\analytix"
+$cfAnalyticsdUrl="$PWD\analytix.exe"
 
 $date=(Get-Date -Format FileDate)
 
