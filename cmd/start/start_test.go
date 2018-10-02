@@ -36,6 +36,7 @@ var _ = Describe("Start", func() {
 		mockAnalyticsD      *mocks.MockAnalyticsD
 		mockHypervisor      *mocks.MockHypervisor
 		mockProvisioner     *mocks.MockProvisioner
+		mockProfiler        *mocks.MockSystemProfiler
 		mockIsoReader       *mocks.MockIsoReader
 		mockStop            *mocks.MockStop
 
@@ -80,6 +81,7 @@ var _ = Describe("Start", func() {
 		mockAnalyticsD = mocks.NewMockAnalyticsD(mockController)
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
+		mockProfiler = mocks.NewMockSystemProfiler(mockController)
 		mockIsoReader = mocks.NewMockIsoReader(mockController)
 		mockStop = mocks.NewMockStop(mockController)
 
@@ -118,6 +120,7 @@ var _ = Describe("Start", func() {
 			Provisioner:     mockProvisioner,
 			IsoReader:       mockIsoReader,
 			Stop:            mockStop,
+			Profiler:        mockProfiler,
 		}
 
 		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
@@ -135,7 +138,7 @@ var _ = Describe("Start", func() {
 
 	Describe("Execute", func() {
 		Context("when no args are provided", func() {
-			// TODO test splashMessage
+
 			It("starts the vm with default settings", func() {
 				if runtime.GOOS == "darwin" {
 					mockUI.EXPECT().Say("Installing cfdevd network helper...")
@@ -158,6 +161,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
@@ -213,6 +217,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
@@ -282,6 +287,7 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -341,6 +347,7 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -374,6 +381,101 @@ var _ = Describe("Start", func() {
 					})).To(Succeed())
 				})
 			})
+
+			Context("and not enough system memory", func() {
+				It("returns an error", func() {
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
+
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cf-deps.iso"},
+							},
+						}),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockProfiler.EXPECT().GetAvailableMemory().Return(1200, nil),
+						mockUI.EXPECT().Say("CF Dev requires 8765 MB of RAM to run."),
+					)
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus: 7,
+						Mem:  0,
+					}).Error()).To(ContainSubstring("not enough system memory"))
+				})
+			})
+		})
+
+		Context("when -m flag is provided", func() {
+			Context("and does not have enough memory", func() {
+				It("warns users but starts the vm", func() {
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
+
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cf-deps.iso"},
+							},
+						}),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockProfiler.EXPECT().GetAvailableMemory().Return(100, nil),
+						mockUI.EXPECT().Say("This machine does not have the enough available RAM to run with what is specified."),
+						mockUI.EXPECT().Say("Creating the VM..."),
+						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+							Name:     "cfdev",
+							CPUs:     7,
+							MemoryMB: 8000,
+							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						}),
+						mockUI.EXPECT().Say("Starting VPNKit..."),
+						mockVpnKit.EXPECT().Start(),
+						mockVpnKit.EXPECT().Watch(localExitChan),
+						mockUI.EXPECT().Say("Starting the VM..."),
+						mockHypervisor.EXPECT().Start("cfdev"),
+						mockUI.EXPECT().Say("Waiting for Garden..."),
+						mockProvisioner.EXPECT().Ping(),
+						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+						mockProvisioner.EXPECT().DeployBosh(),
+						mockUI.EXPECT().Say("Deploying CF..."),
+						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+						mockProvisioner.EXPECT().DeployServices(mockUI, services),
+
+						mockToggle.EXPECT().Get().Return(true),
+						mockAnalyticsD.EXPECT().Start(),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+					)
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus: 7,
+						Mem:  8000,
+					})).To(Succeed())
+				})
+			})
 		})
 
 		Context("when the -s flag is provided", func() {
@@ -400,9 +502,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "all"}),
-
+						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -461,8 +562,9 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "some-other-service-flagname"}),
+						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+
 
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -525,8 +627,8 @@ var _ = Describe("Start", func() {
 					)
 
 					Expect(startCmd.Execute(start.Args{
-						Cpus:        7,
-						Mem:         6666,
+						Cpus:                7,
+						Mem:                 6666,
 						DeploySingleService: "non-existent-service",
 					}).Error()).To(ContainSubstring("is not supported"))
 				})
@@ -555,6 +657,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
 
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -654,6 +757,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
+					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
 
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{

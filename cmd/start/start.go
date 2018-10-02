@@ -43,6 +43,11 @@ type Toggle interface {
 	SetProp(k, v string) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/system-profiler.go code.cloudfoundry.org/cfdev/cmd/start SystemProfiler
+type SystemProfiler interface {
+	GetAvailableMemory() (int, error)
+}
+
 //go:generate mockgen -package mocks -destination mocks/network.go code.cloudfoundry.org/cfdev/cmd/start HostNet
 type HostNet interface {
 	AddLoopbackAliases(...string) error
@@ -132,6 +137,7 @@ type Start struct {
 	Hypervisor      Hypervisor
 	Provisioner     Provisioner
 	Stop            Stop
+	Profiler        SystemProfiler
 }
 
 const compatibilityVersion = "v2"
@@ -255,19 +261,16 @@ func (s *Start) Execute(args Args) error {
 		s.Analytics.Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": args.DeploySingleService})
 	}
 
-	if args.Mem <= 0 {
-		if isoConfig.DefaultMemory > 0 {
-			args.Mem = isoConfig.DefaultMemory
-		} else {
-			args.Mem = defaultMemory
-		}
+	memoryToAllocate, err := s.allocateMemory(isoConfig, args.Mem)
+	if err != nil {
+		return err
 	}
 
 	s.UI.Say("Creating the VM...")
 	if err := s.Hypervisor.CreateVM(hypervisor.VM{
 		Name:     "cfdev",
 		CPUs:     args.Cpus,
-		MemoryMB: args.Mem,
+		MemoryMB: memoryToAllocate,
 		DepsIso:  depsIsoPath,
 	}); err != nil {
 		return errors.SafeWrap(err, "creating the vm")
@@ -381,4 +384,35 @@ func (s *Start) isServiceSupported(service string, services []provision.Service)
 	}
 
 	return false
+	}
+
+func (s *Start) allocateMemory(isoConfig iso.Metadata, memoryArg int) (int, error) {
+	memoryToAllocate := defaultMemory
+	if isoConfig.DefaultMemory > 0 {
+		fmt.Printf("isoConfig.DefaultMemory %v \n", isoConfig.DefaultMemory)
+		memoryToAllocate = isoConfig.DefaultMemory
+	}
+
+	availableMem, err := s.Profiler.GetAvailableMemory()
+	if err != nil {
+		return 0, errors.SafeWrap(err, "error retrieving available system memory")
+	}
+
+	customMemProvided := memoryArg> 0
+	if customMemProvided {
+		memoryToAllocate = memoryArg
+	}
+
+	if !customMemProvided {
+		if availableMem < memoryToAllocate {
+			s.UI.Say(fmt.Sprintf("CF Dev requires %v MB of RAM to run.", memoryToAllocate))
+			return memoryToAllocate, errors.SafeWrap(err, "not enough system memory")
+		}
+	} else {
+		if availableMem < memoryToAllocate {
+			s.UI.Say(fmt.Sprintf("This machine does not have the enough available RAM to run with what is specified."))
+		}
+	}
+
+	return memoryToAllocate, nil
 }
