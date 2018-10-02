@@ -405,7 +405,7 @@ func (s *Start) allocateMemory(isoConfig iso.Metadata, memoryArg int) (int, erro
 
 	if !customMemProvided {
 		if availableMem < memoryToAllocate {
-			s.UI.Say(fmt.Sprintf("CF Dev requires %v MB of RAM to run.", memoryToAllocate))
+			s.UI.Say(fmt.Sprintf("WARNING : It is recommended that you run (P) CF Dev with at least %v", memoryToAllocate))
 			return memoryToAllocate, errors.SafeWrap(err, "not enough system memory")
 		}
 	} else {

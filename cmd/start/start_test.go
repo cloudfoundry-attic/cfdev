@@ -406,7 +406,7 @@ var _ = Describe("Start", func() {
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 						mockProfiler.EXPECT().GetAvailableMemory().Return(1200, nil),
-						mockUI.EXPECT().Say("CF Dev requires 8765 MB of RAM to run."),
+						mockUI.EXPECT().Say("WARNING : It is recommended that you run (P) CF Dev with at least 8765"),
 					)
 
 					Expect(startCmd.Execute(start.Args{
