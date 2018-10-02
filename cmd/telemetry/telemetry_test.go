@@ -5,18 +5,15 @@ import (
 
 	"code.cloudfoundry.org/cfdev/cmd/telemetry"
 	"code.cloudfoundry.org/cfdev/cmd/telemetry/mocks"
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
-	"github.com/golang/mock/gomock"
 )
 
 type MockUI struct {
 	WasCalledWith string
 }
-
-
-
 
 func (m *MockUI) Say(message string, args ...interface{}) {
 	m.WasCalledWith = fmt.Sprintf(message, args...)
@@ -31,11 +28,11 @@ func (t *MockToggle) Set(v bool) error { t.val = v; return nil }
 
 var _ = Describe("Telemetry", func() {
 	var (
-		mockController      *gomock.Controller
-		mockAnalyticsD      *mocks.MockAnalyticsD
-		mockUI     MockUI
-		mockToggle *MockToggle
-		telCmd     *cobra.Command
+		mockController *gomock.Controller
+		mockAnalyticsD *mocks.MockAnalyticsD
+		mockUI         MockUI
+		mockToggle     *MockToggle
+		telCmd         *cobra.Command
 	)
 
 	BeforeEach(func() {
@@ -50,7 +47,7 @@ var _ = Describe("Telemetry", func() {
 		subject := &telemetry.Telemetry{
 			UI:              &mockUI,
 			AnalyticsToggle: mockToggle,
-			AnalyticsD: mockAnalyticsD,
+			AnalyticsD:      mockAnalyticsD,
 		}
 		telCmd = subject.Cmd()
 		telCmd.SetArgs([]string{})

@@ -9,6 +9,8 @@ import (
 
 	"path/filepath"
 
+	"code.cloudfoundry.org/cfdev/cfanalytics"
+	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
@@ -19,16 +21,14 @@ import (
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/host"
 	"code.cloudfoundry.org/cfdev/hypervisor"
 	"code.cloudfoundry.org/cfdev/iso"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
-	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
 	"github.com/spf13/cobra"
-	"code.cloudfoundry.org/cfdev/host"
-	"code.cloudfoundry.org/cfdev/cfanalytics"
 )
 
 type UI interface {
@@ -74,7 +74,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl, Label: network.VpnKitLabel}
 	isoReader := iso.New()
 	analyticsD := &cfanalytics.AnalyticsD{
-		Config: config,
+		Config:       config,
 		DaemonRunner: lctl,
 	}
 
@@ -98,7 +98,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:          ui,
 			StateDir:    config.StateDir,
 			Provisioner: provision.NewController(),
-			Analytics:	 analyticsClient,
+			Analytics:   analyticsClient,
 		},
 		&b3.Catalog{
 			UI:     ui,
@@ -130,15 +130,15 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Hypervisor:  linuxkit,
 			Provisioner: provision.NewController(),
 			IsoReader:   isoReader,
-			Stop: &b6.Stop {
+			Stop: &b6.Stop{
 				Config:     config,
 				Analytics:  analyticsClient,
 				Hypervisor: linuxkit,
 				HostNet: &network.HostNet{
 					CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 				},
-				Host:        &host.Host{},
-				AnalyticsD:  analyticsD,
+				Host:         &host.Host{},
+				AnalyticsD:   analyticsD,
 				VpnKit:       vpnkit,
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
@@ -150,15 +150,15 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			HostNet: &network.HostNet{
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
-			Host:        &host.Host{},
-			AnalyticsD:  analyticsD,
+			Host:         &host.Host{},
+			AnalyticsD:   analyticsD,
 			VpnKit:       vpnkit,
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
 		&b7.Telemetry{
 			UI:              ui,
 			AnalyticsToggle: analyticsToggle,
-			AnalyticsD:  analyticsD,
+			AnalyticsD:      analyticsD,
 		},
 		&b8.Logs{
 			Provisioner: provision.NewController(),

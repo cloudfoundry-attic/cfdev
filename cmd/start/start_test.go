@@ -36,7 +36,7 @@ var _ = Describe("Start", func() {
 		mockAnalyticsD      *mocks.MockAnalyticsD
 		mockHypervisor      *mocks.MockHypervisor
 		mockProvisioner     *mocks.MockProvisioner
-		mockProfiler        *mocks.MockSystemProfiler
+		mockSystemProfiler  *mocks.MockSystemProfiler
 		mockIsoReader       *mocks.MockIsoReader
 		mockStop            *mocks.MockStop
 
@@ -81,7 +81,7 @@ var _ = Describe("Start", func() {
 		mockAnalyticsD = mocks.NewMockAnalyticsD(mockController)
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
-		mockProfiler = mocks.NewMockSystemProfiler(mockController)
+		mockSystemProfiler = mocks.NewMockSystemProfiler(mockController)
 		mockIsoReader = mocks.NewMockIsoReader(mockController)
 		mockStop = mocks.NewMockStop(mockController)
 
@@ -120,7 +120,7 @@ var _ = Describe("Start", func() {
 			Provisioner:     mockProvisioner,
 			IsoReader:       mockIsoReader,
 			Stop:            mockStop,
-			Profiler:        mockProfiler,
+			Profiler:        mockSystemProfiler,
 		}
 
 		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
@@ -147,7 +147,12 @@ var _ = Describe("Start", func() {
 
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+						"available memory":      uint64(222),
+						"available free memory": uint64(111),
+					}),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockStop.EXPECT().RunE(nil, nil),
@@ -161,7 +166,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
@@ -203,7 +208,12 @@ var _ = Describe("Start", func() {
 
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+						"available memory":      uint64(222),
+						"available free memory": uint64(111),
+					}),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockStop.EXPECT().RunE(nil, nil),
@@ -217,7 +227,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
@@ -268,7 +278,12 @@ var _ = Describe("Start", func() {
 
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"available memory":      uint64(222),
+							"available free memory": uint64(111),
+						}),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockStop.EXPECT().RunE(nil, nil),
@@ -287,7 +302,7 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(110000), nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -333,7 +348,12 @@ var _ = Describe("Start", func() {
 
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"available memory":      uint64(222),
+							"available free memory": uint64(111),
+						}),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockStop.EXPECT().RunE(nil, nil),
@@ -347,7 +367,7 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -391,7 +411,12 @@ var _ = Describe("Start", func() {
 
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"available memory":      uint64(222),
+							"available free memory": uint64(111),
+						}),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockStop.EXPECT().RunE(nil, nil),
@@ -405,7 +430,7 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-						mockProfiler.EXPECT().GetAvailableMemory().Return(1200, nil),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1200), nil),
 						mockUI.EXPECT().Say("WARNING : It is recommended that you run (P) CF Dev with at least 8765"),
 					)
 
@@ -427,7 +452,12 @@ var _ = Describe("Start", func() {
 
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"available memory":      uint64(222),
+							"available free memory": uint64(111),
+						}),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockStop.EXPECT().RunE(nil, nil),
@@ -441,7 +471,7 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-						mockProfiler.EXPECT().GetAvailableMemory().Return(100, nil),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(100), nil),
 						mockUI.EXPECT().Say("This machine does not have the enough available RAM to run with what is specified."),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -488,7 +518,12 @@ var _ = Describe("Start", func() {
 
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"available memory":      uint64(222),
+							"available free memory": uint64(111),
+						}),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockStop.EXPECT().RunE(nil, nil),
@@ -503,7 +538,7 @@ var _ = Describe("Start", func() {
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "all"}),
-						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -548,7 +583,12 @@ var _ = Describe("Start", func() {
 
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"available memory":      uint64(222),
+							"available free memory": uint64(111),
+						}),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockStop.EXPECT().RunE(nil, nil),
@@ -563,8 +603,7 @@ var _ = Describe("Start", func() {
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "some-other-service-flagname"}),
-						mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
-
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -610,7 +649,12 @@ var _ = Describe("Start", func() {
 
 					gomock.InOrder(
 						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"available memory":      uint64(222),
+							"available free memory": uint64(111),
+						}),
 						mockHost.EXPECT().CheckRequirements(),
 						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 						mockStop.EXPECT().RunE(nil, nil),
@@ -644,7 +688,12 @@ var _ = Describe("Start", func() {
 
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+						"available memory":      uint64(222),
+						"available free memory": uint64(111),
+					}),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockStop.EXPECT().RunE(nil, nil),
@@ -657,7 +706,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -709,7 +758,12 @@ var _ = Describe("Start", func() {
 
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+						"available memory":      uint64(222),
+						"available free memory": uint64(111),
+					}),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockStop.EXPECT().RunE(nil, nil),
@@ -744,7 +798,12 @@ var _ = Describe("Start", func() {
 
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "custom.iso"),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+						"available memory":      uint64(222),
+						"available free memory": uint64(111),
+					}),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
 					mockStop.EXPECT().RunE(nil, nil),
@@ -757,7 +816,7 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
-					mockProfiler.EXPECT().GetAvailableMemory().Return(10000, nil),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -798,7 +857,12 @@ var _ = Describe("Start", func() {
 			It("says cf dev is already running", func() {
 				gomock.InOrder(
 					mockToggle.EXPECT().SetProp("type", "cf"),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN),
+					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+						"available memory":      uint64(222),
+						"available free memory": uint64(111),
+					}),
 					mockHost.EXPECT().CheckRequirements(),
 					mockHypervisor.EXPECT().IsRunning("cfdev").Return(true, nil),
 					mockUI.EXPECT().Say("CF Dev is already running..."),

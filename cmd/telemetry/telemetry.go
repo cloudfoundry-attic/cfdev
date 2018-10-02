@@ -66,11 +66,11 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 		}
 		isRunning, err := t.AnalyticsD.IsRunning()
 		if err != nil {
-			return errors.SafeWrap(err,"checking if analyticsd is running")
+			return errors.SafeWrap(err, "checking if analyticsd is running")
 		}
 		if !isRunning {
 			if err := t.AnalyticsD.Start(); err != nil {
-				return errors.SafeWrap(err,"turning on analyticsd")
+				return errors.SafeWrap(err, "turning on analyticsd")
 			}
 		}
 	}

@@ -33,9 +33,9 @@ func (m *MockSystemProfiler) EXPECT() *MockSystemProfilerMockRecorder {
 }
 
 // GetAvailableMemory mocks base method
-func (m *MockSystemProfiler) GetAvailableMemory() (int, error) {
+func (m *MockSystemProfiler) GetAvailableMemory() (uint64, error) {
 	ret := m.ctrl.Call(m, "GetAvailableMemory")
-	ret0, _ := ret[0].(int)
+	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -43,4 +43,17 @@ func (m *MockSystemProfiler) GetAvailableMemory() (int, error) {
 // GetAvailableMemory indicates an expected call of GetAvailableMemory
 func (mr *MockSystemProfilerMockRecorder) GetAvailableMemory() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvailableMemory", reflect.TypeOf((*MockSystemProfiler)(nil).GetAvailableMemory))
+}
+
+// GetTotalMemory mocks base method
+func (m *MockSystemProfiler) GetTotalMemory() (uint64, error) {
+	ret := m.ctrl.Call(m, "GetTotalMemory")
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalMemory indicates an expected call of GetTotalMemory
+func (mr *MockSystemProfilerMockRecorder) GetTotalMemory() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalMemory", reflect.TypeOf((*MockSystemProfiler)(nil).GetTotalMemory))
 }

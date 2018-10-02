@@ -45,7 +45,8 @@ type Toggle interface {
 
 //go:generate mockgen -package mocks -destination mocks/system-profiler.go code.cloudfoundry.org/cfdev/cmd/start SystemProfiler
 type SystemProfiler interface {
-	GetAvailableMemory() (int, error)
+	GetAvailableMemory() (uint64, error)
+	GetTotalMemory() (uint64, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/network.go code.cloudfoundry.org/cfdev/cmd/start HostNet
@@ -197,7 +198,13 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
-	s.Analytics.Event(cfanalytics.START_BEGIN)
+
+	aMem, _ := s.Profiler.GetAvailableMemory()
+	tMem, _ := s.Profiler.GetTotalMemory()
+	s.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{
+		"available memory":      tMem,
+		"available free memory": aMem,
+	})
 	if err := s.Host.CheckRequirements(); err != nil {
 		return err
 	}
@@ -384,7 +391,7 @@ func (s *Start) isServiceSupported(service string, services []provision.Service)
 	}
 
 	return false
-	}
+}
 
 func (s *Start) allocateMemory(isoConfig iso.Metadata, memoryArg int) (int, error) {
 	memoryToAllocate := defaultMemory
@@ -398,18 +405,18 @@ func (s *Start) allocateMemory(isoConfig iso.Metadata, memoryArg int) (int, erro
 		return 0, errors.SafeWrap(err, "error retrieving available system memory")
 	}
 
-	customMemProvided := memoryArg> 0
+	customMemProvided := memoryArg > 0
 	if customMemProvided {
 		memoryToAllocate = memoryArg
 	}
 
 	if !customMemProvided {
-		if availableMem < memoryToAllocate {
+		if availableMem < uint64(memoryToAllocate) {
 			s.UI.Say(fmt.Sprintf("WARNING : It is recommended that you run (P) CF Dev with at least %v", memoryToAllocate))
 			return memoryToAllocate, errors.SafeWrap(err, "not enough system memory")
 		}
 	} else {
-		if availableMem < memoryToAllocate {
+		if availableMem < uint64(memoryToAllocate) {
 			s.UI.Say(fmt.Sprintf("This machine does not have the enough available RAM to run with what is specified."))
 		}
 	}

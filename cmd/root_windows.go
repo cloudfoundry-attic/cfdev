@@ -98,7 +98,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:          ui,
 			StateDir:    config.StateDir,
 			Provisioner: provision.NewController(),
-			Analytics:	 analyticsClient,
+			Analytics:   analyticsClient,
 		},
 		&b3.Catalog{
 			UI:     ui,
@@ -117,7 +117,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Cache:           cache,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			HostNet: &network.HostNet{},
+			HostNet:         &network.HostNet{},
 			Host: &host.Host{
 				Powershell: &runner.Powershell{},
 			},
@@ -133,7 +133,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				Hypervisor: &hypervisor.HyperV{Config: config},
 				VpnKit:     vpnkit,
 				HostNet:    &network.HostNet{},
-				Host:       &host.Host{
+				Host: &host.Host{
 					Powershell: &runner.Powershell{},
 				},
 				AnalyticsD: analyticsD,
@@ -145,7 +145,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Hypervisor: &hypervisor.HyperV{Config: config},
 			VpnKit:     vpnkit,
 			HostNet:    &network.HostNet{},
-			Host:       &host.Host{
+			Host: &host.Host{
 				Powershell: &runner.Powershell{},
 			},
 			AnalyticsD: analyticsD,
