@@ -1,6 +1,9 @@
 package profiler
 
-import "github.com/shirou/gopsutil/mem"
+import (
+	"github.com/shirou/gopsutil/mem"
+	"runtime"
+)
 
 type SystemProfiler struct {
 }
@@ -11,7 +14,11 @@ func (s *SystemProfiler)GetAvailableMemory() (uint64, error){
 		return 0, err
 	}
 
-	return virtualMemory.Free/1000000, nil
+	if runtime.GOOS == "windows" {
+		return virtualMemory.Available / 1000000, nil
+	}
+
+	return virtualMemory.Free / 1000000, nil
 }
 
 func (s *SystemProfiler)GetTotalMemory()(uint64, error){
