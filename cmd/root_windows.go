@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"code.cloudfoundry.org/cfdev/profiler"
 	"code.cloudfoundry.org/cfdev/runner"
 	"io"
 	"net/http"
