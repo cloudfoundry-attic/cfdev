@@ -138,6 +138,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				},
 				AnalyticsD: analyticsD,
 			},
+			Profiler: &profiler.SystemProfiler{},
 		},
 		&b6.Stop{
 			Config:     config,

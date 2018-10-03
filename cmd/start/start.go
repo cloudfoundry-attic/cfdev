@@ -199,10 +199,18 @@ func (s *Start) Execute(args Args) error {
 
 	s.AnalyticsToggle.SetProp("type", depsIsoName)
 
-	aMem, _ := s.Profiler.GetAvailableMemory()
-	tMem, _ := s.Profiler.GetTotalMemory()
+	aMem, err := s.Profiler.GetAvailableMemory()
+	if err != nil {
+		fmt.Printf("AVAILABLE MEMORY ERROR: %v", err)
+	}
+
+	tMem, err := s.Profiler.GetTotalMemory()
+	if err != nil {
+		fmt.Printf("TOTAL MEMORY ERROR: %v", err)
+	}
+
 	s.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{
-		"total memory":      tMem,
+		"total memory":     tMem,
 		"available memory": aMem,
 	})
 	if err := s.Host.CheckRequirements(); err != nil {

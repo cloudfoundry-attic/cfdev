@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"code.cloudfoundry.org/cfdev/profiler"
 	"io"
 	"net/http"
 	"os"
@@ -142,6 +143,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				VpnKit:       vpnkit,
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
+			Profiler: &profiler.SystemProfiler{},
 		},
 		&b6.Stop{
 			Config:     config,
