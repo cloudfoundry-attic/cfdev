@@ -24,11 +24,12 @@ type Version struct {
 }
 
 type Metadata struct {
-	Version       string              `yaml:"compatibility_version"`
-	Message       string              `yaml:"splash_message"`
-	DefaultMemory int                 `yaml:"default_memory"`
-	Services      []provision.Service `yaml:"services"`
-	Versions      []Version           `yaml:"versions"`
+	Version        string              `yaml:"compatibility_version"`
+	Message        string              `yaml:"splash_message"`
+	DeploymentName string              `yaml:"deployment_name"`
+	DefaultMemory  int                 `yaml:"default_memory"`
+	Services       []provision.Service `yaml:"services"`
+	Versions       []Version           `yaml:"versions"`
 }
 
 func (Reader) Read(isoFile string) (Metadata, error) {

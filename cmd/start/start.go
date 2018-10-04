@@ -401,11 +401,10 @@ func (s *Start) isServiceSupported(service string, services []provision.Service)
 	return false
 }
 
-func (s *Start) allocateMemory(isoConfig iso.Metadata, memoryArg int) (int, error) {
-	memoryToAllocate := defaultMemory
+func (s *Start) allocateMemory(isoConfig iso.Metadata, requestedMem int) (int, error) {
+	baseMem := defaultMemory
 	if isoConfig.DefaultMemory > 0 {
-		fmt.Printf("isoConfig.DefaultMemory %v \n", isoConfig.DefaultMemory)
-		memoryToAllocate = isoConfig.DefaultMemory
+		baseMem = isoConfig.DefaultMemory
 	}
 
 	availableMem, err := s.Profiler.GetAvailableMemory()
@@ -413,21 +412,38 @@ func (s *Start) allocateMemory(isoConfig iso.Metadata, memoryArg int) (int, erro
 		return 0, errors.SafeWrap(err, "error retrieving available system memory")
 	}
 
-	customMemProvided := memoryArg > 0
+	customMemProvided := requestedMem > 0
 	if customMemProvided {
-		memoryToAllocate = memoryArg
-	}
+		if requestedMem >= baseMem {
+			if availableMem >= uint64(requestedMem) {
+				return requestedMem, nil
+			}
 
-	if !customMemProvided {
-		if availableMem < uint64(memoryToAllocate) {
-			s.UI.Say(fmt.Sprintf("WARNING : It is recommended that you run (P) CF Dev with at least %v", memoryToAllocate))
-			return memoryToAllocate, errors.SafeWrap(err, "not enough system memory")
+			if availableMem < uint64(requestedMem) {
+				s.UI.Say("WARNING: This machine does not have enough available RAM to run with what is specified.")
+				return requestedMem, nil
+			}
+		}
+
+		if requestedMem < baseMem {
+			s.UI.Say(fmt.Sprintf("WARNING: It is recommended that you run %s Dev with at least %v MB of RAM", strings.ToUpper(isoConfig.DeploymentName), baseMem))
+			if availableMem >= uint64(requestedMem) {
+				return requestedMem, nil
+			}
+
+			if availableMem < uint64(requestedMem) {
+				s.UI.Say("WARNING: This machine does not have enough available RAM to run with what is specified.")
+				return requestedMem, nil
+			}
 		}
 	} else {
-		if availableMem < uint64(memoryToAllocate) {
-			s.UI.Say(fmt.Sprintf("This machine does not have the enough available RAM to run with what is specified."))
+		if availableMem >= uint64(baseMem) {
+			return baseMem, nil
+		} else {
+			s.UI.Say("WARNING: This machine does not have enough available RAM to run with what is specified.")
+			return baseMem, nil
 		}
 	}
 
-	return memoryToAllocate, nil
+	return 0, nil
 }

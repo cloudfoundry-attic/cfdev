@@ -125,9 +125,10 @@ var _ = Describe("Start", func() {
 
 		depsIsoPath = filepath.Join(cacheDir, "cf-deps.iso")
 		metadata = iso.Metadata{
-			Version:       "v2",
-			DefaultMemory: 8765,
-			Services:      services,
+			Version:        "v2",
+			DefaultMemory:  8765,
+			DeploymentName: "cf",
+			Services:       services,
 		}
 	})
 
@@ -138,7 +139,6 @@ var _ = Describe("Start", func() {
 
 	Describe("Execute", func() {
 		Context("when no args are provided", func() {
-
 			It("starts the vm with default settings", func() {
 				if runtime.GOOS == "darwin" {
 					mockUI.EXPECT().Say("Installing cfdevd network helper...")
@@ -337,10 +337,8 @@ var _ = Describe("Start", func() {
 				})
 			})
 
-			Context("when no args are provided AND deps.iso does not have default memory", func() {
+			Context("when no args are provided AND deps.iso does not have a default memory field", func() {
 				It("starts the vm with a default memory setting", func() {
-					metadata.DefaultMemory = 0
-
 					if runtime.GOOS == "darwin" {
 						mockUI.EXPECT().Say("Installing cfdevd network helper...")
 						mockCFDevD.EXPECT().Install()
@@ -366,7 +364,12 @@ var _ = Describe("Start", func() {
 								{Name: "cf-deps.iso"},
 							},
 						}),
-						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(iso.Metadata{
+							Version:        "v2",
+							DefaultMemory:  0,
+							DeploymentName: "cf",
+							Services:       services,
+						}, nil),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
@@ -402,8 +405,8 @@ var _ = Describe("Start", func() {
 				})
 			})
 
-			Context("and not enough system memory", func() {
-				It("returns an error", func() {
+			Context("when the system does not have enough memory", func() {
+				It("gives a warning but starts the vm anyways", func() {
 					if runtime.GOOS == "darwin" {
 						mockUI.EXPECT().Say("Installing cfdevd network helper...")
 						mockCFDevD.EXPECT().Install()
@@ -430,54 +433,13 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1200), nil),
-						mockUI.EXPECT().Say("WARNING : It is recommended that you run (P) CF Dev with at least 8765"),
-					)
-
-					Expect(startCmd.Execute(start.Args{
-						Cpus: 7,
-						Mem:  0,
-					}).Error()).To(ContainSubstring("not enough system memory"))
-				})
-			})
-		})
-
-		Context("when -m flag is provided", func() {
-			Context("and does not have enough memory", func() {
-				It("warns users but starts the vm", func() {
-					if runtime.GOOS == "darwin" {
-						mockUI.EXPECT().Say("Installing cfdevd network helper...")
-						mockCFDevD.EXPECT().Install()
-					}
-
-					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
-						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
-							"total memory":     uint64(222),
-							"available memory": uint64(111),
-						}),
-						mockHost.EXPECT().CheckRequirements(),
-						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
-						mockStop.EXPECT().RunE(nil, nil),
-
-						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
-						mockUI.EXPECT().Say("Downloading Resources..."),
-						mockCache.EXPECT().Sync(resource.Catalog{
-							Items: []resource.Item{
-								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
-							},
-						}),
-						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(100), nil),
-						mockUI.EXPECT().Say("This machine does not have the enough available RAM to run with what is specified."),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1000), nil),
+						mockUI.EXPECT().Say("WARNING: This machine does not have enough available RAM to run with what is specified."),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
 							CPUs:     7,
-							MemoryMB: 8000,
+							MemoryMB: 8765,
 							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
 						}),
 						mockUI.EXPECT().Say("Starting VPNKit..."),
@@ -502,8 +464,335 @@ var _ = Describe("Start", func() {
 
 					Expect(startCmd.Execute(start.Args{
 						Cpus: 7,
-						Mem:  8000,
+						Mem:  0,
 					})).To(Succeed())
+				})
+			})
+		})
+
+		Context("when -m flag is provided", func() {
+
+			Context("and the --no-provision flag is provided", func() {
+				It("starts the VM and garden but does not provision", func() {
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"total memory":     uint64(222),
+							"available memory": uint64(111),
+						}),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cf-deps.iso"},
+							},
+						}),
+						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
+						mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM"),
+						mockUI.EXPECT().Say("Creating the VM..."),
+						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+							Name:     "cfdev",
+							CPUs:     7,
+							MemoryMB: 6666,
+							DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+						}),
+						mockUI.EXPECT().Say("Starting VPNKit..."),
+						mockVpnKit.EXPECT().Start(),
+						mockVpnKit.EXPECT().Watch(localExitChan),
+						mockUI.EXPECT().Say("Starting the VM..."),
+						mockHypervisor.EXPECT().Start("cfdev"),
+						mockUI.EXPECT().Say("Waiting for Garden..."),
+						mockProvisioner.EXPECT().Ping(),
+					)
+
+					//no provision message message
+					mockUI.EXPECT().Say(gomock.Any())
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus:        7,
+						Mem:         6666,
+						NoProvision: true,
+					})).To(Succeed())
+				})
+			})
+
+			Context("and the requested memory > base memory", func() {
+				Context("and available memory > requested memory", func() {
+					Context("should start successfully", func() {
+						It("starts the vm with default settings", func() {
+							if runtime.GOOS == "darwin" {
+								mockUI.EXPECT().Say("Installing cfdevd network helper...")
+								mockCFDevD.EXPECT().Install()
+							}
+
+							gomock.InOrder(
+								mockToggle.EXPECT().SetProp("type", "cf"),
+								mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(15000), nil),
+								mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(16000), nil),
+								mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+									"total memory":     uint64(16000),
+									"available memory": uint64(15000),
+								}),
+								mockHost.EXPECT().CheckRequirements(),
+								mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+								mockStop.EXPECT().RunE(nil, nil),
+
+								mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+								mockUI.EXPECT().Say("Downloading Resources..."),
+								mockCache.EXPECT().Sync(resource.Catalog{
+									Items: []resource.Item{
+										{Name: "some-item"},
+										{Name: "cf-deps.iso"},
+									},
+								}),
+								mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+								mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(15000), nil),
+								mockUI.EXPECT().Say("Creating the VM..."),
+								mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+									Name:     "cfdev",
+									CPUs:     7,
+									MemoryMB: 10000,
+									DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+								}),
+								mockUI.EXPECT().Say("Starting VPNKit..."),
+								mockVpnKit.EXPECT().Start(),
+								mockVpnKit.EXPECT().Watch(localExitChan),
+								mockUI.EXPECT().Say("Starting the VM..."),
+								mockHypervisor.EXPECT().Start("cfdev"),
+								mockUI.EXPECT().Say("Waiting for Garden..."),
+								mockProvisioner.EXPECT().Ping(),
+								mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+								mockProvisioner.EXPECT().DeployBosh(),
+								mockUI.EXPECT().Say("Deploying CF..."),
+								mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+								mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+								mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+								mockProvisioner.EXPECT().DeployServices(mockUI, services),
+
+								mockToggle.EXPECT().Get().Return(true),
+								mockAnalyticsD.EXPECT().Start(),
+								mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+							)
+
+							Expect(startCmd.Execute(start.Args{
+								Cpus: 7,
+								Mem:  10000,
+							})).To(Succeed())
+						})
+					})
+				})
+
+				Context("and available mem < requested mem", func() {
+					It("gives a warning and continues to start up", func() {
+						if runtime.GOOS == "darwin" {
+							mockUI.EXPECT().Say("Installing cfdevd network helper...")
+							mockCFDevD.EXPECT().Install()
+						}
+
+						gomock.InOrder(
+							mockToggle.EXPECT().SetProp("type", "cf"),
+							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(9000), nil),
+							mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(9500), nil),
+							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+								"total memory":     uint64(9500),
+								"available memory": uint64(9000),
+							}),
+							mockHost.EXPECT().CheckRequirements(),
+							mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+							mockStop.EXPECT().RunE(nil, nil),
+
+							mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+							mockUI.EXPECT().Say("Downloading Resources..."),
+							mockCache.EXPECT().Sync(resource.Catalog{
+								Items: []resource.Item{
+									{Name: "some-item"},
+									{Name: "cf-deps.iso"},
+								},
+							}),
+							mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1200), nil),
+							mockUI.EXPECT().Say("WARNING: This machine does not have enough available RAM to run with what is specified."),
+							mockUI.EXPECT().Say("Creating the VM..."),
+							mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+								Name:     "cfdev",
+								CPUs:     7,
+								MemoryMB: 10000,
+								DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+							}),
+							mockUI.EXPECT().Say("Starting VPNKit..."),
+							mockVpnKit.EXPECT().Start(),
+							mockVpnKit.EXPECT().Watch(localExitChan),
+							mockUI.EXPECT().Say("Starting the VM..."),
+							mockHypervisor.EXPECT().Start("cfdev"),
+							mockUI.EXPECT().Say("Waiting for Garden..."),
+							mockProvisioner.EXPECT().Ping(),
+							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+							mockProvisioner.EXPECT().DeployBosh(),
+							mockUI.EXPECT().Say("Deploying CF..."),
+							mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+							mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+							mockProvisioner.EXPECT().DeployServices(mockUI, services),
+
+							mockToggle.EXPECT().Get().Return(true),
+							mockAnalyticsD.EXPECT().Start(),
+							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+						)
+
+						Expect(startCmd.Execute(start.Args{
+							Cpus: 7,
+							Mem:  10000,
+						})).To(Succeed())
+					})
+				})
+
+			})
+
+			Context("and requested memory < base memory", func() {
+				Context("available mem >= REQUESTED mem", func() {
+					It("starts with warning", func() {
+						if runtime.GOOS == "darwin" {
+							mockUI.EXPECT().Say("Installing cfdevd network helper...")
+							mockCFDevD.EXPECT().Install()
+						}
+
+						gomock.InOrder(
+							mockToggle.EXPECT().SetProp("type", "cf"),
+							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(15000), nil),
+							mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(16000), nil),
+							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+								"total memory":     uint64(16000),
+								"available memory": uint64(15000),
+							}),
+							mockHost.EXPECT().CheckRequirements(),
+							mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+							mockStop.EXPECT().RunE(nil, nil),
+
+							mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+							mockUI.EXPECT().Say("Downloading Resources..."),
+							mockCache.EXPECT().Sync(resource.Catalog{
+								Items: []resource.Item{
+									{Name: "some-item"},
+									{Name: "cf-deps.iso"},
+								},
+							}),
+							mockIsoReader.EXPECT().Read(depsIsoPath).Return(iso.Metadata{
+								Version:        "v2",
+								DefaultMemory:  8765,
+								DeploymentName: "pcf",
+								Services:       services,
+							}, nil),
+							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(15000), nil),
+							mockUI.EXPECT().Say("WARNING: It is recommended that you run PCF Dev with at least 8765 MB of RAM"),
+							mockUI.EXPECT().Say("Creating the VM..."),
+							mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+								Name:     "cfdev",
+								CPUs:     7,
+								MemoryMB: 6000,
+								DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+							}),
+							mockUI.EXPECT().Say("Starting VPNKit..."),
+							mockVpnKit.EXPECT().Start(),
+							mockVpnKit.EXPECT().Watch(localExitChan),
+							mockUI.EXPECT().Say("Starting the VM..."),
+							mockHypervisor.EXPECT().Start("cfdev"),
+							mockUI.EXPECT().Say("Waiting for Garden..."),
+							mockProvisioner.EXPECT().Ping(),
+							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+							mockProvisioner.EXPECT().DeployBosh(),
+							mockUI.EXPECT().Say("Deploying CF..."),
+							mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+							mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+							mockProvisioner.EXPECT().DeployServices(mockUI, services),
+
+							mockToggle.EXPECT().Get().Return(true),
+							mockAnalyticsD.EXPECT().Start(),
+							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+						)
+
+						Expect(startCmd.Execute(start.Args{
+							Cpus: 7,
+							Mem:  6000,
+						})).To(Succeed())
+					})
+				})
+
+				Context("and available mem < requested mem", func() {
+					It("gives two warnings but starts anyway", func() {
+						if runtime.GOOS == "darwin" {
+							mockUI.EXPECT().Say("Installing cfdevd network helper...")
+							mockCFDevD.EXPECT().Install()
+						}
+
+						gomock.InOrder(
+							mockToggle.EXPECT().SetProp("type", "cf"),
+							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(5000), nil),
+							mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(5500), nil),
+							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+								"total memory":     uint64(5500),
+								"available memory": uint64(5000),
+							}),
+							mockHost.EXPECT().CheckRequirements(),
+							mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+							mockStop.EXPECT().RunE(nil, nil),
+
+							mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+							mockUI.EXPECT().Say("Downloading Resources..."),
+							mockCache.EXPECT().Sync(resource.Catalog{
+								Items: []resource.Item{
+									{Name: "some-item"},
+									{Name: "cf-deps.iso"},
+								},
+							}),
+							mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
+							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1200), nil),
+							mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM"),
+							mockUI.EXPECT().Say("WARNING: This machine does not have enough available RAM to run with what is specified."),
+							mockUI.EXPECT().Say("Creating the VM..."),
+							mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+								Name:     "cfdev",
+								CPUs:     7,
+								MemoryMB: 6000,
+								DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
+							}),
+							mockUI.EXPECT().Say("Starting VPNKit..."),
+							mockVpnKit.EXPECT().Start(),
+							mockVpnKit.EXPECT().Watch(localExitChan),
+							mockUI.EXPECT().Say("Starting the VM..."),
+							mockHypervisor.EXPECT().Start("cfdev"),
+							mockUI.EXPECT().Say("Waiting for Garden..."),
+							mockProvisioner.EXPECT().Ping(),
+							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
+							mockProvisioner.EXPECT().DeployBosh(),
+							mockUI.EXPECT().Say("Deploying CF..."),
+							mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
+							mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
+							mockProvisioner.EXPECT().DeployServices(mockUI, services),
+
+							mockToggle.EXPECT().Get().Return(true),
+							mockAnalyticsD.EXPECT().Start(),
+							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+						)
+
+						Expect(startCmd.Execute(start.Args{
+							Cpus: 7,
+							Mem:  6000,
+						})).To(Succeed())
+					})
 				})
 			})
 		})
@@ -679,62 +968,6 @@ var _ = Describe("Start", func() {
 			})
 		})
 
-		Context("when the --no-provision flag is provided", func() {
-			It("starts the VM and garden but does not provision", func() {
-				if runtime.GOOS == "darwin" {
-					mockUI.EXPECT().Say("Installing cfdevd network helper...")
-					mockCFDevD.EXPECT().Install()
-				}
-
-				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "cf"),
-					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
-					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
-					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
-						"total memory":     uint64(222),
-						"available memory": uint64(111),
-					}),
-					mockHost.EXPECT().CheckRequirements(),
-					mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
-					mockStop.EXPECT().RunE(nil, nil),
-					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
-					mockUI.EXPECT().Say("Downloading Resources..."),
-					mockCache.EXPECT().Sync(resource.Catalog{
-						Items: []resource.Item{
-							{Name: "some-item"},
-							{Name: "cf-deps.iso"},
-						},
-					}),
-					mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
-					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
-
-					mockUI.EXPECT().Say("Creating the VM..."),
-					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
-						Name:     "cfdev",
-						CPUs:     7,
-						MemoryMB: 6666,
-						DepsIso:  filepath.Join(cacheDir, "cf-deps.iso"),
-					}),
-					mockUI.EXPECT().Say("Starting VPNKit..."),
-					mockVpnKit.EXPECT().Start(),
-					mockVpnKit.EXPECT().Watch(localExitChan),
-					mockUI.EXPECT().Say("Starting the VM..."),
-					mockHypervisor.EXPECT().Start("cfdev"),
-					mockUI.EXPECT().Say("Waiting for Garden..."),
-					mockProvisioner.EXPECT().Ping(),
-				)
-
-				//no provision message message
-				mockUI.EXPECT().Say(gomock.Any())
-
-				Expect(startCmd.Execute(start.Args{
-					Cpus:        7,
-					Mem:         6666,
-					NoProvision: true,
-				})).To(Succeed())
-			})
-		})
-
 		Context("when the -f flag is provided with a non-existing filepath", func() {
 			It("returns an error message and does not execute start command", func() {
 				Expect(startCmd.Execute(start.Args{
@@ -817,7 +1050,7 @@ var _ = Describe("Start", func() {
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
-
+					mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM"),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
