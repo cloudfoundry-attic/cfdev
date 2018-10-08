@@ -420,19 +420,19 @@ func (s *Start) allocateMemory(isoConfig iso.Metadata, requestedMem int) (int, e
 			}
 
 			if availableMem < uint64(requestedMem) {
-				s.UI.Say("WARNING: This machine does not have enough available RAM to run with what is specified.")
+				s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
 				return requestedMem, nil
 			}
 		}
 
 		if requestedMem < baseMem {
-			s.UI.Say(fmt.Sprintf("WARNING: It is recommended that you run %s Dev with at least %v MB of RAM", strings.ToUpper(isoConfig.DeploymentName), baseMem))
+			s.UI.Say(fmt.Sprintf("WARNING: It is recommended that you run %s Dev with at least %v MB of RAM.", strings.ToUpper(isoConfig.DeploymentName), baseMem))
 			if availableMem >= uint64(requestedMem) {
 				return requestedMem, nil
 			}
 
 			if availableMem < uint64(requestedMem) {
-				s.UI.Say("WARNING: This machine does not have enough available RAM to run with what is specified.")
+				s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
 				return requestedMem, nil
 			}
 		}
@@ -440,7 +440,7 @@ func (s *Start) allocateMemory(isoConfig iso.Metadata, requestedMem int) (int, e
 		if availableMem >= uint64(baseMem) {
 			return baseMem, nil
 		} else {
-			s.UI.Say("WARNING: This machine does not have enough available RAM to run with what is specified.")
+			s.UI.Say(fmt.Sprintf("WARNING: %s Dev requires %v MB of RAM to run. This machine may not have enough free RAM.", strings.ToUpper(isoConfig.DeploymentName), baseMem))
 			return baseMem, nil
 		}
 	}

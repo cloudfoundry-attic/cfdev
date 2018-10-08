@@ -434,7 +434,7 @@ var _ = Describe("Start", func() {
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1000), nil),
-						mockUI.EXPECT().Say("WARNING: This machine does not have enough available RAM to run with what is specified."),
+						mockUI.EXPECT().Say("WARNING: CF Dev requires 8765 MB of RAM to run. This machine may not have enough free RAM."),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -500,7 +500,7 @@ var _ = Describe("Start", func() {
 						}),
 						mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
-						mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM"),
+						mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM."),
 						mockUI.EXPECT().Say("Creating the VM..."),
 						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 							Name:     "cfdev",
@@ -623,7 +623,7 @@ var _ = Describe("Start", func() {
 							}),
 							mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1200), nil),
-							mockUI.EXPECT().Say("WARNING: This machine does not have enough available RAM to run with what is specified."),
+							mockUI.EXPECT().Say("WARNING: This machine may not have enough available RAM to run with what is specified."),
 							mockUI.EXPECT().Say("Creating the VM..."),
 							mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 								Name:     "cfdev",
@@ -661,7 +661,7 @@ var _ = Describe("Start", func() {
 			})
 
 			Context("and requested memory < base memory", func() {
-				Context("available mem >= REQUESTED mem", func() {
+				Context("available memory >= requested memory", func() {
 					It("starts with warning", func() {
 						if runtime.GOOS == "darwin" {
 							mockUI.EXPECT().Say("Installing cfdevd network helper...")
@@ -695,7 +695,7 @@ var _ = Describe("Start", func() {
 								Services:       services,
 							}, nil),
 							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(15000), nil),
-							mockUI.EXPECT().Say("WARNING: It is recommended that you run PCF Dev with at least 8765 MB of RAM"),
+							mockUI.EXPECT().Say("WARNING: It is recommended that you run PCF Dev with at least 8765 MB of RAM."),
 							mockUI.EXPECT().Say("Creating the VM..."),
 							mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 								Name:     "cfdev",
@@ -731,7 +731,7 @@ var _ = Describe("Start", func() {
 				})
 
 				Context("and available mem < requested mem", func() {
-					It("gives two warnings but starts anyway", func() {
+					It("gives two warnings but starts anyways", func() {
 						if runtime.GOOS == "darwin" {
 							mockUI.EXPECT().Say("Installing cfdevd network helper...")
 							mockCFDevD.EXPECT().Install()
@@ -759,8 +759,8 @@ var _ = Describe("Start", func() {
 							}),
 							mockIsoReader.EXPECT().Read(depsIsoPath).Return(metadata, nil),
 							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(1200), nil),
-							mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM"),
-							mockUI.EXPECT().Say("WARNING: This machine does not have enough available RAM to run with what is specified."),
+							mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM."),
+							mockUI.EXPECT().Say("WARNING: This machine may not have enough available RAM to run with what is specified."),
 							mockUI.EXPECT().Say("Creating the VM..."),
 							mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 								Name:     "cfdev",
@@ -1050,7 +1050,7 @@ var _ = Describe("Start", func() {
 					}),
 					mockIsoReader.EXPECT().Read(customIso).Return(metadata, nil),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
-					mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM"),
+					mockUI.EXPECT().Say("WARNING: It is recommended that you run CF Dev with at least 8765 MB of RAM."),
 					mockUI.EXPECT().Say("Creating the VM..."),
 					mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
 						Name:     "cfdev",
