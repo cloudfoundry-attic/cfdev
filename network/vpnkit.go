@@ -20,6 +20,9 @@ type VpnKit struct {
 	DaemonRunner DaemonRunner
 	Powershell   runner.Powershell
 	Label string
+	EthernetGUID string
+	PortGUID string
+	ForwarderGUID string
 }
 
 type DaemonRunner interface {

@@ -14,10 +14,6 @@ import (
 	"io/ioutil"
 )
 
-const ethernetGUID = "7207f451-2ca3-4b88-8d01-820a21d78293"
-const portGUID = "cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa"
-const forwarderGUID = "e3ae8f06-8c25-47fb-b6ed-c20702bcef5e"
-
 func (v *VpnKit) Start() error {
 	if err := v.Setup(); err != nil {
 		return errors.SafeWrap(err, "Failed to Setup VPNKit")
@@ -64,9 +60,9 @@ func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
 		Label:   v.Label,
 		Program: path.Join(v.Config.CacheDir, "vpnkit.exe"),
 		ProgramArguments: []string{
-			fmt.Sprintf("--ethernet hyperv-connect://%s/%s", vmGuid, ethernetGUID),
-			fmt.Sprintf("--port hyperv-connect://%s/%s", vmGuid, portGUID),
-			fmt.Sprintf("--port hyperv-connect://%s/%s", vmGuid, forwarderGUID),
+			fmt.Sprintf("--ethernet hyperv-connect://%s/%s", vmGuid, v.EthernetGUID),
+			fmt.Sprintf("--port hyperv-connect://%s/%s", vmGuid, v.PortGUID),
+			fmt.Sprintf("--port hyperv-connect://%s/%s", vmGuid, v.ForwarderGUID),
 			fmt.Sprintf("--dns %s", dnsPath),
 			fmt.Sprintf("--dhcp %s", dhcpPath),
 			"--http", path.Join(v.Config.VpnKitStateDir, "http_proxy.json"),
@@ -105,13 +101,13 @@ func (v *VpnKit) Setup() error {
 }
 
 func (v *VpnKit) registerServiceGUIDs() error {
-	if err := v.registerGUID(ethernetGUID, "Ethernet"); err != nil {
+	if err := v.registerGUID(v.EthernetGUID, "Ethernet"); err != nil {
 		return err
 	}
-	if err := v.registerGUID(portGUID, "Port"); err != nil {
+	if err := v.registerGUID(v.PortGUID, "Port"); err != nil {
 		return err
 	}
-	return v.registerGUID(forwarderGUID, "Forwarder")
+	return v.registerGUID(v.ForwarderGUID, "Forwarder")
 }
 
 func (v *VpnKit) registerGUID(guid, name string) error {
