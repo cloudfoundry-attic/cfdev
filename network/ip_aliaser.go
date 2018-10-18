@@ -12,4 +12,5 @@ type CfdevdClient interface {
 type HostNet struct {
 	CfdevdClient CfdevdClient
 	Powershell   runner.Powershell
+	VMSwitchName string
 }

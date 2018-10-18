@@ -14,10 +14,14 @@ import (
 )
 
 var _ = Describe("HostNet", func() {
-	var hostnet *network.HostNet
+	var (
+		hostnet *network.HostNet
+	)
 
 	BeforeEach(func() {
-		hostnet = &network.HostNet{}
+		hostnet = &network.HostNet{
+			VMSwitchName: "test-hostnet-vm-switch",
+		}
 	})
 
 	Describe("RemoveLoopbackAliases", func() {
@@ -26,20 +30,20 @@ var _ = Describe("HostNet", func() {
 				command := exec.Command(
 					"powershell.exe",
 					"-Command",
-					"New-VMSwitch -Name cfdev -SwitchType Internal -Notes 'Switch for CF Dev Networking'",
+					"New-VMSwitch -Name test-hostnet-vm-switch -SwitchType Internal -Notes 'Switch for CF Dev Networking'",
 				)
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10, time.Second).Should(gexec.Exit(0))
-				command = exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
+				command = exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch*")
 				output, err := command.Output()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(string(output)).To(ContainSubstring("cfdev"))
+				Expect(string(output)).To(ContainSubstring("test-hostnet-vm-switch"))
 			})
 
 			It("removes the switch", func() {
 				Expect(hostnet.RemoveLoopbackAliases()).To(Succeed())
-				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
+				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch*")
 				output, err := command.Output()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(output)).To(BeEmpty())
@@ -48,7 +52,7 @@ var _ = Describe("HostNet", func() {
 
 		Context("when the switch does not exists", func() {
 			BeforeEach(func() {
-				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
+				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch*")
 				output, err := command.Output()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(output)).To(BeEmpty())
@@ -63,14 +67,14 @@ var _ = Describe("HostNet", func() {
 	Describe("AddLoopbackAliases", func() {
 		Context("when there is no switch", func() {
 			BeforeEach(func() {
-				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
+				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch*")
 				output, err := command.Output()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(string(output)).To(BeEmpty())
 			})
 
 			AfterEach(func() {
-				command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name cfdev -Force")
+				command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name test-hostnet-vm-switch -Force")
 				Expect(command.Run()).To(Succeed())
 			})
 
@@ -91,26 +95,26 @@ var _ = Describe("HostNet", func() {
 				command := exec.Command(
 					"powershell.exe",
 					"-Command",
-					"New-VMSwitch -Name cfdev -SwitchType Internal -Notes 'Switch for CF Dev Networking'",
+					"New-VMSwitch -Name test-hostnet-vm-switch -SwitchType Internal -Notes 'Switch for CF Dev Networking'",
 				)
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10, time.Second).Should(gexec.Exit(0))
-				command = exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev*")
+				command = exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch*")
 				output, err := command.Output()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(string(output)).To(ContainSubstring("cfdev"))
+				Expect(string(output)).To(ContainSubstring("test-hostnet-vm-switch"))
 			})
 
 			AfterEach(func() {
-				command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name cfdev -Force")
+				command := exec.Command("powershell.exe", "-Command", "Remove-VMSwitch -Name test-hostnet-vm-switch -Force")
 				Expect(command.Run()).To(Succeed())
 			})
 
 			It("succeeds", func() {
 				Expect(hostnet.AddLoopbackAliases("10.66.66.66", "10.22.33.44")).To(Succeed())
 
-				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch cfdev | Measure-Object | Select -ExpandProperty Count")
+				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch | Measure-Object | Select -ExpandProperty Count")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 				Eventually(session, 10, time.Second).Should(gexec.Exit(0))

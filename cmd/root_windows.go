@@ -59,6 +59,9 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	lctl := daemon.NewWinSW(config.CFDevHome)
 	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl, Powershell: runner.Powershell{}, Label: network.VpnKitLabel}
 	isoReader := iso.New()
+	hostnet := &network.HostNet{
+		VMSwitchName: "cfdev",
+	}
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)
@@ -118,7 +121,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Cache:           cache,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			HostNet:         &network.HostNet{},
+			HostNet:         hostnet,
 			Host: &host.Host{
 				Powershell: &runner.Powershell{},
 			},
@@ -133,7 +136,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				Analytics:  analyticsClient,
 				Hypervisor: &hypervisor.HyperV{Config: config},
 				VpnKit:     vpnkit,
-				HostNet:    &network.HostNet{},
+				HostNet:    hostnet,
 				Host: &host.Host{
 					Powershell: &runner.Powershell{},
 				},
@@ -146,7 +149,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Analytics:  analyticsClient,
 			Hypervisor: &hypervisor.HyperV{Config: config},
 			VpnKit:     vpnkit,
-			HostNet:    &network.HostNet{},
+			HostNet:    hostnet,
 			Host: &host.Host{
 				Powershell: &runner.Powershell{},
 			},
