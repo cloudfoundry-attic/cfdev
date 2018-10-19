@@ -1,9 +1,12 @@
 package telemetry_test
 
 import (
-	"fmt"
-
+	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
 	"code.cloudfoundry.org/cfdev/cmd/telemetry"
+	"fmt"
+	"io/ioutil"
+	"os"
+
 	"code.cloudfoundry.org/cfdev/cmd/telemetry/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
@@ -19,61 +22,57 @@ func (m *MockUI) Say(message string, args ...interface{}) {
 	m.WasCalledWith = fmt.Sprintf(message, args...)
 }
 
-type MockToggle struct {
-	val bool
-}
-
-func (t *MockToggle) Get() bool        { return t.val }
-func (t *MockToggle) Set(v bool) error { t.val = v; return nil }
-
 var _ = Describe("Telemetry", func() {
 	var (
+		mockUI         MockUI
 		mockController *gomock.Controller
 		mockAnalyticsD *mocks.MockAnalyticsD
-		mockUI         MockUI
-		mockToggle     *MockToggle
+		t0ggle         *toggle.Toggle
 		telCmd         *cobra.Command
+		tempFilePath string
 	)
 
 	BeforeEach(func() {
+		mockUI = MockUI{}
 		mockController = gomock.NewController(GinkgoT())
 		mockAnalyticsD = mocks.NewMockAnalyticsD(mockController)
 
-		mockUI = MockUI{
-			WasCalledWith: "",
-		}
-		mockToggle = &MockToggle{}
+		tempFile, err := ioutil.TempFile("", "cfdev-telemetry-")
+		Expect(err).NotTo(HaveOccurred())
+		tempFilePath = tempFile.Name()
+	})
+
+	JustBeforeEach(func() {
+		t0ggle = toggle.New(tempFilePath)
 
 		subject := &telemetry.Telemetry{
 			UI:              &mockUI,
-			AnalyticsToggle: mockToggle,
+			AnalyticsToggle: t0ggle,
 			AnalyticsD:      mockAnalyticsD,
 		}
+
 		telCmd = subject.Cmd()
 		telCmd.SetArgs([]string{})
 	})
 
 	AfterEach(func() {
+		os.RemoveAll(tempFilePath)
 		mockController.Finish()
 	})
 
-	Context("first arg", func() {
+	Context("when telemetry status is set", func() {
 		It("ON", func() {
-			mockToggle.val = false
-
 			mockAnalyticsD.EXPECT().IsRunning().Return(false, nil)
 			mockAnalyticsD.EXPECT().Start()
 
 			telCmd.SetArgs([]string{"--on"})
 			Expect(telCmd.Execute()).To(Succeed())
 
-			Expect(mockToggle.val).To(Equal(true))
+			Expect(t0ggle.Enabled()).To(BeTrue())
 			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned ON"))
 		})
 
 		It("OFF", func() {
-			mockToggle.val = true
-
 			mockAnalyticsD.EXPECT().IsRunning().Return(true, nil)
 			mockAnalyticsD.EXPECT().Stop()
 			mockAnalyticsD.EXPECT().Destroy()
@@ -81,26 +80,58 @@ var _ = Describe("Telemetry", func() {
 			telCmd.SetArgs([]string{"--off"})
 			Expect(telCmd.Execute()).To(Succeed())
 
-			Expect(mockToggle.val).To(Equal(false))
+			Expect(t0ggle.Enabled()).To(BeFalse())
 			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned OFF"))
 		})
 	})
 
-	Context("No args displays status", func() {
-		It("ON", func() {
-			mockToggle.val = true
+	Describe("telemetry status", func() {
+		Context("when cfanalytics is enabled", func() {
+			BeforeEach(func() {
+				err := ioutil.WriteFile(
+					tempFilePath,
+					[]byte(`{"cfAnalyticsEnabled": true, "customAnalyticsEnabled": false}`),
+					0600)
+				Expect(err).NotTo(HaveOccurred())
+			})
 
-			Expect(telCmd.Execute()).To(Succeed())
+			It("should display ON", func() {
+				Expect(telCmd.Execute()).To(Succeed())
 
-			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned ON"))
+				Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned ON"))
+			})
 		})
 
-		It("OFF", func() {
-			mockToggle.val = false
+		Context("when custom analytics is enabled", func() {
+			BeforeEach(func() {
+				err := ioutil.WriteFile(
+					tempFilePath,
+					[]byte(`{"cfAnalyticsEnabled": false, "customAnalyticsEnabled": true}`),
+					0600)
+				Expect(err).NotTo(HaveOccurred())
+			})
 
-			Expect(telCmd.Execute()).To(Succeed())
+			It("should display ON", func() {
+				Expect(telCmd.Execute()).To(Succeed())
 
-			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned OFF"))
+				Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned ON"))
+			})
+		})
+
+		Context("when analytics is disabled", func() {
+			BeforeEach(func() {
+				err := ioutil.WriteFile(
+					tempFilePath,
+					[]byte(`{"cfAnalyticsEnabled": false, "customAnalyticsEnabled": false}`),
+					0600)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("should display OFF", func() {
+				Expect(telCmd.Execute()).To(Succeed())
+
+				Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned OFF"))
+			})
 		})
 	})
 })

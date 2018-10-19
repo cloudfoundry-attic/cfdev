@@ -51,8 +51,9 @@ require (
 	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.0.0-20180830192347-182538f80094 // indirect
-	golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3 // indirect
+	golang.org/x/net v0.0.0-20181017193950-04a2e542c03f // indirect
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
+	golang.org/x/sys v0.0.0-20181011152604-fa43e7bc11ba // indirect
 	gopkg.in/VividCortex/ewma.v1 v1.1.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.25 // indirect
@@ -61,7 +62,7 @@ require (
 	gopkg.in/mattn/go-colorable.v0 v0.0.9 // indirect
 	gopkg.in/mattn/go-isatty.v0 v0.0.4 // indirect
 	gopkg.in/mattn/go-runewidth.v0 v0.0.3 // indirect
-	gopkg.in/segmentio/analytics-go.v3 v3.0.0
+	gopkg.in/segmentio/analytics-go.v3 v3.0.1
 	gopkg.in/yaml.v2 v2.2.1
 )
 

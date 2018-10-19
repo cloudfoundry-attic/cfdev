@@ -8,9 +8,11 @@ import (
 type UI interface {
 	Say(message string, args ...interface{})
 }
+
 type Toggle interface {
-	Get() bool
-	Set(value bool) error
+	Enabled() bool
+	SetCustomAnalyticsEnabled(value bool) error
+	SetCFAnalyticsEnabled(value bool) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/telemetry AnalyticsD
@@ -45,7 +47,7 @@ func (t *Telemetry) Cmd() *cobra.Command {
 
 func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 	if t.Args.FlagOff {
-		if err := t.AnalyticsToggle.Set(false); err != nil {
+		if err := t.AnalyticsToggle.SetCustomAnalyticsEnabled(false); err != nil {
 			return errors.SafeWrap(err, "turning off telemetry")
 		}
 		isRunning, err := t.AnalyticsD.IsRunning()
@@ -61,7 +63,7 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else if t.Args.FlagOn {
-		if err := t.AnalyticsToggle.Set(true); err != nil {
+		if err := t.AnalyticsToggle.SetCFAnalyticsEnabled(true); err != nil {
 			return errors.SafeWrap(err, "turning on telemetry")
 		}
 		isRunning, err := t.AnalyticsD.IsRunning()
@@ -75,7 +77,7 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if t.AnalyticsToggle.Get() {
+	if t.AnalyticsToggle.Enabled() {
 		t.UI.Say("Telemetry is turned ON")
 	} else {
 		t.UI.Say("Telemetry is turned OFF")

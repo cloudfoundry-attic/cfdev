@@ -43,12 +43,17 @@ type cmdBuilder interface {
 
 type AnalyticsClient interface {
 	Event(event string, data ...map[string]interface{}) error
-	PromptOptIn() error
+	PromptOptInIfNeeded(customMessage string) error
 }
 
 type Toggle interface {
-	Get() bool
-	Set(value bool) error
+	Defined() bool
+	Enabled() bool
+	CustomAnalyticsDefined() bool
+	IsCustom() bool
+	SetCFAnalyticsEnabled(value bool) error
+	SetCustomAnalyticsEnabled(value bool) error
+	GetProps() map[string]interface{}
 	SetProp(k, v string) error
 }
 

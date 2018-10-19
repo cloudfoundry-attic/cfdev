@@ -1,9 +1,6 @@
 package cfanalytics_test
 
 import (
-	"runtime"
-	"time"
-
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/cfanalytics/mocks"
 	"github.com/denisbrodbeck/machineid"
@@ -11,7 +8,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gstruct"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
+	"gopkg.in/segmentio/analytics-go.v3"
+	"runtime"
+	"time"
 )
 
 var _ = Describe("Analytics", func() {
@@ -35,25 +34,25 @@ var _ = Describe("Analytics", func() {
 		mockController.Finish()
 	})
 
-	Describe("PromptOptIn", func() {
+	Describe("PromptOptInIfNeeded with empty message", func() {
 		Context("When user has NOT yet answered optin prompt", func() {
 			BeforeEach(func() {
 				mockToggle.EXPECT().Defined().Return(false).AnyTimes()
 			})
 			It("prompts user", func() {
-				mockToggle.EXPECT().Set(gomock.Any()).AnyTimes()
+				mockToggle.EXPECT().SetCFAnalyticsEnabled(gomock.Any()).AnyTimes()
 				mockUI.EXPECT().Ask(gomock.Any()).Do(func(prompt string) {
 					Expect(prompt).To(ContainSubstring("Are you ok with CF Dev periodically capturing anonymized telemetry [y/N]?"))
 				})
-				Expect(subject.PromptOptIn()).To(Succeed())
+				Expect(subject.PromptOptInIfNeeded("")).To(Succeed())
 			})
 			for _, answer := range []string{"yes", "y", "yEs"} {
 				Context("user answers "+answer, func() {
 					BeforeEach(func() { mockUI.EXPECT().Ask(gomock.Any()).Return(answer) })
 					It("saves optin", func() {
-						mockToggle.EXPECT().Set(true)
+						mockToggle.EXPECT().SetCFAnalyticsEnabled(true)
 
-						Expect(subject.PromptOptIn()).To(Succeed())
+						Expect(subject.PromptOptInIfNeeded("")).To(Succeed())
 					})
 				})
 			}
@@ -61,9 +60,9 @@ var _ = Describe("Analytics", func() {
 				Context("user answers "+answer, func() {
 					BeforeEach(func() { mockUI.EXPECT().Ask(gomock.Any()).Return(answer) })
 					It("saves optout", func() {
-						mockToggle.EXPECT().Set(false)
+						mockToggle.EXPECT().SetCFAnalyticsEnabled(false)
 
-						Expect(subject.PromptOptIn()).To(Succeed())
+						Expect(subject.PromptOptInIfNeeded("")).To(Succeed())
 					})
 				})
 			}
@@ -73,7 +72,7 @@ var _ = Describe("Analytics", func() {
 					exitChan <- struct{}{}
 				})
 				It("does not write set a value on toggle", func() {
-					Expect(subject.PromptOptIn()).To(MatchError("Exit while waiting for telemetry prompt"))
+					Expect(subject.PromptOptInIfNeeded("")).To(MatchError("Exit while waiting for telemetry prompt"))
 				})
 			})
 		})
@@ -82,14 +81,109 @@ var _ = Describe("Analytics", func() {
 				mockToggle.EXPECT().Defined().AnyTimes().Return(true)
 			})
 			It("does not ask again", func() {
-				Expect(subject.PromptOptIn()).To(Succeed())
+				Expect(subject.PromptOptInIfNeeded("")).To(Succeed())
+			})
+		})
+	})
+	Describe("PromptOptInIfNeeded with custom message", func() {
+		Context("When user has NOT yet answered any optin prompt at all", func() {
+			BeforeEach(func() {
+				mockToggle.EXPECT().Defined().Return(false).AnyTimes()
+				mockToggle.EXPECT().CustomAnalyticsDefined().Return(false).AnyTimes()
+			})
+			It("prompts user", func() {
+				mockToggle.EXPECT().SetCustomAnalyticsEnabled(gomock.Any()).AnyTimes()
+				mockUI.EXPECT().Ask(gomock.Any()).Do(func(prompt string) {
+					Expect(prompt).To(ContainSubstring("some-custom-message"))
+				})
+				Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(Succeed())
+			})
+			for _, answer := range []string{"yes", "y", "yEs"} {
+				Context("user answers "+answer, func() {
+					BeforeEach(func() { mockUI.EXPECT().Ask(gomock.Any()).Return(answer) })
+					It("saves optin", func() {
+						mockToggle.EXPECT().SetCustomAnalyticsEnabled(true)
+
+						Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(Succeed())
+					})
+				})
+			}
+			for _, answer := range []string{"no", "N", "anything", ""} {
+				Context("user answers "+answer, func() {
+					BeforeEach(func() { mockUI.EXPECT().Ask(gomock.Any()).Return(answer) })
+					It("saves optout", func() {
+						mockToggle.EXPECT().SetCustomAnalyticsEnabled(false)
+
+						Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(Succeed())
+					})
+				})
+			}
+			Context("user hits ctrl-c", func() {
+				BeforeEach(func() {
+					mockUI.EXPECT().Ask(gomock.Any()).Return("")
+					exitChan <- struct{}{}
+				})
+				It("does not write set a value on toggle", func() {
+					Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(MatchError("Exit while waiting for telemetry prompt"))
+				})
+			})
+		})
+		Context("When user has answered custom optin prompt already", func() {
+			BeforeEach(func() {
+				mockToggle.EXPECT().Defined().AnyTimes().Return(true)
+				mockToggle.EXPECT().CustomAnalyticsDefined().Return(true).AnyTimes()
+			})
+			It("does not ask again", func() {
+				Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(Succeed())
+			})
+		})
+		Context("When user has answered standard optin prompt but not custom prompt", func() {
+			BeforeEach(func() {
+				mockToggle.EXPECT().Defined().AnyTimes().Return(true)
+				mockToggle.EXPECT().CustomAnalyticsDefined().Return(false).AnyTimes()
+			})
+			It("prompts user", func() {
+				mockToggle.EXPECT().SetCustomAnalyticsEnabled(gomock.Any()).AnyTimes()
+				mockUI.EXPECT().Ask(gomock.Any()).Do(func(prompt string) {
+					Expect(prompt).To(ContainSubstring("some-custom-message"))
+				})
+				Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(Succeed())
+			})
+			for _, answer := range []string{"yes", "y", "yEs"} {
+				Context("user answers "+answer, func() {
+					BeforeEach(func() { mockUI.EXPECT().Ask(gomock.Any()).Return(answer) })
+					It("saves optin", func() {
+						mockToggle.EXPECT().SetCustomAnalyticsEnabled(true)
+
+						Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(Succeed())
+					})
+				})
+			}
+			for _, answer := range []string{"no", "N", "anything", ""} {
+				Context("user answers "+answer, func() {
+					BeforeEach(func() { mockUI.EXPECT().Ask(gomock.Any()).Return(answer) })
+					It("saves optout", func() {
+						mockToggle.EXPECT().SetCustomAnalyticsEnabled(false)
+
+						Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(Succeed())
+					})
+				})
+			}
+			Context("user hits ctrl-c", func() {
+				BeforeEach(func() {
+					mockUI.EXPECT().Ask(gomock.Any()).Return("")
+					exitChan <- struct{}{}
+				})
+				It("does not write set a value on toggle", func() {
+					Expect(subject.PromptOptInIfNeeded("some-custom-message")).To(MatchError("Exit while waiting for telemetry prompt"))
+				})
 			})
 		})
 	})
 	Describe("Event", func() {
 		Context("opt out", func() {
 			BeforeEach(func() {
-				mockToggle.EXPECT().Get().AnyTimes().Return(false)
+				mockToggle.EXPECT().Enabled().AnyTimes().Return(false)
 			})
 			It("does nothing and succeeds", func() {
 				Expect(subject.Event("anevent", map[string]interface{}{"mykey": "myval"})).To(Succeed())
@@ -97,7 +191,7 @@ var _ = Describe("Analytics", func() {
 		})
 		Context("opt in", func() {
 			BeforeEach(func() {
-				mockToggle.EXPECT().Get().AnyTimes().Return(true)
+				mockToggle.EXPECT().Enabled().AnyTimes().Return(true)
 				mockToggle.EXPECT().GetProps().AnyTimes().Return(map[string]interface{}{
 					"type": "cf.1.2.3.iso",
 				})

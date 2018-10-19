@@ -29,7 +29,6 @@ import (
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
-	"github.com/spf13/cobra"
 )
 
 type UI interface {
@@ -43,7 +42,7 @@ type cmdBuilder interface {
 
 type AnalyticsClient interface {
 	Event(event string, data ...map[string]interface{}) error
-	PromptOptIn() error
+	PromptOptInIfNeeded(message string) error
 }
 
 type Toggle interface {

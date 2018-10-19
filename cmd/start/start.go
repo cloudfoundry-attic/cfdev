@@ -34,12 +34,14 @@ type UI interface {
 //go:generate mockgen -package mocks -destination mocks/analytics_client.go code.cloudfoundry.org/cfdev/cmd/start AnalyticsClient
 type AnalyticsClient interface {
 	Event(event string, data ...map[string]interface{}) error
-	PromptOptIn() error
+	PromptOptInIfNeeded(message string) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/toggle.go code.cloudfoundry.org/cfdev/cmd/start Toggle
 type Toggle interface {
-	Get() bool
+	Enabled() bool
+	SetCFAnalyticsEnabled(value bool) error
+	SetCustomAnalyticsEnabled(value bool) error
 	SetProp(k, v string) error
 }
 
@@ -209,10 +211,6 @@ func (s *Start) Execute(args Args) error {
 		fmt.Printf("TOTAL MEMORY ERROR: %v", err)
 	}
 
-	s.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{
-		"total memory":     tMem,
-		"available memory": aMem,
-	})
 	if err := s.Host.CheckRequirements(); err != nil {
 		return err
 	}
@@ -269,6 +267,13 @@ func (s *Start) Execute(args Args) error {
 		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsIsoName)
 	}
 
+	s.Analytics.PromptOptInIfNeeded(isoConfig.AnalyticsMessage)
+
+	s.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{
+		"total memory":     tMem,
+		"available memory": aMem,
+	})
+
 	if args.DeploySingleService != "" {
 		if !s.isServiceSupported(args.DeploySingleService, isoConfig.Services) {
 			return errors.SafeWrap(err, fmt.Sprintf("Service: '%v' is not supported", args.DeploySingleService))
@@ -313,7 +318,7 @@ func (s *Start) Execute(args Args) error {
 		return err
 	}
 
-	if s.AnalyticsToggle.Get() {
+	if s.AnalyticsToggle.Enabled() {
 		err = s.AnalyticsD.Start()
 	}
 

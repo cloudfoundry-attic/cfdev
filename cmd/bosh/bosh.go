@@ -20,7 +20,7 @@ type UI interface {
 //go:generate mockgen -package mocks -destination mocks/analytics_client.go code.cloudfoundry.org/cfdev/cmd/bosh AnalyticsClient
 type AnalyticsClient interface {
 	Event(event string, data ...map[string]interface{}) error
-	PromptOptIn() error
+	PromptOptInIfNeeded(string) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/bosh Provisioner
