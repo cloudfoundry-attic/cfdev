@@ -7,6 +7,7 @@ require (
 	code.cloudfoundry.org/garden v0.0.0-20180820151144-7999b305fe99
 	code.cloudfoundry.org/lager v1.1.0 // indirect
 	github.com/SermoDigital/jose v0.9.1 // indirect
+	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40 // indirect
@@ -25,6 +26,7 @@ require (
 	github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/go-ini/ini v1.38.2 // indirect
+	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/golang/mock v1.1.1
 	github.com/hooklift/assert v0.0.0-20170704181755-9d1defd6d214 // indirect
 	github.com/hooklift/iso9660 v1.0.0

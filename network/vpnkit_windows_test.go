@@ -28,6 +28,7 @@ var _ = Describe("VpnKit", func() {
 			Label: "some-vpnkit-label",
 			Config: config.Config{
 				CFDevHome: tempDir,
+				VpnKitStateDir: tempDir,
 			},
 			EthernetGUID: "65319afc-c1a2-4ad9-97a0-0058737b94c2",
 			PortGUID:  "d611c86d-22c9-417c-ac09-3ed4ce5fbfb0",
