@@ -62,6 +62,7 @@ require (
 	gopkg.in/cheggaaa/pb.v1 v1.0.25 // indirect
 	gopkg.in/cheggaaa/pb.v2 v2.0.6 // indirect
 	gopkg.in/fatih/color.v1 v1.7.0 // indirect
+	gopkg.in/h2non/filetype.v1 v1.0.5
 	gopkg.in/mattn/go-colorable.v0 v0.0.9 // indirect
 	gopkg.in/mattn/go-isatty.v0 v0.0.4 // indirect
 	gopkg.in/mattn/go-runewidth.v0 v0.0.3 // indirect

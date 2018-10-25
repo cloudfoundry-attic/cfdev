@@ -2,7 +2,9 @@ package env
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
@@ -61,15 +63,62 @@ func SetupHomeDir(config config.Config) error {
 		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CacheDir, err), "failed to create cache dir")
 	}
 
-	for _, dir := range []string{config.StateDir, config.VpnKitStateDir} {
-		//remove any old state
-		if err := os.RemoveAll(dir); err != nil {
-			return errors.SafeWrap(fmt.Errorf("path %s: %s", dir, err), "failed to clean up state dir")
-		}
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return errors.SafeWrap(fmt.Errorf("path %s: %s", dir, err), "failed to create state dir")
-		}
+	if err := os.RemoveAll(config.StateDir); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.StateDir, err), "failed to clean up state dir")
+	}
+
+	if err := os.MkdirAll(config.VpnKitStateDir, 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.VpnKitStateDir, err), "failed to create state dir")
+	}
+
+	if err := os.MkdirAll(filepath.Join(config.StateLinuxkit), 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.StateLinuxkit), err), "failed to create state dir")
+	}
+
+	if err := os.MkdirAll(filepath.Join(config.StateBosh), 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.StateBosh), err), "failed to create state dir")
+	}
+
+	err := moveFile(filepath.Join(config.CacheDir, "disk.qcow2"), filepath.Join(config.StateLinuxkit, "disk.qcow2"))
+	if err != nil {
+		return err
+	}
+
+	err = moveFile(filepath.Join(config.CacheDir, "state.json"), filepath.Join(config.StateBosh, "state.json"))
+	if err != nil {
+		return err
+	}
+
+	err = moveFile(filepath.Join(config.CacheDir, "creds.yml"), filepath.Join(config.StateBosh, "creds.yml"))
+	if err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func moveFile(srcDir, targetDir string) error {
+	_, err := os.Stat(srcDir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+
+	src, err := os.Open(srcDir)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(targetDir)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		return err
+	}
+
+	return err
 }

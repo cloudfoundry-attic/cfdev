@@ -67,16 +67,27 @@ func (c *Cache) download(item *Item) error {
 		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
 	}
 
-	if strings.HasPrefix(item.URL, "file://") {
+	if strings.HasPrefix(item.URL, "file://") || strings.HasPrefix(item.URL, "C:") {
 		if err := c.copyFile(item); err != nil {
 			return err
 		}
-		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
-	} else if strings.HasPrefix(item.URL, "C:") {
-		if err := c.copyFile(item); err != nil {
-			return err
+
+		err := os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
+		if err != nil {
+			return nil
 		}
-		return os.Chmod(filepath.Join(c.Dir, item.Name), 0755)
+
+		if !IsTar(filepath.Join(c.Dir, item.Name)) {
+			return nil
+		}
+
+		f, err := os.Open(filepath.Join(c.Dir, item.Name))
+		if err != nil {
+			return nil
+		}
+		defer f.Close()
+
+		return Untar(c.Dir, f)
 	}
 
 	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)
@@ -90,7 +101,24 @@ func (c *Cache) download(item *Item) error {
 		os.Remove(tmpPath)
 		return errors.SafeWrap(fmt.Errorf("%s: %s != %s", item.Name, m, item.MD5), "md5 did not match")
 	}
-	return os.Rename(tmpPath, filepath.Join(c.Dir, item.Name))
+
+	os.Rename(tmpPath, filepath.Join(c.Dir, item.Name))
+
+	if !IsTar(filepath.Join(c.Dir, item.Name)) {
+		return nil
+	}
+
+	f, err := os.Open(filepath.Join(c.Dir, item.Name))
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	return Untar(c.Dir, f)
+}
+
+func IsTar(path string) bool {
+	return strings.HasSuffix(path, ".tgz") || strings.HasSuffix(path, ".tar.gz")
 }
 
 func (c *Cache) downloadHTTP(url, tmpPath string) error {

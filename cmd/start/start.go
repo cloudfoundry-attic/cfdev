@@ -259,8 +259,8 @@ func (s *Start) Execute(args Args) error {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
 
-	isoConfig, err := s.IsoReader.Read(depsIsoPath)
-	if err != nil {
+	isoConfig, err := s.IsoReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
+		if err != nil {
 		return errors.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsIsoName))
 	}
 	if isoConfig.Version != compatibilityVersion {
@@ -291,7 +291,7 @@ func (s *Start) Execute(args Args) error {
 		Name:     "cfdev",
 		CPUs:     args.Cpus,
 		MemoryMB: memoryToAllocate,
-		DepsIso:  depsIsoPath,
+		DepsIso:  filepath.Join(s.Config.CacheDir, "cfdev-efi-v2.iso"),
 	}); err != nil {
 		return errors.SafeWrap(err, "creating the vm")
 	}
@@ -305,6 +305,9 @@ func (s *Start) Execute(args Args) error {
 	if err := s.Hypervisor.Start("cfdev"); err != nil {
 		return errors.SafeWrap(err, "starting the vm")
 	}
+
+	fmt.Println("Anthony is stopping this prematurely....")
+	os.Exit(0)
 
 	s.UI.Say("Waiting for Garden...")
 	s.waitForGarden()

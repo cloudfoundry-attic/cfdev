@@ -1,15 +1,9 @@
 package iso
 
 import (
-	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
-	"strings"
-
 	"code.cloudfoundry.org/cfdev/provision"
-	"github.com/hooklift/iso9660"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
 type Reader struct{}
@@ -33,43 +27,18 @@ type Metadata struct {
 	Versions         []Version           `yaml:"versions"`
 }
 
-func (Reader) Read(isoFile string) (Metadata, error) {
-	file, err := os.Open(isoFile)
-	if err != nil {
-		return Metadata{}, err
-	}
-	defer file.Close()
-
-	r, err := iso9660.NewReader(file)
+func (Reader) Read(metaDataPath string) (Metadata, error) {
+	buf, err := ioutil.ReadFile(metaDataPath)
 	if err != nil {
 		return Metadata{}, err
 	}
 
-	for {
-		f, err := r.Next()
-		if err == io.EOF {
-			fmt.Println("File not found")
-			return Metadata{}, err
-		}
+	var metadata Metadata
 
-		if err != nil {
-			return Metadata{}, err
-		}
-
-		if strings.Contains(f.Name(), "metadata.yml") {
-			buf, err := ioutil.ReadAll(f.Sys().(io.Reader))
-			if err != nil {
-				return Metadata{}, err
-			}
-
-			var metadata Metadata
-
-			err = yaml.Unmarshal(buf, &metadata)
-			if err != nil {
-				return Metadata{}, err
-			}
-
-			return metadata, nil
-		}
+	err = yaml.Unmarshal(buf, &metadata)
+	if err != nil {
+		return Metadata{}, err
 	}
+
+	return metadata, nil
 }

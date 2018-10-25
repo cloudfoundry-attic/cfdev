@@ -51,7 +51,7 @@ func (l *LinuxKit) Stop(vmName string) error {
 		reterr = err
 	}
 	if err := SafeKill(
-		filepath.Join(l.Config.StateDir, "hyperkit.pid"),
+		filepath.Join(l.Config.StateLinuxkit, "hyperkit.pid"),
 		"hyperkit",
 	); err != nil {
 		reterr = err
@@ -79,7 +79,7 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonS
 		return daemon.DaemonSpec{}, err
 	}
 
-	osImagePath := filepath.Join(l.Config.CacheDir, "cfdev-efi.iso")
+	osImagePath := filepath.Join(l.Config.CacheDir, "cfdev-efi-v2.iso")
 
 	diskArgs := []string{
 		"type=qcow",
@@ -104,10 +104,9 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonS
 			"-networking", fmt.Sprintf("vpnkit,%v,%v", vpnkitEthSock, vpnkitPortSock),
 			"-fw", uefi,
 			"-disk", strings.Join(diskArgs, ","),
-			"-disk", "file=" + depsIsoPath,
-			"-state", l.Config.StateDir,
-			"--uefi",
-			"--vsock-ports", "62372",
+			"-state", l.Config.StateLinuxkit,
+			"-uefi",
+			"-publish", "9999:9999/tcp",
 			osImagePath,
 		},
 		RunAtLoad:  false,

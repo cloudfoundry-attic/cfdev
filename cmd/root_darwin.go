@@ -102,7 +102,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		&b2.Bosh{
 			Exit:        exit,
 			UI:          ui,
-			StateDir:    config.StateDir,
+			StateDir:    config.StateBosh,
 			Provisioner: provision.NewController(),
 			Analytics:   analyticsClient,
 		},
@@ -129,7 +129,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Host: &host.Host{},
 			CFDevD: &network.CFDevD{
 				ExecutablePath: filepath.Join(config.CacheDir, "cfdevd"),
-				TimeSyncSocket: filepath.Join(config.StateDir, "00000003.0000f3a4"),
+				TimeSyncSocket: filepath.Join(config.StateLinuxkit, "00000003.0000f3a4"),
 			},
 			VpnKit:      vpnkit,
 			AnalyticsD:  analyticsD,

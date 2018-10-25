@@ -52,7 +52,7 @@ func (v *VpnKit) daemonSpec() daemon.DaemonSpec {
 			path.Join(v.Config.CacheDir, "vpnkit"),
 			"--ethernet", path.Join(v.Config.VpnKitStateDir, "vpnkit_eth.sock"),
 			"--port", path.Join(v.Config.VpnKitStateDir, "vpnkit_port.sock"),
-			"--vsock-path", path.Join(v.Config.StateDir, "connect"),
+			"--vsock-path", path.Join(v.Config.StateLinuxkit, "connect"),
 			"--http", path.Join(v.Config.VpnKitStateDir, "http_proxy.json"),
 			"--host-names", "host.cfdev.sh",
 		},

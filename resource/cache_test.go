@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -32,7 +33,7 @@ func (m *MockProgress) End()                        { m.EndCalled = true }
 func (m *MockProgress) SetLastCompleted()			{m.CurrentLastCompleted = m.Current}
 func (m *MockProgress) ResetCurrent()			{m.Current = m.CurrentLastCompleted; m.LastPercentage = m.LastPercentage + 1}
 
-var _ = Describe("Cache Sync", func() {
+var _ = FDescribe("Cache Sync", func() {
 
 	var (
 		tmpDir       string
@@ -94,6 +95,7 @@ var _ = Describe("Cache Sync", func() {
 
 		createFile(tmpDir, "second-resource", "wrong-content")
 		createFile(tmpDir, "third-resource", "content")
+		createTarFile(tmpDir, "tar-resource", "tar-content")
 
 		cache = &resource.Cache{
 			Dir: tmpDir,
@@ -191,6 +193,23 @@ var _ = Describe("Cache Sync", func() {
 
 		Expect(mockProgress.Total).To(Equal(uint64(7)))
 		Expect(mockProgress.Current).To(Equal(uint64(7)))
+	})
+
+	It("untars files if needed", func(){
+		md5, err := resource.MD5(filepath.Join(tmpDir, "tar-resource.tgz"))
+		Expect(err).NotTo(HaveOccurred())
+
+		catalog = resource.Catalog{Items: []resource.Item{{
+			Name:  "tar-resource",
+			URL:   fmt.Sprintf("file://%s/tar-resource.tgz", tmpDir),
+			MD5:   md5,
+			Size:  7,
+			InUse: true,
+		}}}
+
+		b, err := ioutil.ReadFile(filepath.Join(tmpDir, "tar-resource"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(b)).To(Equal("tar-content"))
 	})
 
 	Context("when unknown resources are present", func() {
@@ -342,6 +361,12 @@ func createFile(dir, name, contents string) {
 	filename := filepath.Join(dir, name)
 	err := ioutil.WriteFile(filename, []byte(contents), 0777)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+}
+
+func createTarFile(dir, name, contents string){
+	createFile(dir, name, contents)
+	output, err := exec.Command("tar", "czvf", filepath.Join(dir, name+".tgz"), "-C", dir, name).CombinedOutput()
+	ExpectWithOffset(1, err).NotTo(HaveOccurred(), string(output))
 }
 
 type download struct {

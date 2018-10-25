@@ -19,30 +19,6 @@ var (
 	cfdepsMd5  string
 	cfdepsSize string
 
-	cfdevefiUrl  string
-	cfdevefiMd5  string
-	cfdevefiSize string
-
-	vpnkitUrl  string
-	vpnkitMd5  string
-	vpnkitSize string
-
-	hyperkitUrl  string
-	hyperkitMd5  string
-	hyperkitSize string
-
-	linuxkitUrl  string
-	linuxkitMd5  string
-	linuxkitSize string
-
-	qcowtoolUrl  string
-	qcowtoolMd5  string
-	qcowtoolSize string
-
-	uefiUrl  string
-	uefiMd5  string
-	uefiSize string
-
 	cfdevdUrl  string
 	cfdevdMd5  string
 	cfdevdSize string
@@ -61,6 +37,8 @@ type Config struct {
 	HostIP                 string
 	CFDevHome              string
 	StateDir               string
+	StateBosh              string
+	StateLinuxkit          string
 	CacheDir               string
 	VpnKitStateDir         string
 	Dependencies           resource.Catalog
@@ -81,9 +59,11 @@ func NewConfig() (Config, error) {
 	return Config{
 		BoshDirectorIP:         "10.245.0.2",
 		CFRouterIP:             "10.144.0.34",
-		HostIP:					"192.168.65.2",
+		HostIP:                 "192.168.65.2",
 		CFDevHome:              cfdevHome,
-		StateDir:               filepath.Join(cfdevHome, "state", "linuxkit"),
+		StateDir:               filepath.Join(cfdevHome, "state"),
+		StateBosh:              filepath.Join(cfdevHome, "state", "bosh"),
+		StateLinuxkit:          filepath.Join(cfdevHome, "state", "linuxkit"),
 		CacheDir:               filepath.Join(cfdevHome, "cache"),
 		VpnKitStateDir:         filepath.Join(cfdevHome, "state", "vpnkit"),
 		Dependencies:           catalog,
@@ -117,51 +97,9 @@ func catalog() (resource.Catalog, error) {
 		Items: []resource.Item{
 			{
 				URL:   cfdepsUrl,
-				Name:  "cf-deps.iso",
+				Name:  "cfdev-deps.tgz",
 				MD5:   cfdepsMd5,
 				Size:  aToUint64(cfdepsSize),
-				InUse: true,
-			},
-			{
-				URL:   cfdevefiUrl,
-				Name:  "cfdev-efi.iso",
-				MD5:   cfdevefiMd5,
-				Size:  aToUint64(cfdevefiSize),
-				InUse: true,
-			},
-			{
-				URL:   vpnkitUrl,
-				Name:  "vpnkit",
-				MD5:   vpnkitMd5,
-				Size:  aToUint64(vpnkitSize),
-				InUse: true,
-			},
-			{
-				URL:   hyperkitUrl,
-				Name:  "hyperkit",
-				MD5:   hyperkitMd5,
-				Size:  aToUint64(hyperkitSize),
-				InUse: true,
-			},
-			{
-				URL:   linuxkitUrl,
-				Name:  "linuxkit",
-				MD5:   linuxkitMd5,
-				Size:  aToUint64(linuxkitSize),
-				InUse: true,
-			},
-			{
-				URL:   qcowtoolUrl,
-				Name:  "qcow-tool",
-				MD5:   qcowtoolMd5,
-				Size:  aToUint64(qcowtoolSize),
-				InUse: true,
-			},
-			{
-				URL:   uefiUrl,
-				Name:  "UEFI.fd",
-				MD5:   uefiMd5,
-				Size:  aToUint64(uefiSize),
 				InUse: true,
 			},
 			{

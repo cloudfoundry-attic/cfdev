@@ -60,7 +60,7 @@ var _ = Describe("env", func() {
 	})
 
 	Describe("SetupHomeDir", func() {
-		var dir, homeDir, cacheDir, stateDir, vpnkitStateDir string
+		var dir, homeDir, cacheDir, stateDir, boshDir, linuxkitDir, vpnkitStateDir string
 		var err error
 		var conf config.Config
 
@@ -71,13 +71,17 @@ var _ = Describe("env", func() {
 			homeDir = filepath.Join(dir, "some-cfdev-home")
 			cacheDir = filepath.Join(dir, "some-cache-dir")
 			stateDir = filepath.Join(dir, "some-state-dir")
-			vpnkitStateDir = filepath.Join(dir, "some-vpnkit-state-dir")
+			boshDir = filepath.Join(stateDir, "some-bosh-state-dir")
+			linuxkitDir = filepath.Join(stateDir, "some-linuxkit-state-dir")
+			vpnkitStateDir = filepath.Join(stateDir, "some-vpnkit-state-dir")
 
 			conf = config.Config{
-				CFDevHome: homeDir,
-				CacheDir:  cacheDir,
-				StateDir:  stateDir,
-				VpnKitStateDir:  vpnkitStateDir,
+				CFDevHome:      homeDir,
+				StateDir:       stateDir,
+				StateBosh:      boshDir,
+				StateLinuxkit:  linuxkitDir,
+				CacheDir:       cacheDir,
+				VpnKitStateDir: vpnkitStateDir,
 			}
 		})
 
@@ -100,7 +104,7 @@ var _ = Describe("env", func() {
 		Context("when there is already state in the home dir", func() {
 			var oldFile, oldDir string
 
-			BeforeEach(func(){
+			BeforeEach(func() {
 				oldFile = filepath.Join(stateDir, "some-file")
 				oldDir = filepath.Join(stateDir, "some-dir")
 
@@ -108,17 +112,47 @@ var _ = Describe("env", func() {
 				Expect(os.Mkdir(cacheDir, 0755)).To(Succeed())
 				Expect(os.Mkdir(stateDir, 0755)).To(Succeed())
 
+				boshStateJson := filepath.Join(cacheDir, "state.json")
+				Expect(ioutil.WriteFile(boshStateJson, []byte("state"), 0600)).To(Succeed())
+
+				boshCreds := filepath.Join(cacheDir, "creds.yml")
+				Expect(ioutil.WriteFile(boshCreds, []byte("creds"), 0600)).To(Succeed())
+
+				fpath := filepath.Join(cacheDir, "disk.qcow2")
+				Expect(ioutil.WriteFile(fpath, []byte("tmp-disk"), 0600)).To(Succeed())
+
 				Expect(ioutil.WriteFile(oldFile, []byte{}, 0644)).To(Succeed())
 				Expect(os.Mkdir(oldDir, 0755)).To(Succeed())
 				Expect(ioutil.WriteFile(filepath.Join(oldDir, "some-other-file"), []byte{}, 0400)).To(Succeed())
 			})
 
-			It("cleans out the state dir", func() {
+			It("cleans out the state dir but preserves qcow disk", func() {
 				Expect(env.SetupHomeDir(conf)).To(Succeed())
+
 				_, err := os.Stat(oldFile)
 				Expect(os.IsNotExist(err)).To(BeTrue())
 				_, err = os.Stat(oldDir)
 				Expect(os.IsNotExist(err)).To(BeTrue())
+
+				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("tmp-disk"))
+			})
+
+			It("moves bosh state", func() {
+				Expect(env.SetupHomeDir(conf)).To(Succeed())
+
+				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "state.json"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("state"))
+			})
+
+			It("moves bosh creds", func() {
+				Expect(env.SetupHomeDir(conf)).To(Succeed())
+
+				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "creds.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("creds"))
 			})
 		})
 
@@ -147,4 +181,3 @@ var _ = Describe("env", func() {
 		})
 	})
 })
-
