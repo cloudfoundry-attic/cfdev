@@ -59,7 +59,7 @@ var _ = Describe("env", func() {
 		})
 	})
 
-	Describe("SetupHomeDir", func() {
+	Describe("CreateDirs", func() {
 		var dir, homeDir, cacheDir, stateDir, boshDir, linuxkitDir, vpnkitStateDir string
 		var err error
 		var conf config.Config
@@ -90,7 +90,7 @@ var _ = Describe("env", func() {
 		})
 
 		It("creates home, state, and cache dirs", func() {
-			Expect(env.SetupHomeDir(conf)).To(Succeed())
+			Expect(env.CreateDirs(conf)).To(Succeed())
 			_, err := os.Stat(homeDir)
 			Expect(err).NotTo(HaveOccurred())
 			_, err = os.Stat(cacheDir)
@@ -127,7 +127,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("cleans out the state dir but preserves qcow disk", func() {
-				Expect(env.SetupHomeDir(conf)).To(Succeed())
+				Expect(env.CreateDirs(conf)).To(Succeed())
+				Expect(env.SetupState(conf)).To(Succeed())
 
 				_, err := os.Stat(oldFile)
 				Expect(os.IsNotExist(err)).To(BeTrue())
@@ -140,7 +141,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("moves bosh state", func() {
-				Expect(env.SetupHomeDir(conf)).To(Succeed())
+				Expect(env.CreateDirs(conf)).To(Succeed())
+				Expect(env.SetupState(conf)).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "state.json"))
 				Expect(err).ToNot(HaveOccurred())
@@ -148,7 +150,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("moves bosh creds", func() {
-				Expect(env.SetupHomeDir(conf)).To(Succeed())
+				Expect(env.CreateDirs(conf)).To(Succeed())
+				Expect(env.SetupState(conf)).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "creds.yml"))
 				Expect(err).ToNot(HaveOccurred())
@@ -162,7 +165,7 @@ var _ = Describe("env", func() {
 			})
 
 			It("returns an error", func() {
-				err := env.SetupHomeDir(conf)
+				err := env.CreateDirs(conf)
 				Expect(err.Error()).
 					To(ContainSubstring(fmt.Sprintf("failed to create cfdev home dir: path %s", homeDir)))
 			})
@@ -174,7 +177,7 @@ var _ = Describe("env", func() {
 			})
 
 			It("returns an error", func() {
-				err := env.SetupHomeDir(conf)
+				err := env.CreateDirs(conf)
 				Expect(err.Error()).
 					To(ContainSubstring(fmt.Sprintf("failed to create cache dir: path %s", cacheDir)))
 			})

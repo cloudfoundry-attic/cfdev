@@ -40,7 +40,7 @@ func (d *Download) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(128)
 	}()
 
-	if err := env.SetupHomeDir(d.Config); err != nil {
+	if err := env.CreateDirs(d.Config); err != nil {
 		return errors.SafeWrap(err, "setup for download")
 	}
 

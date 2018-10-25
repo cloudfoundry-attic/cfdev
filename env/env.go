@@ -1,6 +1,7 @@
 package env
 
 import (
+	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"io"
 	"os"
@@ -54,7 +55,7 @@ func BuildProxyConfig(boshDirectorIP string, cfRouterIP string, hostIP string) P
 	return proxyConfig
 }
 
-func SetupHomeDir(config config.Config) error {
+func CreateDirs(config config.Config) error {
 	if err := os.MkdirAll(config.CFDevHome, 0755); err != nil {
 		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CFDevHome, err), "failed to create cfdev home dir")
 	}
@@ -79,7 +80,17 @@ func SetupHomeDir(config config.Config) error {
 		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.StateBosh), err), "failed to create state dir")
 	}
 
-	err := moveFile(filepath.Join(config.CacheDir, "disk.qcow2"), filepath.Join(config.StateLinuxkit, "disk.qcow2"))
+	return nil
+}
+
+func SetupState(config config.Config) error {
+	f, err := os.Open(filepath.Join(config.CacheDir, "cfdev-deps.tgz"))
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	err = resource.Untar(config.StateLinuxkit, f, resource.TarOpts{Include: "disk.qcow2"})
 	if err != nil {
 		return err
 	}

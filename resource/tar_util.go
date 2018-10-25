@@ -8,8 +8,12 @@ import (
 	"path/filepath"
 )
 
-func Untar(dst string, r io.Reader) error {
+type TarOpts struct {
+	Include string
+	Exclude string
+}
 
+func Untar(dst string, r io.Reader, opts TarOpts) error {
 	gzr, err := gzip.NewReader(r)
 	if err != nil {
 		return err
@@ -40,6 +44,13 @@ func Untar(dst string, r io.Reader) error {
 				}
 			}
 		case tar.TypeReg:
+			switch {
+			case opts.Include != "" && filepath.Base(header.Name) != opts.Include:
+				continue
+			case opts.Exclude != "" && filepath.Base(header.Name) == opts.Exclude:
+				continue
+			}
+
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err

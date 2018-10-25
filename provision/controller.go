@@ -3,6 +3,8 @@ package provision
 import (
 	garden "code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
+	"context"
+	"github.com/aemengo/bosh-runc-cpi/client"
 )
 
 type Controller struct {
@@ -16,5 +18,7 @@ func NewController() *Controller {
 }
 
 func (c *Controller) Ping() error {
-	return c.Client.Ping()
+	ctx := context.Background()
+	return client.Ping(ctx, "127.0.0.1:9999")
 }
+

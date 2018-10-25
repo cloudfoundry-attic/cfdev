@@ -87,7 +87,7 @@ func (c *Cache) download(item *Item) error {
 		}
 		defer f.Close()
 
-		return Untar(c.Dir, f)
+		return Untar(c.Dir, f, TarOpts{Exclude: "disk.qcow2"})
 	}
 
 	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)
@@ -114,7 +114,7 @@ func (c *Cache) download(item *Item) error {
 	}
 	defer f.Close()
 
-	return Untar(c.Dir, f)
+	return Untar(c.Dir, f, TarOpts{Exclude: "disk.qcow2"})
 }
 
 func IsTar(path string) bool {

@@ -2,20 +2,19 @@ package start
 
 import (
 	"io"
+	"time"
 
 	"code.cloudfoundry.org/cfdev/iso"
 
+	"code.cloudfoundry.org/cfdev/config"
+	e "code.cloudfoundry.org/cfdev/errors"
+	"code.cloudfoundry.org/cfdev/provision"
+	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
+	"github.com/spf13/cobra"
 	"net/url"
 	"os"
 	"strings"
-	"time"
-
-	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/provision"
-	"code.cloudfoundry.org/cfdev/resource"
-	"github.com/spf13/cobra"
 
 	"path/filepath"
 	"text/template"
@@ -152,7 +151,7 @@ func (s *Start) Cmd() *cobra.Command {
 		Use: "start",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := s.Execute(args); err != nil {
-				return errors.SafeWrap(err, "cf dev start")
+				return e.SafeWrap(err, "cf dev start")
 			}
 			return nil
 		},
@@ -190,7 +189,7 @@ func (s *Start) Execute(args Args) error {
 		var err error
 		depsIsoPath, err = filepath.Abs(args.DepsIsoPath)
 		if err != nil {
-			return errors.SafeWrap(err, "determining absolute path to deps iso")
+			return e.SafeWrap(err, "determining absolute path to deps iso")
 		}
 		if _, err := os.Stat(depsIsoPath); os.IsNotExist(err) {
 			return fmt.Errorf("no file found at: %s", depsIsoPath)
@@ -216,7 +215,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	if running, err := s.Hypervisor.IsRunning("cfdev"); err != nil {
-		return errors.SafeWrap(err, "is running")
+		return e.SafeWrap(err, "is running")
 	} else if running {
 		s.UI.Say("CF Dev is already running...")
 		s.Analytics.Event(cfanalytics.START_END, map[string]interface{}{"alreadyrunning": true})
@@ -224,11 +223,11 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	if err := s.Stop.RunE(nil, nil); err != nil {
-		return errors.SafeWrap(err, "stopping cfdev")
+		return e.SafeWrap(err, "stopping cfdev")
 	}
 
-	if err := env.SetupHomeDir(s.Config); err != nil {
-		return errors.SafeWrap(err, "setting up cfdev home dir")
+	if err := env.CreateDirs(s.Config); err != nil {
+		return e.SafeWrap(err, "setting up cfdev home dir")
 	}
 
 	if cfdevd := s.Config.Dependencies.Lookup("cfdevd"); cfdevd != nil {
@@ -236,7 +235,7 @@ func (s *Start) Execute(args Args) error {
 		if err := s.Cache.Sync(resource.Catalog{
 			Items: []resource.Item{*cfdevd},
 		}); err != nil {
-			return errors.SafeWrap(err, "Unable to download network helper")
+			return e.SafeWrap(err, "Unable to download network helper")
 		}
 		s.Config.Dependencies.Remove("cfdevd")
 	}
@@ -246,22 +245,27 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	if err := s.HostNet.AddLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
-		return errors.SafeWrap(err, "adding aliases")
+		return e.SafeWrap(err, "adding aliases")
 	}
 
 	registries, err := s.parseDockerRegistriesFlag(args.Registries)
 	if err != nil {
-		return errors.SafeWrap(err, "Unable to parse docker registries")
+		return e.SafeWrap(err, "Unable to parse docker registries")
 	}
 
 	s.UI.Say("Downloading Resources...")
 	if err := s.Cache.Sync(s.Config.Dependencies); err != nil {
-		return errors.SafeWrap(err, "Unable to sync assets")
+		return e.SafeWrap(err, "Unable to sync assets")
+	}
+
+	s.UI.Say("Setting State...")
+	if err := env.SetupState(s.Config); err != nil {
+		return e.SafeWrap(err, "Unable to setup directories")
 	}
 
 	isoConfig, err := s.IsoReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
 		if err != nil {
-		return errors.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsIsoName))
+		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsIsoName))
 	}
 	if isoConfig.Version != compatibilityVersion {
 		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsIsoName)
@@ -276,7 +280,7 @@ func (s *Start) Execute(args Args) error {
 
 	if args.DeploySingleService != "" {
 		if !s.isServiceSupported(args.DeploySingleService, isoConfig.Services) {
-			return errors.SafeWrap(err, fmt.Sprintf("Service: '%v' is not supported", args.DeploySingleService))
+			return e.SafeWrap(err, fmt.Sprintf("Service: '%v' is not supported", args.DeploySingleService))
 		}
 		s.Analytics.Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": args.DeploySingleService})
 	}
@@ -293,24 +297,24 @@ func (s *Start) Execute(args Args) error {
 		MemoryMB: memoryToAllocate,
 		DepsIso:  filepath.Join(s.Config.CacheDir, "cfdev-efi-v2.iso"),
 	}); err != nil {
-		return errors.SafeWrap(err, "creating the vm")
+		return e.SafeWrap(err, "creating the vm")
 	}
 	s.UI.Say("Starting VPNKit...")
 	if err := s.VpnKit.Start(); err != nil {
-		return errors.SafeWrap(err, "starting vpnkit")
+		return e.SafeWrap(err, "starting vpnkit")
 	}
 	s.VpnKit.Watch(s.LocalExit)
 
 	s.UI.Say("Starting the VM...")
 	if err := s.Hypervisor.Start("cfdev"); err != nil {
-		return errors.SafeWrap(err, "starting the vm")
+		return e.SafeWrap(err, "starting the vm")
 	}
 
-	fmt.Println("Anthony is stopping this prematurely....")
-	os.Exit(0)
-
-	s.UI.Say("Waiting for Garden...")
-	s.waitForGarden()
+	s.UI.Say("Waiting for the VM...")
+	err = s.waitForGarden()
+	if err != nil {
+		return e.SafeWrap(err, "Timed out waiting for the VM")
+	}
 
 	if args.NoProvision {
 		s.UI.Say("VM will not be provisioned because '-n' (no-provision) flag was specified.")
@@ -333,41 +337,47 @@ func (s *Start) Execute(args Args) error {
 func (s *Start) provision(isoConfig iso.Metadata, registries []string, deploySingleService string) error {
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := s.Provisioner.DeployBosh(); err != nil {
-		return errors.SafeWrap(err, "Failed to deploy the BOSH Director")
+		return e.SafeWrap(err, "Failed to deploy the BOSH Director")
 	}
 
 	s.UI.Say("Deploying CF...")
 	s.Provisioner.ReportProgress(s.UI, "cf")
 	if err := s.Provisioner.DeployCloudFoundry(registries); err != nil {
-		return errors.SafeWrap(err, "Failed to deploy the Cloud Foundry")
+		return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
 	services, err := s.Provisioner.WhiteListServices(deploySingleService, isoConfig.Services)
 	if err != nil {
-		return errors.SafeWrap(err, "Failed to whitelist services")
+		return e.SafeWrap(err, "Failed to whitelist services")
 	}
 
 	if err := s.Provisioner.DeployServices(s.UI, services); err != nil {
-		return errors.SafeWrap(err, "Failed to deploy services")
+		return e.SafeWrap(err, "Failed to deploy services")
 	}
 
 	if isoConfig.Message != "" {
 		t := template.Must(template.New("message").Parse(isoConfig.Message))
 		err := t.Execute(s.UI.Writer(), map[string]string{"SYSTEM_DOMAIN": "dev.cfdev.sh"})
 		if err != nil {
-			return errors.SafeWrap(err, "Failed to print deps file provided message")
+			return e.SafeWrap(err, "Failed to print deps file provided message")
 		}
 	}
 	return nil
 }
 
-func (s *Start) waitForGarden() {
-	for {
-		if err := s.Provisioner.Ping(); err == nil {
-			return
+func (s *Start) waitForGarden() error {
+	timeout := 120
+	var err error
+	for i:=0; i<timeout; i++ {
+		err = s.Provisioner.Ping()
+		if err == nil {
+			return nil
 		}
-		time.Sleep(time.Second)
+
+		time.Sleep(1 * time.Second)
 	}
+
+	return err
 }
 
 func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
@@ -417,7 +427,7 @@ func (s *Start) allocateMemory(isoConfig iso.Metadata, requestedMem int) (int, e
 
 	availableMem, err := s.Profiler.GetAvailableMemory()
 	if err != nil {
-		return 0, errors.SafeWrap(err, "error retrieving available system memory")
+		return 0, e.SafeWrap(err, "error retrieving available system memory")
 	}
 
 	customMemProvided := requestedMem > 0
