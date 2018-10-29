@@ -18,6 +18,7 @@ require (
 	github.com/cloudfoundry/bosh-cli v5.2.1+incompatible
 	github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
+	github.com/cloudfoundry/gosigar v1.1.0
 	github.com/cloudfoundry/socks5-proxy v0.0.0-20180530211953-3659db090cb2 // indirect
 	github.com/cppforlife/go-patch v0.0.0-20171006213518-250da0e0e68c // indirect
 	github.com/cppforlife/go-semi-semantic v0.0.0-20160921010311-576b6af77ae4 // indirect

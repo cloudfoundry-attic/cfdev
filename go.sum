@@ -34,6 +34,8 @@ github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455 h1:iLnjvzw
 github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455/go.mod h1:JCrKwetZGjxbfq1U139TZuXDBfdGLtjOEAfxMWKV/QM=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e h1:FQdRViaoDphGRfgrotl2QGsX1gbloe57dbGBS5CG6KY=
 github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e/go.mod h1:PXmcacyJB/pJjSxEl15IU6rEIKXrhZQRzsr0UTkgNNs=
+github.com/cloudfoundry/gosigar v1.1.0 h1:V/dVCzhKOdIU3WRB5inQU20s4yIgL9Dxx/Mhi0SF8eM=
+github.com/cloudfoundry/gosigar v1.1.0/go.mod h1:3qLfc2GlfmwOx2+ZDaRGH3Y9fwQ0sQeaAleo2GV5pH0=
 github.com/cloudfoundry/socks5-proxy v0.0.0-20180530211953-3659db090cb2 h1:9j2KbUEQn5E7MEV3enSrkJTrBC0iDbosW5gXX+Z+dLE=
 github.com/cloudfoundry/socks5-proxy v0.0.0-20180530211953-3659db090cb2/go.mod h1:0a+Ghg38uB86Dx+de84dFSkILTnBHzCpFMRnjHgSzi4=
 github.com/cppforlife/go-patch v0.0.0-20171006213518-250da0e0e68c h1:L6Qwcfk/qeD05lCaMxjhn8fCKNAVEWOBn1vqU7KJHtk=

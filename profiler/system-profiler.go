@@ -1,31 +1,26 @@
 package profiler
 
 import (
-	"github.com/shirou/gopsutil/mem"
-	"runtime"
+	"github.com/cloudfoundry/gosigar"
 )
+
+const bytesInMegabyte = 1048576
 
 type SystemProfiler struct {
 }
 
-func (s *SystemProfiler)GetAvailableMemory() (uint64, error){
-	virtualMemory, err := mem.VirtualMemory()
-	if err != nil {
+func (s *SystemProfiler) GetAvailableMemory() (uint64, error) {
+	mem := &sigar.Mem{}
+	if err := mem.Get(); err != nil {
 		return 0, err
 	}
-
-	if runtime.GOOS == "windows" {
-		return virtualMemory.Available / 1000000, nil
-	}
-
-	return virtualMemory.Free / 1000000, nil
+	return mem.ActualFree / bytesInMegabyte, nil
 }
 
-func (s *SystemProfiler)GetTotalMemory()(uint64, error){
-	virtualMemory, err := mem.VirtualMemory()
-	if err != nil {
+func (s *SystemProfiler) GetTotalMemory() (uint64, error) {
+	mem := &sigar.Mem{}
+	if err := mem.Get(); err != nil {
 		return 0, err
 	}
-
-	return virtualMemory.Total/1000000, nil
+	return mem.Total / bytesInMegabyte, nil
 }
