@@ -1,6 +1,7 @@
 package provision_test
 
 import (
+	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/provision"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,7 +14,8 @@ var _ = Describe("When progress whitelist is called with", func() {
 	)
 
 	BeforeEach(func() {
-		c = provision.NewController()
+		//TODO: CONFIG IS GOING TO FAIL
+		c = provision.NewController(config.Config{})
 
 		services = []provision.Service{
 			{

@@ -1,60 +1,24 @@
 package provision
 
 import (
-	"fmt"
-
-	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/garden"
+	"os/exec"
+	"path/filepath"
 )
 
 func (c *Controller) DeployBosh() error {
-	containerSpec := garden.ContainerSpec{
-		Handle:     "deploy-bosh",
-		Privileged: true,
-		Network:    "10.246.0.0/16",
-		Image: garden.ImageRef{
-			URI: "/var/vcap/cache/workspace.tar",
-		},
-		BindMounts: []garden.BindMount{
-			{
-				SrcPath: "/var/vcap",
-				DstPath: "/var/vcap",
-				Mode:    garden.BindMountModeRW,
-			},
-			{
-				SrcPath: "/var/vcap/cache",
-				DstPath: "/var/vcap/cache",
-				Mode:    garden.BindMountModeRO,
-			},
-		},
-	}
+	cmd := exec.Command(
+		"bosh",
+		"create-env",
+		filepath.Join(c.Config.CacheDir,"director.yml"),
+		"--state",
+		filepath.Join(c.Config.StateBosh,"state.json"),
+		"--vars-store",
+		filepath.Join(c.Config.StateBosh,"creds.yml"))
 
-	container, err := c.Client.Create(containerSpec)
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
-
-	process, err := container.Run(garden.ProcessSpec{
-		ID:   "deploy-bosh",
-		Path: "/bin/bash",
-		Args: []string{"/var/vcap/cache/bin/deploy-bosh"},
-		User: "root",
-	}, garden.ProcessIO{})
-
-	if err != nil {
-		return err
-	}
-
-	exitCode, err := process.Wait()
-	if err != nil {
-		return err
-	}
-
-	if exitCode != 0 {
-		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %v", exitCode))
-	}
-
-	c.Client.Destroy("deploy-bosh")
 
 	return nil
 }

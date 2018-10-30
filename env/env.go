@@ -105,6 +105,21 @@ func SetupState(config config.Config) error {
 		return err
 	}
 
+	err = moveFile(filepath.Join(config.CacheDir, "secret"), filepath.Join(config.StateBosh, "secret"))
+	if err != nil {
+		return err
+	}
+
+	err = moveFile(filepath.Join(config.CacheDir, "jumpbox.key"), filepath.Join(config.StateBosh, "jumpbox.key"))
+	if err != nil {
+		return err
+	}
+
+	err = moveFile(filepath.Join(config.CacheDir, "ca.crt"), filepath.Join(config.StateBosh, "ca.crt"))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

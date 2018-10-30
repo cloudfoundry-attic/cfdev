@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"code.cloudfoundry.org/cfdev/config"
 	garden "code.cloudfoundry.org/garden/client"
 	"code.cloudfoundry.org/garden/client/connection"
 	"context"
@@ -9,11 +10,13 @@ import (
 
 type Controller struct {
 	Client garden.Client
+	Config config.Config
 }
 
-func NewController() *Controller {
+func NewController(config config.Config) *Controller {
 	return &Controller{
 		Client: garden.New(connection.New("tcp", "localhost:8888")),
+		Config: config,
 	}
 }
 

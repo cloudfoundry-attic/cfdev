@@ -118,6 +118,15 @@ var _ = Describe("env", func() {
 				boshCreds := filepath.Join(cacheDir, "creds.yml")
 				Expect(ioutil.WriteFile(boshCreds, []byte("creds"), 0600)).To(Succeed())
 
+				boshSecret := filepath.Join(cacheDir, "secret")
+				Expect(ioutil.WriteFile(boshSecret, []byte("some-bosh-secret"), 0600)).To(Succeed())
+
+				boshJumpboxKey := filepath.Join(cacheDir, "jumpbox.key")
+				Expect(ioutil.WriteFile(boshJumpboxKey, []byte("some-bosh-jumpbox-key"), 0600)).To(Succeed())
+
+				boshCaCert := filepath.Join(cacheDir, "ca.crt")
+				Expect(ioutil.WriteFile(boshCaCert, []byte("some-bosh-ca-cert"), 0600)).To(Succeed())
+
 				fpath := filepath.Join(cacheDir, "disk.qcow2")
 				Expect(ioutil.WriteFile(fpath, []byte("tmp-disk"), 0600)).To(Succeed())
 
@@ -156,6 +165,23 @@ var _ = Describe("env", func() {
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "creds.yml"))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(string(b)).To(Equal("creds"))
+			})
+
+			It("moves bosh environment variables", func() {
+				Expect(env.CreateDirs(conf)).To(Succeed())
+				Expect(env.SetupState(conf)).To(Succeed())
+
+				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "jumpbox.key"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("some-bosh-jumpbox-key"))
+
+				b, err = ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "ca.crt"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("some-bosh-ca-cert"))
+
+				b, err = ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "secret"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("some-bosh-secret"))
 			})
 		})
 

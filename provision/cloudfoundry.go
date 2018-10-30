@@ -1,72 +1,46 @@
 package provision
 
 import (
-	"fmt"
-
-	yaml "gopkg.in/yaml.v2"
-
-	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/garden"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 func (c *Controller) DeployCloudFoundry(dockerRegistries []string) error {
-	containerSpec := garden.ContainerSpec{
-		Handle:     "deploy-cf",
-		Privileged: true,
-		Network:    "10.246.0.0/16",
-		Image: garden.ImageRef{
-			URI: "/var/vcap/cache/workspace.tar",
-		},
-		BindMounts: []garden.BindMount{
-			{
-				SrcPath: "/var/vcap",
-				DstPath: "/var/vcap",
-				Mode:    garden.BindMountModeRW,
-			},
-			{
-				SrcPath: "/var/vcap/cache",
-				DstPath: "/var/vcap/cache",
-				Mode:    garden.BindMountModeRO,
-			},
-		},
-	}
+	cmd := exec.Command(
+		"bosh", "-n",
+		"-d", "cf",
+		"deploy",
+		filepath.Join(c.Config.CacheDir, "cf.yml"),
+		"--vars-store", filepath.Join(c.Config.StateBosh, "creds.yml"))
 
-	if len(dockerRegistries) > 0 {
-		bytes, err := yaml.Marshal(dockerRegistries)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, c.boshEnvs()...)
 
-		if err != nil {
-			return err
-		}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-		containerSpec.Env = append(containerSpec.Env, "DOCKER_REGISTRIES="+string(bytes))
-	}
-
-	container, err := c.Client.Create(containerSpec)
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
-
-	process, err := container.Run(garden.ProcessSpec{
-		ID:   "deploy-cf",
-		Path: "/bin/bash",
-		Args: []string{"/var/vcap/cache/bin/deploy-cf"},
-		User: "root",
-	}, garden.ProcessIO{})
-
-	if err != nil {
-		return err
-	}
-
-	exitCode, err := process.Wait()
-	if err != nil {
-		return err
-	}
-
-	if exitCode != 0 {
-		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %d", exitCode))
-	}
-
-	c.Client.Destroy("deploy-cf")
 
 	return nil
+}
+
+func (c *Controller) boshEnvs() []string {
+	content, _ := ioutil.ReadFile(filepath.Join(c.Config.StateBosh, "secret"))
+	secret := strings.TrimSpace(string(content))
+
+	return []string{
+		"BOSH_ENVIRONMENT=10.0.0.4",
+		"BOSH_CLIENT=admin",
+		"BOSH_CLIENT_SECRET=" + secret,
+		"BOSH_CA_CERT=" + filepath.Join(c.Config.StateBosh, "ca.crt"),
+		"BOSH_GW_HOST=10.0.0.4",
+		"BOSH_GW_USER=jumpbox",
+		"BOSH_GW_PRIVATE_KEY=" + filepath.Join(c.Config.StateBosh, "jumpbox.key"),
+	}
 }

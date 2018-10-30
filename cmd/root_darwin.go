@@ -103,7 +103,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Exit:        exit,
 			UI:          ui,
 			StateDir:    config.StateBosh,
-			Provisioner: provision.NewController(),
+			Provisioner: provision.NewController(config),
 			Analytics:   analyticsClient,
 		},
 		&b3.Catalog{
@@ -134,7 +134,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			VpnKit:      vpnkit,
 			AnalyticsD:  analyticsD,
 			Hypervisor:  linuxkit,
-			Provisioner: provision.NewController(),
+			Provisioner: provision.NewController(config),
 			IsoReader:   isoReader,
 			Stop: &b6.Stop{
 				Config:     config,
@@ -168,7 +168,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD:      analyticsD,
 		},
 		&b8.Logs{
-			Provisioner: provision.NewController(),
+			Provisioner: provision.NewController(config),
 			UI:          ui,
 		},
 	} {
