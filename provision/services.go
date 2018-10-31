@@ -3,42 +3,24 @@ package provision
 import (
 	"archive/tar"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
+	"os/exec"
 
-	yaml "gopkg.in/yaml.v2"
-
-	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/garden"
 )
 
-func (c *Controller) DeployService(handle, script string) error {
-	container, err := c.Client.Create(containerSpec(handle))
+func (c *Controller) DeployService(handle, serviceManifest string) error {
+	cmd := exec.Command(
+		"bosh",
+		"-d",
+		serviceManifest)
+
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
-
-	process, err := container.Run(garden.ProcessSpec{
-		ID:   handle,
-		Path: "/bin/bash",
-		Args: []string{fmt.Sprintf("/var/vcap/cache/%s", script)},
-		User: "root",
-	}, garden.ProcessIO{})
-
-	if err != nil {
-		return err
-	}
-
-	exitCode, err := process.Wait()
-	if err != nil {
-		return err
-	}
-
-	if exitCode != 0 {
-		return errors.SafeWrap(nil, fmt.Sprintf("process exited with status %d", exitCode))
-	}
-
-	c.Client.Destroy(handle)
 
 	return nil
 }

@@ -118,7 +118,7 @@ var _ = Describe("Start", func() {
 			AnalyticsD:      mockAnalyticsD,
 			Hypervisor:      mockHypervisor,
 			Provisioner:     mockProvisioner,
-			IsoReader:       mockIsoReader,
+			MetaDataReader:  mockIsoReader,
 			Stop:            mockStop,
 			Profiler:        mockSystemProfiler,
 		}

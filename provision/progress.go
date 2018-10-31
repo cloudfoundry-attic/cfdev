@@ -2,6 +2,7 @@ package provision
 
 import (
 	"io"
+	"path/filepath"
 	"time"
 	"strings"
 	"fmt"
@@ -59,6 +60,7 @@ func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]
 
 func (c *Controller) DeployServices(ui UI, services []Service) error {
 	config, err := c.FetchBOSHConfig()
+
 	if err != nil {
 		return err
 	}
@@ -74,8 +76,8 @@ func (c *Controller) DeployServices(ui UI, services []Service) error {
 		start := time.Now()
 		ui.Say("Deploying %s...", service.Name)
 
-		go func(handle string, script string) {
-			errChan <- c.DeployService(handle, script)
+		go func(handle string, serviceManifest string) {
+			errChan <- c.DeployService(handle, filepath.Join(c.Config.CacheDir, serviceManifest))
 		}(service.Handle, service.Script)
 
 		err := c.report(start, ui, b, service, errChan)

@@ -103,8 +103,8 @@ type Provisioner interface {
 	ReportProgress(provision.UI, string)
 }
 
-//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start IsoReader
-type IsoReader interface {
+//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
+type MetaDataReader interface {
 	Read(isoPath string) (iso.Metadata, error)
 }
 
@@ -127,7 +127,7 @@ type Start struct {
 	LocalExit       chan string
 	UI              UI
 	Config          config.Config
-	IsoReader       IsoReader
+	MetaDataReader  MetaDataReader
 	Analytics       AnalyticsClient
 	AnalyticsToggle Toggle
 	HostNet         HostNet
@@ -263,7 +263,7 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "Unable to setup directories")
 	}
 
-	isoConfig, err := s.IsoReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
+	isoConfig, err := s.MetaDataReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
 		if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsIsoName))
 	}
@@ -345,6 +345,9 @@ func (s *Start) provision(isoConfig iso.Metadata, registries []string, deploySin
 	if err := s.Provisioner.DeployCloudFoundry(registries); err != nil {
 		return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
+
+	s.UI.Say("ANTHONY IS EXITING...")
+	os.Exit(0)
 
 	services, err := s.Provisioner.WhiteListServices(deploySingleService, isoConfig.Services)
 	if err != nil {

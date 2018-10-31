@@ -15,7 +15,7 @@ type UI interface {
 	Say(message string, args ...interface{})
 }
 
-//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start IsoReader
+//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
 type IsoReader interface {
 	Read(isoPath string) (iso.Metadata, error)
 }

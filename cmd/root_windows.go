@@ -138,12 +138,12 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Host: &host.Host{
 				Powershell: &runner.Powershell{},
 			},
-			AnalyticsD:  analyticsD,
-			CFDevD:      &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
-			Hypervisor:  &hypervisor.HyperV{Config: config},
-			VpnKit:      vpnkit,
-			Provisioner: provision.NewController(),
-			IsoReader:   isoReader,
+			AnalyticsD:     analyticsD,
+			CFDevD:         &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
+			Hypervisor:     &hypervisor.HyperV{Config: config},
+			VpnKit:         vpnkit,
+			Provisioner:    provision.NewController(),
+			MetaDataReader: isoReader,
 			Stop: &b6.Stop{
 				Config:     config,
 				Analytics:  analyticsClient,
