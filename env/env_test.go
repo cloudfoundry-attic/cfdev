@@ -1,6 +1,7 @@
 package env_test
 
 import (
+	"code.cloudfoundry.org/cfdev/resource"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -60,7 +61,7 @@ var _ = Describe("env", func() {
 	})
 
 	Describe("CreateDirs", func() {
-		var dir, homeDir, cacheDir, stateDir, boshDir, linuxkitDir, vpnkitStateDir string
+		var dir, homeDir, cacheDir, stateDir, boshDir, linuxkitDir, vpnkitStateDir, servicesDir string
 		var err error
 		var conf config.Config
 
@@ -69,11 +70,12 @@ var _ = Describe("env", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			homeDir = filepath.Join(dir, "some-cfdev-home")
-			cacheDir = filepath.Join(dir, "some-cache-dir")
-			stateDir = filepath.Join(dir, "some-state-dir")
+			cacheDir = filepath.Join(homeDir, "some-cache-dir")
+			stateDir = filepath.Join(homeDir, "some-state-dir")
 			boshDir = filepath.Join(stateDir, "some-bosh-state-dir")
 			linuxkitDir = filepath.Join(stateDir, "some-linuxkit-state-dir")
 			vpnkitStateDir = filepath.Join(stateDir, "some-vpnkit-state-dir")
+			servicesDir = filepath.Join(homeDir, "services")
 
 			conf = config.Config{
 				CFDevHome:      homeDir,
@@ -93,63 +95,72 @@ var _ = Describe("env", func() {
 			Expect(env.CreateDirs(conf)).To(Succeed())
 			_, err := os.Stat(homeDir)
 			Expect(err).NotTo(HaveOccurred())
+
 			_, err = os.Stat(cacheDir)
 			Expect(err).NotTo(HaveOccurred())
+
 			_, err = os.Stat(stateDir)
 			Expect(err).NotTo(HaveOccurred())
+
+			_, err = os.Stat(linuxkitDir)
+			Expect(err).NotTo(HaveOccurred())
+
 			_, err = os.Stat(vpnkitStateDir)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		Context("when there is already state in the home dir", func() {
-			var oldFile, oldDir string
-
 			BeforeEach(func() {
-				oldFile = filepath.Join(stateDir, "some-file")
-				oldDir = filepath.Join(stateDir, "some-dir")
+				tmpDir, err := ioutil.TempDir(os.TempDir(), "tmp-tar")
+				Expect(err).ToNot(HaveOccurred())
 
 				Expect(os.Mkdir(homeDir, 0755)).To(Succeed())
 				Expect(os.Mkdir(cacheDir, 0755)).To(Succeed())
-				Expect(os.Mkdir(stateDir, 0755)).To(Succeed())
 
-				boshStateJson := filepath.Join(cacheDir, "state.json")
+				boshStateJson := filepath.Join(tmpDir, "state.json")
 				Expect(ioutil.WriteFile(boshStateJson, []byte("state"), 0600)).To(Succeed())
 
-				boshCreds := filepath.Join(cacheDir, "creds.yml")
+				boshCreds := filepath.Join(tmpDir, "creds.yml")
 				Expect(ioutil.WriteFile(boshCreds, []byte("creds"), 0600)).To(Succeed())
 
-				boshSecret := filepath.Join(cacheDir, "secret")
+				boshSecret := filepath.Join(tmpDir, "secret")
 				Expect(ioutil.WriteFile(boshSecret, []byte("some-bosh-secret"), 0600)).To(Succeed())
 
-				boshJumpboxKey := filepath.Join(cacheDir, "jumpbox.key")
+				boshJumpboxKey := filepath.Join(tmpDir, "jumpbox.key")
 				Expect(ioutil.WriteFile(boshJumpboxKey, []byte("some-bosh-jumpbox-key"), 0600)).To(Succeed())
 
-				boshCaCert := filepath.Join(cacheDir, "ca.crt")
+				boshCaCert := filepath.Join(tmpDir, "ca.crt")
 				Expect(ioutil.WriteFile(boshCaCert, []byte("some-bosh-ca-cert"), 0600)).To(Succeed())
 
-				fpath := filepath.Join(cacheDir, "disk.qcow2")
+				tmpServicesDir := filepath.Join(tmpDir, "services")
+				Expect(os.Mkdir(tmpServicesDir, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(tmpServicesDir, "service.file"), []byte("service file contents"), 0600)).To(Succeed())
+
+				fpath := filepath.Join(tmpDir, "disk.qcow2")
 				Expect(ioutil.WriteFile(fpath, []byte("tmp-disk"), 0600)).To(Succeed())
 
-				Expect(ioutil.WriteFile(oldFile, []byte{}, 0644)).To(Succeed())
-				Expect(os.Mkdir(oldDir, 0755)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(oldDir, "some-other-file"), []byte{}, 0400)).To(Succeed())
+				tarDst, err := os.Create(filepath.Join(cacheDir, "cfdev-deps.tgz"))
+				Expect(err).ToNot(HaveOccurred())
+				defer tarDst.Close()
+
+				err = resource.Tar(tmpDir, tarDst)
+				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("cleans out the state dir but preserves qcow disk", func() {
+				Expect(os.MkdirAll(filepath.Join(stateDir, "some-linuxkit-state-dir"), 0755)).To(Succeed())
+				fpath := filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2")
+				Expect(ioutil.WriteFile(fpath, []byte("old-qcow"), 0600)).To(Succeed())
+
 				Expect(env.CreateDirs(conf)).To(Succeed())
 				Expect(env.SetupState(conf)).To(Succeed())
 
-				_, err := os.Stat(oldFile)
-				Expect(os.IsNotExist(err)).To(BeTrue())
-				_, err = os.Stat(oldDir)
-				Expect(os.IsNotExist(err)).To(BeTrue())
-
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2"))
 				Expect(err).ToNot(HaveOccurred())
-				Expect(string(b)).To(Equal("tmp-disk"))
+				Expect(string(b)).To(Equal("old-qcow"))
 			})
 
-			It("moves bosh state", func() {
+			It("copies bosh state", func() {
 				Expect(env.CreateDirs(conf)).To(Succeed())
 				Expect(env.SetupState(conf)).To(Succeed())
 
@@ -158,7 +169,7 @@ var _ = Describe("env", func() {
 				Expect(string(b)).To(Equal("state"))
 			})
 
-			It("moves bosh creds", func() {
+			It("copies bosh creds", func() {
 				Expect(env.CreateDirs(conf)).To(Succeed())
 				Expect(env.SetupState(conf)).To(Succeed())
 
@@ -167,7 +178,16 @@ var _ = Describe("env", func() {
 				Expect(string(b)).To(Equal("creds"))
 			})
 
-			It("moves bosh environment variables", func() {
+			It("copies services directory", func() {
+				Expect(env.CreateDirs(conf)).To(Succeed())
+				Expect(env.SetupState(conf)).To(Succeed())
+
+				b, err := ioutil.ReadFile(filepath.Join(servicesDir, "service.file"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("service file contents"))
+			})
+
+			It("copies bosh environment variables", func() {
 				Expect(env.CreateDirs(conf)).To(Succeed())
 				Expect(env.SetupState(conf)).To(Succeed())
 
@@ -199,6 +219,7 @@ var _ = Describe("env", func() {
 
 		Context("when cache dir cannot be created", func() {
 			BeforeEach(func() {
+				Expect(os.MkdirAll(homeDir, 755)).To(Succeed())
 				ioutil.WriteFile(cacheDir, []byte{}, 0400)
 			})
 

@@ -3,8 +3,6 @@ package env
 import (
 	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,10 +63,6 @@ func CreateDirs(config config.Config) error {
 		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CacheDir, err), "failed to create cache dir")
 	}
 
-	if err := os.RemoveAll(config.StateDir); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.StateDir, err), "failed to clean up state dir")
-	}
-
 	if err := os.MkdirAll(config.VpnKitStateDir, 0755); err != nil {
 		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.VpnKitStateDir, err), "failed to create state dir")
 	}
@@ -85,127 +79,53 @@ func CreateDirs(config config.Config) error {
 }
 
 func SetupState(config config.Config) error {
-	f, err := os.Open(filepath.Join(config.CacheDir, "cfdev-deps.tgz"))
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
+	tarFilepath := filepath.Join(config.CacheDir, "cfdev-deps.tgz")
 
-	err = resource.Untar(config.StateLinuxkit, f, resource.TarOpts{Include: "disk.qcow2"})
+	qcowPath := filepath.Join(config.StateLinuxkit, "disk.qcow2")
+	if _, err := os.Stat(qcowPath); os.IsNotExist(err) {
+		err = resource.Untar(config.StateLinuxkit, tarFilepath, resource.TarOpts{Include: "disk.qcow2"})
+		if err != nil {
+			errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar disk.qcow2")
+			return err
+		}
+	}
+
+	err := resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "state.json"})
 	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar state.json")
 		return err
 	}
 
-	err = moveFile(filepath.Join(config.CacheDir, "state.json"), filepath.Join(config.StateBosh, "state.json"))
+	err = resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "creds.yml"})
 	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar creds.yml")
 		return err
 	}
 
-	err = moveFile(filepath.Join(config.CacheDir, "creds.yml"), filepath.Join(config.StateBosh, "creds.yml"))
+	err = resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "secret"})
 	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar secrets")
 		return err
 	}
 
-	err = moveFile(filepath.Join(config.CacheDir, "secret"), filepath.Join(config.StateBosh, "secret"))
+	resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "jumpbox.key"})
 	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar jumpbox.key")
 		return err
 	}
 
-	err = moveFile(filepath.Join(config.CacheDir, "jumpbox.key"), filepath.Join(config.StateBosh, "jumpbox.key"))
+	resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "ca.crt"})
 	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar ca.crt")
 		return err
 	}
 
-	err = moveFile(filepath.Join(config.CacheDir, "ca.crt"), filepath.Join(config.StateBosh, "ca.crt"))
+	resource.Untar(config.CFDevHome, tarFilepath, resource.TarOpts{IncludeFolder: "services"})
 	if err != nil {
-		return err
-	}
-
-	err = copyDir(filepath.Join(config.CacheDir, "services"), filepath.Join(config.CFDevHome, "services"))
-	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar services")
 		return err
 	}
 
 	return nil
 }
 
-func moveFile(srcDir, targetDir string) error {
-	_, err := os.Stat(srcDir)
-	if os.IsNotExist(err) {
-		return nil
-	}
-
-	src, err := os.Open(srcDir)
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	dst, err := os.Create(targetDir)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, src)
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-func copyDir(src string, dst string) (err error) {
-	src = filepath.Clean(src)
-	dst = filepath.Clean(dst)
-
-	si, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-	if !si.IsDir() {
-		return fmt.Errorf("source is not a directory")
-	}
-
-	_, err = os.Stat(dst)
-	if err != nil && !os.IsNotExist(err) {
-		return
-	}
-	if err == nil {
-		return fmt.Errorf("destination already exists")
-	}
-
-	err = os.MkdirAll(dst, si.Mode())
-	if err != nil {
-		return
-	}
-
-	entries, err := ioutil.ReadDir(src)
-	if err != nil {
-		return
-	}
-
-	for _, entry := range entries {
-		srcPath := filepath.Join(src, entry.Name())
-		dstPath := filepath.Join(dst, entry.Name())
-
-		if entry.IsDir() {
-			err = copyDir(srcPath, dstPath)
-			if err != nil {
-				return
-			}
-		} else {
-			// Skip symlinks.
-			if entry.Mode()&os.ModeSymlink != 0 {
-				continue
-			}
-
-			err = moveFile(srcPath, dstPath)
-			if err != nil {
-				return
-			}
-		}
-	}
-
-	return
-}

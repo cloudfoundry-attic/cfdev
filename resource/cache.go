@@ -77,17 +77,7 @@ func (c *Cache) download(item *Item) error {
 			return nil
 		}
 
-		if !IsTar(filepath.Join(c.Dir, item.Name)) {
-			return nil
-		}
-
-		f, err := os.Open(filepath.Join(c.Dir, item.Name))
-		if err != nil {
-			return nil
-		}
-		defer f.Close()
-
-		return Untar(c.Dir, f, TarOpts{Exclude: "disk.qcow2"})
+		return nil
 	}
 
 	tmpPath := filepath.Join(c.Dir, item.Name+".tmp."+item.MD5)
@@ -104,21 +94,7 @@ func (c *Cache) download(item *Item) error {
 
 	os.Rename(tmpPath, filepath.Join(c.Dir, item.Name))
 
-	if !IsTar(filepath.Join(c.Dir, item.Name)) {
-		return nil
-	}
-
-	f, err := os.Open(filepath.Join(c.Dir, item.Name))
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
-
-	return Untar(c.Dir, f, TarOpts{Exclude: "disk.qcow2"})
-}
-
-func IsTar(path string) bool {
-	return strings.HasSuffix(path, ".tgz") || strings.HasSuffix(path, ".tar.gz")
+	return nil
 }
 
 func (c *Cache) downloadHTTP(url, tmpPath string) error {
