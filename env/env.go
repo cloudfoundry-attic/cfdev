@@ -85,53 +85,58 @@ func SetupState(config config.Config) error {
 	if _, err := os.Stat(qcowPath); os.IsNotExist(err) {
 		err = resource.Untar(config.StateLinuxkit, tarFilepath, resource.TarOpts{Include: "disk.qcow2"})
 		if err != nil {
-			errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar disk.qcow2")
+			errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar disk.qcow2")
 			return err
 		}
 	}
 
 	err := resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "state.json"})
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar state.json")
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar state.json")
 		return err
 	}
 
 	err = resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "creds.yml"})
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar creds.yml")
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar creds.yml")
 		return err
 	}
 
 	err = resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "secret"})
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar secrets")
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar secrets")
 		return err
 	}
 
 	resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "jumpbox.key"})
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar jumpbox.key")
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar jumpbox.key")
 		return err
 	}
 
 	resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "ca.crt"})
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar ca.crt")
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar ca.crt")
 		return err
 	}
 
 	resource.Untar(config.CFDevHome, tarFilepath, resource.TarOpts{IncludeFolder: "services"})
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar services")
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar services")
 		return err
 	}
 
 	resource.Untar(config.CacheDir, tarFilepath, resource.TarOpts{IncludeFolder: "binaries", FlattenFolder: true})
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar binaries")
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar binaries")
+		return err
+	}
+
+	resource.Untar(config.CacheDir, tarFilepath, resource.TarOpts{IncludeFolder: "deployment_config", FlattenFolder: true})
+	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar deployment configuration files")
 		return err
 	}
 
 	return nil
 }
-

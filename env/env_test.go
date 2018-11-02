@@ -148,6 +148,11 @@ var _ = Describe("env", func() {
 				Expect(ioutil.WriteFile(filepath.Join(binaryPath, "binary.file"), []byte("one binary file"), 0600)).To(Succeed())
 				Expect(ioutil.WriteFile(filepath.Join(binaryPath, "binary1.file"), []byte("other binary file"), 0600)).To(Succeed())
 
+				deploymentConfigPath := filepath.Join(tmpDir, "deployment_config")
+				Expect(os.MkdirAll(deploymentConfigPath, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(deploymentConfigPath, "director.yml"), []byte("some director config"), 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(deploymentConfigPath, "cf.yml"), []byte("some cf configuration"), 0600)).To(Succeed())
+
 				err = resource.Tar(tmpDir, tarDst)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -203,6 +208,19 @@ var _ = Describe("env", func() {
 				b, err = ioutil.ReadFile(filepath.Join(cacheDir, "binary1.file"))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(string(b)).To(Equal("other binary file"))
+			})
+
+			It("copies deployment configuration directory", func() {
+				Expect(env.CreateDirs(conf)).To(Succeed())
+				Expect(env.SetupState(conf)).To(Succeed())
+
+				b, err := ioutil.ReadFile(filepath.Join(cacheDir, "director.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("some director config"))
+
+				b, err = ioutil.ReadFile(filepath.Join(cacheDir, "cf.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("some cf configuration"))
 			})
 
 			It("copies bosh environment variables", func() {
