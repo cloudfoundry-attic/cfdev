@@ -2,27 +2,19 @@ package provision
 
 import (
 	"archive/tar"
+	"code.cloudfoundry.org/garden"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
-
-	"code.cloudfoundry.org/garden"
 )
 
-func (c *Controller) DeployService(handle, serviceManifest string) error {
+func (c *Controller) DeployService(handle, script string) error {
 	c.boshEnvs()
 
-	cmd := exec.Command(
-		"bosh", "-n",
-		"deploy",
-		"-d", "cf-mysql",
-		"--vars-store",
-		filepath.Join(c.Config.StateBosh),
-		serviceManifest)
+	cmd := exec.Command(script)
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, c.boshEnvs()...)

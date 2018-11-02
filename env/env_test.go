@@ -143,6 +143,11 @@ var _ = Describe("env", func() {
 				Expect(err).ToNot(HaveOccurred())
 				defer tarDst.Close()
 
+				binaryPath := filepath.Join(tmpDir, "binaries")
+				Expect(os.MkdirAll(binaryPath, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(binaryPath, "binary.file"), []byte("one binary file"), 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(binaryPath, "binary1.file"), []byte("other binary file"), 0600)).To(Succeed())
+
 				err = resource.Tar(tmpDir, tarDst)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -185,6 +190,19 @@ var _ = Describe("env", func() {
 				b, err := ioutil.ReadFile(filepath.Join(servicesDir, "service.file"))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(string(b)).To(Equal("service file contents"))
+			})
+
+			It("copies binaries directory", func() {
+				Expect(env.CreateDirs(conf)).To(Succeed())
+				Expect(env.SetupState(conf)).To(Succeed())
+
+				b, err := ioutil.ReadFile(filepath.Join(cacheDir, "binary.file"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("one binary file"))
+
+				b, err = ioutil.ReadFile(filepath.Join(cacheDir, "binary1.file"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(string(b)).To(Equal("other binary file"))
 			})
 
 			It("copies bosh environment variables", func() {

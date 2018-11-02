@@ -75,7 +75,7 @@ func (c *Controller) DeployServices(ui UI, services []Service) error {
 	for _, service := range services {
 		//start := time.Now()
 		ui.Say("Deploying %s...", service.Name)
-		c.DeployService(service.Handle, filepath.Join(c.Config.CacheDir, service.Script))
+		c.DeployService(service.Handle, filepath.Join(c.Config.CacheDir, "services", service.Script))
 
 		//go func(handle string, serviceManifest string) {
 		//	errChan <- c.DeployService(handle, filepath.Join(c.Config.CacheDir, serviceManifest))

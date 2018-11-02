@@ -14,6 +14,7 @@ type TarOpts struct {
 	Include       string
 	IncludeFolder string
 	Exclude       string
+	FlattenFolder bool
 }
 
 func Untar(dst string, src string, opts TarOpts) error {
@@ -53,13 +54,16 @@ func Untar(dst string, src string, opts TarOpts) error {
 			case opts.Exclude != "" && filepath.Base(header.Name) == opts.Exclude:
 				continue
 			case opts.IncludeFolder != "":
-				dir, _ := filepath.Split(header.Name)
+				dir, fileName := filepath.Split(header.Name)
 				if !strings.Contains(dir, opts.IncludeFolder) {
 					continue
 				}
-
-				if err := os.MkdirAll(filepath.Join(dst, dir), 0755); err != nil {
-					return err
+				if !opts.FlattenFolder {
+					if err := os.MkdirAll(filepath.Join(dst, dir), 0755); err != nil {
+						return err
+					}
+				} else {
+					target = filepath.Join(dst, fileName)
 				}
 			}
 

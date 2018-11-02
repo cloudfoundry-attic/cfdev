@@ -42,5 +42,9 @@ func (c *Controller) boshEnvs() []string {
 		"BOSH_GW_HOST=10.0.0.4",
 		"BOSH_GW_USER=jumpbox",
 		"BOSH_GW_PRIVATE_KEY=" + filepath.Join(c.Config.StateBosh, "jumpbox.key"),
+		"SERVICES_DIR=" + c.Config.ServicesDir,
+		"CACHE_DIR=" + c.Config.CacheDir,
+		"BOSH_STATE=" + c.Config.StateBosh,
+		"LOG_DIR="+ filepath.Join(c.Config.ServicesDir, "logs"),
 	}
 }

@@ -46,6 +46,7 @@ type Config struct {
 	CFDevDInstallationPath string
 	CliVersion             *semver.Version
 	AnalyticsKey           string
+	ServicesDir            string
 }
 
 func NewConfig() (Config, error) {
@@ -71,6 +72,7 @@ func NewConfig() (Config, error) {
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
 		CliVersion:             semver.Must(semver.New(cliVersion)),
 		AnalyticsKey:           analyticsKey,
+		ServicesDir:            filepath.Join(cfdevHome, "services"),
 	}, nil
 }
 

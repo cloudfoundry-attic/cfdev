@@ -126,6 +126,12 @@ func SetupState(config config.Config) error {
 		return err
 	}
 
+	resource.Untar(config.CacheDir, tarFilepath, resource.TarOpts{IncludeFolder: "binaries", FlattenFolder: true})
+	if err != nil {
+		errors.SafeWrap(fmt.Errorf("%s", err),"unable to untar binaries")
+		return err
+	}
+
 	return nil
 }
 
