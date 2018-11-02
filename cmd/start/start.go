@@ -264,7 +264,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	isoConfig, err := s.MetaDataReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
-		if err != nil {
+	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsIsoName))
 	}
 	if isoConfig.Version != compatibilityVersion {
@@ -346,9 +346,6 @@ func (s *Start) provision(isoConfig iso.Metadata, registries []string, deploySin
 		return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 
-	s.UI.Say("ANTHONY IS EXITING...")
-	os.Exit(0)
-
 	services, err := s.Provisioner.WhiteListServices(deploySingleService, isoConfig.Services)
 	if err != nil {
 		return e.SafeWrap(err, "Failed to whitelist services")
@@ -371,7 +368,7 @@ func (s *Start) provision(isoConfig iso.Metadata, registries []string, deploySin
 func (s *Start) waitForGarden() error {
 	timeout := 120
 	var err error
-	for i:=0; i<timeout; i++ {
+	for i := 0; i < timeout; i++ {
 		err = s.Provisioner.Ping()
 		if err == nil {
 			return nil

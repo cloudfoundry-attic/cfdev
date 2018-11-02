@@ -63,10 +63,10 @@ var _ = Describe("ServiceBind", func() {
 				Event:     "app bound to service",
 				Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 				Properties: map[string]interface{}{
-					"service": "mysql",
-					"os":      runtime.GOOS,
+					"service":        "mysql",
+					"os":             runtime.GOOS,
 					"plugin_version": "some-version",
-					"os_version": "some-os-version",
+					"os_version":     "some-os-version",
 				},
 			})
 

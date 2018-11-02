@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = FDescribe("DeployMysql", func() {
+var _ = Describe("DeployMysql", func() {
 	//var (
 	//	fakeClient *gardenfakes.FakeClient
 	//	err        error

@@ -44,10 +44,10 @@ var _ = Describe("AppCreate", func() {
 				Event:     "app created",
 				Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 				Properties: map[string]interface{}{
-					"buildpack": "go",
-					"os":        runtime.GOOS,
+					"buildpack":      "go",
+					"os":             runtime.GOOS,
 					"plugin_version": "some-version",
-					"os_version": "some-os-version",
+					"os_version":     "some-os-version",
 				},
 			})
 
@@ -69,10 +69,10 @@ var _ = Describe("AppCreate", func() {
 				Event:     "app created",
 				Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 				Properties: map[string]interface{}{
-					"buildpack": "custom",
-					"os":        runtime.GOOS,
+					"buildpack":      "custom",
+					"os":             runtime.GOOS,
 					"plugin_version": "some-version",
-					"os_version": "some-os-version",
+					"os_version":     "some-os-version",
 				},
 			})
 

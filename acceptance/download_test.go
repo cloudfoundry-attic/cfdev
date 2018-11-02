@@ -19,8 +19,8 @@ import (
 
 var _ = Describe("download", func() {
 	var (
-		cacheDir string
-		server   *httptest.Server
+		cacheDir        string
+		server          *httptest.Server
 		serverAssetsDir string
 	)
 

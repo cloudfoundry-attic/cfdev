@@ -118,7 +118,7 @@ func (v *VpnKit) registerGUID(guid, name string) error {
 	return err
 }
 
-func (v *VpnKit) writeResolvConf() error{
+func (v *VpnKit) writeResolvConf() error {
 	command := "get-dnsclientserveraddress -family ipv4 | select-object -expandproperty serveraddresses"
 	dns, err := v.Powershell.Output(command)
 	if err != nil {
@@ -140,7 +140,7 @@ func (v *VpnKit) writeResolvConf() error{
 	return ioutil.WriteFile(resolvConfPath, []byte(dnsFile), 0600)
 }
 
-func (v *VpnKit) writeDHCPJSON() error{
+func (v *VpnKit) writeDHCPJSON() error {
 	command := "get-dnsclient | select-object -expandproperty connectionspecificsuffix"
 	dhcp, err := v.Powershell.Output(command)
 	if err != nil {

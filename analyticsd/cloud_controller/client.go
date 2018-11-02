@@ -97,7 +97,7 @@ func (c *Client) FetchEvents(timeStamp time.Time) ([]Event, error) {
 	var (
 		events  []Event
 		nextURL *string = nil
-		fetch   = func(params url.Values) error {
+		fetch           = func(params url.Values) error {
 			var response eventResponse
 			err := c.Fetch("/v2/events", params, &response)
 			if err != nil {

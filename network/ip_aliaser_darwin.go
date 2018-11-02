@@ -22,5 +22,3 @@ func (h *HostNet) AddLoopbackAliases(addrs ...string) error {
 
 	return nil
 }
-
-

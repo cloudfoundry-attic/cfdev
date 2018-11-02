@@ -3,11 +3,11 @@
 package cmd
 
 import (
-	"net"
-	"os/exec"
-	"os"
-	"strings"
 	"fmt"
+	"net"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 type RemoveIPAliasCommand struct {
@@ -19,7 +19,7 @@ func (u *RemoveIPAliasCommand) Execute(conn *net.UnixConn) error {
 	err := u.RemoveLoopbackAliases(BOSH_IP, GOROUTER_IP)
 	if err == nil {
 		conn.Write([]byte{0})
-	}else{
+	} else {
 		conn.Write([]byte{1})
 	}
 

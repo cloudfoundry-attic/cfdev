@@ -974,7 +974,6 @@ var _ = Describe("Start", func() {
 							"total memory":     uint64(222),
 							"available memory": uint64(111),
 						}),
-
 					)
 
 					Expect(startCmd.Execute(start.Args{

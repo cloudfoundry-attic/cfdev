@@ -2,16 +2,16 @@ package proxy_test
 
 import (
 	. "code.cloudfoundry.org/cfdev/acceptance"
+	"fmt"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
-	"os/exec"
-	"fmt"
-	"net/http"
+	"github.com/onsi/gomega/gexec"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"os/exec"
 	"time"
 )
 
@@ -28,22 +28,22 @@ var _ = Describe("cf dev proxy settings", func() {
 	})
 
 	Context("when the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables are set", func() {
-	  It("an app respect proxy environment variables", func() {
-          Eventually(cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space"), 5*time.Minute).Should(gexec.Exit(0))
-		  Eventually(cf.Cf("push", "cf-test-app", "-p", "../fixture", "-b", "ruby_buildpack"), 5*time.Minute).Should(gexec.Exit(0))
+		It("an app respect proxy environment variables", func() {
+			Eventually(cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space"), 5*time.Minute).Should(gexec.Exit(0))
+			Eventually(cf.Cf("push", "cf-test-app", "-p", "../fixture", "-b", "ruby_buildpack"), 5*time.Minute).Should(gexec.Exit(0))
 
-		  By("making HTTP requests")
-		  Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external")).To(ContainSubstring("Example Domain"))
-		  Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`Established connection to host ".*"`))
+			By("making HTTP requests")
+			Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external")).To(ContainSubstring("Example Domain"))
+			Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`Established connection to host ".*"`))
 
-		  By("making HTTPS requests")
-		  Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external_https")).To(ContainSubstring("Example Domain"))
-		  Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`CONNECT .*:443 HTTP/1.1`))
+			By("making HTTPS requests")
+			Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external_https")).To(ContainSubstring("Example Domain"))
+			Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`CONNECT .*:443 HTTP/1.1`))
 
-		  By("making a request from a site in the NO_PROXY list")
-		  Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external_no_proxy")).To(ContainSubstring("www.google.com"))
-		  Consistently(fetchProxyLogs(proxyName)).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
-	  })
+			By("making a request from a site in the NO_PROXY list")
+			Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external_no_proxy")).To(ContainSubstring("www.google.com"))
+			Consistently(fetchProxyLogs(proxyName)).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
+		})
 	})
 
 	Context("when the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables are set", func() {

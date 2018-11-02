@@ -13,7 +13,7 @@ type Toggle struct {
 	CfAnalyticsEnabled     bool `json:"cfAnalyticsEnabled"`
 	CustomAnalyticsEnabled bool `json:"customAnalyticsEnabled"`
 	path                   string
-	props   map[string]interface{}
+	props                  map[string]interface{}
 }
 
 func New(path string) *Toggle {
@@ -22,7 +22,7 @@ func New(path string) *Toggle {
 		CfAnalyticsEnabled:     false,
 		CustomAnalyticsEnabled: false,
 		path:                   path,
-		props:   make(map[string]interface{}, 1),
+		props:                  make(map[string]interface{}, 1),
 	}
 
 	if txt, err := ioutil.ReadFile(path); err == nil {

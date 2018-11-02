@@ -85,12 +85,12 @@ func (a *Analytics) Event(event string, data ...map[string]interface{}) error {
 	properties.Set("os_version", a.osVersion)
 	for k, v := range a.toggle.GetProps() {
 		properties.Set(k, v)
-		}
+	}
 	for _, d := range data {
 		for k, v := range d {
 			properties.Set(k, v)
-			}
 		}
+	}
 
 	return a.client.Enqueue(analytics.Track{
 		UserId:     a.userId,

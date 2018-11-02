@@ -9,7 +9,7 @@ import (
 )
 
 func install(programSrc string, args []string) error {
-	var(
+	var (
 		lctl        = daemon.New("")
 		label       = "org.cloudfoundry.cfdevd"
 		program     = "/Library/PrivilegedHelperTools/org.cloudfoundry.cfdevd"

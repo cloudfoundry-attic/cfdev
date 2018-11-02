@@ -6,16 +6,29 @@ import (
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
+	"os"
 	"os/exec"
+	"path/filepath"
 
 	"code.cloudfoundry.org/garden"
 )
 
 func (c *Controller) DeployService(handle, serviceManifest string) error {
+	c.boshEnvs()
+
 	cmd := exec.Command(
-		"bosh",
-		"-d",
+		"bosh", "-n",
+		"deploy",
+		"-d", "cf-mysql",
+		"--vars-store",
+		filepath.Join(c.Config.StateBosh),
 		serviceManifest)
+
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, c.boshEnvs()...)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 	if err != nil {

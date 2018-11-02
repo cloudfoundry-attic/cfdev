@@ -29,7 +29,7 @@ var _ = Describe("Telemetry", func() {
 		mockAnalyticsD *mocks.MockAnalyticsD
 		t0ggle         *toggle.Toggle
 		telCmd         *cobra.Command
-		tempFilePath string
+		tempFilePath   string
 	)
 
 	BeforeEach(func() {

@@ -7,11 +7,11 @@ import (
 )
 
 type Progress struct {
-	current        uint64
+	current              uint64
 	currentLastCompleted uint64
-	total          uint64
-	lastPercentage int
-	writer         io.Writer
+	total                uint64
+	lastPercentage       int
+	writer               io.Writer
 }
 
 func New(writer io.Writer) *Progress {

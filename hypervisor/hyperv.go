@@ -184,7 +184,7 @@ func (h *HyperV) IsRunning(vmName string) (bool, error) {
 		return false, err
 	}
 
-	command :=  fmt.Sprintf("Get-VM -Name %s | format-list -Property State", vmName)
+	command := fmt.Sprintf("Get-VM -Name %s | format-list -Property State", vmName)
 	output, err := h.Powershell.Output(command)
 	if err != nil {
 		return false, err

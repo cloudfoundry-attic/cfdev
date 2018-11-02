@@ -24,4 +24,3 @@ func (c *Controller) Ping() error {
 	ctx := context.Background()
 	return client.Ping(ctx, "127.0.0.1:9999")
 }
-

@@ -11,9 +11,9 @@ import (
 
 	"github.com/onsi/gomega/gexec"
 
+	"code.cloudfoundry.org/cfdev/hypervisor"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
 var _ = Describe("safe kill test", func() {

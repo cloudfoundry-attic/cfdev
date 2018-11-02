@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/denisbrodbeck/machineid"
-	"net"
-	"os"
-	"os/exec"
-	"strconv"
 	"github.com/minio/minio-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"net"
+	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"time"
@@ -153,7 +153,7 @@ func hasFoundAnalyticsFor(client *minio.Client, userID string, event string) boo
 			results := map[string]interface{}{}
 
 			err := json.Unmarshal([]byte(line), &results)
-			Expect(err).NotTo(HaveOccurred(), "invalid json received: "+ line)
+			Expect(err).NotTo(HaveOccurred(), "invalid json received: "+line)
 
 			if results["event"] == event && results["userId"] == userID {
 				return true
@@ -165,7 +165,7 @@ func hasFoundAnalyticsFor(client *minio.Client, userID string, event string) boo
 
 	objectCh := client.ListObjectsV2("cfdev-analytics", "kinesis-stream", true, doneCh)
 	for object := range objectCh {
-		tenMinutesAgo := time.Now().UTC().Add(-10*time.Minute)
+		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
 
 		if object.Err != nil {
 			continue
@@ -185,7 +185,7 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")
 
 	Eventually(func() error {
-		return HttpServerIsListeningAt("https://"+BoshDirectorIP+":25555")
+		return HttpServerIsListeningAt("https://" + BoshDirectorIP + ":25555")
 	}, 15*time.Minute, 30*time.Second).ShouldNot(HaveOccurred())
 
 	w := gexec.NewPrefixedWriter("[bosh env] ", GinkgoWriter)

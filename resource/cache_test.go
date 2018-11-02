@@ -19,21 +19,24 @@ import (
 )
 
 type MockProgress struct {
-	Total     uint64
-	Current   uint64
-	EndCalled bool
+	Total                uint64
+	Current              uint64
+	EndCalled            bool
 	CurrentLastCompleted uint64
-	LastPercentage int
+	LastPercentage       int
 }
 
 func (m *MockProgress) Write(b []byte) (int, error) { m.Current += uint64(len(b)); return len(b), nil }
 func (m *MockProgress) Start(total uint64)          { m.Current = 0; m.Total = total }
 func (m *MockProgress) Add(add uint64)              { m.Current += add }
 func (m *MockProgress) End()                        { m.EndCalled = true }
-func (m *MockProgress) SetLastCompleted()			{m.CurrentLastCompleted = m.Current}
-func (m *MockProgress) ResetCurrent()			{m.Current = m.CurrentLastCompleted; m.LastPercentage = m.LastPercentage + 1}
+func (m *MockProgress) SetLastCompleted()           { m.CurrentLastCompleted = m.Current }
+func (m *MockProgress) ResetCurrent() {
+	m.Current = m.CurrentLastCompleted
+	m.LastPercentage = m.LastPercentage + 1
+}
 
-var _ = FDescribe("Cache Sync", func() {
+var _ = Describe("Cache Sync", func() {
 
 	var (
 		tmpDir       string
@@ -195,7 +198,7 @@ var _ = FDescribe("Cache Sync", func() {
 		Expect(mockProgress.Current).To(Equal(uint64(7)))
 	})
 
-	It("untars files if needed", func(){
+	It("untars files if needed", func() {
 		md5, err := resource.MD5(filepath.Join(tmpDir, "tar-resource.tgz"))
 		Expect(err).NotTo(HaveOccurred())
 
@@ -363,7 +366,7 @@ func createFile(dir, name, contents string) {
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 }
 
-func createTarFile(dir, name, contents string){
+func createTarFile(dir, name, contents string) {
 	createFile(dir, name, contents)
 	output, err := exec.Command("tar", "czvf", filepath.Join(dir, name+".tgz"), "-C", dir, name).CombinedOutput()
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), string(output))

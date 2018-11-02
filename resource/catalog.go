@@ -22,7 +22,6 @@ func (c *Catalog) Lookup(name string) *Item {
 	return nil
 }
 
-
 func (c *Catalog) Remove(name string) {
 	newItems := make([]Item, 0, len(c.Items))
 	for _, item := range c.Items {

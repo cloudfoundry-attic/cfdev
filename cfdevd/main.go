@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 var (
 	timesyncSocket = ""
 	sockName       = "ListenSocket"
@@ -41,7 +40,7 @@ func main() {
 
 func root() *cobra.Command {
 	root := &cobra.Command{Use: "cfdevd"}
-	root.PersistentFlags().StringVarP(&timesyncSocket, "timesyncSock", "t", "","path to socket where host-timesync-daemon is listening")
+	root.PersistentFlags().StringVarP(&timesyncSocket, "timesyncSock", "t", "", "path to socket where host-timesync-daemon is listening")
 	root.Run = func(_ *cobra.Command, _ []string) {
 		log.Printf("Running cfdevd with timesyncSocket=%s\n", timesyncSocket)
 
@@ -65,30 +64,30 @@ func listenAndServe() {
 	}
 
 	for {
-	   select {
-	   case <-doneChan:
-		   log.Println("Terminating server listener...")
-		   return
-	   default:
-		   conn, err := listener.AcceptUnix()
-		   if err != nil {
-			   continue
-		   }
+		select {
+		case <-doneChan:
+			log.Println("Terminating server listener...")
+			return
+		default:
+			conn, err := listener.AcceptUnix()
+			if err != nil {
+				continue
+			}
 
-		   if err := doHandshake(conn); err != nil {
-			   log.Printf("Handshake Error: %s\n", err)
-			   continue
-		   }
+			if err := doHandshake(conn); err != nil {
+				log.Printf("Handshake Error: %s\n", err)
+				continue
+			}
 
-		   command, err := cmd.UnmarshalCommand(conn)
-		   if err != nil {
-			   log.Printf("Command Error: %s\n", err)
-			   continue
-		   }
+			command, err := cmd.UnmarshalCommand(conn)
+			if err != nil {
+				log.Printf("Command Error: %s\n", err)
+				continue
+			}
 
-		   command.Execute(conn)
-		   conn.Close()
-	   }
+			command.Execute(conn)
+			conn.Close()
+		}
 	}
 
 }

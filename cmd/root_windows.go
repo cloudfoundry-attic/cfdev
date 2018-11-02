@@ -63,12 +63,12 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root.PersistentFlags().Lookup("help").Hidden = true
 	lctl := daemon.NewWinSW(config.CFDevHome)
 	vpnkit := &network.VpnKit{
-		Config: config,
-		DaemonRunner: lctl,
-		Powershell: runner.Powershell{},
-		Label: network.VpnKitLabel,
-		EthernetGUID: "7207f451-2ca3-4b88-8d01-820a21d78293",
-		PortGUID:  "cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa",
+		Config:        config,
+		DaemonRunner:  lctl,
+		Powershell:    runner.Powershell{},
+		Label:         network.VpnKitLabel,
+		EthernetGUID:  "7207f451-2ca3-4b88-8d01-820a21d78293",
+		PortGUID:      "cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa",
 		ForwarderGUID: "e3ae8f06-8c25-47fb-b6ed-c20702bcef5e",
 	}
 	isoReader := iso.New()

@@ -55,7 +55,7 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 				`export BOSH_CA_CERT=`,
 				`export BOSH_GW_PRIVATE_KEY=`,
 			}
-		}else{
+		} else {
 			expectedExports = []string{
 				`$env:BOSH_ENVIRONMENT="10.245.0.2";`,
 				`$env:BOSH_CLIENT="admin";`,
@@ -95,7 +95,7 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			if runtime.GOOS != "windows" {
 				Expect(exports).To(MatchRegexp(`(?m)^unset BOSH_ALL_PROXY;$`))
-			}else{
+			} else {
 				Expect(exports).To(MatchRegexp(`(?m)^Remove-Item Env:BOSH_ALL_PROXY;$`))
 			}
 		})

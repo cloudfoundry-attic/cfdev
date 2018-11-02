@@ -16,12 +16,12 @@ import (
 const VpnKitLabel = "org.cloudfoundry.cfdev.vpnkit"
 
 type VpnKit struct {
-	Config       config.Config
-	DaemonRunner DaemonRunner
-	Powershell   runner.Powershell
-	Label string
-	EthernetGUID string
-	PortGUID string
+	Config        config.Config
+	DaemonRunner  DaemonRunner
+	Powershell    runner.Powershell
+	Label         string
+	EthernetGUID  string
+	PortGUID      string
 	ForwarderGUID string
 }
 

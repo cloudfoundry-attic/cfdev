@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-type Powershell struct {}
+type Powershell struct{}
 
 func (p *Powershell) Output(command string) (string, error) {
 	output, err := exec.Command("powershell.exe", "-Command", command).CombinedOutput()

@@ -85,7 +85,7 @@ func NewConfig() (Config, error) {
 	return Config{
 		BoshDirectorIP:         "10.245.0.2",
 		CFRouterIP:             "10.144.0.34",
-		HostIP:					"192.168.65.2",
+		HostIP:                 "192.168.65.2",
 		CFDevHome:              cfdevHome,
 		StateDir:               filepath.Join(cfdevHome, "state", "linuxkit"),
 		CacheDir:               filepath.Join(cfdevHome, "cache"),

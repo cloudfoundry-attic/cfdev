@@ -1,12 +1,12 @@
 package provision
 
 import (
+	e "errors"
+	"fmt"
 	"io"
 	"path/filepath"
-	"time"
 	"strings"
-	"fmt"
-	e "errors"
+	"time"
 
 	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/errors"
@@ -59,31 +59,32 @@ func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]
 }
 
 func (c *Controller) DeployServices(ui UI, services []Service) error {
-	config, err := c.FetchBOSHConfig()
+	///config, err := c.FetchBOSHConfig()
 
-	if err != nil {
-		return err
-	}
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//b, err := bosh.New(config)
+	//if err != nil {
+	//	return err
+	//}
 
-	b, err := bosh.New(config)
-	if err != nil {
-		return err
-	}
-
-	errChan := make(chan error, 1)
+	//errChan := make(chan error, 1)
 
 	for _, service := range services {
-		start := time.Now()
+		//start := time.Now()
 		ui.Say("Deploying %s...", service.Name)
+		c.DeployService(service.Handle, filepath.Join(c.Config.CacheDir, service.Script))
 
-		go func(handle string, serviceManifest string) {
-			errChan <- c.DeployService(handle, filepath.Join(c.Config.CacheDir, serviceManifest))
-		}(service.Handle, service.Script)
+		//go func(handle string, serviceManifest string) {
+		//	errChan <- c.DeployService(handle, filepath.Join(c.Config.CacheDir, serviceManifest))
+		//}(service.Handle, service.Script)
 
-		err := c.report(start, ui, b, service, errChan)
-		if err != nil {
-			return err
-		}
+		//err := c.report(start, ui, b, service, errChan)
+		//if err != nil {
+		//	return err
+		//}
 	}
 
 	return nil

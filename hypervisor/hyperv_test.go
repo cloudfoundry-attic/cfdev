@@ -12,14 +12,14 @@ import (
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/hypervisor"
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"code.cloudfoundry.org/cfdev/hypervisor"
 	"math/rand"
 	"time"
-	"fmt"
 )
 
 var _ = Describe("HyperV", func() {
@@ -28,13 +28,13 @@ var _ = Describe("HyperV", func() {
 		cfDevHome  string
 		testIsoUrl = "https://s3.amazonaws.com/cfdev-test-assets/test.iso"
 		err        error
-		vmName string
+		vmName     string
 	)
 
 	BeforeEach(func() {
 		rand.Seed(time.Now().UTC().UnixNano())
 		vmName = randomVMName()
-		
+
 		cfDevHome, err = ioutil.TempDir("", "hypervtest")
 		if err != nil {
 			log.Fatal(err)
@@ -67,13 +67,13 @@ var _ = Describe("HyperV", func() {
 
 		It("creates hyperv VM", func() {
 			vm := hypervisor.VM{
-				Name: vmName,
+				Name:     vmName,
 				MemoryMB: 2000,
 				CPUs:     1,
 			}
 			Expect(hyperV.CreateVM(vm)).To(Succeed())
 
-			cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-VM -Name %s | format-list -Property MemoryStartup,ProcessorCount",vmName))
+			cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-VM -Name %s | format-list -Property MemoryStartup,ProcessorCount", vmName))
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 			Eventually(session, 10, 1).Should(gexec.Exit(0))
@@ -116,7 +116,7 @@ var _ = Describe("HyperV", func() {
 			})
 			Context("when the vm is already running", func() {
 				BeforeEach(func() {
-					cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Start-VM -Name %s",vmName))
+					cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Start-VM -Name %s", vmName))
 					session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 					Expect(err).NotTo(HaveOccurred())
 					Eventually(session, 10, 1).Should(gexec.Exit())

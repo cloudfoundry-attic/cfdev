@@ -36,7 +36,9 @@ var _ = Describe("Util", func() {
 		var (
 			counter int
 			task    = func() error {
-				if counter > 3 { return nil }
+				if counter > 3 {
+					return nil
+				}
 
 				counter++
 

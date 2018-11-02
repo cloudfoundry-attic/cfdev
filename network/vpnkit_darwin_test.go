@@ -21,7 +21,7 @@ var _ = Describe("VpnKit", func() {
 		vpnkitStateDir string
 		vkit           network.VpnKit
 		lctl           *daemon.Launchd
-		label 		   = "some-vpnkit-label"
+		label          = "some-vpnkit-label"
 	)
 
 	BeforeEach(func() {
@@ -49,7 +49,7 @@ var _ = Describe("VpnKit", func() {
 				CFDevHome:      homeDir,
 			},
 			DaemonRunner: lctl,
-			Label: label,
+			Label:        label,
 		}
 	})
 

@@ -210,11 +210,11 @@ var _ = Describe("Analytics", func() {
 						"Event":     Equal("anevent"),
 						"Timestamp": BeTemporally(">=", time.Now().Add(-1*time.Minute)),
 						"Properties": BeEquivalentTo(map[string]interface{}{
-							"os":      runtime.GOOS,
+							"os":             runtime.GOOS,
 							"plugin_version": "4.5.6-unit-test",
-							"os_version": "some-os-version",
-							"type":    "cf.1.2.3.iso",
-							"mykey":   "myval",
+							"os_version":     "some-os-version",
+							"type":           "cf.1.2.3.iso",
+							"mykey":          "myval",
 						}),
 					}))
 				})

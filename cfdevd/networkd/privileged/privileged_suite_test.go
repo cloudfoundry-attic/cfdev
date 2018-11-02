@@ -11,7 +11,6 @@ import (
 	"runtime"
 )
 
-
 func TestPrivileged(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "cf dev - network - privileged suite")
