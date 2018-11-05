@@ -84,6 +84,7 @@ var _ = Describe("env", func() {
 				StateLinuxkit:  linuxkitDir,
 				CacheDir:       cacheDir,
 				VpnKitStateDir: vpnkitStateDir,
+				ServicesDir: servicesDir,
 			}
 		})
 
@@ -91,7 +92,7 @@ var _ = Describe("env", func() {
 			os.RemoveAll(dir)
 		})
 
-		It("creates home, state, and cache dirs", func() {
+		It("creates home, state, cache and services dirs", func() {
 			Expect(env.CreateDirs(conf)).To(Succeed())
 			_, err := os.Stat(homeDir)
 			Expect(err).NotTo(HaveOccurred())
@@ -106,6 +107,12 @@ var _ = Describe("env", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = os.Stat(vpnkitStateDir)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = os.Stat(servicesDir)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = os.Stat(filepath.Join(servicesDir, "logs"))
 			Expect(err).NotTo(HaveOccurred())
 		})
 
