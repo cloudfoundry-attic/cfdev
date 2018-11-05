@@ -12,8 +12,6 @@ import (
 )
 
 func (c *Controller) DeployService(handle, script string) error {
-	c.boshEnvs()
-
 	cmd := exec.Command(script)
 
 	cmd.Env = os.Environ()
