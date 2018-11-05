@@ -35,11 +35,11 @@ func (c *Controller) boshEnvs() []string {
 	secret := strings.TrimSpace(string(content))
 
 	return []string{
-		"BOSH_ENVIRONMENT=10.0.0.4",
+		"BOSH_ENVIRONMENT=10.144.0.4",
 		"BOSH_CLIENT=admin",
 		"BOSH_CLIENT_SECRET=" + secret,
 		"BOSH_CA_CERT=" + filepath.Join(c.Config.StateBosh, "ca.crt"),
-		"BOSH_GW_HOST=10.0.0.4",
+		"BOSH_GW_HOST=10.144.0.4",
 		"BOSH_GW_USER=jumpbox",
 		"BOSH_GW_PRIVATE_KEY=" + filepath.Join(c.Config.StateBosh, "jumpbox.key"),
 		"SERVICES_DIR=" + c.Config.ServicesDir,
