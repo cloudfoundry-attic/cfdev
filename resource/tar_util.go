@@ -15,9 +15,10 @@ type TarOpts struct {
 	IncludeFolder string
 	Exclude       string
 	FlattenFolder bool
+	Dst           string
 }
 
-func Untar(dst string, src string, opts TarOpts) error {
+func Untar(src string, dstOpts []TarOpts) error {
 	f, err := os.Open(src)
 	if err != nil {
 		return err
@@ -44,30 +45,39 @@ func Untar(dst string, src string, opts TarOpts) error {
 			continue
 		}
 
-		target := filepath.Join(dst, header.Name)
+		err = copyCurrentFileIfMatch(tr, header, dstOpts)
+		if err != nil {
+			return err
+		}
+	}
+}
 
-		switch header.Typeflag {
-		case tar.TypeReg:
-			switch {
-			case opts.Include != "" && filepath.Base(header.Name) != opts.Include:
-				continue
-			case opts.Exclude != "" && filepath.Base(header.Name) == opts.Exclude:
-				continue
-			case opts.IncludeFolder != "":
-				dir, fileName := filepath.Split(header.Name)
-				if !strings.Contains(dir, opts.IncludeFolder) {
-					continue
+func copyCurrentFileIfMatch(tr *tar.Reader, header *tar.Header, opts []TarOpts) error {
+	for _, opt := range opts {
+		if header.Typeflag == tar.TypeDir {
+			break
+		}
+		target := ""
+
+		dir, filename := filepath.Split(header.Name)
+		if opt.IncludeFolder != "" && !strings.Contains(dir, opt.IncludeFolder) {
+			continue
+		} else if opt.IncludeFolder != "" && strings.Contains(dir, opt.IncludeFolder) {
+			if !opt.FlattenFolder {
+				if err := os.MkdirAll(filepath.Join(opt.Dst, dir), 0755); err != nil {
+					return err
 				}
-				if !opts.FlattenFolder {
-					if err := os.MkdirAll(filepath.Join(dst, dir), 0755); err != nil {
-						return err
-					}
-				} else {
-					target = filepath.Join(dst, fileName)
-				}
+
+				target = filepath.Join(opt.Dst, header.Name)
+			} else {
+				target = filepath.Join(opt.Dst, filename)
 			}
+		} else if opt.Include == filepath.Base(header.Name) {
+			target = filepath.Join(opt.Dst, header.Name)
+		}
 
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+		if target != "" {
+			f, err := os.OpenFile(target, os.O_TRUNC|os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
@@ -75,8 +85,10 @@ func Untar(dst string, src string, opts TarOpts) error {
 				return err
 			}
 			f.Close()
+			break
 		}
 	}
+	return nil
 }
 
 func Tar(src string, writers ...io.Writer) error {

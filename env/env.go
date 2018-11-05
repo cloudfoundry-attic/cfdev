@@ -85,61 +85,61 @@ func CreateDirs(config config.Config) error {
 func SetupState(config config.Config) error {
 	tarFilepath := filepath.Join(config.CacheDir, "cfdev-deps.tgz")
 
+	thingsToUntar := []resource.TarOpts{
+		{
+			Include: "state.json",
+			Dst:     config.StateBosh,
+		},
+
+		{
+			Include: "creds.yml",
+			Dst:     config.StateBosh,
+		},
+
+		{
+			Include: "secret",
+			Dst:     config.StateBosh,
+		},
+
+		{
+			Include: "jumpbox.key",
+			Dst:     config.StateBosh,
+		},
+
+		{
+			Include: "ca.crt",
+			Dst:     config.StateBosh,
+		},
+
+		{
+			IncludeFolder: "services",
+			Dst:           config.CFDevHome,
+		},
+
+		{
+			IncludeFolder: "binaries",
+			FlattenFolder: true,
+			Dst:           config.CacheDir,
+		},
+
+		{
+			IncludeFolder: "deployment_config",
+			FlattenFolder: true,
+			Dst:           config.CacheDir,
+		},
+	}
+
 	qcowPath := filepath.Join(config.StateLinuxkit, "disk.qcow2")
 	if _, err := os.Stat(qcowPath); os.IsNotExist(err) {
-		err = resource.Untar(config.StateLinuxkit, tarFilepath, resource.TarOpts{Include: "disk.qcow2"})
-		if err != nil {
-			errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar disk.qcow2")
-			return err
-		}
+		thingsToUntar = append(thingsToUntar, resource.TarOpts{
+			Include: "disk.qcow2",
+			Dst:     config.StateLinuxkit,
+		})
 	}
 
-	err := resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "state.json"})
+	err := resource.Untar(tarFilepath, thingsToUntar)
 	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar state.json")
-		return err
-	}
-
-	err = resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "creds.yml"})
-	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar creds.yml")
-		return err
-	}
-
-	err = resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "secret"})
-	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar secrets")
-		return err
-	}
-
-	resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "jumpbox.key"})
-	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar jumpbox.key")
-		return err
-	}
-
-	resource.Untar(config.StateBosh, tarFilepath, resource.TarOpts{Include: "ca.crt"})
-	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar ca.crt")
-		return err
-	}
-
-	resource.Untar(config.CFDevHome, tarFilepath, resource.TarOpts{IncludeFolder: "services"})
-	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar services")
-		return err
-	}
-
-	resource.Untar(config.CacheDir, tarFilepath, resource.TarOpts{IncludeFolder: "binaries", FlattenFolder: true})
-	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar binaries")
-		return err
-	}
-
-	resource.Untar(config.CacheDir, tarFilepath, resource.TarOpts{IncludeFolder: "deployment_config", FlattenFolder: true})
-	if err != nil {
-		errors.SafeWrap(fmt.Errorf("%s", err), "unable to untar deployment configuration files")
-		return err
+		return errors.SafeWrap(err, "failed to untar the desired parts of the tarball")
 	}
 
 	return nil
