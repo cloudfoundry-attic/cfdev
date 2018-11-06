@@ -127,15 +127,20 @@ func SetupState(config config.Config) error {
 			FlattenFolder: true,
 			Dst:           config.CacheDir,
 		},
-	}
 
-	qcowPath := filepath.Join(config.StateLinuxkit, "disk.qcow2")
-	if _, err := os.Stat(qcowPath); os.IsNotExist(err) {
-		thingsToUntar = append(thingsToUntar, resource.TarOpts{
+		{
 			Include: "disk.qcow2",
 			Dst:     config.StateLinuxkit,
-		})
+		},
 	}
+
+	//qcowPath := filepath.Join(config.StateLinuxkit, "disk.qcow2")
+	//if _, err := os.Stat(qcowPath); os.IsNotExist(err) {
+	//	thingsToUntar = append(thingsToUntar, resource.TarOpts{
+	//		Include: "disk.qcow2",
+	//		Dst:     config.StateLinuxkit,
+	//	})
+	//}
 
 	err := resource.Untar(tarFilepath, thingsToUntar)
 	if err != nil {

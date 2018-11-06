@@ -164,7 +164,7 @@ var _ = Describe("env", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("cleans out the state dir but preserves qcow disk", func() {
+			It("overwrites the qcow disk with a new one", func() {
 				Expect(os.MkdirAll(filepath.Join(stateDir, "some-linuxkit-state-dir"), 0755)).To(Succeed())
 				fpath := filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2")
 				Expect(ioutil.WriteFile(fpath, []byte("old-qcow"), 0600)).To(Succeed())
@@ -174,7 +174,7 @@ var _ = Describe("env", func() {
 
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2"))
 				Expect(err).ToNot(HaveOccurred())
-				Expect(string(b)).To(Equal("old-qcow"))
+				Expect(string(b)).To(Equal("tmp-disk"))
 			})
 
 			It("copies bosh state", func() {
