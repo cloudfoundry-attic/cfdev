@@ -105,8 +105,8 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonS
 			osImagePath,
 		},
 		RunAtLoad:  false,
-		StdoutPath: path.Join(l.Config.CFDevHome, "linuxkit.stdout.log"),
-		StderrPath: path.Join(l.Config.CFDevHome, "linuxkit.stderr.log"),
+		StdoutPath: path.Join(l.Config.LogDir, "linuxkit.stdout.log"),
+		StderrPath: path.Join(l.Config.LogDir, "linuxkit.stderr.log"),
 	}, nil
 }
 

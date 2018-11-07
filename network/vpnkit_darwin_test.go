@@ -32,10 +32,12 @@ var _ = Describe("VpnKit", func() {
 		vpnkitStateDir = filepath.Join(tmpDir, "some-vpnkit-state-dir")
 		stateDir := filepath.Join(tmpDir, "some-state-dir")
 		homeDir := filepath.Join(tmpDir, "some-home-dir")
+		logDir := filepath.Join(tmpDir, "some-log-dir")
 		Expect(os.Mkdir(cacheDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(vpnkitStateDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(stateDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(homeDir, 0777)).To(Succeed())
+		Expect(os.Mkdir(logDir, 0777)).To(Succeed())
 		downloadVpnKit(cacheDir, "https://s3.amazonaws.com/cfdev-ci/vpnkit/vpnkit-darwin-amd64-0.0.0-build.3")
 		lctl = &daemon.Launchd{
 			PListDir: tmpDir,
@@ -47,6 +49,7 @@ var _ = Describe("VpnKit", func() {
 				VpnKitStateDir: vpnkitStateDir,
 				StateDir:       stateDir,
 				CFDevHome:      homeDir,
+				LogDir:         logDir,
 			},
 			DaemonRunner: lctl,
 			Label:        label,

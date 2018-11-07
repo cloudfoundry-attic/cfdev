@@ -7,7 +7,6 @@ import (
 
 	"os"
 
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -120,9 +119,6 @@ var _ = Describe("env", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = os.Stat(logDir)
-			Expect(err).NotTo(HaveOccurred())
-
-			_, err = os.Stat(filepath.Join(servicesDir, "logs"))
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -265,21 +261,7 @@ var _ = Describe("env", func() {
 
 			It("returns an error", func() {
 				err := subject.CreateDirs()
-				Expect(err.Error()).
-					To(ContainSubstring(fmt.Sprintf("failed to create cfdev home dir: path %s", homeDir)))
-			})
-		})
-
-		Context("when cache dir cannot be created", func() {
-			BeforeEach(func() {
-				Expect(os.MkdirAll(homeDir, 755)).To(Succeed())
-				ioutil.WriteFile(cacheDir, []byte{}, 0400)
-			})
-
-			It("returns an error", func() {
-				err := subject.CreateDirs()
-				Expect(err.Error()).
-					To(ContainSubstring(fmt.Sprintf("failed to create cache dir: path %s", cacheDir)))
+				Expect(err.Error()).To(ContainSubstring("failed to create dir"))
 			})
 		})
 	})

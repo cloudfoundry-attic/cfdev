@@ -59,32 +59,21 @@ type Env struct {
 }
 
 func (e *Env) CreateDirs() error {
-	if err := os.MkdirAll(e.Config.CFDevHome, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.CFDevHome, err), "failed to create cfdev home dir")
-	}
+	return e.MkdirAlls(
+		e.Config.CFDevHome,
+		e.Config.CacheDir,
+		e.Config.VpnKitStateDir,
+		e.Config.StateLinuxkit,
+		e.Config.StateBosh,
+		e.Config.ServicesDir,
+		e.Config.LogDir)
+}
 
-	if err := os.MkdirAll(e.Config.CacheDir, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.CacheDir, err), "failed to create cache dir")
-	}
-
-	if err := os.MkdirAll(e.Config.VpnKitStateDir, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.VpnKitStateDir, err), "failed to create state dir")
-	}
-
-	if err := os.MkdirAll(filepath.Join(e.Config.StateLinuxkit), 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(e.Config.StateLinuxkit), err), "failed to create state dir")
-	}
-
-	if err := os.MkdirAll(filepath.Join(e.Config.StateBosh), 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(e.Config.StateBosh), err), "failed to create state dir")
-	}
-
-	if err := os.MkdirAll(filepath.Join(e.Config.ServicesDir, "logs"), 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(e.Config.ServicesDir, "logs"), err), "failed to create services dir")
-	}
-
-	if err := os.MkdirAll(e.Config.LogDir, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.LogDir, err), "failed to create log dir")
+func (e *Env) MkdirAlls(dirs ...string) error {
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return errors.SafeWrap(fmt.Errorf("path %s: %s", dir, err), "failed to create dir")
+		}
 	}
 
 	return nil

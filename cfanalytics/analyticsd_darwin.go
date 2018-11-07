@@ -14,7 +14,7 @@ func (a *AnalyticsD) DaemonSpec() daemon.DaemonSpec {
 		SessionType:      "Background",
 		ProgramArguments: []string{filepath.Join(a.Config.CacheDir, "analyticsd"), os.Getenv("CFDEV_MODE")},
 		RunAtLoad:        false,
-		StdoutPath:       path.Join(a.Config.CFDevHome, "analyticsd.stdout.log"),
-		StderrPath:       path.Join(a.Config.CFDevHome, "analyticsd.stderr.log"),
+		StdoutPath:       path.Join(a.Config.LogDir, "analyticsd.stdout.log"),
+		StderrPath:       path.Join(a.Config.LogDir, "analyticsd.stderr.log"),
 	}
 }
