@@ -76,7 +76,11 @@ func CreateDirs(config config.Config) error {
 	}
 
 	if err := os.MkdirAll(filepath.Join(config.ServicesDir, "logs"), 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.ServicesDir), err), "failed to create services dir")
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.ServicesDir, "logs"), err), "failed to create services dir")
+	}
+
+	if err := os.MkdirAll(config.LogDir, 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.LogDir, err), "failed to create log dir")
 	}
 
 	return nil

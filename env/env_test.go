@@ -61,7 +61,7 @@ var _ = Describe("env", func() {
 	})
 
 	Describe("CreateDirs", func() {
-		var dir, homeDir, cacheDir, stateDir, boshDir, linuxkitDir, vpnkitStateDir, servicesDir string
+		var dir, homeDir, cacheDir, stateDir, boshDir, linuxkitDir, vpnkitStateDir, servicesDir, logDir string
 		var err error
 		var conf config.Config
 
@@ -76,6 +76,7 @@ var _ = Describe("env", func() {
 			linuxkitDir = filepath.Join(stateDir, "some-linuxkit-state-dir")
 			vpnkitStateDir = filepath.Join(stateDir, "some-vpnkit-state-dir")
 			servicesDir = filepath.Join(homeDir, "services")
+			logDir = filepath.Join(homeDir, "log")
 
 			conf = config.Config{
 				CFDevHome:      homeDir,
@@ -85,6 +86,7 @@ var _ = Describe("env", func() {
 				CacheDir:       cacheDir,
 				VpnKitStateDir: vpnkitStateDir,
 				ServicesDir: servicesDir,
+				LogDir: logDir,
 			}
 		})
 
@@ -110,6 +112,9 @@ var _ = Describe("env", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = os.Stat(servicesDir)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = os.Stat(logDir)
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = os.Stat(filepath.Join(servicesDir, "logs"))
