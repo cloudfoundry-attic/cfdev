@@ -10,7 +10,7 @@ import (
 
 func (c *Controller) DeployCloudFoundry(dockerRegistries []string) error {
 	cmd := exec.Command(
-		"bosh", "-n",
+		"bosh", "--tty", "-n",
 		"-d", "cf",
 		"deploy",
 		filepath.Join(c.Config.CacheDir, "cf.yml"),
@@ -19,15 +19,16 @@ func (c *Controller) DeployCloudFoundry(dockerRegistries []string) error {
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, c.boshEnvs()...)
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
+	logFile, err := os.Create(filepath.Join(c.Config.LogDir, "deploy-cf.log"))
 	if err != nil {
 		return err
 	}
+	defer logFile.Close()
 
-	return nil
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	return cmd.Run()
 }
 
 func (c *Controller) boshEnvs() []string {
@@ -45,6 +46,5 @@ func (c *Controller) boshEnvs() []string {
 		"SERVICES_DIR=" + c.Config.ServicesDir,
 		"CACHE_DIR=" + c.Config.CacheDir,
 		"BOSH_STATE=" + c.Config.StateBosh,
-		"LOG_DIR="+ filepath.Join(c.Config.ServicesDir, "logs"),
 	}
 }

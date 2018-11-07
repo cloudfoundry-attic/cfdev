@@ -9,23 +9,26 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
-func (c *Controller) DeployService(handle, script string) error {
-	cmd := exec.Command(script)
+func (c *Controller) DeployService(service Service) error {
+	cmd := exec.Command(service.Script)
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, c.boshEnvs()...)
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
+	logFile, err := os.Create(filepath.Join(c.Config.LogDir, strings.ToLower(service.Name)+".log"))
 	if err != nil {
 		return err
 	}
+	defer logFile.Close()
 
-	return nil
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	return cmd.Run()
 }
 
 type Service struct {

@@ -76,12 +76,5 @@ var _ = Describe("LinuxKit process", func() {
 				"/home-dir/.cfdev/cache/cfdev-efi-v2.iso",
 			))
 		})
-
-		Context("DepsIsoPath does not exist", func() {
-			It("returns file not found error", func() {
-				_, err := linuxkit.DaemonSpec(4, 4096, "/some/path/that/does/not/exist")
-				Expect(err).To(HaveOccurred())
-			})
-		})
 	})
 })

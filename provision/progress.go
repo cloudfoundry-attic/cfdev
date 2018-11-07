@@ -4,7 +4,6 @@ import (
 	e "errors"
 	"fmt"
 	"io"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -75,7 +74,7 @@ func (c *Controller) DeployServices(ui UI, services []Service) error {
 	for _, service := range services {
 		//start := time.Now()
 		ui.Say("Deploying %s...", service.Name)
-		err := c.DeployService(service.Handle, filepath.Join(c.Config.ServicesDir, service.Script))
+		err := c.DeployService(service)
 		if err != nil {
 			return err
 		}

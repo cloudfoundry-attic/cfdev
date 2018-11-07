@@ -3,7 +3,6 @@ package hypervisor
 import (
 	"fmt"
 	"io"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -74,10 +73,6 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonS
 	qcowtool := filepath.Join(l.Config.CacheDir, "qcow-tool")
 	vpnkitEthSock := filepath.Join(l.Config.VpnKitStateDir, "vpnkit_eth.sock")
 	vpnkitPortSock := filepath.Join(l.Config.VpnKitStateDir, "vpnkit_port.sock")
-
-	if _, err := os.Stat(depsIsoPath); os.IsNotExist(err) {
-		return daemon.DaemonSpec{}, err
-	}
 
 	osImagePath := filepath.Join(l.Config.CacheDir, "cfdev-efi-v2.iso")
 

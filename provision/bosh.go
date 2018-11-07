@@ -9,7 +9,7 @@ import (
 func (c *Controller) DeployBosh() error {
 	cmd := exec.Command(
 		filepath.Join(c.Config.CacheDir, "bosh"),
-		"create-env",
+		"--tty", "create-env",
 		filepath.Join(c.Config.CacheDir, "director.yml"),
 		"--state",
 		filepath.Join(c.Config.StateBosh, "state.json"),
