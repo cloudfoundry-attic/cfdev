@@ -59,7 +59,7 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-		BoshDirectorIP:         "10.245.0.2",
+		BoshDirectorIP:         "10.144.0.4",
 		CFRouterIP:             "10.144.0.34",
 		HostIP:                 "192.168.65.2",
 		CFDevHome:              cfdevHome,

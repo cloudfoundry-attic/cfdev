@@ -88,9 +88,9 @@ var _ = Describe("Fetching BOSH Configuration", func() {
 					AdminUsername:   "admin",
 					AdminPassword:   "admin-password",
 					CACertificate:   "ca-certificate",
-					DirectorAddress: "10.245.0.2",
+					DirectorAddress: "10.144.0.4",
 
-					GatewayHost:       "10.245.0.2",
+					GatewayHost:       "10.144.0.4",
 					GatewayPrivateKey: "ssh-private-key",
 					GatewayUsername:   "jumpbox",
 				}))

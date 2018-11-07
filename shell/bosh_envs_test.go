@@ -22,7 +22,7 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 			AdminUsername:   "admin",
 			AdminPassword:   "admin-password",
 			CACertificate:   "ca-certificate",
-			DirectorAddress: "10.245.0.2",
+			DirectorAddress: "10.144.0.4",
 
 			GatewayHost:       "10.245.0.3",
 			GatewayUsername:   "jumpbox",
@@ -44,7 +44,7 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 		var expectedExports []string
 		if runtime.GOOS != "windows" {
 			expectedExports = []string{
-				`export BOSH_ENVIRONMENT="10.245.0.2";`,
+				`export BOSH_ENVIRONMENT="10.144.0.4";`,
 				`export BOSH_CLIENT="admin";`,
 				`export BOSH_CLIENT_SECRET="admin-password";`,
 				`export BOSH_GW_HOST="10.245.0.3";`,
@@ -57,7 +57,7 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 			}
 		} else {
 			expectedExports = []string{
-				`$env:BOSH_ENVIRONMENT="10.245.0.2";`,
+				`$env:BOSH_ENVIRONMENT="10.144.0.4";`,
 				`$env:BOSH_CLIENT="admin";`,
 				`$env:BOSH_CLIENT_SECRET="admin-password";`,
 				`$env:BOSH_GW_HOST="10.245.0.3";`,

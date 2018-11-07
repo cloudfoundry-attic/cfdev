@@ -103,7 +103,7 @@ func (r *yamlResponse) convert() (bosh.Config, error) {
 		return conf, errors.SafeWrap(nil, "jumpbox ssh key was not returned")
 	}
 
-	conf.DirectorAddress = "10.245.0.2"
+	conf.DirectorAddress = "10.144.0.4"
 	conf.AdminUsername = "admin"
 	conf.AdminPassword = r.AdminPassword
 	conf.CACertificate = r.DirectorSSL.CACertificate

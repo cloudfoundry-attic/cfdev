@@ -21,7 +21,7 @@ import (
 
 const (
 	GardenIP       = "localhost"
-	BoshDirectorIP = "10.245.0.2"
+	BoshDirectorIP = "10.144.0.4"
 	CFRouterIP     = "10.144.0.34"
 )
 
