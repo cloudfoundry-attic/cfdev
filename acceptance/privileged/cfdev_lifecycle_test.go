@@ -51,10 +51,6 @@ var _ = Describe("cfdev lifecycle", func() {
 		telemetrySession := cf.Cf("dev", "telemetry", "--off")
 		Eventually(telemetrySession).Should(gexec.Exit())
 
-		// capture any bosh deploy logs for easier debugging
-		logsSession := cf.Cf("dev", "logs")
-		Eventually(logsSession).Should(gexec.Exit())
-
 		startSession.Kill()
 
 		stopSession := cf.Cf("dev", "stop")

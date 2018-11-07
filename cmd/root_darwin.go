@@ -16,7 +16,6 @@ import (
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
-	b8 "code.cloudfoundry.org/cfdev/cmd/logs"
 	b5 "code.cloudfoundry.org/cfdev/cmd/start"
 	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
@@ -169,10 +168,6 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:              ui,
 			AnalyticsToggle: analyticsToggle,
 			AnalyticsD:      analyticsD,
-		},
-		&b8.Logs{
-			Provisioner: provision.NewController(config),
-			UI:          ui,
 		},
 	} {
 		dev.AddCommand(cmd.Cmd())
