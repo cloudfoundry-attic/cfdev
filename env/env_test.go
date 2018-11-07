@@ -64,6 +64,7 @@ var _ = Describe("env", func() {
 		var dir, homeDir, cacheDir, stateDir, boshDir, linuxkitDir, vpnkitStateDir, servicesDir, logDir string
 		var err error
 		var conf config.Config
+		var subject env.Env
 
 		BeforeEach(func() {
 			dir, err = ioutil.TempDir(os.TempDir(), "test-space")
@@ -88,6 +89,10 @@ var _ = Describe("env", func() {
 				ServicesDir: servicesDir,
 				LogDir: logDir,
 			}
+
+			subject = env.Env{
+				Config: conf,
+			}
 		})
 
 		AfterEach(func() {
@@ -95,7 +100,7 @@ var _ = Describe("env", func() {
 		})
 
 		It("creates home, state, cache and services dirs", func() {
-			Expect(env.CreateDirs(conf)).To(Succeed())
+			Expect(subject.CreateDirs()).To(Succeed())
 			_, err := os.Stat(homeDir)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -174,8 +179,8 @@ var _ = Describe("env", func() {
 				fpath := filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2")
 				Expect(ioutil.WriteFile(fpath, []byte("old-qcow"), 0600)).To(Succeed())
 
-				Expect(env.CreateDirs(conf)).To(Succeed())
-				Expect(env.SetupState(conf)).To(Succeed())
+				Expect(subject.CreateDirs()).To(Succeed())
+				Expect(subject.SetupState()).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2"))
 				Expect(err).ToNot(HaveOccurred())
@@ -183,8 +188,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("copies bosh state", func() {
-				Expect(env.CreateDirs(conf)).To(Succeed())
-				Expect(env.SetupState(conf)).To(Succeed())
+				Expect(subject.CreateDirs()).To(Succeed())
+				Expect(subject.SetupState()).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "state.json"))
 				Expect(err).ToNot(HaveOccurred())
@@ -192,8 +197,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("copies bosh creds", func() {
-				Expect(env.CreateDirs(conf)).To(Succeed())
-				Expect(env.SetupState(conf)).To(Succeed())
+				Expect(subject.CreateDirs()).To(Succeed())
+				Expect(subject.SetupState()).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "creds.yml"))
 				Expect(err).ToNot(HaveOccurred())
@@ -201,8 +206,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("copies services directory", func() {
-				Expect(env.CreateDirs(conf)).To(Succeed())
-				Expect(env.SetupState(conf)).To(Succeed())
+				Expect(subject.CreateDirs()).To(Succeed())
+				Expect(subject.SetupState()).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(servicesDir, "service.file"))
 				Expect(err).ToNot(HaveOccurred())
@@ -210,8 +215,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("copies binaries directory", func() {
-				Expect(env.CreateDirs(conf)).To(Succeed())
-				Expect(env.SetupState(conf)).To(Succeed())
+				Expect(subject.CreateDirs()).To(Succeed())
+				Expect(subject.SetupState()).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(cacheDir, "binary.file"))
 				Expect(err).ToNot(HaveOccurred())
@@ -223,8 +228,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("copies deployment configuration directory", func() {
-				Expect(env.CreateDirs(conf)).To(Succeed())
-				Expect(env.SetupState(conf)).To(Succeed())
+				Expect(subject.CreateDirs()).To(Succeed())
+				Expect(subject.SetupState()).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(cacheDir, "director.yml"))
 				Expect(err).ToNot(HaveOccurred())
@@ -236,8 +241,8 @@ var _ = Describe("env", func() {
 			})
 
 			It("copies bosh environment variables", func() {
-				Expect(env.CreateDirs(conf)).To(Succeed())
-				Expect(env.SetupState(conf)).To(Succeed())
+				Expect(subject.CreateDirs()).To(Succeed())
+				Expect(subject.SetupState()).To(Succeed())
 
 				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-bosh-state-dir", "jumpbox.key"))
 				Expect(err).ToNot(HaveOccurred())
@@ -259,7 +264,7 @@ var _ = Describe("env", func() {
 			})
 
 			It("returns an error", func() {
-				err := env.CreateDirs(conf)
+				err := subject.CreateDirs()
 				Expect(err.Error()).
 					To(ContainSubstring(fmt.Sprintf("failed to create cfdev home dir: path %s", homeDir)))
 			})
@@ -272,7 +277,7 @@ var _ = Describe("env", func() {
 			})
 
 			It("returns an error", func() {
-				err := env.CreateDirs(conf)
+				err := subject.CreateDirs()
 				Expect(err.Error()).
 					To(ContainSubstring(fmt.Sprintf("failed to create cache dir: path %s", cacheDir)))
 			})

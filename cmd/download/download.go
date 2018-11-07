@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
@@ -21,10 +20,16 @@ type UI interface {
 	Writer() io.Writer
 }
 
+//go:generate mockgen -package mocks -destination mocks/env.go code.cloudfoundry.org/cfdev/cmd/start Env
+type Env interface {
+	CreateDirs() error
+}
+
 type Download struct {
 	Exit   chan struct{}
 	UI     UI
 	Config config.Config
+	Env    Env
 }
 
 func (d *Download) Cmd() *cobra.Command {
@@ -40,7 +45,7 @@ func (d *Download) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(128)
 	}()
 
-	if err := env.CreateDirs(d.Config); err != nil {
+	if err := d.Env.CreateDirs(); err != nil {
 		return errors.SafeWrap(err, "setup for download")
 	}
 

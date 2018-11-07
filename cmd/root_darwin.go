@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/profiler"
 	"io"
 	"net/http"
@@ -114,6 +115,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Exit:   exit,
 			UI:     ui,
 			Config: config,
+			Env:    &env.Env{Config: config},
 		},
 		&b5.Start{
 			Exit:            exit,
@@ -121,6 +123,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:              ui,
 			Config:          config,
 			Cache:           cache,
+			Env:             &env.Env{Config: config},
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
 			HostNet: &network.HostNet{

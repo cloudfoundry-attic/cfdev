@@ -54,79 +54,83 @@ func BuildProxyConfig(boshDirectorIP string, cfRouterIP string, hostIP string) P
 	return proxyConfig
 }
 
-func CreateDirs(config config.Config) error {
-	if err := os.MkdirAll(config.CFDevHome, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CFDevHome, err), "failed to create cfdev home dir")
+type Env struct {
+	Config config.Config
+}
+
+func (e *Env) CreateDirs() error {
+	if err := os.MkdirAll(e.Config.CFDevHome, 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.CFDevHome, err), "failed to create cfdev home dir")
 	}
 
-	if err := os.MkdirAll(config.CacheDir, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.CacheDir, err), "failed to create cache dir")
+	if err := os.MkdirAll(e.Config.CacheDir, 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.CacheDir, err), "failed to create cache dir")
 	}
 
-	if err := os.MkdirAll(config.VpnKitStateDir, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.VpnKitStateDir, err), "failed to create state dir")
+	if err := os.MkdirAll(e.Config.VpnKitStateDir, 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.VpnKitStateDir, err), "failed to create state dir")
 	}
 
-	if err := os.MkdirAll(filepath.Join(config.StateLinuxkit), 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.StateLinuxkit), err), "failed to create state dir")
+	if err := os.MkdirAll(filepath.Join(e.Config.StateLinuxkit), 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(e.Config.StateLinuxkit), err), "failed to create state dir")
 	}
 
-	if err := os.MkdirAll(filepath.Join(config.StateBosh), 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.StateBosh), err), "failed to create state dir")
+	if err := os.MkdirAll(filepath.Join(e.Config.StateBosh), 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(e.Config.StateBosh), err), "failed to create state dir")
 	}
 
-	if err := os.MkdirAll(filepath.Join(config.ServicesDir, "logs"), 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(config.ServicesDir, "logs"), err), "failed to create services dir")
+	if err := os.MkdirAll(filepath.Join(e.Config.ServicesDir, "logs"), 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", filepath.Join(e.Config.ServicesDir, "logs"), err), "failed to create services dir")
 	}
 
-	if err := os.MkdirAll(config.LogDir, 0755); err != nil {
-		return errors.SafeWrap(fmt.Errorf("path %s: %s", config.LogDir, err), "failed to create log dir")
+	if err := os.MkdirAll(e.Config.LogDir, 0755); err != nil {
+		return errors.SafeWrap(fmt.Errorf("path %s: %s", e.Config.LogDir, err), "failed to create log dir")
 	}
 
 	return nil
 }
 
-func SetupState(config config.Config) error {
-	tarFilepath := filepath.Join(config.CacheDir, "cfdev-deps.tgz")
+func (e *Env) SetupState() error {
+	tarFilepath := filepath.Join(e.Config.CacheDir, "cfdev-deps.tgz")
 
 	thingsToUntar := []resource.TarOpts{
 		{
 			Include: "state.json",
-			Dst:     config.StateBosh,
+			Dst:     e.Config.StateBosh,
 		},
 		{
 			Include: "creds.yml",
-			Dst:     config.StateBosh,
+			Dst:     e.Config.StateBosh,
 		},
 		{
 			Include: "secret",
-			Dst:     config.StateBosh,
+			Dst:     e.Config.StateBosh,
 		},
 		{
 			Include: "jumpbox.key",
-			Dst:     config.StateBosh,
+			Dst:     e.Config.StateBosh,
 		},
 		{
 			Include: "ca.crt",
-			Dst:     config.StateBosh,
+			Dst:     e.Config.StateBosh,
 		},
 		{
 			IncludeFolder: "services",
-			Dst:           config.CFDevHome,
+			Dst:           e.Config.CFDevHome,
 		},
 		{
 			IncludeFolder: "binaries",
 			FlattenFolder: true,
-			Dst:           config.CacheDir,
+			Dst:           e.Config.CacheDir,
 		},
 		{
 			IncludeFolder: "deployment_config",
 			FlattenFolder: true,
-			Dst:           config.CacheDir,
+			Dst:           e.Config.CacheDir,
 		},
 		{
 			Include: "disk.qcow2",
-			Dst:     config.StateLinuxkit,
+			Dst:     e.Config.StateLinuxkit,
 		},
 	}
 
