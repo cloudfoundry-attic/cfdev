@@ -20,10 +20,6 @@ type IsoReader interface {
 	Read(isoPath string) (iso.Metadata, error)
 }
 
-type Args struct {
-	DepsIsoPath string
-}
-
 type Version struct {
 	UI        UI
 	Version   *semver.Version
@@ -31,15 +27,18 @@ type Version struct {
 	IsoReader IsoReader
 }
 
-func (v *Version) Execute(args Args) {
-	message := []string{fmt.Sprintf("CLI: %s", v.Version.Original)}
+func (v *Version) Execute() {
+	var (
+		message     = []string{fmt.Sprintf("CLI: %s", v.Version.Original)}
+		metadataYml = filepath.Join(v.Config.CacheDir, "metadata.yml")
+	)
 
-	if !exists(args.DepsIsoPath) {
+	if !exists(metadataYml) {
 		v.UI.Say(strings.Join(message, "\n"))
 		return
 	}
 
-	metadata, err := v.IsoReader.Read(args.DepsIsoPath)
+	metadata, err := v.IsoReader.Read(metadataYml)
 	if err != nil {
 		v.UI.Say(strings.Join(message, "\n"))
 		return
@@ -53,22 +52,12 @@ func (v *Version) Execute(args Args) {
 }
 
 func (v *Version) Cmd() *cobra.Command {
-	args := Args{}
 	cmd := &cobra.Command{
 		Use: "version",
 		Run: func(_ *cobra.Command, _ []string) {
-			v.Execute(args)
+			v.Execute()
 		},
 	}
-
-	pf := cmd.PersistentFlags()
-	pf.StringVarP(
-		&args.DepsIsoPath,
-		"file",
-		"f",
-		filepath.Join(v.Config.CacheDir, "cf-deps.iso"),
-		"path to .dev file containing bosh & cf bits",
-	)
 	return cmd
 }
 

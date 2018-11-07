@@ -28,6 +28,7 @@ var _ = Describe("LinuxKit process", func() {
 				CFDevHome:      "/home-dir/.cfdev",
 				StateDir:       "/home-dir/.cfdev/state",
 				CacheDir:       "/home-dir/.cfdev/cache",
+				StateLinuxkit:  "/home-dir/.cfdev/state/linuxkit",
 				VpnKitStateDir: "/home-dir/.cfdev/state_vpnkit",
 			},
 		}
@@ -66,14 +67,13 @@ var _ = Describe("LinuxKit process", func() {
 				"-cpus", "4",
 				"-mem", "4096",
 				"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
-				"-networking",
-				"vpnkit,/home-dir/.cfdev/state_vpnkit/vpnkit_eth.sock,/home-dir/.cfdev/state_vpnkit/vpnkit_port.sock",
+				"-networking", "vpnkit,/home-dir/.cfdev/state_vpnkit/vpnkit_eth.sock,/home-dir/.cfdev/state_vpnkit/vpnkit_port.sock",
 				"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
 				"-disk", "type=qcow,size=80G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
-				"-disk", "file="+depsIsoPath,
-				"-state", "/home-dir/.cfdev/state",
-				"--uefi", "/home-dir/.cfdev/cache/cfdev-efi.iso",
-				"--vsock-ports", "62372",
+				"-state", "/home-dir/.cfdev/state/linuxkit",
+				"-uefi",
+				"-publish", "9999:9999/tcp",
+				"/home-dir/.cfdev/cache/cfdev-efi-v2.iso",
 			))
 		})
 
