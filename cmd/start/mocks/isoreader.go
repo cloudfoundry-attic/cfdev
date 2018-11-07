@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIsoReader is a mock of MetaDataReader interface
-type MockIsoReader struct {
+// MockMetaDataReader is a mock of MetaDataReader interface
+type MockMetaDataReader struct {
 	ctrl     *gomock.Controller
-	recorder *MockIsoReaderMockRecorder
+	recorder *MockMetaDataReaderMockRecorder
 }
 
-// MockIsoReaderMockRecorder is the mock recorder for MockIsoReader
-type MockIsoReaderMockRecorder struct {
-	mock *MockIsoReader
+// MockMetaDataReaderMockRecorder is the mock recorder for MockMetaDataReader
+type MockMetaDataReaderMockRecorder struct {
+	mock *MockMetaDataReader
 }
 
-// NewMockIsoReader creates a new mock instance
-func NewMockIsoReader(ctrl *gomock.Controller) *MockIsoReader {
-	mock := &MockIsoReader{ctrl: ctrl}
-	mock.recorder = &MockIsoReaderMockRecorder{mock}
+// NewMockMetaDataReader creates a new mock instance
+func NewMockMetaDataReader(ctrl *gomock.Controller) *MockMetaDataReader {
+	mock := &MockMetaDataReader{ctrl: ctrl}
+	mock.recorder = &MockMetaDataReaderMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIsoReader) EXPECT() *MockIsoReaderMockRecorder {
+func (m *MockMetaDataReader) EXPECT() *MockMetaDataReaderMockRecorder {
 	return m.recorder
 }
 
 // Read mocks base method
-func (m *MockIsoReader) Read(arg0 string) (iso.Metadata, error) {
+func (m *MockMetaDataReader) Read(arg0 string) (iso.Metadata, error) {
 	ret := m.ctrl.Call(m, "Read", arg0)
 	ret0, _ := ret[0].(iso.Metadata)
 	ret1, _ := ret[1].(error)
@@ -42,6 +42,6 @@ func (m *MockIsoReader) Read(arg0 string) (iso.Metadata, error) {
 }
 
 // Read indicates an expected call of Read
-func (mr *MockIsoReaderMockRecorder) Read(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockIsoReader)(nil).Read), arg0)
+func (mr *MockMetaDataReaderMockRecorder) Read(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockMetaDataReader)(nil).Read), arg0)
 }

@@ -20,7 +20,6 @@ import (
 	"text/template"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/hypervisor"
 )
 
@@ -113,6 +112,12 @@ type Stop interface {
 	RunE(cmd *cobra.Command, args []string) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/env.go code.cloudfoundry.org/cfdev/cmd/start Env
+type Env interface {
+	CreateDirs() error
+	SetupState() error
+}
+
 type Args struct {
 	Registries          string
 	DeploySingleService string
@@ -139,10 +144,11 @@ type Start struct {
 	Hypervisor      Hypervisor
 	Provisioner     Provisioner
 	Stop            Stop
+	Env             Env
 	Profiler        SystemProfiler
 }
 
-const compatibilityVersion = "v2"
+const compatibilityVersion = "v3"
 const defaultMemory = 4192
 
 func (s *Start) Cmd() *cobra.Command {
@@ -226,7 +232,7 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "stopping cfdev")
 	}
 
-	if err := env.CreateDirs(s.Config); err != nil {
+	if err := s.Env.CreateDirs(); err != nil {
 		return e.SafeWrap(err, "setting up cfdev home dir")
 	}
 
@@ -259,7 +265,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Setting State...")
-	if err := env.SetupState(s.Config); err != nil {
+	if err := s.Env.SetupState(); err != nil {
 		return e.SafeWrap(err, "Unable to setup directories")
 	}
 
@@ -295,7 +301,6 @@ func (s *Start) Execute(args Args) error {
 		Name:     "cfdev",
 		CPUs:     args.Cpus,
 		MemoryMB: memoryToAllocate,
-		DepsIso:  filepath.Join(s.Config.CacheDir, "cfdev-efi-v2.iso"),
 	}); err != nil {
 		return e.SafeWrap(err, "creating the vm")
 	}
