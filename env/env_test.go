@@ -85,8 +85,8 @@ var _ = Describe("env", func() {
 				StateLinuxkit:  linuxkitDir,
 				CacheDir:       cacheDir,
 				VpnKitStateDir: vpnkitStateDir,
-				ServicesDir: servicesDir,
-				LogDir: logDir,
+				ServicesDir:    servicesDir,
+				LogDir:         logDir,
 			}
 
 			subject = env.Env{

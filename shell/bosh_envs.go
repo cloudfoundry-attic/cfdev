@@ -13,7 +13,6 @@ import (
 )
 
 type Environment struct {
-	StateDir string
 }
 
 func (e *Environment) Prepare(config bosh.Config) (string, error) {

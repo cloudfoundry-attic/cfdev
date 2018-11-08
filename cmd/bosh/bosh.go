@@ -70,7 +70,7 @@ func (b *Bosh) Env() error {
 
 	b.Analytics.Event(cfanalytics.BOSH_ENV)
 
-	env := shell.Environment{StateDir: b.StateDir}
+	env := shell.Environment{}
 	shellScript, err := env.Prepare(config)
 	if err != nil {
 		return errors.SafeWrap(err, "failed to prepare bosh configuration")

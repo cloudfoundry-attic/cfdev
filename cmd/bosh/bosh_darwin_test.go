@@ -63,10 +63,10 @@ var _ = Describe("Bosh", func() {
 				mockProvisioner.EXPECT().FetchBOSHConfig().Return(bosh.Config{
 					AdminUsername:     "some-admin-username",
 					AdminPassword:     "some-admin-password",
-					CACertificate:     "some-ca-cert",
+					CACertificate:     filepath.Join(tmpDir, "some-ca-cert"),
 					DirectorAddress:   "some-director-address",
 					GatewayHost:       "some-gateway-host",
-					GatewayPrivateKey: "some-gateway-private-key",
+					GatewayPrivateKey: filepath.Join(tmpDir, "some-gateway-private-key"),
 					GatewayUsername:   "some-gateway-username",
 				}, nil)
 
@@ -80,19 +80,11 @@ export BOSH_CA_CERT="%s";
 export BOSH_GW_HOST="some-gateway-host";
 export BOSH_GW_PRIVATE_KEY="%s";
 export BOSH_GW_USER="some-gateway-username";`,
-					filepath.Join(tmpDir, "bosh-ca-cert"),
-					filepath.Join(tmpDir, "bosh-gw-key"),
+					filepath.Join(tmpDir, "some-ca-cert"),
+					filepath.Join(tmpDir, "some-gateway-private-key"),
 				),
 				)
 				Expect(boshCmd.Env()).To(Succeed())
-
-				contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "bosh-ca-cert"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-ca-cert"))
-
-				contents, err = ioutil.ReadFile(filepath.Join(tmpDir, "bosh-gw-key"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-gateway-private-key"))
 			})
 		})
 
@@ -112,10 +104,10 @@ export BOSH_GW_USER="some-gateway-username";`,
 				mockProvisioner.EXPECT().FetchBOSHConfig().Return(bosh.Config{
 					AdminUsername:     "some-admin-username",
 					AdminPassword:     "some-admin-password",
-					CACertificate:     "some-ca-cert",
+					CACertificate:     filepath.Join(tmpDir, "some-ca-cert"),
 					DirectorAddress:   "some-director-address",
 					GatewayHost:       "some-gateway-host",
-					GatewayPrivateKey: "some-gateway-private-key",
+					GatewayPrivateKey: filepath.Join(tmpDir, "some-gateway-private-key"),
 					GatewayUsername:   "some-gateway-username",
 				}, nil)
 				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
@@ -129,19 +121,11 @@ export BOSH_CA_CERT="%s";
 export BOSH_GW_HOST="some-gateway-host";
 export BOSH_GW_PRIVATE_KEY="%s";
 export BOSH_GW_USER="some-gateway-username";`,
-					filepath.Join(tmpDir, "bosh-ca-cert"),
-					filepath.Join(tmpDir, "bosh-gw-key"),
+					filepath.Join(tmpDir, "some-ca-cert"),
+					filepath.Join(tmpDir, "some-gateway-private-key"),
 				),
 				)
 				Expect(boshCmd.Env()).To(Succeed())
-
-				contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "bosh-ca-cert"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-ca-cert"))
-
-				contents, err = ioutil.ReadFile(filepath.Join(tmpDir, "bosh-gw-key"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-gateway-private-key"))
 			})
 		})
 	})

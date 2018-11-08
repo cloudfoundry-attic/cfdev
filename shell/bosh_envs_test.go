@@ -29,15 +29,7 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 			GatewayPrivateKey: "ssh-private-key",
 		}
 
-		dir, err := ioutil.TempDir("", "cfdev-state-dir")
-		Expect(err).ToNot(HaveOccurred())
-
-		env = shell.Environment{
-			StateDir: dir,
-		}
-	})
-	AfterEach(func() {
-		os.RemoveAll(env.StateDir)
+		env = shell.Environment{}
 	})
 
 	It("formats BOSH configuration for eval'ing", func() {
@@ -52,8 +44,8 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 
 				// The following items will be saved to files so we
 				// ignore the value for now
-				`export BOSH_CA_CERT=`,
-				`export BOSH_GW_PRIVATE_KEY=`,
+				`export BOSH_CA_CERT="ca-certificate";`,
+				`export BOSH_GW_PRIVATE_KEY="ssh-private-key";`,
 			}
 		} else {
 			expectedExports = []string{
@@ -65,8 +57,8 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 
 				// The following items will be saved to files so we
 				// ignore the value for now
-				`$env:BOSH_CA_CERT=`,
-				`$env:BOSH_GW_PRIVATE_KEY=`,
+				`$env:BOSH_CA_CERT="ca-certificate";`,
+				`$env:BOSH_GW_PRIVATE_KEY="ssh-private-key";`,
 			}
 		}
 
@@ -76,9 +68,6 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 		for _, v := range expectedExports {
 			Expect(exports).To(ContainSubstring(v))
 		}
-
-		ExpectExportToContainFilePathWithContent(exports, "BOSH_GW_PRIVATE_KEY", "ssh-private-key")
-		ExpectExportToContainFilePathWithContent(exports, "BOSH_CA_CERT", "ca-certificate")
 	})
 
 	Context("previous BOSH environment variables are set", func() {
@@ -109,17 +98,6 @@ var _ = Describe("Formatting BOSH Configuration", func() {
 			exports, err := env.Prepare(config)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(exports).ToNot(ContainSubstring("RANDOM_ENV_FOR_TEST"))
-		})
-	})
-
-	Context("unable save files to the state dir", func() {
-		It("returns an error", func() {
-			env := shell.Environment{
-				StateDir: "/some-garbage-directory",
-			}
-
-			_, err := env.Prepare(bosh.Config{})
-			Expect(err).To(HaveOccurred())
 		})
 	})
 })

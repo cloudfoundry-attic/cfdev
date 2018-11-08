@@ -2,23 +2,26 @@ package provision
 
 import (
 	"code.cloudfoundry.org/cfdev/bosh"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error {
-	//TODO change to call service/cf.yml
-	cmd := exec.Command(
-		"bosh", "--tty", "-n",
-		"-d", "cf",
-		"deploy",
-		filepath.Join(c.Config.CacheDir, "cf.yml"),
-		"--vars-store", filepath.Join(c.Config.StateBosh, "creds.yml"))
+	cmd := exec.Command(filepath.Join(c.Config.ServicesDir, "deploy-cf"))
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, c.boshEnvs()...)
+
+	var arr []string
+	for _, registry := range dockerRegistries {
+		arr = append(arr, fmt.Sprintf(`%q`, registry))
+	}
+
+	cmd.Env = append(cmd.Env, `DOCKER_REGISTRIES=[`+strings.Join(arr, ",")+"]")
 
 	logFile, err := os.Create(filepath.Join(c.Config.LogDir, "deploy-cf.log"))
 	if err != nil {
@@ -45,8 +48,8 @@ func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error 
 	}()
 
 	return c.report(time.Now(), ui, b, Service{
-		Name: "cf",
+		Name:       "cf",
 		Deployment: "cf",
-		IsErrand: false,
+		IsErrand:   false,
 	}, errChan)
 }

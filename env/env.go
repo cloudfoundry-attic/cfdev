@@ -87,7 +87,6 @@ func (e *Env) MkdirAlls(dirs ...string) error {
 	return nil
 }
 
-
 func (e *Env) RemoveDirAlls(dirs ...string) error {
 	for _, dir := range dirs {
 		if err := os.RemoveAll(dir); err != nil {

@@ -195,8 +195,7 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 					mockProvisioner.EXPECT().DeployBosh(),
 					mockUI.EXPECT().Say("Deploying CF..."),
-					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+					mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 					mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -260,8 +259,7 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 					mockProvisioner.EXPECT().DeployBosh(),
 					mockUI.EXPECT().Say("Deploying CF..."),
-					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+					mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 					mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -340,8 +338,7 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 						mockProvisioner.EXPECT().DeployBosh(),
 						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 						mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -412,8 +409,7 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 						mockProvisioner.EXPECT().DeployBosh(),
 						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 						mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -480,8 +476,7 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 						mockProvisioner.EXPECT().DeployBosh(),
 						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 						mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -613,8 +608,7 @@ var _ = Describe("Start", func() {
 								mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 								mockProvisioner.EXPECT().DeployBosh(),
 								mockUI.EXPECT().Say("Deploying CF..."),
-								mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-								mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+								mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 								mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 								mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -682,8 +676,7 @@ var _ = Describe("Start", func() {
 							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 							mockProvisioner.EXPECT().DeployBosh(),
 							mockUI.EXPECT().Say("Deploying CF..."),
-							mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-							mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+							mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 							mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -759,8 +752,7 @@ var _ = Describe("Start", func() {
 							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 							mockProvisioner.EXPECT().DeployBosh(),
 							mockUI.EXPECT().Say("Deploying CF..."),
-							mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-							mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+							mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 							mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -828,8 +820,7 @@ var _ = Describe("Start", func() {
 							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 							mockProvisioner.EXPECT().DeployBosh(),
 							mockUI.EXPECT().Say("Deploying CF..."),
-							mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-							mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+							mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 							mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -899,8 +890,7 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 						mockProvisioner.EXPECT().DeployBosh(),
 						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 						mockProvisioner.EXPECT().WhiteListServices("all", services).Return(services, nil),
 						mockProvisioner.EXPECT().DeployServices(mockUI, services),
 
@@ -969,8 +959,7 @@ var _ = Describe("Start", func() {
 						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 						mockProvisioner.EXPECT().DeployBosh(),
 						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-						mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 						mockProvisioner.EXPECT().WhiteListServices("some-other-service-flagname", services).Return(services[1:], nil),
 						mockProvisioner.EXPECT().DeployServices(mockUI, services[1:]),
 
@@ -1126,8 +1115,7 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 					mockProvisioner.EXPECT().DeployBosh(),
 					mockUI.EXPECT().Say("Deploying CF..."),
-					mockProvisioner.EXPECT().ReportProgress(mockUI, "cf"),
-					mockProvisioner.EXPECT().DeployCloudFoundry(nil),
+					mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
 					mockProvisioner.EXPECT().DeployServices(mockUI, services),
 

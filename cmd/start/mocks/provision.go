@@ -46,15 +46,15 @@ func (mr *MockProvisionerMockRecorder) DeployBosh() *gomock.Call {
 }
 
 // DeployCloudFoundry mocks base method
-func (m *MockProvisioner) DeployCloudFoundry(arg0 []string) error {
-	ret := m.ctrl.Call(m, "DeployCloudFoundry", arg0)
+func (m *MockProvisioner) DeployCloudFoundry(arg0 provision.UI, arg1 []string) error {
+	ret := m.ctrl.Call(m, "DeployCloudFoundry", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeployCloudFoundry indicates an expected call of DeployCloudFoundry
-func (mr *MockProvisionerMockRecorder) DeployCloudFoundry(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployCloudFoundry", reflect.TypeOf((*MockProvisioner)(nil).DeployCloudFoundry), arg0)
+func (mr *MockProvisionerMockRecorder) DeployCloudFoundry(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployCloudFoundry", reflect.TypeOf((*MockProvisioner)(nil).DeployCloudFoundry), arg0, arg1)
 }
 
 // DeployServices mocks base method
@@ -79,16 +79,6 @@ func (m *MockProvisioner) Ping() error {
 // Ping indicates an expected call of Ping
 func (mr *MockProvisionerMockRecorder) Ping() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockProvisioner)(nil).Ping))
-}
-
-// ReportProgress mocks base method
-func (m *MockProvisioner) ReportProgress(arg0 provision.UI, arg1 string) {
-	m.ctrl.Call(m, "ReportProgress", arg0, arg1)
-}
-
-// ReportProgress indicates an expected call of ReportProgress
-func (mr *MockProvisionerMockRecorder) ReportProgress(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportProgress", reflect.TypeOf((*MockProvisioner)(nil).ReportProgress), arg0, arg1)
 }
 
 // WhiteListServices mocks base method
