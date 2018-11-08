@@ -96,7 +96,6 @@ type Provisioner interface {
 	Ping() error
 	DeployBosh() error
 	DeployCloudFoundry([]string) error
-	GetServices() ([]provision.Service, string, error)
 	WhiteListServices(string, []provision.Service) ([]provision.Service, error)
 	DeployServices(provision.UI, []provision.Service) error
 	ReportProgress(provision.UI, string)

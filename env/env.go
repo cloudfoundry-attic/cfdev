@@ -59,6 +59,14 @@ type Env struct {
 }
 
 func (e *Env) CreateDirs() error {
+	err := e.RemoveDirAlls(
+		e.Config.LogDir,
+		e.Config.ServicesDir,
+		e.Config.StateDir)
+	if err != nil {
+		return err
+	}
+
 	return e.MkdirAlls(
 		e.Config.CFDevHome,
 		e.Config.CacheDir,
@@ -73,6 +81,17 @@ func (e *Env) MkdirAlls(dirs ...string) error {
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return errors.SafeWrap(fmt.Errorf("path %s: %s", dir, err), "failed to create dir")
+		}
+	}
+
+	return nil
+}
+
+
+func (e *Env) RemoveDirAlls(dirs ...string) error {
+	for _, dir := range dirs {
+		if err := os.RemoveAll(dir); err != nil {
+			return errors.SafeWrap(fmt.Errorf("path %s: %s", dir, err), "failed to remove dir")
 		}
 	}
 

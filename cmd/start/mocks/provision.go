@@ -69,20 +69,6 @@ func (mr *MockProvisionerMockRecorder) DeployServices(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployServices", reflect.TypeOf((*MockProvisioner)(nil).DeployServices), arg0, arg1)
 }
 
-// GetServices mocks base method
-func (m *MockProvisioner) GetServices() ([]provision.Service, string, error) {
-	ret := m.ctrl.Call(m, "GetServices")
-	ret0, _ := ret[0].([]provision.Service)
-	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetServices indicates an expected call of GetServices
-func (mr *MockProvisionerMockRecorder) GetServices() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServices", reflect.TypeOf((*MockProvisioner)(nil).GetServices))
-}
-
 // Ping mocks base method
 func (m *MockProvisioner) Ping() error {
 	ret := m.ctrl.Call(m, "Ping")
