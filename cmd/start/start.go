@@ -95,10 +95,9 @@ type Hypervisor interface {
 type Provisioner interface {
 	Ping() error
 	DeployBosh() error
-	DeployCloudFoundry([]string) error
+	DeployCloudFoundry(provision.UI, []string) error
 	WhiteListServices(string, []provision.Service) ([]provision.Service, error)
 	DeployServices(provision.UI, []provision.Service) error
-	ReportProgress(provision.UI, string)
 }
 
 //go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
@@ -345,8 +344,7 @@ func (s *Start) provision(isoConfig iso.Metadata, registries []string, deploySin
 	}
 
 	s.UI.Say("Deploying CF...")
-	s.Provisioner.ReportProgress(s.UI, "cf")
-	if err := s.Provisioner.DeployCloudFoundry(registries); err != nil {
+	if err := s.Provisioner.DeployCloudFoundry(s.UI, registries); err != nil {
 		return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
 	}
 

@@ -1,14 +1,15 @@
 package provision
 
 import (
-	"io/ioutil"
+	"code.cloudfoundry.org/cfdev/bosh"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+	"time"
 )
 
-func (c *Controller) DeployCloudFoundry(dockerRegistries []string) error {
+func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error {
+	//TODO change to call service/cf.yml
 	cmd := exec.Command(
 		"bosh", "--tty", "-n",
 		"-d", "cf",
@@ -28,23 +29,24 @@ func (c *Controller) DeployCloudFoundry(dockerRegistries []string) error {
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 
-	return cmd.Run()
-}
-
-func (c *Controller) boshEnvs() []string {
-	content, _ := ioutil.ReadFile(filepath.Join(c.Config.StateBosh, "secret"))
-	secret := strings.TrimSpace(string(content))
-
-	return []string{
-		"BOSH_ENVIRONMENT=10.144.0.4",
-		"BOSH_CLIENT=admin",
-		"BOSH_CLIENT_SECRET=" + secret,
-		"BOSH_CA_CERT=" + filepath.Join(c.Config.StateBosh, "ca.crt"),
-		"BOSH_GW_HOST=10.144.0.4",
-		"BOSH_GW_USER=jumpbox",
-		"BOSH_GW_PRIVATE_KEY=" + filepath.Join(c.Config.StateBosh, "jumpbox.key"),
-		"SERVICES_DIR=" + c.Config.ServicesDir,
-		"CACHE_DIR=" + c.Config.CacheDir,
-		"BOSH_STATE=" + c.Config.StateBosh,
+	config, err := c.FetchBOSHConfig()
+	if err != nil {
+		return err
 	}
+
+	b, err := bosh.New(config)
+	if err != nil {
+		return err
+	}
+
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- cmd.Run()
+	}()
+
+	return c.report(time.Now(), ui, b, Service{
+		Name: "cf",
+		Deployment: "cf",
+		IsErrand: false,
+	}, errChan)
 }
