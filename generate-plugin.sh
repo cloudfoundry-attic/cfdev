@@ -20,8 +20,7 @@ go build \
      -X $analyticsdpkg.version=0.0.$(date +%Y%m%d-%H%M%S)" \
      code.cloudfoundry.org/cfdev/analyticsd
 
-cfdepsUrl="/Users/pivotal/Desktop/cfdev-deps.tgz"
-cfdevefiUrl="$cache_dir/cfdev-efi.iso"
+cfdepsUrl="$cache_dir/cfdev-deps.tgz"
 pkg="code.cloudfoundry.org/cfdev/config"
 
 go build \
