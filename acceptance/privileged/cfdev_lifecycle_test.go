@@ -205,7 +205,7 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 	}, 10*time.Minute, 30*time.Second).Should(BeNil())
 }
 
-func PushAnApp() {start/start.go:7
+func PushAnApp() {
 	server, port := fakeTcpServer()
 	defer server.Close()
 
