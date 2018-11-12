@@ -100,7 +100,7 @@ type Provision interface {
 
 //go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
 type MetaDataReader interface {
-	Read(isoPath string) (metadata.Metadata, error)
+	Read(tarballPath string) (metadata.Metadata, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/stop.go code.cloudfoundry.org/cfdev/cmd/start Stop
@@ -261,15 +261,15 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "Unable to setup directories")
 	}
 
-	isoConfig, err := s.MetaDataReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
+	metaData, err := s.MetaDataReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
 	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsFileName))
 	}
-	if isoConfig.Version != compatibilityVersion {
+	if metaData.Version != compatibilityVersion {
 		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsFileName)
 	}
 
-	s.Analytics.PromptOptInIfNeeded(isoConfig.AnalyticsMessage)
+	s.Analytics.PromptOptInIfNeeded(metaData.AnalyticsMessage)
 
 	s.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{
 		"total memory":     tMem,
@@ -277,13 +277,13 @@ func (s *Start) Execute(args Args) error {
 	})
 
 	if args.DeploySingleService != "" {
-		if !s.isServiceSupported(args.DeploySingleService, isoConfig.Services) {
+		if !s.isServiceSupported(args.DeploySingleService, metaData.Services) {
 			return e.SafeWrap(err, fmt.Sprintf("Service: '%v' is not supported", args.DeploySingleService))
 		}
 		s.Analytics.Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": args.DeploySingleService})
 	}
 
-	memoryToAllocate, err := s.allocateMemory(isoConfig, args.Mem)
+	memoryToAllocate, err := s.allocateMemory(metaData, args.Mem)
 	if err != nil {
 		return err
 	}
@@ -360,10 +360,10 @@ func (s *Start) isServiceSupported(service string, services []provision.Service)
 	return false
 }
 
-func (s *Start) allocateMemory(isoConfig metadata.Metadata, requestedMem int) (int, error) {
+func (s *Start) allocateMemory(metaData metadata.Metadata, requestedMem int) (int, error) {
 	baseMem := defaultMemory
-	if isoConfig.DefaultMemory > 0 {
-		baseMem = isoConfig.DefaultMemory
+	if metaData.DefaultMemory > 0 {
+		baseMem = metaData.DefaultMemory
 	}
 
 	availableMem, err := s.Profiler.GetAvailableMemory()
@@ -385,7 +385,7 @@ func (s *Start) allocateMemory(isoConfig metadata.Metadata, requestedMem int) (i
 		}
 
 		if requestedMem < baseMem {
-			s.UI.Say(fmt.Sprintf("WARNING: It is recommended that you run %s Dev with at least %v MB of RAM.", strings.ToUpper(isoConfig.DeploymentName), baseMem))
+			s.UI.Say(fmt.Sprintf("WARNING: It is recommended that you run %s Dev with at least %v MB of RAM.", strings.ToUpper(metaData.DeploymentName), baseMem))
 			if availableMem >= uint64(requestedMem) {
 				return requestedMem, nil
 			}
@@ -399,7 +399,7 @@ func (s *Start) allocateMemory(isoConfig metadata.Metadata, requestedMem int) (i
 		if availableMem >= uint64(baseMem) {
 			return baseMem, nil
 		} else {
-			s.UI.Say(fmt.Sprintf("WARNING: %s Dev requires %v MB of RAM to run. This machine may not have enough free RAM.", strings.ToUpper(isoConfig.DeploymentName), baseMem))
+			s.UI.Say(fmt.Sprintf("WARNING: %s Dev requires %v MB of RAM to run. This machine may not have enough free RAM.", strings.ToUpper(metaData.DeploymentName), baseMem))
 			return baseMem, nil
 		}
 	}

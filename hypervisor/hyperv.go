@@ -18,9 +18,6 @@ type HyperV struct {
 
 func (h *HyperV) CreateVM(vm VM) error {
 	var cfdevEfiIso = filepath.Join(h.Config.CacheDir, "cfdev-efi.iso")
-	if vm.DepsIso == "" {
-		vm.DepsIso = filepath.Join(h.Config.CacheDir, "cf-deps.iso")
-	}
 	var cfDevVHD = filepath.Join(h.Config.CFDevHome, "cfdev.vhd")
 
 	command := fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vm.Name)
@@ -45,11 +42,6 @@ func (h *HyperV) CreateVM(vm VM) error {
 	err = h.addVhdDrive(cfdevEfiIso, vm.Name)
 	if err != nil {
 		return fmt.Errorf("adding dvd drive %s: %s", cfdevEfiIso, err)
-	}
-
-	err = h.addVhdDrive(vm.DepsIso, vm.Name)
-	if err != nil {
-		return fmt.Errorf("adding dvd drive %s: %s", vm.DepsIso, err)
 	}
 
 	command = fmt.Sprintf("(Get-VMNetworkAdapter -VMName * | Where-Object -FilterScript {$_.VMName -eq '%s'}).Name", vm.Name)

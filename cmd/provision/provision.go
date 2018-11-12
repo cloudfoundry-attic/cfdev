@@ -24,7 +24,7 @@ type UI interface {
 
 //go:generate mockgen -package mocks -destination mocks/metadata_reader.go code.cloudfoundry.org/cfdev/cmd/provision MetaDataReader
 type MetaDataReader interface {
-	Read(isoPath string) (metadata.Metadata, error)
+	Read(tarballPath string) (metadata.Metadata, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/provision Provisioner

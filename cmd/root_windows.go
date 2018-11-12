@@ -71,7 +71,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		PortGUID:      "cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa",
 		ForwarderGUID: "e3ae8f06-8c25-47fb-b6ed-c20702bcef5e",
 	}
-	isoReader := metadata.New()
+	metaDataReader := metadata.New()
 	hostnet := &network.HostNet{
 		VMSwitchName: "cfdev",
 	}
@@ -99,7 +99,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		Exit:           exit,
 		UI:             ui,
 		Provisioner:    provision.NewController(),
-		MetaDataReader: isoReader,
+		MetaDataReader: metaDataReader,
 		Config:         config,
 	}
 
@@ -113,10 +113,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 	for _, cmd := range []cmdBuilder{
 		&b1.Version{
-			UI:        ui,
-			Version:   config.CliVersion,
-			Config:    config,
-			IsoReader: isoReader,
+			UI:             ui,
+			Version:        config.CliVersion,
+			Config:         config,
+			MetaDataReader: metaDataReader,
 		},
 		&b2.Bosh{
 			Exit:        exit,
@@ -152,7 +152,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			VpnKit:         vpnkit,
 			Provisioner:    provision.NewController(),
 			Provision:      provisionCmd,
-			MetaDataReader: isoReader,
+			MetaDataReader: metaDataReader,
 			Stop: &b6.Stop{
 				Config:     config,
 				Analytics:  analyticsClient,

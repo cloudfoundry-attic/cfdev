@@ -903,10 +903,10 @@ var _ = Describe("Start", func() {
 			})
 		})
 
-		Context("when the -f flag is provided with an incompatible deps iso version", func() {
+		Context("when the -f flag is provided with an incompatible deps tarball version", func() {
 			It("returns an error message and does not execute start command", func() {
-				customIso := filepath.Join(tmpDir, "custom.iso")
-				ioutil.WriteFile(customIso, []byte{}, 0644)
+				tarballFile := filepath.Join(tmpDir, "custom.tgz")
+				ioutil.WriteFile(tarballFile, []byte{}, 0644)
 				metadata.Version = "v100"
 
 				if runtime.GOOS == "darwin" {
@@ -915,7 +915,7 @@ var _ = Describe("Start", func() {
 				}
 
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "custom.iso"),
+					mockToggle.EXPECT().SetProp("type", "custom.tgz"),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 					mockHost.EXPECT().CheckRequirements(),
@@ -939,15 +939,15 @@ var _ = Describe("Start", func() {
 				Expect(startCmd.Execute(start.Args{
 					Cpus:     7,
 					Mem:      6666,
-					DepsPath: customIso,
-				})).To(MatchError("custom.iso is not compatible with CF Dev. Please use a compatible file"))
+					DepsPath: tarballFile,
+				})).To(MatchError("custom.tgz is not compatible with CF Dev. Please use a compatible file"))
 			})
 		})
 
 		Context("when the -f flag is provided with an existing filepath", func() {
-			It("starts the given iso, doesn't download cfdev-deps, adds the iso name as an analytics property", func() {
-				customIso := filepath.Join(tmpDir, "custom.iso")
-				ioutil.WriteFile(customIso, []byte{}, 0644)
+			It("starts the given tarball, doesn't download cfdev-deps, adds the tarball name as an analytics property", func() {
+				customTarball := filepath.Join(tmpDir, "custom.tgz")
+				ioutil.WriteFile(customTarball, []byte{}, 0644)
 
 				if runtime.GOOS == "darwin" {
 					mockUI.EXPECT().Say("Installing cfdevd network helper...")
@@ -955,7 +955,7 @@ var _ = Describe("Start", func() {
 				}
 
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "custom.iso"),
+					mockToggle.EXPECT().SetProp("type", "custom.tgz"),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 					mockHost.EXPECT().CheckRequirements(),
@@ -995,7 +995,7 @@ var _ = Describe("Start", func() {
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for the VM..."),
 					mockProvisioner.EXPECT().Ping(),
-					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6666, DepsPath: customIso}),
+					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6666, DepsPath: customTarball}),
 
 					mockToggle.EXPECT().Enabled().Return(true),
 					mockAnalyticsD.EXPECT().Start(),
@@ -1005,7 +1005,7 @@ var _ = Describe("Start", func() {
 				Expect(startCmd.Execute(start.Args{
 					Cpus:     7,
 					Mem:      6666,
-					DepsPath: customIso,
+					DepsPath: customTarball,
 				})).To(Succeed())
 			})
 		})

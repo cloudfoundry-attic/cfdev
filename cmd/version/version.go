@@ -15,16 +15,16 @@ type UI interface {
 	Say(message string, args ...interface{})
 }
 
-//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
-type IsoReader interface {
-	Read(isoPath string) (metadata.Metadata, error)
+//go:generate mockgen -package mocks -destination mocks/metadata.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
+type MetaDataReader interface {
+	Read(metadataPath string) (metadata.Metadata, error)
 }
 
 type Version struct {
-	UI        UI
-	Version   *semver.Version
-	Config    config.Config
-	IsoReader IsoReader
+	UI             UI
+	Version        *semver.Version
+	Config         config.Config
+	MetaDataReader MetaDataReader
 }
 
 func (v *Version) Execute() {
@@ -38,7 +38,7 @@ func (v *Version) Execute() {
 		return
 	}
 
-	metadata, err := v.IsoReader.Read(metadataYml)
+	metadata, err := v.MetaDataReader.Read(metadataYml)
 	if err != nil {
 		v.UI.Say(strings.Join(message, "\n"))
 		return

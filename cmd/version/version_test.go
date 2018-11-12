@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"code.cloudfoundry.org/cfdev/cmd/start/mocks"
+	"code.cloudfoundry.org/cfdev/cmd/version/mocks"
 	"code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/metadata"
 	"code.cloudfoundry.org/cfdev/semver"
@@ -37,9 +37,9 @@ var _ = Describe("Value", func() {
 		mockUI = MockUI{WasCalledWith: ""}
 
 		verCmd = &version.Version{
-			UI:        &mockUI,
-			IsoReader: mockMetaDataReader,
-			Version:   &semver.Version{Original: "1.2.3-rc.4"},
+			UI:             &mockUI,
+			MetaDataReader: mockMetaDataReader,
+			Version:        &semver.Version{Original: "1.2.3-rc.4"},
 		}
 	})
 

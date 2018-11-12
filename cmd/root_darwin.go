@@ -16,10 +16,10 @@ import (
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
+	b8 "code.cloudfoundry.org/cfdev/cmd/provision"
 	b5 "code.cloudfoundry.org/cfdev/cmd/start"
 	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
-	b8 "code.cloudfoundry.org/cfdev/cmd/provision"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
@@ -79,7 +79,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	}
 	linuxkit := &hypervisor.LinuxKit{Config: config, DaemonRunner: lctl}
 	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl, Label: network.VpnKitLabel}
-	isoReader := metadata.New()
+	metaDataReader := metadata.New()
 	analyticsD := &cfanalytics.AnalyticsD{
 		Config:       config,
 		DaemonRunner: lctl,
@@ -88,7 +88,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		Exit:           exit,
 		UI:             ui,
 		Provisioner:    provision.NewController(config),
-		MetaDataReader: isoReader,
+		MetaDataReader: metaDataReader,
 		Config:         config,
 	}
 
@@ -102,10 +102,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 	for _, cmd := range []cmdBuilder{
 		&b1.Version{
-			UI:        ui,
-			Version:   config.CliVersion,
-			Config:    config,
-			IsoReader: isoReader,
+			UI:             ui,
+			Version:        config.CliVersion,
+			Config:         config,
+			MetaDataReader: metaDataReader,
 		},
 		&b2.Bosh{
 			Exit:        exit,
@@ -145,8 +145,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD:     analyticsD,
 			Hypervisor:     linuxkit,
 			Provisioner:    provision.NewController(config),
-			Provision: provisionCmd,
-			MetaDataReader: isoReader,
+			Provision:      provisionCmd,
+			MetaDataReader: metaDataReader,
 			Stop: &b6.Stop{
 				Config:     config,
 				Analytics:  analyticsClient,

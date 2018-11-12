@@ -33,7 +33,7 @@ type DaemonRunner interface {
 const LinuxKitLabel = "org.cloudfoundry.cfdev.linuxkit"
 
 func (l *LinuxKit) CreateVM(vm VM) error {
-	daemonSpec, err := l.DaemonSpec(vm.CPUs, vm.MemoryMB, vm.DepsIso)
+	daemonSpec, err := l.DaemonSpec(vm.CPUs, vm.MemoryMB)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (l *LinuxKit) IsRunning(vmName string) (bool, error) {
 	return l.DaemonRunner.IsRunning(LinuxKitLabel)
 }
 
-func (l *LinuxKit) DaemonSpec(cpus, mem int, depsIsoPath string) (daemon.DaemonSpec, error) {
+func (l *LinuxKit) DaemonSpec(cpus, mem int) (daemon.DaemonSpec, error) {
 	linuxkit := filepath.Join(l.Config.CacheDir, "linuxkit")
 	hyperkit := filepath.Join(l.Config.CacheDir, "hyperkit")
 	uefi := filepath.Join(l.Config.CacheDir, "UEFI.fd")

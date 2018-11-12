@@ -35,8 +35,8 @@ var _ = Describe("cfdev lifecycle", func() {
 		stopSession := cf.Cf("dev", "stop")
 		Eventually(stopSession).Should(gexec.Exit(0))
 
-		if isoPath := os.Getenv("ISO_PATH"); isoPath != "" {
-			startSession = cf.Cf("dev", "start", "-f", isoPath)
+		if tarballPath := os.Getenv("TARBALL_PATH"); tarballPath != "" {
+			startSession = cf.Cf("dev", "start", "-f", tarballPath)
 		} else {
 			startSession = cf.Cf("dev", "start")
 		}
@@ -100,8 +100,8 @@ var _ = Describe("cfdev lifecycle", func() {
 		By("checking for cf versions")
 		var versionSession *gexec.Session
 
-		if isoPath := os.Getenv("ISO_PATH"); isoPath != "" {
-			versionSession = cf.Cf("dev", "version", "-f", isoPath)
+		if tarballPath := os.Getenv("TARBALL_PATH"); tarballPath != "" {
+			versionSession = cf.Cf("dev", "version", "-f", tarballPath)
 		} else {
 			versionSession = cf.Cf("dev", "version")
 		}
