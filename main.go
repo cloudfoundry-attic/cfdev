@@ -38,6 +38,12 @@ type Plugin struct {
 	Version   plugin.VersionType
 }
 
+const (
+	boshIP = "10.144.0.4"
+	routerIP = "10.144.0.34"
+	domain = "dev.cfdev.sh"
+)
+
 func main() {
 	exitChan := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
@@ -76,6 +82,8 @@ func main() {
 	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, exitChan, ui)
 	defer analyticsClient.Close()
 
+	setWhiteListedProxyVariables()
+
 	v := conf.CliVersion
 	cfdev := &Plugin{
 		UI:        ui,
@@ -86,6 +94,18 @@ func main() {
 	}
 
 	plugin.Start(cfdev)
+}
+
+func setWhiteListedProxyVariables() {
+	noProxyVars := os.Getenv("NO_PROXY")
+	if noProxyVars != "" {
+		noProxyVars = os.Getenv("no_proxy")
+	}
+
+	arr := strings.Split(noProxyVars, ",")
+	arr = append(arr, boshIP, routerIP, "."+domain)
+
+	os.Setenv("NO_PROXY", strings.Join(arr, ","))
 }
 
 func (p *Plugin) GetMetadata() plugin.PluginMetadata {
