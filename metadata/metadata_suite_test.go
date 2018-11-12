@@ -1,4 +1,4 @@
-package iso_test
+package metadata_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestIso(t *testing.T) {
+func TestMetaData(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Iso Suite")
+	RunSpecs(t, "MetaData Suite")
 }

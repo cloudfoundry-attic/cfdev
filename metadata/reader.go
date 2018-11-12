@@ -1,4 +1,4 @@
-package iso
+package metadata
 
 import (
 	"code.cloudfoundry.org/cfdev/provision"

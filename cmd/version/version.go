@@ -2,7 +2,7 @@ package version
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/metadata"
 	"code.cloudfoundry.org/cfdev/semver"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -17,7 +17,7 @@ type UI interface {
 
 //go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
 type IsoReader interface {
-	Read(isoPath string) (iso.Metadata, error)
+	Read(isoPath string) (metadata.Metadata, error)
 }
 
 type Version struct {

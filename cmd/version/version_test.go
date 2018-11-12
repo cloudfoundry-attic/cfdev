@@ -6,7 +6,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/cmd/start/mocks"
 	"code.cloudfoundry.org/cfdev/cmd/version"
-	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/metadata"
 	"code.cloudfoundry.org/cfdev/semver"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
@@ -76,8 +76,8 @@ var _ = Describe("Value", func() {
 		})
 
 		It("reports the versions in the metadata", func() {
-			mockMetaDataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(iso.Metadata{
-				Versions: []iso.Version{
+			mockMetaDataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata.Metadata{
+				Versions: []metadata.Version{
 					{Name: "some-release-1", Value: "some-version-1"},
 					{Name: "some-release-2", Value: "some-version-2"},
 				},

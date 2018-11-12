@@ -78,12 +78,14 @@ var _ = Describe("env", func() {
 			servicesDir = filepath.Join(homeDir, "services")
 			logDir = filepath.Join(homeDir, "log")
 
+			depsFile := filepath.Join(dir, "tmp-tar.tgz")
 			conf = config.Config{
 				CFDevHome:      homeDir,
 				StateDir:       stateDir,
 				StateBosh:      boshDir,
 				StateLinuxkit:  linuxkitDir,
 				CacheDir:       cacheDir,
+				DepsFile:       &depsFile,
 				VpnKitStateDir: vpnkitStateDir,
 				ServicesDir:    servicesDir,
 				LogDir:         logDir,
@@ -152,7 +154,7 @@ var _ = Describe("env", func() {
 				fpath := filepath.Join(tmpDir, "disk.qcow2")
 				Expect(ioutil.WriteFile(fpath, []byte("tmp-disk"), 0600)).To(Succeed())
 
-				tarDst, err := os.Create(filepath.Join(cacheDir, "cfdev-deps.tgz"))
+				tarDst, err := os.Create(*conf.DepsFile)
 				Expect(err).ToNot(HaveOccurred())
 				defer tarDst.Close()
 

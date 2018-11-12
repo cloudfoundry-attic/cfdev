@@ -1,7 +1,7 @@
-package iso_test
+package metadata_test
 
 import (
-	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/metadata"
 	"io/ioutil"
 	"path/filepath"
 
@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Iso", func() {
+var _ = Describe("MetaData", func() {
 	Context("reader returns", func() {
 		var (
 			metaDataPath string
@@ -43,7 +43,7 @@ versions:
 		})
 
 		It("metadata", func() {
-			metadata, err := iso.New().Read(metaDataPath)
+			metadata, err := metadata.New().Read(metaDataPath)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(metadata.Version).To(Equal("v29"))

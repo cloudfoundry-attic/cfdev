@@ -42,6 +42,7 @@ type Config struct {
 	CacheDir               string
 	VpnKitStateDir         string
 	LogDir                 string
+	DepsFile               *string
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
@@ -58,6 +59,8 @@ func NewConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	depsFile := ""
+
 	return Config{
 		BoshDirectorIP:         "10.144.0.4",
 		CFRouterIP:             "10.144.0.34",
@@ -69,6 +72,7 @@ func NewConfig() (Config, error) {
 		CacheDir:               filepath.Join(cfdevHome, "cache"),
 		VpnKitStateDir:         filepath.Join(cfdevHome, "state", "vpnkit"),
 		LogDir:                 filepath.Join(cfdevHome, "log"),
+		DepsFile:               &depsFile,
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
@@ -101,7 +105,7 @@ func catalog() (resource.Catalog, error) {
 		Items: []resource.Item{
 			{
 				URL:   cfdepsUrl,
-				Name:  "cfdev-deps.tgz",
+				Name:  "cfdev-deps",
 				MD5:   cfdepsMd5,
 				Size:  aToUint64(cfdepsSize),
 				InUse: true,

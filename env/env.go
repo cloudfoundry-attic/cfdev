@@ -4,7 +4,6 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
@@ -98,8 +97,6 @@ func (e *Env) RemoveDirAlls(dirs ...string) error {
 }
 
 func (e *Env) SetupState() error {
-	tarFilepath := filepath.Join(e.Config.CacheDir, "cfdev-deps.tgz")
-
 	thingsToUntar := []resource.TarOpts{
 		{
 			Include: "state.json",
@@ -141,7 +138,7 @@ func (e *Env) SetupState() error {
 		},
 	}
 
-	err := resource.Untar(tarFilepath, thingsToUntar)
+	err := resource.Untar(*e.Config.DepsFile, thingsToUntar)
 	if err != nil {
 		return errors.SafeWrap(err, "failed to untar the desired parts of the tarball")
 	}

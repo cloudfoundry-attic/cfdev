@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	iso "code.cloudfoundry.org/cfdev/iso"
+	iso "code.cloudfoundry.org/cfdev/metadata"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )

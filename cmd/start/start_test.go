@@ -3,7 +3,7 @@ package start_test
 import (
 	"runtime"
 
-	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/metadata"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -48,7 +48,7 @@ var _ = Describe("Start", func() {
 		tmpDir        string
 		cacheDir      string
 		//depsIsoPath   string
-		metadata iso.Metadata
+		metadata metadata.Metadata
 	)
 
 	services := []provision.Service{
@@ -93,6 +93,7 @@ var _ = Describe("Start", func() {
 		cacheDir = filepath.Join(tmpDir, "some-cache-dir")
 		Expect(err).NotTo(HaveOccurred())
 
+		depsFile := ""
 		startCmd = start.Start{
 			Config: config.Config{
 				CFDevHome:      tmpDir,
@@ -101,12 +102,13 @@ var _ = Describe("Start", func() {
 				StateLinuxkit:  filepath.Join(tmpDir, "some-linuxkit-state-dir"),
 				VpnKitStateDir: filepath.Join(tmpDir, "some-vpnkit-state-dir"),
 				CacheDir:       cacheDir,
+				DepsFile:       &depsFile,
 				CFRouterIP:     "some-cf-router-ip",
 				BoshDirectorIP: "some-bosh-director-ip",
 				Dependencies: resource.Catalog{
 					Items: []resource.Item{
 						{Name: "some-item"},
-						{Name: "cf-deps.iso"},
+						{Name: "cfdev-deps"},
 					},
 				},
 			},
@@ -129,7 +131,7 @@ var _ = Describe("Start", func() {
 			Profiler:        mockSystemProfiler,
 		}
 
-		metadata = iso.Metadata{
+		metadata = metadata.Metadata{
 			Version:          "v3",
 			DefaultMemory:    8765,
 			DeploymentName:   "cf",
@@ -166,7 +168,7 @@ var _ = Describe("Start", func() {
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
 							{Name: "some-item"},
-							{Name: "cf-deps.iso"},
+							{Name: "cfdev-deps"},
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
@@ -230,7 +232,7 @@ var _ = Describe("Start", func() {
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
 							{Name: "some-item"},
-							{Name: "cf-deps.iso"},
+							{Name: "cfdev-deps"},
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
@@ -279,7 +281,7 @@ var _ = Describe("Start", func() {
 						Items: []resource.Item{
 							{Name: "some-item"},
 							{Name: "cfdevd"},
-							{Name: "cf-deps.iso"},
+							{Name: "cfdev-deps"},
 						},
 					}
 				})
@@ -309,7 +311,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
+								{Name: "cfdev-deps"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -375,12 +377,12 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
+								{Name: "cfdev-deps"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
 						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(iso.Metadata{
+						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata.Metadata{
 							Version:          "v3",
 							DeploymentName:   "cf",
 							AnalyticsMessage: "",
@@ -446,7 +448,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
+								{Name: "cfdev-deps"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -516,7 +518,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
+								{Name: "cfdev-deps"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -579,7 +581,7 @@ var _ = Describe("Start", func() {
 								mockCache.EXPECT().Sync(resource.Catalog{
 									Items: []resource.Item{
 										{Name: "some-item"},
-										{Name: "cf-deps.iso"},
+										{Name: "cfdev-deps"},
 									},
 								}),
 								mockUI.EXPECT().Say("Setting State..."),
@@ -646,7 +648,7 @@ var _ = Describe("Start", func() {
 							mockCache.EXPECT().Sync(resource.Catalog{
 								Items: []resource.Item{
 									{Name: "some-item"},
-									{Name: "cf-deps.iso"},
+									{Name: "cfdev-deps"},
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
@@ -716,12 +718,12 @@ var _ = Describe("Start", func() {
 							mockCache.EXPECT().Sync(resource.Catalog{
 								Items: []resource.Item{
 									{Name: "some-item"},
-									{Name: "cf-deps.iso"},
+									{Name: "cfdev-deps"},
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
 							mockEnv.EXPECT().SetupState(),
-							mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(iso.Metadata{
+							mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata.Metadata{
 								Version:          "v3",
 								DefaultMemory:    8765,
 								DeploymentName:   "some-deployment-name",
@@ -789,7 +791,7 @@ var _ = Describe("Start", func() {
 							mockCache.EXPECT().Sync(resource.Catalog{
 								Items: []resource.Item{
 									{Name: "some-item"},
-									{Name: "cf-deps.iso"},
+									{Name: "cfdev-deps"},
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
@@ -860,7 +862,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
+								{Name: "cfdev-deps"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -928,7 +930,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
+								{Name: "cfdev-deps"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -997,7 +999,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cf-deps.iso"},
+								{Name: "cfdev-deps"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -1042,7 +1044,7 @@ var _ = Describe("Start", func() {
 
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
-					// don't download cf-deps.iso that we won't use
+					// don't download cfdev-deps that we won't use
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
 							{Name: "some-item"},
@@ -1054,15 +1056,15 @@ var _ = Describe("Start", func() {
 				)
 
 				Expect(startCmd.Execute(start.Args{
-					Cpus:        7,
-					Mem:         6666,
-					DepsIsoPath: customIso,
+					Cpus:     7,
+					Mem:      6666,
+					DepsPath: customIso,
 				})).To(MatchError("custom.iso is not compatible with CF Dev. Please use a compatible file"))
 			})
 		})
 
 		Context("when the -f flag is provided with an existing filepath", func() {
-			XIt("starts the given iso, doesn't download cf-deps.iso, adds the iso name as an analytics property", func() {
+			It("starts the given iso, doesn't download cfdev-deps, adds the iso name as an analytics property", func() {
 				customIso := filepath.Join(tmpDir, "custom.iso")
 				ioutil.WriteFile(customIso, []byte{}, 0644)
 
@@ -1082,7 +1084,7 @@ var _ = Describe("Start", func() {
 
 					mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
 					mockUI.EXPECT().Say("Downloading Resources..."),
-					// don't download cf-deps.iso that we won't use
+					// don't download cfdev-deps that we won't use
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
 							{Name: "some-item"},
@@ -1125,9 +1127,9 @@ var _ = Describe("Start", func() {
 				)
 
 				Expect(startCmd.Execute(start.Args{
-					Cpus:        7,
-					Mem:         6666,
-					DepsIsoPath: customIso,
+					Cpus:     7,
+					Mem:      6666,
+					DepsPath: customIso,
 				})).To(Succeed())
 			})
 		})

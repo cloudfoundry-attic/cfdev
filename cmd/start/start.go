@@ -4,7 +4,7 @@ import (
 	"io"
 	"time"
 
-	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/metadata"
 
 	"code.cloudfoundry.org/cfdev/config"
 	e "code.cloudfoundry.org/cfdev/errors"
@@ -102,7 +102,7 @@ type Provisioner interface {
 
 //go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
 type MetaDataReader interface {
-	Read(isoPath string) (iso.Metadata, error)
+	Read(isoPath string) (metadata.Metadata, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/stop.go code.cloudfoundry.org/cfdev/cmd/start Stop
@@ -119,7 +119,7 @@ type Env interface {
 type Args struct {
 	Registries          string
 	DeploySingleService string
-	DepsIsoPath         string
+	DepsPath            string
 	NoProvision         bool
 	Cpus                int
 	Mem                 int
@@ -162,7 +162,7 @@ func (s *Start) Cmd() *cobra.Command {
 	}
 
 	pf := cmd.PersistentFlags()
-	pf.StringVarP(&args.DepsIsoPath, "file", "f", "", "path to .dev file containing bosh & cf bits")
+	pf.StringVarP(&args.DepsPath, "file", "f", "", "path to .dev file containing bosh & cf bits")
 	pf.StringVarP(&args.Registries, "registries", "r", "", "docker registries that skip ssl validation - ie. host:port,host2:port2")
 	pf.IntVarP(&args.Cpus, "cpus", "c", 4, "cpus to allocate to vm")
 	pf.IntVarP(&args.Mem, "memory", "m", 0, "memory to allocate to vm in MB")
@@ -186,23 +186,23 @@ func (s *Start) Execute(args Args) error {
 		os.Exit(128)
 	}()
 
-	depsIsoName := "cf"
-	depsIsoPath := filepath.Join(s.Config.CacheDir, "cf-deps.iso")
-	if args.DepsIsoPath != "" {
-		depsIsoName = filepath.Base(args.DepsIsoPath)
+	depsFileName := "cf"
+	*s.Config.DepsFile = filepath.Join(s.Config.CacheDir, "cfdev-deps.tgz")
+	if args.DepsPath != "" {
+		depsFileName = filepath.Base(args.DepsPath)
 		var err error
-		depsIsoPath, err = filepath.Abs(args.DepsIsoPath)
+		*s.Config.DepsFile, err = filepath.Abs(args.DepsPath)
 		if err != nil {
 			return e.SafeWrap(err, "determining absolute path to deps iso")
 		}
-		if _, err := os.Stat(depsIsoPath); os.IsNotExist(err) {
-			return fmt.Errorf("no file found at: %s", depsIsoPath)
+		if _, err := os.Stat(*s.Config.DepsFile); os.IsNotExist(err) {
+			return fmt.Errorf("no file found at: %s", *s.Config.DepsFile)
 		}
 
-		s.Config.Dependencies.Remove("cf-deps.iso")
+		s.Config.Dependencies.Remove("cfdev-deps")
 	}
 
-	s.AnalyticsToggle.SetProp("type", depsIsoName)
+	s.AnalyticsToggle.SetProp("type", depsFileName)
 
 	aMem, err := s.Profiler.GetAvailableMemory()
 	if err != nil {
@@ -269,10 +269,10 @@ func (s *Start) Execute(args Args) error {
 
 	isoConfig, err := s.MetaDataReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
 	if err != nil {
-		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsIsoName))
+		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsFileName))
 	}
 	if isoConfig.Version != compatibilityVersion {
-		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsIsoName)
+		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsFileName)
 	}
 
 	s.Analytics.PromptOptInIfNeeded(isoConfig.AnalyticsMessage)
@@ -337,7 +337,7 @@ func (s *Start) Execute(args Args) error {
 	return nil
 }
 
-func (s *Start) provision(isoConfig iso.Metadata, registries []string, deploySingleService string) error {
+func (s *Start) provision(isoConfig metadata.Metadata, registries []string, deploySingleService string) error {
 	s.UI.Say("Deploying the BOSH Director...")
 	if err := s.Provisioner.DeployBosh(); err != nil {
 		return e.SafeWrap(err, "Failed to deploy the BOSH Director")
@@ -421,7 +421,7 @@ func (s *Start) isServiceSupported(service string, services []provision.Service)
 	return false
 }
 
-func (s *Start) allocateMemory(isoConfig iso.Metadata, requestedMem int) (int, error) {
+func (s *Start) allocateMemory(isoConfig metadata.Metadata, requestedMem int) (int, error) {
 	baseMem := defaultMemory
 	if isoConfig.DefaultMemory > 0 {
 		baseMem = isoConfig.DefaultMemory

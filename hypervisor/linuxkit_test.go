@@ -38,7 +38,7 @@ var _ = Describe("LinuxKit process", func() {
 		mockController.Finish()
 	})
 
-	Context("DepsIsoPath exists", func() {
+	Context("DepsPath exists", func() {
 		var depsIsoPath string
 		var tmpDir string
 

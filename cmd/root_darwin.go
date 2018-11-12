@@ -24,7 +24,7 @@ import (
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/host"
 	"code.cloudfoundry.org/cfdev/hypervisor"
-	"code.cloudfoundry.org/cfdev/iso"
+	"code.cloudfoundry.org/cfdev/metadata"
 	"code.cloudfoundry.org/cfdev/network"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
@@ -78,7 +78,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	}
 	linuxkit := &hypervisor.LinuxKit{Config: config, DaemonRunner: lctl}
 	vpnkit := &network.VpnKit{Config: config, DaemonRunner: lctl, Label: network.VpnKitLabel}
-	isoReader := iso.New()
+	isoReader := metadata.New()
 	analyticsD := &cfanalytics.AnalyticsD{
 		Config:       config,
 		DaemonRunner: lctl,
