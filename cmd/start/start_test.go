@@ -3,7 +3,7 @@ package start_test
 import (
 	"runtime"
 
-	"code.cloudfoundry.org/cfdev/metadata"
+	mdata "code.cloudfoundry.org/cfdev/metadata"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -48,7 +48,7 @@ var _ = Describe("Start", func() {
 		tmpDir        string
 		cacheDir      string
 		//depsIsoPath   string
-		metadata metadata.Metadata
+		metadata mdata.Metadata
 	)
 
 	services := []provision.Service{
@@ -131,7 +131,7 @@ var _ = Describe("Start", func() {
 			Profiler:        mockSystemProfiler,
 		}
 
-		metadata = metadata.Metadata{
+		metadata = mdata.Metadata{
 			Version:          "v3",
 			DefaultMemory:    8765,
 			DeploymentName:   "cf",
@@ -382,7 +382,7 @@ var _ = Describe("Start", func() {
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
 						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata.Metadata{
+						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(mdata.Metadata{
 							Version:          "v3",
 							DeploymentName:   "cf",
 							AnalyticsMessage: "",
@@ -723,7 +723,7 @@ var _ = Describe("Start", func() {
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
 							mockEnv.EXPECT().SetupState(),
-							mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata.Metadata{
+							mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(mdata.Metadata{
 								Version:          "v3",
 								DefaultMemory:    8765,
 								DeploymentName:   "some-deployment-name",
