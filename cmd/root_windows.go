@@ -18,6 +18,7 @@ import (
 	b5 "code.cloudfoundry.org/cfdev/cmd/start"
 	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
+	b8 "code.cloudfoundry.org/cfdev/cmd/provision"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
@@ -94,6 +95,14 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		DaemonRunner: lctl,
 	}
 
+	provisionCmd := &b8.Provision{
+		Exit:           exit,
+		UI:             ui,
+		Provisioner:    provision.NewController(),
+		MetaDataReader: isoReader,
+		Config:         config,
+	}
+
 	dev := &cobra.Command{
 		Use:           "dev",
 		Short:         "Start and stop a single vm CF deployment running on your workstation",
@@ -142,6 +151,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Hypervisor:     &hypervisor.HyperV{Config: config},
 			VpnKit:         vpnkit,
 			Provisioner:    provision.NewController(),
+			Provision:      provisionCmd,
 			MetaDataReader: isoReader,
 			Stop: &b6.Stop{
 				Config:     config,
@@ -172,6 +182,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsToggle: analyticsToggle,
 			AnalyticsD:      analyticsD,
 		},
+		provisionCmd,
 	} {
 		dev.AddCommand(cmd.Cmd())
 	}

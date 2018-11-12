@@ -36,19 +36,18 @@ var _ = Describe("Start", func() {
 		mockAnalyticsD      *mocks.MockAnalyticsD
 		mockHypervisor      *mocks.MockHypervisor
 		mockProvisioner     *mocks.MockProvisioner
+		mockProvision       *mocks.MockProvision
 		mockSystemProfiler  *mocks.MockSystemProfiler
-		//mockIsoReader       *mocks.MockIsoReader
-		mockMetadataReader *mocks.MockMetaDataReader
-		mockEnv            *mocks.MockEnv
-		mockStop           *mocks.MockStop
+		mockMetadataReader  *mocks.MockMetaDataReader
+		mockEnv             *mocks.MockEnv
+		mockStop            *mocks.MockStop
 
 		startCmd      start.Start
 		exitChan      chan struct{}
 		localExitChan chan string
 		tmpDir        string
 		cacheDir      string
-		//depsIsoPath   string
-		metadata mdata.Metadata
+		metadata      mdata.Metadata
 	)
 
 	services := []provision.Service{
@@ -83,6 +82,7 @@ var _ = Describe("Start", func() {
 		mockAnalyticsD = mocks.NewMockAnalyticsD(mockController)
 		mockHypervisor = mocks.NewMockHypervisor(mockController)
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
+		mockProvision = mocks.NewMockProvision(mockController)
 		mockSystemProfiler = mocks.NewMockSystemProfiler(mockController)
 		mockMetadataReader = mocks.NewMockMetaDataReader(mockController)
 		mockEnv = mocks.NewMockEnv(mockController)
@@ -125,6 +125,7 @@ var _ = Describe("Start", func() {
 			AnalyticsD:      mockAnalyticsD,
 			Hypervisor:      mockHypervisor,
 			Provisioner:     mockProvisioner,
+			Provision:       mockProvision,
 			MetaDataReader:  mockMetadataReader,
 			Env:             mockEnv,
 			Stop:            mockStop,
@@ -194,12 +195,7 @@ var _ = Describe("Start", func() {
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for the VM..."),
 					mockProvisioner.EXPECT().Ping(),
-					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-					mockProvisioner.EXPECT().DeployBosh(),
-					mockUI.EXPECT().Say("Deploying CF..."),
-					mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-					mockProvisioner.EXPECT().DeployServices(mockUI, services),
+					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 					mockToggle.EXPECT().Enabled().Return(true),
 					mockAnalyticsD.EXPECT().Start(),
@@ -258,12 +254,7 @@ var _ = Describe("Start", func() {
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for the VM..."),
 					mockProvisioner.EXPECT().Ping(),
-					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-					mockProvisioner.EXPECT().DeployBosh(),
-					mockUI.EXPECT().Say("Deploying CF..."),
-					mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-					mockProvisioner.EXPECT().DeployServices(mockUI, services),
+					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 					mockToggle.EXPECT().Enabled().Return(false),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
@@ -337,12 +328,7 @@ var _ = Describe("Start", func() {
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
 						mockProvisioner.EXPECT().Ping(),
-						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-						mockProvisioner.EXPECT().DeployBosh(),
-						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-						mockProvisioner.EXPECT().DeployServices(mockUI, services),
+						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
 						mockAnalyticsD.EXPECT().Start(),
@@ -408,12 +394,7 @@ var _ = Describe("Start", func() {
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
 						mockProvisioner.EXPECT().Ping(),
-						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-						mockProvisioner.EXPECT().DeployBosh(),
-						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-						mockProvisioner.EXPECT().DeployServices(mockUI, services),
+						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
 						mockAnalyticsD.EXPECT().Start(),
@@ -475,12 +456,7 @@ var _ = Describe("Start", func() {
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
 						mockProvisioner.EXPECT().Ping(),
-						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-						mockProvisioner.EXPECT().DeployBosh(),
-						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-						mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-						mockProvisioner.EXPECT().DeployServices(mockUI, services),
+						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
 						mockAnalyticsD.EXPECT().Start(),
@@ -607,12 +583,7 @@ var _ = Describe("Start", func() {
 								mockHypervisor.EXPECT().Start("cfdev"),
 								mockUI.EXPECT().Say("Waiting for the VM..."),
 								mockProvisioner.EXPECT().Ping(),
-								mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-								mockProvisioner.EXPECT().DeployBosh(),
-								mockUI.EXPECT().Say("Deploying CF..."),
-								mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-								mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-								mockProvisioner.EXPECT().DeployServices(mockUI, services),
+								mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 10000}),
 
 								mockToggle.EXPECT().Enabled().Return(true),
 								mockAnalyticsD.EXPECT().Start(),
@@ -675,12 +646,7 @@ var _ = Describe("Start", func() {
 							mockHypervisor.EXPECT().Start("cfdev"),
 							mockUI.EXPECT().Say("Waiting for the VM..."),
 							mockProvisioner.EXPECT().Ping(),
-							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-							mockProvisioner.EXPECT().DeployBosh(),
-							mockUI.EXPECT().Say("Deploying CF..."),
-							mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-							mockProvisioner.EXPECT().DeployServices(mockUI, services),
+							mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 10000}),
 
 							mockToggle.EXPECT().Enabled().Return(true),
 							mockAnalyticsD.EXPECT().Start(),
@@ -751,13 +717,7 @@ var _ = Describe("Start", func() {
 							mockHypervisor.EXPECT().Start("cfdev"),
 							mockUI.EXPECT().Say("Waiting for the VM..."),
 							mockProvisioner.EXPECT().Ping(),
-							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-							mockProvisioner.EXPECT().DeployBosh(),
-							mockUI.EXPECT().Say("Deploying CF..."),
-							mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-							mockProvisioner.EXPECT().DeployServices(mockUI, services),
-
+							mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6000}),
 							mockToggle.EXPECT().Enabled().Return(true),
 							mockAnalyticsD.EXPECT().Start(),
 							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
@@ -819,12 +779,7 @@ var _ = Describe("Start", func() {
 							mockHypervisor.EXPECT().Start("cfdev"),
 							mockUI.EXPECT().Say("Waiting for the VM..."),
 							mockProvisioner.EXPECT().Ping(),
-							mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-							mockProvisioner.EXPECT().DeployBosh(),
-							mockUI.EXPECT().Say("Deploying CF..."),
-							mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-							mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-							mockProvisioner.EXPECT().DeployServices(mockUI, services),
+							mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6000}),
 
 							mockToggle.EXPECT().Enabled().Return(true),
 							mockAnalyticsD.EXPECT().Start(),
@@ -889,12 +844,7 @@ var _ = Describe("Start", func() {
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
 						mockProvisioner.EXPECT().Ping(),
-						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-						mockProvisioner.EXPECT().DeployBosh(),
-						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-						mockProvisioner.EXPECT().WhiteListServices("all", services).Return(services, nil),
-						mockProvisioner.EXPECT().DeployServices(mockUI, services),
+						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0, DeploySingleService: "all"}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
 						mockAnalyticsD.EXPECT().Start(),
@@ -905,75 +855,6 @@ var _ = Describe("Start", func() {
 						Cpus:                7,
 						Mem:                 0,
 						DeploySingleService: "all",
-					})).To(Succeed())
-				})
-			})
-
-			Context("arg is some-other-service-flagname", func() {
-				It("WhiteListServices is called with some-other-service-flagname", func() {
-					if runtime.GOOS == "darwin" {
-						mockUI.EXPECT().Say("Installing cfdevd network helper...")
-						mockCFDevD.EXPECT().Install()
-					}
-
-					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
-						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
-						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
-						mockHost.EXPECT().CheckRequirements(),
-						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
-						mockStop.EXPECT().RunE(nil, nil),
-						mockEnv.EXPECT().CreateDirs(),
-
-						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
-						mockUI.EXPECT().Say("Downloading Resources..."),
-						mockCache.EXPECT().Sync(resource.Catalog{
-							Items: []resource.Item{
-								{Name: "some-item"},
-								{Name: "cfdev-deps"},
-							},
-						}),
-						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
-
-						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
-							"total memory":     uint64(222),
-							"available memory": uint64(111),
-						}),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "some-other-service-flagname"}),
-						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
-
-						mockUI.EXPECT().Say("Creating the VM..."),
-						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
-							Name:     "cfdev",
-							CPUs:     7,
-							MemoryMB: 8765,
-						}),
-						mockUI.EXPECT().Say("Starting VPNKit..."),
-						mockVpnKit.EXPECT().Start(),
-						mockVpnKit.EXPECT().Watch(localExitChan),
-						mockUI.EXPECT().Say("Starting the VM..."),
-						mockHypervisor.EXPECT().Start("cfdev"),
-						mockUI.EXPECT().Say("Waiting for the VM..."),
-						mockProvisioner.EXPECT().Ping(),
-						mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-						mockProvisioner.EXPECT().DeployBosh(),
-						mockUI.EXPECT().Say("Deploying CF..."),
-						mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-						mockProvisioner.EXPECT().WhiteListServices("some-other-service-flagname", services).Return(services[1:], nil),
-						mockProvisioner.EXPECT().DeployServices(mockUI, services[1:]),
-
-						mockToggle.EXPECT().Enabled().Return(true),
-						mockAnalyticsD.EXPECT().Start(),
-						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
-					)
-
-					Expect(startCmd.Execute(start.Args{
-						Cpus:                7,
-						Mem:                 0,
-						DeploySingleService: "some-other-service-flagname",
 					})).To(Succeed())
 				})
 			})
@@ -1114,12 +995,7 @@ var _ = Describe("Start", func() {
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for the VM..."),
 					mockProvisioner.EXPECT().Ping(),
-					mockUI.EXPECT().Say("Deploying the BOSH Director..."),
-					mockProvisioner.EXPECT().DeployBosh(),
-					mockUI.EXPECT().Say("Deploying CF..."),
-					mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
-					mockProvisioner.EXPECT().WhiteListServices("", services).Return(services, nil),
-					mockProvisioner.EXPECT().DeployServices(mockUI, services),
+					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6666, DepsPath: customIso}),
 
 					mockToggle.EXPECT().Enabled().Return(true),
 					mockAnalyticsD.EXPECT().Start(),

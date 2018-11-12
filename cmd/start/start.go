@@ -12,15 +12,12 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"github.com/spf13/cobra"
-	"net/url"
 	"os"
 	"strings"
 
-	"path/filepath"
-	"text/template"
-
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/hypervisor"
+	"path/filepath"
 )
 
 //go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cmd/start UI
@@ -91,13 +88,14 @@ type Hypervisor interface {
 	IsRunning(vmName string) (bool, error)
 }
 
-//go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/start Provisioner
+//go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/start Provisioner
 type Provisioner interface {
 	Ping() error
-	DeployBosh() error
-	DeployCloudFoundry(provision.UI, []string) error
-	WhiteListServices(string, []provision.Service) ([]provision.Service, error)
-	DeployServices(provision.UI, []provision.Service) error
+}
+
+//go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/start Provision
+type Provision interface {
+	Execute(args Args) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
@@ -140,8 +138,9 @@ type Start struct {
 	VpnKit          VpnKit
 	AnalyticsD      AnalyticsD
 	Hypervisor      Hypervisor
-	Provisioner     Provisioner
 	Stop            Stop
+	Provisioner     Provisioner
+	Provision       Provision
 	Env             Env
 	Profiler        SystemProfiler
 }
@@ -252,11 +251,6 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "adding aliases")
 	}
 
-	registries, err := s.parseDockerRegistriesFlag(args.Registries)
-	if err != nil {
-		return e.SafeWrap(err, "Unable to parse docker registries")
-	}
-
 	s.UI.Say("Downloading Resources...")
 	if err := s.Cache.Sync(s.Config.Dependencies); err != nil {
 		return e.SafeWrap(err, "Unable to sync assets")
@@ -324,7 +318,7 @@ func (s *Start) Execute(args Args) error {
 		return nil
 	}
 
-	if err := s.provision(isoConfig, registries, args.DeploySingleService); err != nil {
+	if err := s.Provision.Execute(args); err != nil {
 		return err
 	}
 
@@ -334,36 +328,6 @@ func (s *Start) Execute(args Args) error {
 
 	s.Analytics.Event(cfanalytics.START_END)
 
-	return nil
-}
-
-func (s *Start) provision(isoConfig metadata.Metadata, registries []string, deploySingleService string) error {
-	s.UI.Say("Deploying the BOSH Director...")
-	if err := s.Provisioner.DeployBosh(); err != nil {
-		return e.SafeWrap(err, "Failed to deploy the BOSH Director")
-	}
-
-	s.UI.Say("Deploying CF...")
-	if err := s.Provisioner.DeployCloudFoundry(s.UI, registries); err != nil {
-		return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
-	}
-
-	services, err := s.Provisioner.WhiteListServices(deploySingleService, isoConfig.Services)
-	if err != nil {
-		return e.SafeWrap(err, "Failed to whitelist services")
-	}
-
-	if err := s.Provisioner.DeployServices(s.UI, services); err != nil {
-		return e.SafeWrap(err, "Failed to deploy services")
-	}
-
-	if isoConfig.Message != "" {
-		t := template.Must(template.New("message").Parse(isoConfig.Message))
-		err := t.Execute(s.UI.Writer(), map[string]string{"SYSTEM_DOMAIN": "dev.cfdev.sh"})
-		if err != nil {
-			return e.SafeWrap(err, "Failed to print deps file provided message")
-		}
-	}
 	return nil
 }
 
@@ -380,31 +344,6 @@ func (s *Start) waitForGarden() error {
 	}
 
 	return err
-}
-
-func (s *Start) parseDockerRegistriesFlag(flag string) ([]string, error) {
-	if flag == "" {
-		return nil, nil
-	}
-
-	values := strings.Split(flag, ",")
-
-	registries := make([]string, 0, len(values))
-
-	for _, value := range values {
-		// Including the // will cause url.Parse to validate 'value' as a host:port
-		u, err := url.Parse("//" + value)
-
-		if err != nil {
-			// Grab the more succinct error message
-			if urlErr, ok := err.(*url.Error); ok {
-				err = urlErr.Err
-			}
-			return nil, fmt.Errorf("'%v' - %v", value, err)
-		}
-		registries = append(registries, u.Host)
-	}
-	return registries, nil
 }
 
 func (s *Start) isServiceSupported(service string, services []provision.Service) bool {

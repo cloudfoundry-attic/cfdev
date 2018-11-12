@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	iso "code.cloudfoundry.org/cfdev/metadata"
+	metadata "code.cloudfoundry.org/cfdev/metadata"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -34,9 +34,9 @@ func (m *MockMetaDataReader) EXPECT() *MockMetaDataReaderMockRecorder {
 }
 
 // Read mocks base method
-func (m *MockMetaDataReader) Read(arg0 string) (iso.Metadata, error) {
+func (m *MockMetaDataReader) Read(arg0 string) (metadata.Metadata, error) {
 	ret := m.ctrl.Call(m, "Read", arg0)
-	ret0, _ := ret[0].(iso.Metadata)
+	ret0, _ := ret[0].(metadata.Metadata)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
