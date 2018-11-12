@@ -49,6 +49,7 @@ type Config struct {
 	CliVersion             *semver.Version
 	AnalyticsKey           string
 	ServicesDir            string
+	CFDomain               string
 }
 
 func NewConfig() (Config, error) {
@@ -79,6 +80,7 @@ func NewConfig() (Config, error) {
 		CliVersion:             semver.Must(semver.New(cliVersion)),
 		AnalyticsKey:           analyticsKey,
 		ServicesDir:            filepath.Join(cfdevHome, "services"),
+		CFDomain:               "dev.cfdev.sh",
 	}, nil
 }
 

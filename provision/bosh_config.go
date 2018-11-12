@@ -48,5 +48,6 @@ func (c *Controller) boshEnvs() []string {
 		"SERVICES_DIR=" + c.Config.ServicesDir,
 		"CACHE_DIR=" + c.Config.CacheDir,
 		"BOSH_STATE=" + c.Config.StateBosh,
+		"CF_DOMAIN=" + c.Config.CFDomain,
 	}
 }
