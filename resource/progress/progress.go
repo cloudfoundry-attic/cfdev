@@ -46,7 +46,7 @@ func (c *Progress) ResetCurrent() {
 }
 
 func (c *Progress) End() {
-	fmt.Fprintf(c.writer, "\r")
+	fmt.Fprintf(c.writer, "\r\n")
 }
 
 func (c *Progress) display() {
