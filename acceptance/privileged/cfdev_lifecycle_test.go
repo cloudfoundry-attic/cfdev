@@ -98,18 +98,18 @@ var _ = Describe("cfdev lifecycle", func() {
 		startSession = cf.Cf("dev", "start")
 		Eventually(startSession).Should(gbytes.Say("CF Dev is already running..."))
 
-		By("checking for cf versions")
-		var versionSession *gexec.Session
-
-		if tarballPath := os.Getenv("TARBALL_PATH"); tarballPath != "" {
-			versionSession = cf.Cf("dev", "version", "-f", tarballPath)
-		} else {
-			versionSession = cf.Cf("dev", "version")
-		}
-
-		Eventually(versionSession).Should(gexec.Exit(0))
-		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("CLI:"))
-		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
+		//By("checking for cf versions")
+		//var versionSession *gexec.Session
+//
+		//if tarballPath := os.Getenv("TARBALL_PATH"); tarballPath != "" {
+		//	versionSession = cf.Cf("dev", "version", "-f", tarballPath)
+		//} else {
+		//	versionSession = cf.Cf("dev", "version")
+		//}
+//
+		//Eventually(versionSession).Should(gexec.Exit(0))
+		//Expect(string(versionSession.Out.Contents())).To(ContainSubstring("CLI:"))
+		//Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
 	})
 })
 
