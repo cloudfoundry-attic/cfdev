@@ -87,6 +87,7 @@ var _ = Describe("cfdev lifecycle", func() {
 		telemetrySession = cf.Cf("dev", "telemetry", "--on")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
 		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
+		time.Sleep(10 * time.Second)
 
 		By("pushing an app")
 		PushAnApp()
