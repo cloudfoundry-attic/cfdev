@@ -134,6 +134,7 @@ var _ = Describe("Version Command", func() {
 
 					folderToTar, err = ioutil.TempDir("", "folderToTar")
 					Expect(err).ToNot(HaveOccurred())
+					Expect(os.Mkdir(filepath.Join(folderToTar, "deployment_config"), 0766)).ToNot(HaveOccurred())
 
 					targetTar, err = ioutil.TempDir("", "targetTar")
 					Expect(err).ToNot(HaveOccurred())
@@ -141,7 +142,7 @@ var _ = Describe("Version Command", func() {
 					yml := `versions:
   - name: some-name
     version: some-version`
-					err = ioutil.WriteFile(filepath.Join(folderToTar, "metadata.yml"), []byte(yml), 0666)
+					err = ioutil.WriteFile(filepath.Join(folderToTar, "deployment_config", "metadata.yml"), []byte(yml), 0666)
 					Expect(err).ToNot(HaveOccurred())
 
 					tarFilepath = filepath.Join(targetTar, "deps.tgz")

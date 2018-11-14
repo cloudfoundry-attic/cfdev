@@ -48,6 +48,7 @@ func (v *Version) Execute(pathTarball string) {
 			{
 				Include: "metadata.yml",
 				Dst:     tmpDir,
+				FlattenFolder: true,
 			},
 		})
 

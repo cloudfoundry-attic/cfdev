@@ -73,7 +73,11 @@ func copyCurrentFileIfMatch(tr *tar.Reader, header *tar.Header, opts []TarOpts) 
 				target = filepath.Join(opt.Dst, filename)
 			}
 		} else if opt.Include == filepath.Base(header.Name) {
-			target = filepath.Join(opt.Dst, header.Name)
+			if !opt.FlattenFolder {
+				target = filepath.Join(opt.Dst, header.Name)
+			} else {
+				target = filepath.Join(opt.Dst, filepath.Base(header.Name))
+			}
 		}
 
 		if target != "" {
