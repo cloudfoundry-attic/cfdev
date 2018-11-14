@@ -39,9 +39,9 @@ type Plugin struct {
 }
 
 const (
-	boshIP = "10.144.0.4"
+	boshIP   = "10.144.0.4"
 	routerIP = "10.144.0.34"
-	domain = "dev.cfdev.sh"
+	domain   = "dev.cfdev.sh"
 )
 
 func main() {

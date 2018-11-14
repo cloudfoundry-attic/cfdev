@@ -2,11 +2,11 @@ package provision_test
 
 import (
 	"code.cloudfoundry.org/cfdev/cmd/provision"
-	prvsion "code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/cmd/provision/mocks"
 	"code.cloudfoundry.org/cfdev/cmd/start"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/metadata"
+	prvsion "code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cli/cf/errors"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
@@ -17,11 +17,11 @@ import (
 
 var _ = Describe("Provision", func() {
 	var (
-		mockController      *gomock.Controller
-		mockUI              *mocks.MockUI
-		mockMetadataReader  *mocks.MockMetaDataReader
-		mockProvisioner     *mocks.MockProvisioner
-		cmd *provision.Provision
+		mockController     *gomock.Controller
+		mockUI             *mocks.MockUI
+		mockMetadataReader *mocks.MockMetaDataReader
+		mockProvisioner    *mocks.MockProvisioner
+		cmd                *provision.Provision
 	)
 
 	BeforeEach(func() {
@@ -38,7 +38,7 @@ var _ = Describe("Provision", func() {
 			UI:             mockUI,
 			Provisioner:    mockProvisioner,
 			MetaDataReader: mockMetadataReader,
-			Config:         config.Config{
+			Config: config.Config{
 				CacheDir: "some-cache-dir",
 			},
 		}
@@ -87,7 +87,7 @@ var _ = Describe("Provision", func() {
 				mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 				mockProvisioner.EXPECT().DeployBosh(),
 				mockUI.EXPECT().Say("Deploying CF..."),
-				mockProvisioner.EXPECT().DeployCloudFoundry(mockUI,  []string{"domain1.com", "domain2.com"}),
+				mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, []string{"domain1.com", "domain2.com"}),
 				mockProvisioner.EXPECT().WhiteListServices("", nil).Return([]prvsion.Service{}, nil),
 				mockProvisioner.EXPECT().DeployServices(mockUI, []prvsion.Service{}),
 			)

@@ -39,11 +39,11 @@ type Provisioner interface {
 const compatibilityVersion = "v3"
 
 type Provision struct {
-	Exit   chan struct{}
-	UI     UI
-	Provisioner Provisioner
+	Exit           chan struct{}
+	UI             UI
+	Provisioner    Provisioner
 	MetaDataReader MetaDataReader
-	Config config.Config
+	Config         config.Config
 }
 
 func (c *Provision) Cmd() *cobra.Command {
@@ -67,7 +67,7 @@ func (c *Provision) RunE(cmd *cobra.Command, args []string) error {
 func (c *Provision) Execute(args start.Args) error {
 	metadataConfig, err := c.MetaDataReader.Read(filepath.Join(c.Config.CacheDir, "metadata.yml"))
 	if err != nil {
-		return e.SafeWrap(err, fmt.Sprintf( "something went wrong while reading the assets. Please execute 'cf dev start'"))
+		return e.SafeWrap(err, fmt.Sprintf("something went wrong while reading the assets. Please execute 'cf dev start'"))
 	}
 
 	if metadataConfig.Version != compatibilityVersion {
@@ -117,7 +117,6 @@ func (c *Provision) provision(metadataConfig metadata.Metadata, registries []str
 
 	return nil
 }
-
 
 func (c *Provision) parseDockerRegistriesFlag(flag string) ([]string, error) {
 	if flag == "" {
