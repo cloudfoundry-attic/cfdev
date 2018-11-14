@@ -3,9 +3,11 @@ package version
 import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/metadata"
+	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/semver"
 	"fmt"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,37 +29,68 @@ type Version struct {
 	MetaDataReader MetaDataReader
 }
 
-func (v *Version) Execute() {
+func (v *Version) Execute(pathTarball string) {
 	var (
-		message     = []string{fmt.Sprintf("CLI: %s", v.Version.Original)}
+		message     []string
 		metadataYml = filepath.Join(v.Config.CacheDir, "metadata.yml")
+		tmpDir      string
 	)
 
-	if !exists(metadataYml) {
+	if pathTarball != "" {
+		if !exists(pathTarball) {
+			v.UI.Say(fmt.Sprintf("%s: file not found", pathTarball))
+			return
+		}
+
+		tmpDir, _ = ioutil.TempDir("", "versioncmd")
+		defer os.RemoveAll(tmpDir)
+		resource.Untar(pathTarball, []resource.TarOpts{
+			{
+				Include: "metadata.yml",
+				Dst:     tmpDir,
+			},
+		})
+
+		if !exists(filepath.Join(tmpDir, "metadata.yml")) {
+			v.UI.Say("Metadata not found version unknown")
+			return
+		}
+
+		metadataYml = filepath.Join(tmpDir, "metadata.yml")
+	}
+
+	v.printCliVersion()
+
+	if exists(metadataYml) {
+		mtData, err := v.MetaDataReader.Read(metadataYml)
+		if err != nil {
+			return
+		}
+
+		for _, version := range mtData.Versions {
+			message = append(message, fmt.Sprintf("%s: %s", version.Name, version.Value))
+		}
+
 		v.UI.Say(strings.Join(message, "\n"))
-		return
 	}
+}
 
-	metadata, err := v.MetaDataReader.Read(metadataYml)
-	if err != nil {
-		v.UI.Say(strings.Join(message, "\n"))
-		return
-	}
-
-	for _, version := range metadata.Versions {
-		message = append(message, fmt.Sprintf("%s: %s", version.Name, version.Value))
-	}
-
-	v.UI.Say(strings.Join(message, "\n"))
+func (v *Version) printCliVersion() {
+	v.UI.Say(fmt.Sprintf("CLI: %s\n", v.Version.Original))
 }
 
 func (v *Version) Cmd() *cobra.Command {
+	filename := ""
+
 	cmd := &cobra.Command{
 		Use: "version",
 		Run: func(_ *cobra.Command, _ []string) {
-			v.Execute()
+			v.Execute(filename)
 		},
 	}
+
+	pf := cmd.PersistentFlags()
+	pf.StringVarP(&filename, "file", "f", "", "path to deps-tar file")
 	return cmd
 }
 
