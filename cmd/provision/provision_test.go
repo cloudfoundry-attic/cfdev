@@ -25,7 +25,6 @@ var _ = Describe("Provision", func() {
 	)
 
 	BeforeEach(func() {
-		//var err error
 		mockController = gomock.NewController(GinkgoT())
 		mockUI = mocks.NewMockUI(mockController)
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
