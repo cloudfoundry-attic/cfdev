@@ -9,6 +9,7 @@ require (
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/aemengo/bosh-runc-cpi v0.0.0-20181016120954-927ca0e80f2f
 	github.com/apoydence/eachers v0.0.0-20181020210610-23942921fe77 // indirect
+	github.com/aws/aws-sdk-go v1.15.75 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -38,6 +39,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
+	github.com/harlow/kinesis-consumer v0.2.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kr/pretty v0.1.0 // indirect
