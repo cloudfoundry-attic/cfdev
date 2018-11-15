@@ -316,6 +316,6 @@ func streamKinesis(userId, eventToWatchFor string){
 		}
 	})
 	if err != nil {
-		fmt.Println("scan error: %v", err)
+		fmt.Printf("scan error: %v", err)
 	}
 }
