@@ -12,17 +12,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/denisbrodbeck/machineid"
 	"github.com/harlow/kinesis-consumer"
-	"github.com/minio/minio-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"log"
 	"net"
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
-
 	"time"
 
 	"io/ioutil"
@@ -39,7 +35,6 @@ var _ = Describe("cfdev lifecycle", func() {
 
 	var (
 		startSession *gexec.Session
-
 	)
 
 	BeforeEach(func() {
@@ -108,7 +103,10 @@ var _ = Describe("cfdev lifecycle", func() {
 		By("pushing an app")
 		PushAnApp()
 
-		Eventually(analyticsReceived, 10*time.Minute, 2*time.Second).Should(BeTrue())
+		Eventually(func() bool {
+			By(fmt.Sprintf("checking if analytics event received : %v \n", analyticsReceived))
+			return analyticsReceived
+		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
 
 		By("rerunning cf dev start")
 		startSession = cf.Cf("dev", "start")
@@ -128,50 +126,6 @@ var _ = Describe("cfdev lifecycle", func() {
 		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
 	})
 })
-
-func hasFoundAnalyticsFor(client *minio.Client, userID string, event string) bool {
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-
-	objHasEvent := func(obj minio.ObjectInfo) bool {
-		reader, err := client.GetObject("cfdev-analytics", obj.Key, minio.GetObjectOptions{})
-		Expect(err).NotTo(HaveOccurred())
-
-		contents, err := ioutil.ReadAll(reader)
-		Expect(err).NotTo(HaveOccurred())
-
-		j := strings.Replace(string(contents), `}{`, "}\n{", -1)
-		for _, line := range strings.Split(j, "\n") {
-			results := map[string]interface{}{}
-
-			err := json.Unmarshal([]byte(line), &results)
-			Expect(err).NotTo(HaveOccurred(), "invalid json received: "+line)
-
-			if results["event"] == event && results["userId"] == userID {
-				return true
-			}
-		}
-
-		return false
-	}
-
-	objectCh := client.ListObjectsV2("cfdev-analytics", "kinesis-stream", true, doneCh)
-	for object := range objectCh {
-		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
-
-		if object.Err != nil {
-			continue
-		}
-
-		if object.LastModified.After(tenMinutesAgo) {
-			if objHasEvent(object) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
 
 func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")
@@ -204,6 +158,8 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 func PushAnApp() {
 	server, port := fakeTcpServer()
 	defer server.Close()
+
+	By("pushing app")
 
 	Eventually(cf.Cf("push", "cf-test-app", "--no-start", "-p", "./fixture", "-b", "ruby_buildpack")).Should(gexec.Exit(0))
 	Eventually(cf.Cf("set-env", "cf-test-app", "HOST_SERVER_PORT", strconv.Itoa(port))).Should(gexec.Exit(0))
@@ -290,19 +246,15 @@ func streamKinesis(userId, eventToWatchFor string){
 		consumer.WithClient(newKclient),
 	)
 	if err != nil {
-		log.Fatalf("consumer error: %v", err)
+		fmt.Printf("consumer error: %v \n", err)
 	}
 	ctx, _ := context.WithCancel(context.Background())
-	fmt.Println(time.Now(), ": Starting.....")
 	err = c.Scan(ctx, func(r *consumer.Record) consumer.ScanError {
 		var analyticsEvent StatMessage
 		json.Unmarshal(r.Data, &analyticsEvent)
 		eventTime, err := time.Parse(time.RFC3339, analyticsEvent.Timestamp)
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
-		fmt.Printf("EVENT FIRED")
 		if eventTime.After(tenMinutesAgo) && !analyticsReceived {
-			fmt.Printf("EVENT IN FROM LAST 10minutes: %v\n", analyticsEvent)
-
 			if analyticsEvent.Event == eventToWatchFor && analyticsEvent.UserId == userId {
 				analyticsReceived = true
 			}
@@ -315,7 +267,7 @@ func streamKinesis(userId, eventToWatchFor string){
 			SkipCheckpoint: false,
 		}
 	})
-	if err != nil {
-		fmt.Printf("scan error: %v", err)
-	}
+	//if err != nil {
+	//	fmt.Printf("scan error: %v", err)
+	//}
 }
