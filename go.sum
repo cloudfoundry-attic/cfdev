@@ -17,6 +17,8 @@ github.com/apoydence/eachers v0.0.0-20181020210610-23942921fe77 h1:afT88tB6u9JCK
 github.com/apoydence/eachers v0.0.0-20181020210610-23942921fe77/go.mod h1:bXvGk6IkT1Agy7qzJ+DjIw/SJ1AaB3AvAuMDVV+Vkoo=
 github.com/aws/aws-sdk-go v1.15.75 h1:KV0OmIfKLyAypOXjZMulzqmoHHGX8J0+3wJJVJNX2hs=
 github.com/aws/aws-sdk-go v1.15.75/go.mod h1:E3/ieXAlvM0XWO57iftYVDLLvQ824smPP3ATZkfNZeM=
+github.com/aws/aws-sdk-go v1.15.76 h1:AZB4clNWIk13YJaTm07kqyrHkj7gZYBQCgyTh/v4Sec=
+github.com/aws/aws-sdk-go v1.15.76/go.mod h1:E3/ieXAlvM0XWO57iftYVDLLvQ824smPP3ATZkfNZeM=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/bmatcuk/doublestar v1.1.1 h1:YroD6BJCZBYx06yYFEWvUuKVWQn3vLLQAVmDmvTSaiQ=
@@ -32,6 +34,8 @@ github.com/cheggaaa/pb v2.0.6+incompatible/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeD
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180918235445-a410f25137fb h1:Kd1IvtC7a1DWLSKiba4Zb7oeb5mFOImQGzREz34XBOo=
 github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20180918235445-a410f25137fb/go.mod h1:I21tkmFwW9F06eYcQm5GTUzNV+pc1Q5NVZ1qhWOGGx0=
+github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20181115000646-f917ca935238 h1:Tzr4iNgTRmHeDxNDFBoFbHtrkv+6U2fE8pLVp25ccLU=
+github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20181115000646-f917ca935238/go.mod h1:I21tkmFwW9F06eYcQm5GTUzNV+pc1Q5NVZ1qhWOGGx0=
 github.com/cloudfoundry/bosh-cli v5.2.1+incompatible h1:vCwOg9+NPO2cwEE0Py6PjFR0bB27FZ7xTX4vZ2XIWZg=
 github.com/cloudfoundry/bosh-cli v5.2.1+incompatible/go.mod h1:rzIB+e1sn7wQL/TJ54bl/FemPKRhXby5BIMS3tLuWFM=
 github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455 h1:iLnjvzwYY8s8m6dAHpn8F0wmHEGk+sOP0NIi8SBmVZM=
@@ -112,6 +116,8 @@ github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8Bz
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/minio/minio-go v6.0.7+incompatible h1:nWABqotkiT/3aLgFnG30doQiwFkDMM9xnGGQnS+Ao6M=
 github.com/minio/minio-go v6.0.7+incompatible/go.mod h1:7guKYtitv8dktvNUGrhzmNlA5wrAABTQXCoesZdFQO8=
+github.com/minio/minio-go v6.0.10+incompatible h1:cAdZRAXBaqI0hU06emlG+6S3wAh52Wr3xRtCK3R7EHc=
+github.com/minio/minio-go v6.0.10+incompatible/go.mod h1:7guKYtitv8dktvNUGrhzmNlA5wrAABTQXCoesZdFQO8=
 github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnGC8aR0=
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d h1:VhgPp6v9qf9Agr/56bj7Y/xa04UccTW04VP0Qed4vnQ=
@@ -120,6 +126,7 @@ github.com/onsi/ginkgo v1.6.0 h1:Ix8l273rp3QzYgXSR+c8d1fTG7UPgYkOSELPhiY/YGw=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/gomega v1.4.2 h1:3mYCb7aPxS/RU7TI1y4rkEn1oKmPRjNJLNEXgw7MH2I=
 github.com/onsi/gomega v1.4.2/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
+github.com/pcfdev-forks/bosh-cli v0.0.0-20180831162148-70729ce5b5db h1:x2ctHUjqOqUZPzbMomQfS+JLKvcZsWPhi4ZdC767euU=
 github.com/pcfdev-forks/bosh-cli v0.0.0-20180831162148-70729ce5b5db/go.mod h1:MUA3P3AvXT9LUfuQKcB0WALvNyZmJQqF0ulYUg5hA2k=
 github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20 h1:DR5eMfe2+6GzLkVyWytdtgUxgbPiOfvKDuqityTV3y8=
 github.com/pivotal-cf/paraphernalia v0.0.0-20180203224945-a64ae2051c20/go.mod h1:Y3IqE20LKprEpLkXb7gXinJf4vvDdQe/BS8E4kL/dgE=

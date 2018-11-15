@@ -1,13 +1,22 @@
 package privileged_test
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/denisbrodbeck/machineid"
+	"github.com/harlow/kinesis-consumer"
 	"github.com/minio/minio-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -19,15 +28,24 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/kinesis"
+	"github.com/harlow/kinesis-consumer"
+
 	. "code.cloudfoundry.org/cfdev/acceptance"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	"github.com/onsi/gomega/gbytes"
 )
 
+var analyticsReceived = false
+
 var _ = Describe("cfdev lifecycle", func() {
 
 	var (
 		startSession *gexec.Session
+
 	)
 
 	BeforeEach(func() {
@@ -65,7 +83,11 @@ var _ = Describe("cfdev lifecycle", func() {
 		}
 	})
 
-	It("runs the entire vm lifecycle", func() {
+	It("runs the entire vm lifecycle", func() { 
+		userID, _ := machineid.ProtectedID("cfdev")
+		eventToWatchFor := "app created"
+		streamKinesis(userID, eventToWatchFor)
+
 		By("waiting for bosh to deploy")
 		Eventually(startSession, 1*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
 
@@ -92,7 +114,7 @@ var _ = Describe("cfdev lifecycle", func() {
 		By("pushing an app")
 		PushAnApp()
 
-		EventuallyWeSeeAnalyticsBeingSent()
+		Eventually(analyticsReceived, 10*time.Minute, 2*time.Second).Should(BeTrue())
 
 		By("rerunning cf dev start")
 		startSession = cf.Cf("dev", "start")
@@ -112,27 +134,6 @@ var _ = Describe("cfdev lifecycle", func() {
 		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
 	})
 })
-
-func EventuallyWeSeeAnalyticsBeingSent() {
-	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
-	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
-
-	if accessKeyID == "" || secretAccessKey == "" {
-		fmt.Fprintln(GinkgoWriter, "AWS keys not detected. Skipping assertions for analytics...")
-		return
-	}
-
-	By("querying for analytics")
-
-	minioClient, err := minio.New("s3.amazonaws.com", accessKeyID, secretAccessKey, true)
-	Expect(err).NotTo(HaveOccurred())
-
-	userID, _ := machineid.ProtectedID("cfdev")
-
-	Eventually(func() bool {
-		return hasFoundAnalyticsFor(minioClient, userID, "app created")
-	}, 20*time.Minute, 10*time.Second).Should(BeTrue())
-}
 
 func hasFoundAnalyticsFor(client *minio.Client, userID string, event string) bool {
 	doneCh := make(chan struct{})
@@ -265,4 +266,62 @@ func doesVMExist() bool {
 	}
 
 	return string(output) == "cfdev"
+}
+
+type StatMessage struct {
+	UserId string `json:"userId"`
+	Event string `json:"event"`
+	Timestamp string `json:"timestamp"`
+}
+
+func streamKinesis(userId, eventToWatchFor string){
+	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
+	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+
+	if accessKeyID == "" || secretAccessKey == "" {
+		fmt.Fprintln(GinkgoWriter, "AWS keys not detected. Skipping assertions for analytics...")
+		return
+	}
+
+	var stream = flag.String("cfdev-analytics-development", "cfdev-analytics-development", "cfdev-analytics-development")
+	flag.Parse()
+
+	myKinesisClient := kinesis.New(session.New(aws.NewConfig()), &aws.Config{
+		Region: aws.String("us-east-1"),
+		Credentials: credentials.NewStaticCredentials(accessKeyID, secretAccessKey, ""),
+	})
+	newKclient, err := consumer.NewKinesisClient(consumer.WithKinesis(myKinesisClient))
+	c, err := consumer.New(
+		*stream,
+		consumer.WithClient(newKclient),
+	)
+	if err != nil {
+		log.Fatalf("consumer error: %v", err)
+	}
+	ctx, _ := context.WithCancel(context.Background())
+	fmt.Println(time.Now(), ": Starting.....")
+	err = c.Scan(ctx, func(r *consumer.Record) consumer.ScanError {
+		var analyticsEvent StatMessage
+		json.Unmarshal(r.Data, &analyticsEvent)
+		eventTime, err := time.Parse(time.RFC3339, analyticsEvent.Timestamp)
+		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
+		fmt.Printf("EVENT FIRED")
+		if eventTime.After(tenMinutesAgo) && !analyticsReceived {
+			fmt.Printf("EVENT IN FROM LAST 10minutes: %v\n", analyticsEvent)
+
+			if analyticsEvent.Event == eventToWatchFor && analyticsEvent.UserId == userId {
+				analyticsReceived = true
+			}
+		}
+		err = errors.New("some error happened")
+
+		return consumer.ScanError{
+			Error:          err,
+			StopScan:       false,
+			SkipCheckpoint: false,
+		}
+	})
+	if err != nil {
+		fmt.Println("scan error: %v", err)
+	}
 }
