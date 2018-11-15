@@ -67,22 +67,21 @@ func (c *Controller) DeployServices(ui UI, services []Service) error {
 		return err
 	}
 
-	//errChan := make(chan error, 1)
+	errChan := make(chan error, 1)
 
 	for _, service := range services {
-		//start := time.Now()
+		start := time.Now()
 
 		ui.Say("Deploying %s...", service.Name)
 
-		c.DeployService(service)
-		//go func(handle string, serviceManifest string) {
-		//    errChan <- c.DeployService(service)
-		//}(service.Handle, service.Script)
+		go func(handle string, serviceManifest string) {
+			errChan <- c.DeployService(service)
+		}(service.Handle, service.Script)
 
-		//err = c.report(start, ui, b, service, errChan)
-		//if err != nil {
-		//	return err
-		//}
+		err = c.report(start, ui, b, service, errChan)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
