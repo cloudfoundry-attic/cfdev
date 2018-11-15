@@ -104,7 +104,6 @@ var _ = Describe("cfdev lifecycle", func() {
 		PushAnApp()
 
 		Eventually(func() bool {
-			By(fmt.Sprintf("checking if analytics event received : %v \n", analyticsReceived))
 			return analyticsReceived
 		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
 
@@ -268,7 +267,4 @@ func streamKinesis(userId, eventToWatchFor string){
 			SkipCheckpoint: false,
 		}
 	})
-	//if err != nil {
-	//	fmt.Printf("scan error: %v", err)
-	//}
 }
