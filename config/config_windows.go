@@ -19,34 +19,6 @@ var (
 	cfdepsMd5  string
 	cfdepsSize string
 
-	cfdevefiUrl  string
-	cfdevefiMd5  string
-	cfdevefiSize string
-
-	vpnkitUrl  string
-	vpnkitMd5  string
-	vpnkitSize string
-
-	hyperkitUrl  string
-	hyperkitMd5  string
-	hyperkitSize string
-
-	linuxkitUrl  string
-	linuxkitMd5  string
-	linuxkitSize string
-
-	winswUrl  string
-	winswMd5  string
-	winswSize string
-
-	qcowtoolUrl  string
-	qcowtoolMd5  string
-	qcowtoolSize string
-
-	uefiUrl  string
-	uefiMd5  string
-	uefiSize string
-
 	cfdevdUrl  string
 	cfdevdMd5  string
 	cfdevdSize string
@@ -65,13 +37,19 @@ type Config struct {
 	HostIP                 string
 	CFDevHome              string
 	StateDir               string
+	StateBosh              string
+	StateLinuxkit          string
 	CacheDir               string
 	VpnKitStateDir         string
+	LogDir                 string
+	DepsFile               *string
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
 	CliVersion             *semver.Version
 	AnalyticsKey           string
+	ServicesDir            string
+	CFDomain               string
 }
 
 func NewConfig() (Config, error) {
@@ -82,19 +60,27 @@ func NewConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	depsFile := ""
+
 	return Config{
 		BoshDirectorIP:         "10.144.0.4",
 		CFRouterIP:             "10.144.0.34",
 		HostIP:                 "192.168.65.2",
 		CFDevHome:              cfdevHome,
-		StateDir:               filepath.Join(cfdevHome, "state", "linuxkit"),
+		StateDir:               filepath.Join(cfdevHome, "state"),
+		StateBosh:              filepath.Join(cfdevHome, "state", "bosh"),
+		StateLinuxkit:          filepath.Join(cfdevHome, "state", "linuxkit"),
 		CacheDir:               filepath.Join(cfdevHome, "cache"),
 		VpnKitStateDir:         filepath.Join(cfdevHome, "state", "vpnkit"),
+		LogDir:                 filepath.Join(cfdevHome, "log"),
+		DepsFile:               &depsFile,
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
 		CliVersion:             semver.Must(semver.New(cliVersion)),
 		AnalyticsKey:           analyticsKey,
+		ServicesDir:            filepath.Join(cfdevHome, "services"),
+		CFDomain:               "dev.cfdev.sh",
 	}, nil
 }
 
@@ -121,35 +107,14 @@ func catalog() (resource.Catalog, error) {
 		Items: []resource.Item{
 			{
 				URL:   cfdepsUrl,
-				Name:  "cf-deps.iso",
+				Name:  "cfdev-deps",
 				MD5:   cfdepsMd5,
 				Size:  aToUint64(cfdepsSize),
 				InUse: true,
 			},
 			{
-				URL:   cfdevefiUrl,
-				Name:  "cfdev-efi.iso",
-				MD5:   cfdevefiMd5,
-				Size:  aToUint64(cfdevefiSize),
-				InUse: true,
-			},
-			{
-				URL:   vpnkitUrl,
-				Name:  "vpnkit.exe",
-				MD5:   vpnkitMd5,
-				Size:  aToUint64(vpnkitSize),
-				InUse: true,
-			},
-			{
-				URL:   winswUrl,
-				Name:  "winsw.exe",
-				MD5:   winswMd5,
-				Size:  aToUint64(winswSize),
-				InUse: true,
-			},
-			{
 				URL:   analyticsdUrl,
-				Name:  "analyticsd.exe",
+				Name:  "analyticsd",
 				MD5:   analyticsdMd5,
 				Size:  aToUint64(analyticsdSize),
 				InUse: true,

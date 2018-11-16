@@ -1,31 +1,67 @@
 package provision
 
 import (
+	"code.cloudfoundry.org/cfdev/ssh"
+	"fmt"
+	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"time"
 )
 
 func (c *Controller) DeployBosh() error {
-	cmd := exec.Command(
-		filepath.Join(c.Config.CacheDir, "bosh"),
-		"--tty", "create-env",
-		filepath.Join(c.Config.CacheDir, "director.yml"),
-		"--state",
-		filepath.Join(c.Config.StateBosh, "state.json"),
-		"--vars-store",
-		filepath.Join(c.Config.StateBosh, "creds.yml"))
-
 	logFile, err := os.Create(filepath.Join(c.Config.LogDir, "deploy-bosh.log"))
 	if err != nil {
 		return err
 	}
 	defer logFile.Close()
 
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
+	key, err := ioutil.ReadFile(filepath.Join(c.Config.CacheDir, "id_rsa"))
+	if err != nil {
+		return err
+	}
+	s := ssh.SSH{}
 
-	err = cmd.Run()
+	srcDst := []string{
+		filepath.Join(c.Config.CacheDir, "director.yml"),
+		filepath.Join(c.Config.StateBosh, "state.json"),
+		filepath.Join(c.Config.StateBosh, "creds.yml"),
+	}
+
+	for _, item := range srcDst {
+		s.CopyFile(item, filepath.Base(item), ssh.SSHAddress{
+			IP: "127.0.0.1",
+			Port: "9992",
+		},
+			key,
+			20 * time.Second,
+			logFile,
+			logFile,)
+	}
+
+	command := fmt.Sprintf("%s --tty create-env %s --state %s --vars-store %s",
+		"/bosh/bosh",
+		"director.yml",
+		"state.json",
+		"creds.yml")
+
+	// TODO: Added the time because we were seeing some delay between the time the container
+	// was started and the time it could access the internet
+	// Find a better solution
+	time.Sleep(1*time.Minute)
+
+	err = s.RunSSHCommand(
+		command,
+		ssh.SSHAddress{
+			IP: "127.0.0.1",
+			Port: "9992",
+		},
+		key,
+		20 * time.Second,
+		logFile,
+		logFile,
+		)
+
 	if err != nil {
 		return err
 	}

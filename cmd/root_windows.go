@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/profiler"
 	"code.cloudfoundry.org/cfdev/runner"
 	"io"
@@ -98,7 +99,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	provisionCmd := &b8.Provision{
 		Exit:           exit,
 		UI:             ui,
-		Provisioner:    provision.NewController(),
+		Provisioner:    provision.NewController(config),
 		MetaDataReader: metaDataReader,
 		Config:         config,
 	}
@@ -122,7 +123,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Exit:        exit,
 			UI:          ui,
 			StateDir:    config.StateBosh,
-			Provisioner: provision.NewController(),
+			Provisioner: provision.NewController(config),
 			Analytics:   analyticsClient,
 		},
 		&b3.Catalog{
@@ -133,6 +134,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Exit:   exit,
 			UI:     ui,
 			Config: config,
+			Env:    &env.Env{Config: config},
 		},
 		&b5.Start{
 			Exit:            exit,
@@ -140,6 +142,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:              ui,
 			Config:          config,
 			Cache:           cache,
+			Env: &env.Env{Config: config},
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         hostnet,
@@ -150,7 +153,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			CFDevD:         &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			Hypervisor:     &hypervisor.HyperV{Config: config},
 			VpnKit:         vpnkit,
-			Provisioner:    provision.NewController(),
+			Provisioner:    provision.NewController(config),
 			Provision:      provisionCmd,
 			MetaDataReader: metaDataReader,
 			Stop: &b6.Stop{

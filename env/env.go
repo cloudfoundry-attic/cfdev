@@ -119,6 +119,10 @@ func (e *Env) SetupState() error {
 			Dst:     e.Config.StateBosh,
 		},
 		{
+			Include: "id_rsa",
+			Dst:     e.Config.CacheDir,
+		},
+		{
 			IncludeFolder: "services",
 			Dst:           e.Config.CFDevHome,
 		},
@@ -132,11 +136,19 @@ func (e *Env) SetupState() error {
 			FlattenFolder: true,
 			Dst:           e.Config.CacheDir,
 		},
-		{
-			Include: "disk.qcow2",
-			Dst:     e.Config.StateLinuxkit,
-		},
 	}
+	//
+	//if runtime.GOOS == "windows" {
+	//	thingsToUntar = append(thingsToUntar, resource.TarOpts{
+	//		Include: "disk.vhdx",
+	//			Dst:     e.Config.StateLinuxkit,
+	//		})
+	//} else {
+	//	thingsToUntar = append(thingsToUntar, resource.TarOpts{
+	//		Include: "disk.qcow2",
+	//			Dst:     e.Config.StateLinuxkit,
+	//		})
+	//}
 
 	err := resource.Untar(*e.Config.DepsFile, thingsToUntar)
 	if err != nil {

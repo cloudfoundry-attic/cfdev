@@ -308,7 +308,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Waiting for the VM...")
-	err = s.waitForGarden()
+	err = s.waitForVM()
 	if err != nil {
 		return e.SafeWrap(err, "Timed out waiting for the VM")
 	}
@@ -331,7 +331,7 @@ func (s *Start) Execute(args Args) error {
 	return nil
 }
 
-func (s *Start) waitForGarden() error {
+func (s *Start) waitForVM() error {
 	timeout := 120
 	var err error
 	for i := 0; i < timeout; i++ {

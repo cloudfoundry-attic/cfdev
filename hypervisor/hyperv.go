@@ -3,7 +3,6 @@ package hypervisor
 import (
 	"code.cloudfoundry.org/cfdev/runner"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"strings"
@@ -17,8 +16,8 @@ type HyperV struct {
 }
 
 func (h *HyperV) CreateVM(vm VM) error {
-	var cfdevEfiIso = filepath.Join(h.Config.CacheDir, "cfdev-efi.iso")
-	var cfDevVHD = filepath.Join(h.Config.CFDevHome, "cfdev.vhd")
+	var cfdevEfiIso = filepath.Join(h.Config.CacheDir, "cfdev-efi-v2.iso")
+	var cfDevVHD = filepath.Join(h.Config.StateLinuxkit, "disk.vhdx")
 
 	command := fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vm.Name)
 	_, err := h.Powershell.Output(command)
@@ -60,21 +59,6 @@ func (h *HyperV) CreateVM(vm VM) error {
 				}
 			}
 		}
-	}
-
-	if _, err := os.Stat(cfDevVHD); err == nil {
-		err := os.RemoveAll(cfDevVHD)
-		if err != nil {
-			return fmt.Errorf("removing any vhds: %s", err)
-		}
-	}
-
-	command = fmt.Sprintf(`New-VHD -Path "%s" `+
-		"-SizeBytes '200000000000' "+
-		"-Dynamic", cfDevVHD)
-	_, err = h.Powershell.Output(command)
-	if err != nil {
-		return fmt.Errorf("creating new vhd at path %s : %s", cfDevVHD, err)
 	}
 
 	command = fmt.Sprintf("Add-VMHardDiskDrive -VMName %s "+
