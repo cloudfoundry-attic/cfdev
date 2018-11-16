@@ -198,7 +198,7 @@ func (s *Start) Execute(args Args) error {
 			return fmt.Errorf("no file found at: %s", *s.Config.DepsFile)
 		}
 
-		s.Config.Dependencies.Remove("cfdev-deps")
+		s.Config.Dependencies.Remove("cfdev-deps.tgz")
 	}
 
 	s.AnalyticsToggle.SetProp("type", depsFileName)

@@ -108,7 +108,7 @@ var _ = Describe("Start", func() {
 				Dependencies: resource.Catalog{
 					Items: []resource.Item{
 						{Name: "some-item"},
-						{Name: "cfdev-deps"},
+						{Name: "cfdev-deps.tgz"},
 					},
 				},
 			},
@@ -169,7 +169,7 @@ var _ = Describe("Start", func() {
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
 							{Name: "some-item"},
-							{Name: "cfdev-deps"},
+							{Name: "cfdev-deps.tgz"},
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
@@ -228,7 +228,7 @@ var _ = Describe("Start", func() {
 					mockCache.EXPECT().Sync(resource.Catalog{
 						Items: []resource.Item{
 							{Name: "some-item"},
-							{Name: "cfdev-deps"},
+							{Name: "cfdev-deps.tgz"},
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
@@ -272,7 +272,7 @@ var _ = Describe("Start", func() {
 						Items: []resource.Item{
 							{Name: "some-item"},
 							{Name: "cfdevd"},
-							{Name: "cfdev-deps"},
+							{Name: "cfdev-deps.tgz"},
 						},
 					}
 				})
@@ -302,7 +302,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cfdev-deps"},
+								{Name: "cfdev-deps.tgz"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -363,7 +363,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cfdev-deps"},
+								{Name: "cfdev-deps.tgz"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -429,7 +429,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cfdev-deps"},
+								{Name: "cfdev-deps.tgz"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -494,7 +494,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cfdev-deps"},
+								{Name: "cfdev-deps.tgz"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -557,7 +557,7 @@ var _ = Describe("Start", func() {
 								mockCache.EXPECT().Sync(resource.Catalog{
 									Items: []resource.Item{
 										{Name: "some-item"},
-										{Name: "cfdev-deps"},
+										{Name: "cfdev-deps.tgz"},
 									},
 								}),
 								mockUI.EXPECT().Say("Setting State..."),
@@ -619,7 +619,7 @@ var _ = Describe("Start", func() {
 							mockCache.EXPECT().Sync(resource.Catalog{
 								Items: []resource.Item{
 									{Name: "some-item"},
-									{Name: "cfdev-deps"},
+									{Name: "cfdev-deps.tgz"},
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
@@ -684,7 +684,7 @@ var _ = Describe("Start", func() {
 							mockCache.EXPECT().Sync(resource.Catalog{
 								Items: []resource.Item{
 									{Name: "some-item"},
-									{Name: "cfdev-deps"},
+									{Name: "cfdev-deps.tgz"},
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
@@ -751,7 +751,7 @@ var _ = Describe("Start", func() {
 							mockCache.EXPECT().Sync(resource.Catalog{
 								Items: []resource.Item{
 									{Name: "some-item"},
-									{Name: "cfdev-deps"},
+									{Name: "cfdev-deps.tgz"},
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
@@ -817,7 +817,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cfdev-deps"},
+								{Name: "cfdev-deps.tgz"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
@@ -880,7 +880,7 @@ var _ = Describe("Start", func() {
 						mockCache.EXPECT().Sync(resource.Catalog{
 							Items: []resource.Item{
 								{Name: "some-item"},
-								{Name: "cfdev-deps"},
+								{Name: "cfdev-deps.tgz"},
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),

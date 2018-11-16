@@ -107,7 +107,7 @@ func catalog() (resource.Catalog, error) {
 		Items: []resource.Item{
 			{
 				URL:   cfdepsUrl,
-				Name:  "cfdev-deps",
+				Name:  "cfdev-deps.tgz",
 				MD5:   cfdepsMd5,
 				Size:  aToUint64(cfdepsSize),
 				InUse: true,
