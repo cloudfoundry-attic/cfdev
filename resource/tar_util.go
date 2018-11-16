@@ -19,6 +19,8 @@ type TarOpts struct {
 }
 
 func Untar(src string, dstOpts []TarOpts) error {
+	var foundEverything bool
+
 	f, err := os.Open(src)
 	if err != nil {
 		return err
@@ -45,14 +47,17 @@ func Untar(src string, dstOpts []TarOpts) error {
 			continue
 		}
 
-		err = copyCurrentFileIfMatch(tr, header, dstOpts)
+		foundEverything, err = copyCurrentFileIfMatch(tr, header, dstOpts)
 		if err != nil {
 			return err
+		}
+		if foundEverything {
+			return nil
 		}
 	}
 }
 
-func copyCurrentFileIfMatch(tr *tar.Reader, header *tar.Header, opts []TarOpts) error {
+func copyCurrentFileIfMatch(tr *tar.Reader, header *tar.Header, opts []TarOpts) (bool, error) {
 	for _, opt := range opts {
 		if header.Typeflag == tar.TypeDir {
 			break
@@ -65,7 +70,7 @@ func copyCurrentFileIfMatch(tr *tar.Reader, header *tar.Header, opts []TarOpts) 
 		} else if opt.IncludeFolder != "" && strings.Contains(dir, opt.IncludeFolder) {
 			if !opt.FlattenFolder {
 				if err := os.MkdirAll(filepath.Join(opt.Dst, dir), 0755); err != nil {
-					return err
+					return false, err
 				}
 
 				target = filepath.Join(opt.Dst, header.Name)
@@ -83,16 +88,21 @@ func copyCurrentFileIfMatch(tr *tar.Reader, header *tar.Header, opts []TarOpts) 
 		if target != "" {
 			f, err := os.OpenFile(target, os.O_TRUNC|os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
-				return err
+				return false, err
 			}
 			if _, err := io.Copy(f, tr); err != nil {
-				return err
+				return false, err
 			}
 			f.Close()
+
+			if len(opts) == 1 && opt.Include != "" {
+				return true, nil
+			}
+
 			break
 		}
 	}
-	return nil
+	return false, nil
 }
 
 func Tar(src string, writers ...io.Writer) error {
