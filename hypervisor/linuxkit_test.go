@@ -52,7 +52,6 @@ var _ = Describe("LinuxKit process", func() {
 			"-disk", "type=qcow,size=80G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
 			"-state", "/home-dir/.cfdev/state/linuxkit",
 			"-uefi",
-			"-publish", "9999:9999/tcp",
 			"/home-dir/.cfdev/cache/cfdev-efi-v2.iso",
 		))
 	})

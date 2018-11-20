@@ -101,7 +101,6 @@ func (l *LinuxKit) DaemonSpec(cpus, mem int) (daemon.DaemonSpec, error) {
 			"-disk", strings.Join(diskArgs, ","),
 			"-state", l.Config.StateLinuxkit,
 			"-uefi",
-			"-publish", "9999:9999/tcp",
 			osImagePath,
 		},
 		RunAtLoad:  false,
