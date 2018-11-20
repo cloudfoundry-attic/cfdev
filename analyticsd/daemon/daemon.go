@@ -69,6 +69,10 @@ func (d *Daemon) Start() {
 }
 
 func (d *Daemon) Stop() {
+	err := d.do()
+	if err != nil {
+		d.logger.Println(err)
+	}
 	d.doneChan <- true
 }
 

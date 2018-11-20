@@ -50,7 +50,6 @@ var _ = Describe("Integration", func() {
 	})
 
 	AfterEach(func() {
-		aDaemon.Stop()
 		ccServer.Close()
 
 		mockController.Finish()
@@ -110,7 +109,41 @@ var _ = Describe("Integration", func() {
 								fakePushEvent("2018-08-10T08:08:08Z", "java_buildpack"),
 								fakePushEvent("2018-08-11T08:08:08Z", "nodejs_buildpack"),
 							})),
+						),
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
 						))
+				})
+
+				It("sends the events when analytics is stopped before polling interval completes", func() {
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app created",
+						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"buildpack":      "ruby",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
+						},
+					})
+
+					mockAnalytics.EXPECT().Enqueue(analytics.Track{
+						UserId:    "some-user-uuid",
+						Event:     "app created",
+						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
+						Properties: map[string]interface{}{
+							"buildpack":      "go",
+							"os":             runtime.GOOS,
+							"plugin_version": "some-version",
+							"os_version":     "some-os-version",
+						},
+					})
+
+					startDaemon()
+					<-time.After(200 * time.Millisecond)
+					aDaemon.Stop()
 				})
 
 				It("sends the events and continues polling", func() {
@@ -163,6 +196,7 @@ var _ = Describe("Integration", func() {
 					})
 					startDaemon()
 					<-time.After(2030 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 		})
@@ -183,7 +217,11 @@ var _ = Describe("Integration", func() {
 							fakePushEvent("2018-08-09T08:08:08Z", "ruby_buildpack"),
 							fakePushEvent("2018-08-08T09:07:08Z", "go_buildpack"),
 						})),
-					))
+					),
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
+						))
 				})
 				It("sends the subsequent app push events", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
@@ -212,6 +250,7 @@ var _ = Describe("Integration", func() {
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 
@@ -222,7 +261,11 @@ var _ = Describe("Integration", func() {
 						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
 							fakeCrashEvent("2018-08-09T08:08:08Z"),
 						})),
-					))
+					),
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+							ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
+						))
 				})
 				It("sends the crash event", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
@@ -238,6 +281,7 @@ var _ = Describe("Integration", func() {
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 
@@ -260,6 +304,10 @@ var _ = Describe("Integration", func() {
 						ghttp.RespondWith(http.StatusOK, fakeLabelResponse("p-circuit-breaker-dashboard")),
 					))
 
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
+					))
 				})
 				It("sends the service create event", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
@@ -276,6 +324,7 @@ var _ = Describe("Integration", func() {
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 
@@ -297,6 +346,11 @@ var _ = Describe("Integration", func() {
 						ghttp.VerifyRequest(http.MethodGet, "/some-service-url"),
 						ghttp.RespondWith(http.StatusOK, fakeLabelResponse("p-circuit-breaker-dashboard")),
 					))
+
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
+					))
 				})
 				It("sends the service bind event", func() {
 					mockAnalytics.EXPECT().Enqueue(analytics.Track{
@@ -313,6 +367,7 @@ var _ = Describe("Integration", func() {
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 
@@ -320,9 +375,12 @@ var _ = Describe("Integration", func() {
 				BeforeEach(func() {
 					ccServer.AppendHandlers(ghttp.CombineHandlers(
 						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
-						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
-							fakeRestageEvent("2018-08-08T08:08:08Z"),
-						})),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{fakeRestageEvent("2018-08-08T08:08:08Z")})),
+					))
+
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
 					))
 				})
 				It("sends the restage event", func() {
@@ -339,6 +397,7 @@ var _ = Describe("Integration", func() {
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 
@@ -349,6 +408,11 @@ var _ = Describe("Integration", func() {
 						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{
 							fakeUserProvidedServiceEvent("2018-08-08T08:08:08Z"),
 						})),
+					))
+
+					ccServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
+						ghttp.RespondWith(http.StatusOK, fakeResponse([]string{})),
 					))
 				})
 				It("sends the user-provided-service event", func() {
@@ -365,6 +429,7 @@ var _ = Describe("Integration", func() {
 
 					startDaemon()
 					<-time.After(1030 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 
@@ -383,6 +448,7 @@ var _ = Describe("Integration", func() {
 
 					startDaemon()
 					<-time.After(50 * time.Millisecond)
+					aDaemon.Stop()
 				})
 			})
 		})
