@@ -21,28 +21,6 @@ type SSHAddress struct {
 	Port string
 }
 
-/*
-func main(){
-
-	s := SSH{}
-
-	address := SSHAddress{
-		IP: "127.0.0.1",
-		Port: "9992",
-	}
-
-	privateKey, err := ioutil.ReadFile(filepath.Join("C:\\id_rsa"))
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	err = s.RunSSHCommand("ls bananas", []SSHAddress{address}, privateKey, 10*time.Second, os.Stdout, os.Stderr)
-	fmt.Printf("Error: %v\n", err)
-
-	fmt.Println("this is the end")
-}
-*/
-
 func (s *SSH) CopyFile(filePath string, remoteFilePath string, address SSHAddress, privateKey []byte, timeout time.Duration, stdout io.Writer, stderr io.Writer) error {
 	client, session, err := s.newSession(address, privateKey, timeout)
 	if err != nil {

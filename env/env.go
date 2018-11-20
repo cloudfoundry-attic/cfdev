@@ -4,6 +4,7 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
@@ -137,18 +138,18 @@ func (e *Env) SetupState() error {
 			Dst:           e.Config.CacheDir,
 		},
 	}
-	//
-	//if runtime.GOOS == "windows" {
-	//	thingsToUntar = append(thingsToUntar, resource.TarOpts{
-	//		Include: "disk.vhdx",
-	//			Dst:     e.Config.StateLinuxkit,
-	//		})
-	//} else {
-	//	thingsToUntar = append(thingsToUntar, resource.TarOpts{
-	//		Include: "disk.qcow2",
-	//			Dst:     e.Config.StateLinuxkit,
-	//		})
-	//}
+
+	if runtime.GOOS == "windows" {
+		thingsToUntar = append(thingsToUntar, resource.TarOpts{
+			Include: "disk.vhdx",
+				Dst:     e.Config.StateLinuxkit,
+			})
+	} else {
+		thingsToUntar = append(thingsToUntar, resource.TarOpts{
+			Include: "disk.qcow2",
+				Dst:     e.Config.StateLinuxkit,
+			})
+	}
 
 	err := resource.Untar(*e.Config.DepsFile, thingsToUntar)
 	if err != nil {

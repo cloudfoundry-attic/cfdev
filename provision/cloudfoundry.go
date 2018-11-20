@@ -12,12 +12,13 @@ import (
 )
 
 func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error {
-	script := "deploy-cf"
-	if runtime.GOOS == "windows" {
-		script = "deploy-cf.ps1"
-	}
+	var cmd *exec.Cmd
 
-	cmd := exec.Command(filepath.Join(c.Config.ServicesDir, script))
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("powershell.exe", filepath.Join(c.Config.ServicesDir, "deploy-cf.ps1"))
+	} else {
+		cmd = exec.Command(filepath.Join(c.Config.ServicesDir, "deploy-cf"))
+	}
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, c.boshEnvs()...)
