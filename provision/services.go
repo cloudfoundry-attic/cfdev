@@ -1,14 +1,21 @@
 package provision
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 func (c *Controller) DeployService(service Service) error {
-	cmd := exec.Command(filepath.Join(c.Config.ServicesDir, service.Script))
+	script := service.Script
+	if runtime.GOOS == "windows" {
+		script = fmt.Sprintf("%s.ps1", script)
+	}
+
+	cmd := exec.Command(filepath.Join(c.Config.ServicesDir, script))
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, c.boshEnvs()...)

@@ -6,12 +6,18 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
 
 func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error {
-	cmd := exec.Command(filepath.Join(c.Config.ServicesDir, "deploy-cf"))
+	script := "deploy-cf"
+	if runtime.GOOS == "windows" {
+		script = "deploy-cf.ps1"
+	}
+
+	cmd := exec.Command(filepath.Join(c.Config.ServicesDir, script))
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, c.boshEnvs()...)
