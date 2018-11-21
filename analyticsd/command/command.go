@@ -104,6 +104,18 @@ func New(
 			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
+	case "audit.route.create":
+		logger.Printf("Detected event for %q\n", event)
+
+		return &RouteCreate{
+			CCClient:        ccClient,
+			AnalyticsClient: analyticsClient,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			OSVersion:       osVersion,
+			Logger:          logger,
+		}, true
 	default:
 		return nil, false
 	}

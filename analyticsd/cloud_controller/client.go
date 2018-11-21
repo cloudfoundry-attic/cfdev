@@ -50,6 +50,7 @@ var eventTypes = []string{
 	"audit.service_instance.create",
 	"audit.service_binding.create",
 	"audit.user_provided_service_instance.create",
+	"audit.route.create",
 }
 
 func New(host string, logger *log.Logger, httpClient *http.Client, analyticsClient analytics.Client, userUUID string, version string) *Client {
