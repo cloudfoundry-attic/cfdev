@@ -30,13 +30,13 @@ func (c *Controller) DeployBosh() error {
 
 	for _, item := range srcDst {
 		s.CopyFile(item, filepath.Base(item), ssh.SSHAddress{
-			IP: "127.0.0.1",
+			IP:   "127.0.0.1",
 			Port: "9992",
 		},
 			key,
-			20 * time.Second,
+			20*time.Second,
 			logFile,
-			logFile,)
+			logFile)
 	}
 
 	command := fmt.Sprintf("%s --tty create-env %s --state %s --vars-store %s",
@@ -48,19 +48,19 @@ func (c *Controller) DeployBosh() error {
 	// TODO: Added the time because we were seeing some delay between the time the container
 	// was started and the time it could access the internet
 	// Find a better solution
-	time.Sleep(7*time.Second)
+	time.Sleep(7 * time.Second)
 
 	err = s.RunSSHCommand(
 		command,
 		ssh.SSHAddress{
-			IP: "127.0.0.1",
+			IP:   "127.0.0.1",
 			Port: "9992",
 		},
 		key,
-		20 * time.Second,
+		20*time.Second,
 		logFile,
 		logFile,
-		)
+	)
 
 	if err != nil {
 		return err

@@ -142,7 +142,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:              ui,
 			Config:          config,
 			Cache:           cache,
-			Env: &env.Env{Config: config},
+			Env:             &env.Env{Config: config},
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
 			HostNet:         hostnet,

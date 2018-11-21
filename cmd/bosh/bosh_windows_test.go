@@ -2,10 +2,8 @@ package bosh_test
 
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/bosh"
@@ -72,27 +70,14 @@ var _ = Describe("Bosh", func() {
 
 				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
 
-				mockUI.EXPECT().Say(fmt.Sprintf(
-					`$env:BOSH_ENVIRONMENT="some-director-address";
+				mockUI.EXPECT().Say(`$env:BOSH_ENVIRONMENT="some-director-address";
 $env:BOSH_CLIENT="some-admin-username";
 $env:BOSH_CLIENT_SECRET="some-admin-password";
-$env:BOSH_CA_CERT="%s";
+$env:BOSH_CA_CERT="some-ca-cert";
 $env:BOSH_GW_HOST="some-gateway-host";
-$env:BOSH_GW_PRIVATE_KEY="%s";
-$env:BOSH_GW_USER="some-gateway-username";`,
-					filepath.Join(tmpDir, "bosh-ca-cert"),
-					filepath.Join(tmpDir, "bosh-gw-key"),
-				),
-				)
+$env:BOSH_GW_PRIVATE_KEY="some-gateway-private-key";
+$env:BOSH_GW_USER="some-gateway-username";`)
 				Expect(boshCmd.Env()).To(Succeed())
-
-				contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "bosh-ca-cert"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-ca-cert"))
-
-				contents, err = ioutil.ReadFile(filepath.Join(tmpDir, "bosh-gw-key"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-gateway-private-key"))
 			})
 		})
 
@@ -121,28 +106,16 @@ $env:BOSH_GW_USER="some-gateway-username";`,
 
 				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
 
-				mockUI.EXPECT().Say(fmt.Sprintf(
-					`Remove-Item Env:BOSH_SOME_OTHER_VAR;
+				mockUI.EXPECT().Say(`Remove-Item Env:BOSH_SOME_OTHER_VAR;
 Remove-Item Env:BOSH_SOME_VAR;
 $env:BOSH_ENVIRONMENT="some-director-address";
 $env:BOSH_CLIENT="some-admin-username";
 $env:BOSH_CLIENT_SECRET="some-admin-password";
-$env:BOSH_CA_CERT="%s";
+$env:BOSH_CA_CERT="some-ca-cert";
 $env:BOSH_GW_HOST="some-gateway-host";
-$env:BOSH_GW_PRIVATE_KEY="%s";
-$env:BOSH_GW_USER="some-gateway-username";`,
-					filepath.Join(tmpDir, "bosh-ca-cert"),
-					filepath.Join(tmpDir, "bosh-gw-key"),
-				),
-				)
+$env:BOSH_GW_PRIVATE_KEY="some-gateway-private-key";
+$env:BOSH_GW_USER="some-gateway-username";`)
 				Expect(boshCmd.Env()).To(Succeed())
-				contents, err := ioutil.ReadFile(filepath.Join(tmpDir, "bosh-ca-cert"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-ca-cert"))
-
-				contents, err = ioutil.ReadFile(filepath.Join(tmpDir, "bosh-gw-key"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(contents)).To(Equal("some-gateway-private-key"))
 			})
 		})
 	})

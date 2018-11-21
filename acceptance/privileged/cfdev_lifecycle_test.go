@@ -72,7 +72,7 @@ var _ = Describe("cfdev lifecycle", func() {
 		}
 	})
 
-	It("runs the entire vm lifecycle", func() { 
+	It("runs the entire vm lifecycle", func() {
 		userID, _ := machineid.ProtectedID("cfdev")
 		eventToWatchFor := "app created"
 		go streamKinesis(userID, eventToWatchFor)
@@ -218,12 +218,12 @@ func doesVMExist() bool {
 }
 
 type StatMessage struct {
-	UserId string `json:"userId"`
-	Event string `json:"event"`
+	UserId    string `json:"userId"`
+	Event     string `json:"event"`
 	Timestamp string `json:"timestamp"`
 }
 
-func streamKinesis(userId, eventToWatchFor string){
+func streamKinesis(userId, eventToWatchFor string) {
 	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
@@ -236,7 +236,7 @@ func streamKinesis(userId, eventToWatchFor string){
 	flag.Parse()
 
 	myKinesisClient := kinesis.New(session.New(aws.NewConfig()), &aws.Config{
-		Region: aws.String("us-east-1"),
+		Region:      aws.String("us-east-1"),
 		Credentials: credentials.NewStaticCredentials(accessKeyID, secretAccessKey, ""),
 	})
 	newKclient, err := consumer.NewKinesisClient(consumer.WithKinesis(myKinesisClient))

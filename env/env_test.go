@@ -4,6 +4,7 @@ import (
 	"code.cloudfoundry.org/cfdev/resource"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"runtime"
 
 	"os"
 
@@ -154,6 +155,9 @@ var _ = Describe("env", func() {
 				fpath := filepath.Join(tmpDir, "disk.qcow2")
 				Expect(ioutil.WriteFile(fpath, []byte("tmp-disk"), 0600)).To(Succeed())
 
+				fpath = filepath.Join(tmpDir, "disk.vhdx")
+				Expect(ioutil.WriteFile(fpath, []byte("tmp-disk"), 0600)).To(Succeed())
+
 				tarDst, err := os.Create(*conf.DepsFile)
 				Expect(err).ToNot(HaveOccurred())
 				defer tarDst.Close()
@@ -173,14 +177,21 @@ var _ = Describe("env", func() {
 			})
 
 			It("overwrites the qcow disk with a new one", func() {
+				var fPath string
+
+				if runtime.GOOS == "windows" {
+					fPath = filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.vhdx")
+				} else {
+					fPath = filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2")
+				}
+
 				Expect(os.MkdirAll(filepath.Join(stateDir, "some-linuxkit-state-dir"), 0755)).To(Succeed())
-				fpath := filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2")
-				Expect(ioutil.WriteFile(fpath, []byte("old-qcow"), 0600)).To(Succeed())
+				Expect(ioutil.WriteFile(fPath, []byte("old-qcow"), 0600)).To(Succeed())
 
 				Expect(subject.CreateDirs()).To(Succeed())
 				Expect(subject.SetupState()).To(Succeed())
 
-				b, err := ioutil.ReadFile(filepath.Join(stateDir, "some-linuxkit-state-dir", "disk.qcow2"))
+				b, err := ioutil.ReadFile(fPath)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(string(b)).To(Equal("tmp-disk"))
 			})

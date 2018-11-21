@@ -142,13 +142,13 @@ func (e *Env) SetupState() error {
 	if runtime.GOOS == "windows" {
 		thingsToUntar = append(thingsToUntar, resource.TarOpts{
 			Include: "disk.vhdx",
-				Dst:     e.Config.StateLinuxkit,
-			})
+			Dst:     e.Config.StateLinuxkit,
+		})
 	} else {
 		thingsToUntar = append(thingsToUntar, resource.TarOpts{
 			Include: "disk.qcow2",
-				Dst:     e.Config.StateLinuxkit,
-			})
+			Dst:     e.Config.StateLinuxkit,
+		})
 	}
 
 	err := resource.Untar(*e.Config.DepsFile, thingsToUntar)

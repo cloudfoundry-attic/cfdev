@@ -46,8 +46,8 @@ func (v *Version) Execute(pathTarball string) {
 		defer os.RemoveAll(tmpDir)
 		resource.Untar(pathTarball, []resource.TarOpts{
 			{
-				Include: "metadata.yml",
-				Dst:     tmpDir,
+				Include:       "metadata.yml",
+				Dst:           tmpDir,
 				FlattenFolder: true,
 			},
 		})

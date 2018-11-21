@@ -27,6 +27,7 @@ var _ = Describe("HyperV", func() {
 		hyperV     hypervisor.HyperV
 		cfDevHome  string
 		testIsoUrl = "https://s3.amazonaws.com/cfdev-test-assets/test.iso"
+		testVHDUrl = "https://s3.amazonaws.com/cfdev-test-assets/test-hd.vhdx"
 		err        error
 		vmName     string
 	)
@@ -42,15 +43,19 @@ var _ = Describe("HyperV", func() {
 
 		hyperV = hypervisor.HyperV{
 			Config: config.Config{
-				CFDevHome: cfDevHome,
-				CacheDir:  filepath.Join(cfDevHome, "cache"),
+				CFDevHome:     cfDevHome,
+				CacheDir:      filepath.Join(cfDevHome, "cache"),
+				StateLinuxkit: filepath.Join(cfDevHome, "state", "linuxkit"),
 			},
 		}
 
 		err = os.MkdirAll(hyperV.Config.CacheDir, 0666)
 		Expect(err).ToNot(HaveOccurred())
+		err = os.MkdirAll(hyperV.Config.StateLinuxkit, 0666)
+		Expect(err).ToNot(HaveOccurred())
 
-		downloadAssets(hyperV.Config.CacheDir, testIsoUrl)
+		downloadFile(filepath.Join(hyperV.Config.CacheDir, "cfdev-efi-v2.iso"), testIsoUrl)
+		downloadFile(filepath.Join(hyperV.Config.StateLinuxkit, "disk.vhdx"), testVHDUrl)
 	})
 
 	AfterEach(func() {
@@ -277,11 +282,6 @@ var _ = Describe("HyperV", func() {
 
 	})
 })
-
-func downloadAssets(cacheDir string, isoSource string) {
-	downloadFile(filepath.Join(cacheDir, "cfdev-efi.iso"), isoSource)
-	downloadFile(filepath.Join(cacheDir, "cf-deps.iso"), isoSource)
-}
 
 func downloadFile(filepath string, url string) error {
 	out, err := os.Create(filepath)

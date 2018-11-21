@@ -50,7 +50,6 @@ func (s *SSH) CopyFile(filePath string, remoteFilePath string, address SSHAddres
 		defer w.Close()
 	}()
 
-
 	session.Stdout = stdout
 	session.Stderr = stderr
 
