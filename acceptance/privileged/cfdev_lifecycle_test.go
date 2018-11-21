@@ -29,7 +29,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 )
 
-var analyticsReceived = false
+var analyticsReceived = make(map[string]int)
 
 var _ = Describe("cfdev lifecycle", func() {
 
@@ -74,8 +74,12 @@ var _ = Describe("cfdev lifecycle", func() {
 
 	It("runs the entire vm lifecycle", func() {
 		userID, _ := machineid.ProtectedID("cfdev")
-		eventToWatchFor := "app created"
-		go streamKinesis(userID, eventToWatchFor)
+		appCreatedEventName := "app created"
+		telemetryOffEventName := "telemetry off"
+		analyticsReceived[telemetryOffEventName] = 0
+		analyticsReceived[appCreatedEventName] = 0
+
+		go streamKinesis(userID)
 
 		By("waiting for bosh to deploy")
 		Eventually(startSession, 1*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
@@ -104,7 +108,11 @@ var _ = Describe("cfdev lifecycle", func() {
 		PushAnApp()
 
 		Eventually(func() bool {
-			return analyticsReceived
+			return analyticsReceived[appCreatedEventName] == 1
+		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
+
+		Eventually(func() bool {
+			return analyticsReceived[telemetryOffEventName] == 1
 		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
 
 		By("rerunning cf dev start")
@@ -223,7 +231,7 @@ type StatMessage struct {
 	Timestamp string `json:"timestamp"`
 }
 
-func streamKinesis(userId, eventToWatchFor string) {
+func streamKinesis(userId string) {
 	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
@@ -232,7 +240,7 @@ func streamKinesis(userId, eventToWatchFor string) {
 		return
 	}
 
-	var stream = flag.String("cfdev-analytics-development", "cfdev-analytics-development", "cfdev-analytics-development")
+	stream := flag.String("cfdev-analytics-development", "cfdev-analytics-development", "cfdev-analytics-development")
 	flag.Parse()
 
 	myKinesisClient := kinesis.New(session.New(aws.NewConfig()), &aws.Config{
@@ -253,10 +261,12 @@ func streamKinesis(userId, eventToWatchFor string) {
 		json.Unmarshal(r.Data, &analyticsEvent)
 		eventTime, err := time.Parse(time.RFC3339, analyticsEvent.Timestamp)
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
-		if eventTime.After(tenMinutesAgo) && !analyticsReceived {
+		if eventTime.After(tenMinutesAgo) {
 			fmt.Printf("Recent Event: %v", analyticsEvent)
-			if analyticsEvent.Event == eventToWatchFor && analyticsEvent.UserId == userId {
-				analyticsReceived = true
+			if _, ok := analyticsReceived[analyticsEvent.Event]; ok {
+				if analyticsEvent.UserId == userId {
+					analyticsReceived[analyticsEvent.Event]++
+				}
 			}
 		}
 		err = errors.New("some error happened")
