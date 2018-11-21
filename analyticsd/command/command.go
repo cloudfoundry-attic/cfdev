@@ -80,6 +80,18 @@ func New(
 			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
+	case "audit.space.create":
+		logger.Printf("Detected event for %q\n", event)
+
+		return &SpaceCreate{
+			CCClient:        ccClient,
+			AnalyticsClient: analyticsClient,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			OSVersion:       osVersion,
+			Logger:          logger,
+		}, true
 	case "audit.service_instance.create":
 		logger.Printf("Detected event for %q\n", event)
 
