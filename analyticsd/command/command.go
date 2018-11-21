@@ -92,6 +92,18 @@ func New(
 			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
+	case "audit.service_broker.create":
+		logger.Printf("Detected event for %q\n", event)
+
+		return &ServiceBrokerCreate{
+			CCClient:        ccClient,
+			AnalyticsClient: analyticsClient,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			OSVersion:       osVersion,
+			Logger:          logger,
+		}, true
 	case "audit.user_provided_service_instance.create":
 		logger.Printf("Detected event for %q\n", event)
 

@@ -49,6 +49,7 @@ var eventTypes = []string{
 	"app.crash",
 	"audit.service_instance.create",
 	"audit.service_binding.create",
+	"audit.service_broker.create",
 	"audit.user_provided_service_instance.create",
 	"audit.route.create",
 }
