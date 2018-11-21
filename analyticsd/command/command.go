@@ -68,6 +68,18 @@ func New(
 			OSVersion:       osVersion,
 			Logger:          logger,
 		}, true
+	case "audit.organization.create":
+		logger.Printf("Detected event for %q\n", event)
+
+		return &OrgCreate{
+			CCClient:        ccClient,
+			AnalyticsClient: analyticsClient,
+			TimeStamp:       timeStamp,
+			UUID:            UUID,
+			Version:         version,
+			OSVersion:       osVersion,
+			Logger:          logger,
+		}, true
 	case "audit.service_instance.create":
 		logger.Printf("Detected event for %q\n", event)
 
