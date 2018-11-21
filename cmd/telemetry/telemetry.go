@@ -53,35 +53,14 @@ func (t *Telemetry) Cmd() *cobra.Command {
 
 func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 	if t.Args.FlagOff {
-		t.Analytics.Event(cfanalytics.STOP_TELEMETRY)
-
-		if err := t.AnalyticsToggle.SetCustomAnalyticsEnabled(false); err != nil {
-			return errors.SafeWrap(err, "turning off telemetry")
-		}
-		isRunning, err := t.AnalyticsD.IsRunning()
+		err := t.turnTelemetryOff()
 		if err != nil {
-			return errors.SafeWrap(err, "checking if analyticsd is running")
-		}
-		if isRunning {
-			if err := t.AnalyticsD.Stop(); err != nil {
-				return errors.SafeWrap(err, "turning off analyticsd")
-			}
-			if err := t.AnalyticsD.Destroy(); err != nil {
-				return errors.SafeWrap(err, "destroying analyticsd")
-			}
+			return err
 		}
 	} else if t.Args.FlagOn {
-		if err := t.AnalyticsToggle.SetCFAnalyticsEnabled(true); err != nil {
-			return errors.SafeWrap(err, "turning on telemetry")
-		}
-		isRunning, err := t.AnalyticsD.IsRunning()
+		err := t.turnTelemetryOn()
 		if err != nil {
-			return errors.SafeWrap(err, "checking if analyticsd is running")
-		}
-		if !isRunning {
-			if err := t.AnalyticsD.Start(); err != nil {
-				return errors.SafeWrap(err, "turning on analyticsd")
-			}
+			return err
 		}
 	}
 
@@ -89,6 +68,43 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 		t.UI.Say("Telemetry is turned ON")
 	} else {
 		t.UI.Say("Telemetry is turned OFF")
+	}
+	return nil
+}
+
+func (t *Telemetry)turnTelemetryOff() error {
+	t.Analytics.Event(cfanalytics.STOP_TELEMETRY)
+
+	if err := t.AnalyticsToggle.SetCustomAnalyticsEnabled(false); err != nil {
+		return errors.SafeWrap(err, "turning off telemetry")
+	}
+	isRunning, err := t.AnalyticsD.IsRunning()
+	if err != nil {
+		return errors.SafeWrap(err, "checking if analyticsd is running")
+	}
+	if isRunning {
+		if err := t.AnalyticsD.Stop(); err != nil {
+			return errors.SafeWrap(err, "turning off analyticsd")
+		}
+		if err := t.AnalyticsD.Destroy(); err != nil {
+			return errors.SafeWrap(err, "destroying analyticsd")
+		}
+	}
+	return nil
+}
+
+func (t *Telemetry) turnTelemetryOn() error {
+	if err := t.AnalyticsToggle.SetCFAnalyticsEnabled(true); err != nil {
+		return errors.SafeWrap(err, "turning on telemetry")
+	}
+	isRunning, err := t.AnalyticsD.IsRunning()
+	if err != nil {
+		return errors.SafeWrap(err, "checking if analyticsd is running")
+	}
+	if !isRunning {
+		if err := t.AnalyticsD.Start(); err != nil {
+			return errors.SafeWrap(err, "turning on analyticsd")
+		}
 	}
 	return nil
 }
