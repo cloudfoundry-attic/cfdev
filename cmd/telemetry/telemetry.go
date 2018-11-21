@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,10 @@ type Toggle interface {
 	SetCFAnalyticsEnabled(value bool) error
 }
 
+type Analytics interface {
+	Event(event string, data ...map[string]interface{}) error
+}
+
 //go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/telemetry AnalyticsD
 type AnalyticsD interface {
 	Start() error
@@ -25,6 +30,7 @@ type AnalyticsD interface {
 
 type Telemetry struct {
 	UI              UI
+	Analytics       Analytics
 	AnalyticsToggle Toggle
 	AnalyticsD      AnalyticsD
 	Args            struct {
@@ -47,6 +53,8 @@ func (t *Telemetry) Cmd() *cobra.Command {
 
 func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 	if t.Args.FlagOff {
+		t.Analytics.Event(cfanalytics.STOP_TELEMETRY)
+
 		if err := t.AnalyticsToggle.SetCustomAnalyticsEnabled(false); err != nil {
 			return errors.SafeWrap(err, "turning off telemetry")
 		}

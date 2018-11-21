@@ -14,6 +14,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type MockAnalitics struct {
+	EventWasCalledWith string
+}
+
+func (m *MockAnalitics) Event(event string, data ...map[string]interface{}) error {
+	m.EventWasCalledWith = event
+	return nil
+}
+
 type MockUI struct {
 	WasCalledWith string
 }
@@ -27,6 +36,7 @@ var _ = Describe("Telemetry", func() {
 		mockUI         MockUI
 		mockController *gomock.Controller
 		mockAnalyticsD *mocks.MockAnalyticsD
+		mockAnalytics  MockAnalitics
 		t0ggle         *toggle.Toggle
 		telCmd         *cobra.Command
 		tempFilePath   string
@@ -36,6 +46,7 @@ var _ = Describe("Telemetry", func() {
 		mockUI = MockUI{}
 		mockController = gomock.NewController(GinkgoT())
 		mockAnalyticsD = mocks.NewMockAnalyticsD(mockController)
+		mockAnalytics = MockAnalitics{}
 
 		tempFile, err := ioutil.TempFile("", "cfdev-telemetry-")
 		Expect(err).NotTo(HaveOccurred())
@@ -49,6 +60,7 @@ var _ = Describe("Telemetry", func() {
 			UI:              &mockUI,
 			AnalyticsToggle: t0ggle,
 			AnalyticsD:      mockAnalyticsD,
+			Analytics:       &mockAnalytics,
 		}
 
 		telCmd = subject.Cmd()
@@ -70,6 +82,7 @@ var _ = Describe("Telemetry", func() {
 
 			Expect(t0ggle.Enabled()).To(BeTrue())
 			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned ON"))
+			Expect(mockAnalytics.EventWasCalledWith).To(Equal(""))
 		})
 
 		It("OFF", func() {
@@ -82,6 +95,7 @@ var _ = Describe("Telemetry", func() {
 
 			Expect(t0ggle.Enabled()).To(BeFalse())
 			Expect(mockUI.WasCalledWith).To(Equal("Telemetry is turned OFF"))
+			Expect(mockAnalytics.EventWasCalledWith).To(Equal("telemetry off"))
 		})
 	})
 

@@ -15,6 +15,7 @@ const (
 	START_END        = "start_end"
 	SELECTED_SERVICE = "selected_service"
 	STOP             = "stop"
+	STOP_TELEMETRY   = "telemetry off"
 	BOSH_ENV         = "bosh"
 	ERROR            = "error"
 	UNINSTALL        = "uninstall"
