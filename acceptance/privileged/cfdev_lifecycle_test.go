@@ -261,7 +261,6 @@ func streamKinesis(userId string) {
 		eventTime, err := time.Parse(time.RFC3339, analyticsEvent.Timestamp)
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
 		if eventTime.After(tenMinutesAgo) {
-			fmt.Printf("Recent Event: %v", analyticsEvent)
 			if _, ok := analyticsReceived[analyticsEvent.Event]; ok {
 				if analyticsEvent.UserId == userId {
 					analyticsReceived[analyticsEvent.Event]++
