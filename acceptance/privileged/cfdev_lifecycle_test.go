@@ -81,7 +81,7 @@ var _ = Describe("cfdev lifecycle", func() {
 		//go streamKinesis(userID)
 
 		By("waiting for bosh to deploy")
-		Eventually(startSession, 1*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
+		Eventually(startSession, 2*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
 
 		EventuallyWeCanTargetTheBOSHDirector()
 
