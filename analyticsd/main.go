@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	analyticsKey    string
-	version         string
-	pollingInterval = 10 * time.Minute
+	analyticsKey     string
+	testAnalyticsKey string
+	version          string
+	pollingInterval  = 10 * time.Minute
 )
 
 func main() {
@@ -58,6 +59,13 @@ func main() {
 		pollingInterval = 10 * time.Second
 	}
 
+	var analytixKey string
+	if len(os.Args) > 1 && os.Args[1] == "debug" || analyticsKey == "" {
+		analytixKey = testAnalyticsKey
+	} else {
+		analytixKey = analyticsKey
+	}
+
 	analyticsDaemon := daemon.New(
 		"https://api.dev.cfdev.sh",
 		userID,
@@ -65,7 +73,7 @@ func main() {
 		osVersion,
 		os.Stdout,
 		cfg.Client(ctx),
-		analytics.New(analyticsKey),
+		analytics.New(analytixKey),
 		pollingInterval,
 	)
 

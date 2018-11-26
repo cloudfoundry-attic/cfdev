@@ -27,8 +27,10 @@ var (
 	analyticsdMd5  string
 	analyticsdSize string
 
-	cliVersion   string
-	analyticsKey string
+	analyticsKey     string
+	testAnalyticsKey string
+
+	cliVersion string
 )
 
 type Config struct {
@@ -60,6 +62,13 @@ func NewConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	var analytixKey string
+	if os.Getenv("CFDEV_MODE") == "debug" || analyticsKey == "" {
+		analytixKey = testAnalyticsKey
+	} else {
+		analytixKey = analyticsKey
+	}
+
 	depsFile := ""
 
 	return Config{
@@ -78,7 +87,7 @@ func NewConfig() (Config, error) {
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
 		CliVersion:             semver.Must(semver.New(cliVersion)),
-		AnalyticsKey:           analyticsKey,
+		AnalyticsKey:           analytixKey,
 		ServicesDir:            filepath.Join(cfdevHome, "services"),
 		CFDomain:               "dev.cfdev.sh",
 	}, nil
@@ -121,6 +130,17 @@ func catalog() (resource.Catalog, error) {
 			},
 		},
 	}
+
+	if runtime.GOOS != "windows" {
+		catalog.Items = append(catalog.Items, resource.Item{
+			URL:   cfdevdUrl,
+			Name:  "cfdevd",
+			MD5:   cfdevdMd5,
+			Size:  aToUint64(cfdevdSize),
+			InUse: true,
+		})
+	}
+
 	sort.Slice(catalog.Items, func(i, j int) bool {
 		return catalog.Items[i].Size < catalog.Items[j].Size
 	})

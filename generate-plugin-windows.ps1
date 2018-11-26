@@ -9,7 +9,7 @@ $date=(Get-Date -Format FileDate)
 
 go build -ldflags `
   "-X main.version=0.0.$date
-   -X main.analyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" `
+   -X main.testAnalyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" `
    -o $cfAnalyticsdUrl `
    code.cloudfoundry.org/cfdev/analyticsd
 
@@ -23,5 +23,5 @@ go build -ldflags `
     -X $pkg.cfdepsSize=$((Get-Item $cfdepsUrl).length)
 
     -X $pkg.cliVersion=0.0.$date
-    -X $pkg.analyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" `
+    -X $pkg.testAnalyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" `
     code.cloudfoundry.org/cfdev

@@ -16,7 +16,7 @@ analyticsdpkg="main"
 go build \
   -o $analyticsd \
   -ldflags \
-    "-X $analyticsdpkg.analyticsKey=$analyticskey
+    "-X $analyticsdpkg.testAnalyticsKey=$analyticskey
      -X $analyticsdpkg.version=0.0.$(date +%Y%m%d-%H%M%S)" \
      code.cloudfoundry.org/cfdev/analyticsd
 
@@ -38,7 +38,7 @@ go build \
      -X $pkg.analyticsdSize=$(wc -c < "$analyticsd" | tr -d '[:space:]')
 
      -X $pkg.cliVersion=0.0.$(date +%Y%m%d-%H%M%S)
-     -X $pkg.analyticsKey=$analyticskey" \
+     -X $pkg.testAnalyticsKey=$analyticskey" \
      code.cloudfoundry.org/cfdev
 
 
