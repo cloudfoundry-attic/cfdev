@@ -60,7 +60,7 @@ func main() {
 	}
 
 	var analytixKey string
-	if len(os.Args) > 1 && os.Args[1] == "debug" || analyticsKey == "" {
+	if (len(os.Args) > 1 && os.Args[1] == "debug") || analyticsKey == "" {
 		analytixKey = testAnalyticsKey
 	} else {
 		analytixKey = analyticsKey
