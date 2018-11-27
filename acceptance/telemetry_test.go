@@ -78,7 +78,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		//TODO wait 'till after deps.iso download to have test value
-		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
+		Consistently(session, 2*time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
 		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(MatchJSON([]byte(`{"enabled":true, "props":{"type":"cf"}}`)))
 	})
@@ -88,7 +88,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
-		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
+		Consistently(session, 2*time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
 		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(MatchJSON([]byte(`{"cfAnalyticsEnabled": false,"customAnalyticsEnabled": false,"props":{}}`)))
 	})
@@ -98,7 +98,7 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 
-		Consistently(session, time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
+		Consistently(session, 2*time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
 
 		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(MatchJSON([]byte(`{"cfAnalyticsEnabled": true,"customAnalyticsEnabled": false,"props":{}}`)))
 	})
