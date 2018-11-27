@@ -32,8 +32,8 @@ import (
 var _ = Describe("cfdev lifecycle", func() {
 
 	var (
-		startSession      *gexec.Session
-		analyticsReceived map[string]int
+		startSession  *gexec.Session
+		analyticsChan chan string
 	)
 
 	BeforeEach(func() {
@@ -47,7 +47,7 @@ var _ = Describe("cfdev lifecycle", func() {
 			startSession = cf.Cf("dev", "start")
 		}
 
-		analyticsReceived = make(map[string]int)
+		analyticsChan = make(chan string, 50)
 	})
 
 	AfterEach(func() {
@@ -74,12 +74,7 @@ var _ = Describe("cfdev lifecycle", func() {
 	})
 
 	It("runs the entire vm lifecycle", func() {
-		appCreatedEventName := "app created"
-		telemetryOffEventName := "telemetry off"
-		analyticsReceived[telemetryOffEventName] = 0
-		analyticsReceived[appCreatedEventName] = 0
-
-		go streamKinesis(analyticsReceived)
+		go streamKinesis(analyticsChan)
 
 		By("waiting for bosh to deploy")
 		Eventually(startSession, 2*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
@@ -111,12 +106,12 @@ var _ = Describe("cfdev lifecycle", func() {
 		By("pushing an app")
 		PushAnApp()
 
-		Eventually(analyticsReceived[appCreatedEventName]).Should(Equal(1))
+		Expect(hasAnalyticsFor(analyticsChan, "app created", time.Minute)).To(BeTrue())
 
 		telemetrySession = cf.Cf("dev", "telemetry", "--off")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
 
-		Eventually(analyticsReceived[telemetryOffEventName]).Should(Equal(1))
+		Expect(hasAnalyticsFor(analyticsChan, "telemetry off", time.Minute)).To(BeTrue())
 
 		By("rerunning cf dev start")
 		startSession = cf.Cf("dev", "start")
@@ -136,6 +131,21 @@ var _ = Describe("cfdev lifecycle", func() {
 		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
 	})
 })
+
+func hasAnalyticsFor(analyticsChan chan string, eventName string, timeout time.Duration) bool {
+	timeoutChan := time.After(timeout)
+
+	for {
+		select {
+		case <-timeoutChan:
+			return false
+		case element := <-analyticsChan:
+			if element == eventName {
+				return true
+			}
+		}
+	}
+}
 
 func EventuallyWeCanTargetTheBOSHDirector() {
 	By("waiting for bosh to listen")
@@ -234,7 +244,7 @@ type StatMessage struct {
 	Timestamp string `json:"timestamp"`
 }
 
-func streamKinesis(mapping map[string]int) {
+func streamKinesis(analyticsChan chan string) {
 	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
@@ -267,9 +277,9 @@ func streamKinesis(mapping map[string]int) {
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
 		if eventTime.After(tenMinutesAgo) {
 			fmt.Printf("DEBUG: EVENT RECIEVED: %v\n", analyticsEvent.Event)
-			if mapping[analyticsEvent.Event] == 0 && analyticsEvent.UserId == userID {
+			if analyticsEvent.UserId == userID {
 				fmt.Printf("DEBUG: EVENT AND MAP UPDATED!!: %v\n", analyticsEvent.Event)
-				mapping[analyticsEvent.Event]++
+				analyticsChan <- analyticsEvent.Event
 			}
 		}
 		err = errors.New("some error happened")
