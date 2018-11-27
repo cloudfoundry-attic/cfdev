@@ -263,9 +263,9 @@ func streamKinesis(userId string) {
 		eventTime, err := time.Parse(time.RFC3339, analyticsEvent.Timestamp)
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
 		if eventTime.After(tenMinutesAgo) {
-			fmt.Printf("DEBUG: EVENT RECIEVED: %v", analyticsEvent.Event)
+			fmt.Printf("DEBUG: EVENT RECIEVED: %v\n", analyticsEvent.Event)
 			if analyticsReceived[analyticsEvent.Event] == 0 && analyticsEvent.UserId == userId {
-				fmt.Printf("DEBUG: EVENT AND MAP UPDATED!!: %v", analyticsEvent.Event)
+				fmt.Printf("DEBUG: EVENT AND MAP UPDATED!!: %v\n", analyticsEvent.Event)
 	        	analyticsReceived[analyticsEvent.Event]++
 			}
 		}
