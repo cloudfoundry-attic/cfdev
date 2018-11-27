@@ -3,8 +3,10 @@ package bosh_test
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	cmd "code.cloudfoundry.org/cfdev/cmd/bosh"
@@ -32,7 +34,7 @@ var _ = Describe("Bosh", func() {
 		tmpDir, err = ioutil.TempDir("", "cmd-bosh-test")
 		Expect(err).NotTo(HaveOccurred())
 
-		cfg = config.Config{
+		cfg := config.Config{
 			StateBosh: tmpDir,
 			BoshDirectorIP: "10.0.0.1",
 		}

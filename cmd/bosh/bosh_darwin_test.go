@@ -23,7 +23,6 @@ var _ = Describe("Bosh", func() {
 		tmpDir              string
 		boshCmd             *cmd.Bosh
 		mockAnalyticsClient *mocks.MockAnalyticsClient
-		cfg config.Config
 	)
 
 	BeforeEach(func() {
@@ -35,7 +34,7 @@ var _ = Describe("Bosh", func() {
 		tmpDir, err = ioutil.TempDir("", "cmd-bosh-test")
 		Expect(err).NotTo(HaveOccurred())
 
-		cfg = config.Config{
+		cfg := config.Config{
 			StateBosh: tmpDir,
 			BoshDirectorIP: "10.0.0.1",
 		}
