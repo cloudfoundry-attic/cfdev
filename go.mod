@@ -9,7 +9,7 @@ require (
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/aemengo/bosh-runc-cpi v0.0.0-20181016120954-927ca0e80f2f
 	github.com/apoydence/eachers v0.0.0-20181020210610-23942921fe77 // indirect
-	github.com/aws/aws-sdk-go v1.15.76 // indirect
+	github.com/aws/aws-sdk-go v1.15.76
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
