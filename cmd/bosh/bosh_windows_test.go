@@ -2,11 +2,11 @@ package bosh_test
 
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
+	"code.cloudfoundry.org/cfdev/config"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"code.cloudfoundry.org/cfdev/bosh"
 	cmd "code.cloudfoundry.org/cfdev/cmd/bosh"
 	"code.cloudfoundry.org/cfdev/cmd/bosh/mocks"
 	"github.com/golang/mock/gomock"
@@ -17,7 +17,6 @@ import (
 var _ = Describe("Bosh", func() {
 	var (
 		mockController      *gomock.Controller
-		mockProvisioner     *mocks.MockProvisioner
 		mockAnalyticsClient *mocks.MockAnalyticsClient
 		mockUI              *mocks.MockUI
 		tmpDir              string
@@ -26,18 +25,24 @@ var _ = Describe("Bosh", func() {
 
 	BeforeEach(func() {
 		mockController = gomock.NewController(GinkgoT())
-		mockProvisioner = mocks.NewMockProvisioner(mockController)
 		mockAnalyticsClient = mocks.NewMockAnalyticsClient(mockController)
 		mockUI = mocks.NewMockUI(mockController)
 
 		var err error
 		tmpDir, err = ioutil.TempDir("", "cmd-bosh-test")
 		Expect(err).NotTo(HaveOccurred())
+
+		cfg = config.Config{
+			StateBosh: tmpDir,
+			BoshDirectorIP: "10.0.0.1",
+		}
+
+		ioutil.WriteFile(filepath.Join(tmpDir, "secret"), []byte("some-bosh-secret"), 0600)
+
 		boshCmd = &cmd.Bosh{
-			Provisioner: mockProvisioner,
-			StateDir:    tmpDir,
 			UI:          mockUI,
 			Analytics:   mockAnalyticsClient,
+			Config: cfg,
 		}
 	})
 
@@ -47,40 +52,6 @@ var _ = Describe("Bosh", func() {
 	})
 
 	Describe("Env", func() {
-		Context("when no BOSH_* env vars are currently set", func() {
-			BeforeEach(func() {
-				for _, envvar := range os.Environ() {
-					if strings.HasPrefix(envvar, "BOSH_") {
-						key := strings.Split(envvar, "=")[0]
-						os.Unsetenv(key)
-					}
-				}
-			})
-
-			It("print the export statements", func() {
-				mockProvisioner.EXPECT().FetchBOSHConfig().Return(bosh.Config{
-					AdminUsername:     "some-admin-username",
-					AdminPassword:     "some-admin-password",
-					CACertificate:     "some-ca-cert",
-					DirectorAddress:   "some-director-address",
-					GatewayHost:       "some-gateway-host",
-					GatewayPrivateKey: "some-gateway-private-key",
-					GatewayUsername:   "some-gateway-username",
-				}, nil)
-
-				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
-
-				mockUI.EXPECT().Say(`$env:BOSH_ENVIRONMENT="some-director-address";
-$env:BOSH_CLIENT="some-admin-username";
-$env:BOSH_CLIENT_SECRET="some-admin-password";
-$env:BOSH_CA_CERT="some-ca-cert";
-$env:BOSH_GW_HOST="some-gateway-host";
-$env:BOSH_GW_PRIVATE_KEY="some-gateway-private-key";
-$env:BOSH_GW_USER="some-gateway-username";`)
-				Expect(boshCmd.Env()).To(Succeed())
-			})
-		})
-
 		Context("when the environment has BOSH_* env vars set", func() {
 			BeforeEach(func() {
 				for _, envvar := range os.Environ() {
@@ -94,27 +65,20 @@ $env:BOSH_GW_USER="some-gateway-username";`)
 			})
 
 			It("prints unset and export statements", func() {
-				mockProvisioner.EXPECT().FetchBOSHConfig().Return(bosh.Config{
-					AdminUsername:     "some-admin-username",
-					AdminPassword:     "some-admin-password",
-					CACertificate:     "some-ca-cert",
-					DirectorAddress:   "some-director-address",
-					GatewayHost:       "some-gateway-host",
-					GatewayPrivateKey: "some-gateway-private-key",
-					GatewayUsername:   "some-gateway-username",
-				}, nil)
-
 				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
-
-				mockUI.EXPECT().Say(`Remove-Item Env:BOSH_SOME_OTHER_VAR;
+				mockUI.EXPECT().Say(fmt.Sprintf(`Remove-Item Env:BOSH_SOME_OTHER_VAR;
 Remove-Item Env:BOSH_SOME_VAR;
-$env:BOSH_ENVIRONMENT="some-director-address";
-$env:BOSH_CLIENT="some-admin-username";
-$env:BOSH_CLIENT_SECRET="some-admin-password";
-$env:BOSH_CA_CERT="some-ca-cert";
-$env:BOSH_GW_HOST="some-gateway-host";
-$env:BOSH_GW_PRIVATE_KEY="some-gateway-private-key";
-$env:BOSH_GW_USER="some-gateway-username";`)
+$env:BOSH_ENVIRONMENT="10.0.0.1";
+$env:BOSH_CLIENT="admin";
+$env:BOSH_CLIENT_SECRET="some-bosh-secret";
+$env:BOSH_CA_CERT="%s";
+$env:BOSH_GW_HOST="10.0.0.1";
+$env:BOSH_GW_PRIVATE_KEY="%s";
+$env:BOSH_GW_USER="jumpbox";`,
+					filepath.Join(tmpDir, "ca.crt"),
+					filepath.Join(tmpDir, "jumpbox.key"),
+				))
+
 				Expect(boshCmd.Env()).To(Succeed())
 			})
 		})

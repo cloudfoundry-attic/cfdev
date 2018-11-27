@@ -21,7 +21,7 @@ func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error 
 	}
 
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, c.boshEnvs()...)
+	cmd.Env = append(cmd.Env, bosh.Envs(c.Config)...)
 
 	var arr []string
 	for _, registry := range dockerRegistries {
@@ -39,12 +39,7 @@ func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error 
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 
-	config, err := c.FetchBOSHConfig()
-	if err != nil {
-		return err
-	}
-
-	b, err := bosh.New(config)
+	b, err := bosh.New(c.Config)
 	if err != nil {
 		return err
 	}

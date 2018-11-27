@@ -57,12 +57,7 @@ func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]
 }
 
 func (c *Controller) DeployServices(ui UI, services []Service) error {
-	config, err := c.FetchBOSHConfig()
-	if err != nil {
-		return err
-	}
-
-	b, err := bosh.New(config)
+	b, err := bosh.New(c.Config)
 	if err != nil {
 		return err
 	}

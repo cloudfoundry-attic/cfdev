@@ -1,12 +1,13 @@
 package bosh
 
 import (
+	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/cfanalytics"
+	"code.cloudfoundry.org/cfdev/config"
 	"os"
 
 	"runtime"
 
-	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/shell"
 	"github.com/spf13/cobra"
@@ -23,17 +24,11 @@ type AnalyticsClient interface {
 	PromptOptInIfNeeded(string) error
 }
 
-//go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/bosh Provisioner
-type Provisioner interface {
-	FetchBOSHConfig() (bosh.Config, error)
-}
-
 type Bosh struct {
-	Exit        chan struct{}
-	UI          UI
-	StateDir    string
-	Provisioner Provisioner
-	Analytics   AnalyticsClient
+	Exit      chan struct{}
+	UI        UI
+	Config    config.Config
+	Analytics AnalyticsClient
 }
 
 func (b *Bosh) Cmd() *cobra.Command {
@@ -63,7 +58,7 @@ func (b *Bosh) Env() error {
 		os.Exit(128)
 	}()
 
-	config, err := b.Provisioner.FetchBOSHConfig()
+	config, err := bosh.FetchConfig(b.Config)
 	if err != nil {
 		return errors.SafeWrap(err, "failed to fetch bosh configuration")
 	}

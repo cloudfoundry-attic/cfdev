@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"code.cloudfoundry.org/cfdev/bosh"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,7 +19,7 @@ func (c *Controller) DeployService(service Service) error {
 	}
 
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, c.boshEnvs()...)
+	cmd.Env = append(cmd.Env, bosh.Envs(c.Config)...)
 
 	logFile, err := os.Create(filepath.Join(c.Config.LogDir, "deploy-"+strings.ToLower(service.Name)+".log"))
 	if err != nil {
