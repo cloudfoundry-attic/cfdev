@@ -29,12 +29,11 @@ import (
 	"github.com/onsi/gomega/gbytes"
 )
 
-var analyticsReceived = make(map[string]int)
-
 var _ = Describe("cfdev lifecycle", func() {
 
 	var (
-		startSession *gexec.Session
+		startSession      *gexec.Session
+		analyticsReceived map[string]int
 	)
 
 	BeforeEach(func() {
@@ -47,6 +46,8 @@ var _ = Describe("cfdev lifecycle", func() {
 		} else {
 			startSession = cf.Cf("dev", "start")
 		}
+
+		analyticsReceived = make(map[string]int)
 	})
 
 	AfterEach(func() {
@@ -73,13 +74,12 @@ var _ = Describe("cfdev lifecycle", func() {
 	})
 
 	It("runs the entire vm lifecycle", func() {
-		userID, _ := machineid.ProtectedID("cfdev")
 		appCreatedEventName := "app created"
 		telemetryOffEventName := "telemetry off"
 		analyticsReceived[telemetryOffEventName] = 0
 		analyticsReceived[appCreatedEventName] = 0
 
-		go streamKinesis(userID)
+		go streamKinesis(analyticsReceived)
 
 		By("waiting for bosh to deploy")
 		Eventually(startSession, 2*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
@@ -234,7 +234,7 @@ type StatMessage struct {
 	Timestamp string `json:"timestamp"`
 }
 
-func streamKinesis(userId string) {
+func streamKinesis(mapping map[string]int) {
 	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
@@ -243,6 +243,7 @@ func streamKinesis(userId string) {
 		return
 	}
 
+	userID, _ := machineid.ProtectedID("cfdev")
 	stream := flag.String("cfdev-analytics-development", "cfdev-analytics-development", "cfdev-analytics-development")
 	flag.Parse()
 
@@ -266,9 +267,9 @@ func streamKinesis(userId string) {
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
 		if eventTime.After(tenMinutesAgo) {
 			fmt.Printf("DEBUG: EVENT RECIEVED: %v\n", analyticsEvent.Event)
-			if analyticsReceived[analyticsEvent.Event] == 0 && analyticsEvent.UserId == userId {
+			if mapping[analyticsEvent.Event] == 0 && analyticsEvent.UserId == userID {
 				fmt.Printf("DEBUG: EVENT AND MAP UPDATED!!: %v\n", analyticsEvent.Event)
-	        	analyticsReceived[analyticsEvent.Event]++
+				mapping[analyticsEvent.Event]++
 			}
 		}
 		err = errors.New("some error happened")
