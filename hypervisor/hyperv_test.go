@@ -5,8 +5,6 @@ package hypervisor_test
 import (
 	"io"
 	"io/ioutil"
-	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,28 +22,24 @@ import (
 
 var _ = Describe("HyperV", func() {
 	var (
-		hyperV     hypervisor.HyperV
-		cfDevHome  string
-		testIsoUrl = "https://s3.amazonaws.com/cfdev-test-assets/test.iso"
-		testVHDUrl = "https://s3.amazonaws.com/cfdev-test-assets/test-hd.vhdx"
-		err        error
-		vmName     string
+		cfdevHome string
+		hyperV hypervisor.HyperV
+		err    error
+		vmName string
 	)
 
 	BeforeEach(func() {
 		rand.Seed(time.Now().UTC().UnixNano())
 		vmName = randomVMName()
 
-		cfDevHome, err = ioutil.TempDir("", "hypervtest")
-		if err != nil {
-			log.Fatal(err)
-		}
+		cfdevHome, err = ioutil.TempDir("", "hypervtest")
+		Expect(err).NotTo(HaveOccurred())
 
 		hyperV = hypervisor.HyperV{
 			Config: config.Config{
-				CFDevHome:     cfDevHome,
-				CacheDir:      filepath.Join(cfDevHome, "cache"),
-				StateLinuxkit: filepath.Join(cfDevHome, "state", "linuxkit"),
+				CFDevHome:     cfdevHome,
+				CacheDir:      filepath.Join(cfdevHome, "cache"),
+				StateLinuxkit: filepath.Join(cfdevHome, "state", "linuxkit"),
 			},
 		}
 
@@ -54,12 +48,19 @@ var _ = Describe("HyperV", func() {
 		err = os.MkdirAll(hyperV.Config.StateLinuxkit, 0666)
 		Expect(err).ToNot(HaveOccurred())
 
-		downloadFile(filepath.Join(hyperV.Config.CacheDir, "cfdev-efi-v2.iso"), testIsoUrl)
-		downloadFile(filepath.Join(hyperV.Config.StateLinuxkit, "disk.vhdx"), testVHDUrl)
+		copyFile(
+			filepath.Join(assetDir, "cfdev-efi-v2.iso"),
+			filepath.Join(hyperV.Config.CacheDir, "cfdev-efi-v2.iso"),
+		)
+
+		copyFile(
+			filepath.Join(assetDir, "disk.vhdx"),
+			filepath.Join(hyperV.Config.StateLinuxkit, "disk.vhdx"),
+		)
 	})
 
 	AfterEach(func() {
-		err = os.RemoveAll(cfDevHome)
+		err = os.RemoveAll(cfdevHome)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -283,28 +284,19 @@ var _ = Describe("HyperV", func() {
 	})
 })
 
-func downloadFile(filepath string, url string) error {
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func copyFile(src, dest string) {
+	srcFile, err := os.Open(src)
+	Expect(err).NotTo(HaveOccurred())
+	defer srcFile.Close()
+
+	destFile, err := os.Create(dest)
+	Expect(err).NotTo(HaveOccurred())
+	defer destFile.Close()
+
+	io.Copy(destFile, srcFile)
+}
 
 func randomVMName() string {
 	b := make([]rune, 10)
