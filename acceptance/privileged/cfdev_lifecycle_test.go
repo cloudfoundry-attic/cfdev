@@ -103,18 +103,20 @@ var _ = Describe("cfdev lifecycle", func() {
 		telemetrySession = cf.Cf("dev", "telemetry", "--on")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
 		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
+
+		// wait for analytics to perculate before
+		// doing the rest of routine
 		time.Sleep(10 * time.Second)
 
 		By("pushing an app")
 		PushAnApp()
 
-		Eventually(func() bool {
-			return analyticsReceived[appCreatedEventName] == 1
-		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
+		Eventually(analyticsReceived[appCreatedEventName]).Should(Equal(1))
 
-		Eventually(func() bool {
-			return analyticsReceived[telemetryOffEventName] == 1
-		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
+		telemetrySession = cf.Cf("dev", "telemetry", "--off")
+		Eventually(telemetrySession).Should(gexec.Exit(0))
+
+		Eventually(analyticsReceived[telemetryOffEventName]).Should(Equal(1))
 
 		By("rerunning cf dev start")
 		startSession = cf.Cf("dev", "start")
