@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kinesis"
+	"github.com/denisbrodbeck/machineid"
 	"github.com/harlow/kinesis-consumer"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -72,13 +73,13 @@ var _ = Describe("cfdev lifecycle", func() {
 	})
 
 	It("runs the entire vm lifecycle", func() {
-		//userID, _ := machineid.ProtectedID("cfdev")
+		userID, _ := machineid.ProtectedID("cfdev")
 		appCreatedEventName := "app created"
 		telemetryOffEventName := "telemetry off"
 		analyticsReceived[telemetryOffEventName] = 0
 		analyticsReceived[appCreatedEventName] = 0
 
-		//go streamKinesis(userID)
+		go streamKinesis(userID)
 
 		By("waiting for bosh to deploy")
 		Eventually(startSession, 2*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
@@ -106,13 +107,13 @@ var _ = Describe("cfdev lifecycle", func() {
 		By("pushing an app")
 		PushAnApp()
 
-		//Eventually(func() bool {
-		//	return analyticsReceived[appCreatedEventName] == 1
-		//}, 5*time.Minute, 2*time.Second).Should(BeTrue())
-		//
-		//Eventually(func() bool {
-		//	return analyticsReceived[telemetryOffEventName] == 1
-		//}, 5*time.Minute, 2*time.Second).Should(BeTrue())
+		Eventually(func() bool {
+			return analyticsReceived[appCreatedEventName] == 1
+		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
+
+		Eventually(func() bool {
+			return analyticsReceived[telemetryOffEventName] == 1
+		}, 5*time.Minute, 2*time.Second).Should(BeTrue())
 
 		By("rerunning cf dev start")
 		startSession = cf.Cf("dev", "start")
