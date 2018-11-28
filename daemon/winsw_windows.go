@@ -31,8 +31,8 @@ type Config struct {
 	Executable  string   `xml:"executable"`
 	Arguments   string   `xml:"arguments"`
 	StartMode   string   `xml:"startmode"`
-	LogPath     string   `xml:logpath`
-	LogMode     string   `xml:logmode`
+	LogPath     string   `xml:"logpath"`
+	LogMode     string   `xml:"logmode"`
 }
 
 func (w *WinSW) AddDaemon(spec DaemonSpec) error {
