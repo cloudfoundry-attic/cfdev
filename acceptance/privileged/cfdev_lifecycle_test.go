@@ -106,12 +106,12 @@ var _ = Describe("cfdev lifecycle", func() {
 		By("pushing an app")
 		PushAnApp()
 
-		Expect(hasAnalyticsFor(analyticsChan, "app created", time.Minute)).To(BeTrue())
+		Expect(hasAnalyticsFor(analyticsChan, "app created", 3*time.Minute)).To(BeTrue())
 
 		telemetrySession = cf.Cf("dev", "telemetry", "--off")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
 
-		Expect(hasAnalyticsFor(analyticsChan, "telemetry off", time.Minute)).To(BeTrue())
+		Expect(hasAnalyticsFor(analyticsChan, "telemetry off", 3*time.Minute)).To(BeTrue())
 
 		By("rerunning cf dev start")
 		startSession = cf.Cf("dev", "start")
@@ -134,12 +134,14 @@ var _ = Describe("cfdev lifecycle", func() {
 
 func hasAnalyticsFor(analyticsChan chan string, eventName string, timeout time.Duration) bool {
 	timeoutChan := time.After(timeout)
+	By(fmt.Sprintf("Waiting for analytics %s to be received", eventName))
 
 	for {
 		select {
 		case <-timeoutChan:
 			return false
 		case element := <-analyticsChan:
+			fmt.Printf("DEBUG: found an event in the channel: %v\n", element)
 			if element == eventName {
 				return true
 			}
