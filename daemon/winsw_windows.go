@@ -31,6 +31,8 @@ type Config struct {
 	Executable  string   `xml:"executable"`
 	Arguments   string   `xml:"arguments"`
 	StartMode   string   `xml:"startmode"`
+	LogPath     string   `xml:logpath`
+	LogMode     string   `xml:logmode`
 }
 
 func (w *WinSW) AddDaemon(spec DaemonSpec) error {
@@ -143,6 +145,8 @@ func createXml(serviceDst string, spec DaemonSpec) error {
 		Executable:  spec.Program,
 		Arguments:   strings.Join(spec.ProgramArguments[:], " "),
 		StartMode:   "Manual",
+		LogPath:     filepath.Dir(spec.StdoutPath),
+		LogMode:     "rotate",
 	}
 	configWriter := io.Writer(file)
 
