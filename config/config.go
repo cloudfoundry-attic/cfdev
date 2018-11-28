@@ -121,24 +121,34 @@ func catalog() (resource.Catalog, error) {
 				Size:  aToUint64(cfdepsSize),
 				InUse: true,
 			},
-			{
+		},
+	}
+
+	if runtime.GOOS != "windows" {
+		catalog.Items = append(catalog.Items,
+			resource.Item{
 				URL:   analyticsdUrl,
 				Name:  "analyticsd",
 				MD5:   analyticsdMd5,
 				Size:  aToUint64(analyticsdSize),
 				InUse: true,
 			},
-		},
-	}
-
-	if runtime.GOOS != "windows" {
-		catalog.Items = append(catalog.Items, resource.Item{
-			URL:   cfdevdUrl,
-			Name:  "cfdevd",
-			MD5:   cfdevdMd5,
-			Size:  aToUint64(cfdevdSize),
-			InUse: true,
-		})
+			resource.Item{
+				URL:   cfdevdUrl,
+				Name:  "cfdevd",
+				MD5:   cfdevdMd5,
+				Size:  aToUint64(cfdevdSize),
+				InUse: true,
+			})
+	} else {
+		catalog.Items = append(catalog.Items,
+			resource.Item{
+				URL:   analyticsdUrl,
+				Name:  "analyticsd.exe",
+				MD5:   analyticsdMd5,
+				Size:  aToUint64(analyticsdSize),
+				InUse: true,
+			})
 	}
 
 	sort.Slice(catalog.Items, func(i, j int) bool {
