@@ -134,7 +134,7 @@ var _ = Describe("cfdev lifecycle", func() {
 
 func hasAnalyticsFor(analyticsChan chan string, eventName string, timeout time.Duration) bool {
 	timeoutChan := time.After(timeout)
-	By(fmt.Sprintf("Waiting for analytics %s to be received", eventName))
+	By(fmt.Sprintf("Waiting for analytics `%s` to be received", eventName))
 
 	for {
 		select {
@@ -278,9 +278,9 @@ func streamKinesis(analyticsChan chan string) {
 		eventTime, err := time.Parse(time.RFC3339, analyticsEvent.Timestamp)
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
 		if eventTime.After(tenMinutesAgo) {
-			fmt.Printf("DEBUG: EVENT RECIEVED: %v\n", analyticsEvent.Event)
+			fmt.Printf("DEBUG: EVENT RECEIVED: `%v` event user:`%v` current user:`%v`\n", analyticsEvent.Event, analyticsEvent.UserId, userID)
 			if analyticsEvent.UserId == userID {
-				fmt.Printf("DEBUG: EVENT AND MAP UPDATED!!: %v\n", analyticsEvent.Event)
+				fmt.Printf("DEBUG: Add the event `%v` to the channel!!\n", analyticsEvent.Event)
 				analyticsChan <- analyticsEvent.Event
 			}
 		}
