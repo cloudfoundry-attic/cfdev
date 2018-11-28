@@ -69,8 +69,8 @@ func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
 			"--host-names host.cfdev.sh",
 		},
 		RunAtLoad:  false,
-		StdoutPath: path.Join(v.Config.CFDevHome, "vpnkit.stdout.log"),
-		StderrPath: path.Join(v.Config.CFDevHome, "vpnkit.stderr.log"),
+		StdoutPath: path.Join(v.Config.LogDir, "vpnkit.stdout.log"),
+		StderrPath: path.Join(v.Config.LogDir, "vpnkit.stderr.log"),
 	}
 }
 
