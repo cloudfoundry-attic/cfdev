@@ -90,13 +90,15 @@ func (w *WinSW) Start(label string) error {
 }
 
 func (w *WinSW) Stop(label string) error {
+	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v", label)
 	if running, _ := w.IsRunning(label); running {
-
+		fmt.Printf("DEBUG: %v IS RUNNING", label)
 		_, executablePath := getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
 		err := runCommand(cmd)
 		if err != nil {
+			fmt.Printf("DEBUG: %v SHOULD HAVE STOPPED", executablePath)
 			return err
 		}
 

@@ -126,6 +126,9 @@ func (h *HyperV) Start(vmName string) error {
 }
 
 func (h *HyperV) Stop(vmName string) error {
+
+	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v", vmName)
+
 	if exists, err := h.exists(vmName); err != nil {
 		return err
 	} else if !exists {
@@ -136,6 +139,8 @@ func (h *HyperV) Stop(vmName string) error {
 	if _, err := h.Powershell.Output(command); err != nil {
 		return fmt.Errorf("stopping vm: %s", err)
 	}
+
+	fmt.Printf("DEBUG: SHOULD HAVE STOPED %v", vmName)
 
 	return nil
 }

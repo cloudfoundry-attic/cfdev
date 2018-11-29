@@ -1,6 +1,7 @@
 package stop
 
 import (
+	"fmt"
 	"runtime"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
@@ -73,6 +74,8 @@ func (s *Stop) Cmd() *cobra.Command {
 const vmName = "cfdev"
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
+
+
 	s.Analytics.Event(cfanalytics.STOP)
 
 	if err := s.Host.CheckRequirements(); err != nil {
@@ -81,6 +84,7 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 
 	var reterr error
 
+	fmt.Printf("DEBUG: STOP: ABOUT TO STOP analytics")
 	if err := s.AnalyticsD.Stop(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop analyticsd")
 	}
@@ -89,6 +93,7 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to destroy analyticsd")
 	}
 
+	fmt.Printf("DEBUG: STOP: ABOUT TO STOP HYPERV")
 	if err := s.Hypervisor.Stop(vmName); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop the VM")
 	}
@@ -97,6 +102,7 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to destroy the VM")
 	}
 
+	fmt.Printf("DEBUG: STOP: ABOUT TO STOP VPNKIT")
 	if err := s.VpnKit.Stop(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}
@@ -104,6 +110,8 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	if err := s.VpnKit.Destroy(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
 	}
+
+	fmt.Printf("DEBUG: STOP: REALLY SHOULD HAVE STOPPED VPNKIT")
 
 	if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
 		reterr = errors.SafeWrap(err, "failed to remove IP aliases")
