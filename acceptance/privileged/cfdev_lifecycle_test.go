@@ -101,7 +101,7 @@ var _ = Describe("cfdev lifecycle", func() {
 
 		// wait for analytics to perculate before
 		// doing the rest of routine
-		time.Sleep(10 * time.Second)
+		time.Sleep(20 * time.Second)
 
 		By("pushing an app")
 		PushAnApp()

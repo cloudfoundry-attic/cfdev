@@ -127,7 +127,7 @@ func (h *HyperV) Start(vmName string) error {
 
 func (h *HyperV) Stop(vmName string) error {
 
-	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v", vmName)
+	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v \n", vmName)
 
 	if exists, err := h.exists(vmName); err != nil {
 		return err
@@ -140,7 +140,7 @@ func (h *HyperV) Stop(vmName string) error {
 		return fmt.Errorf("stopping vm: %s", err)
 	}
 
-	fmt.Printf("DEBUG: SHOULD HAVE STOPED %v", vmName)
+	fmt.Printf("DEBUG: SHOULD HAVE STOPED %v \n", vmName)
 
 	return nil
 }
