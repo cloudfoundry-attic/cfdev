@@ -83,7 +83,7 @@ var _ = Describe("cfdev lifecycle", func() {
 
 		By("waiting for cfdev cli to exit when the deploy finished")
 		<-startSession.Exited
-		Expect(startSession.ExitCode()).To(BeZero())
+		Eventually(startSession.ExitCode(), 2*time.Hour).Should(BeZero())
 
 		By("waiting for cf router to listen")
 		loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
