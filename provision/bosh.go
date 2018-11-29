@@ -66,5 +66,10 @@ func (c *Controller) DeployBosh() error {
 		return err
 	}
 
-	return nil
+	return s.RetrieveFile(
+		filepath.Join(c.Config.StateBosh, "state.json"),
+		"/root/state.json",
+		ssh.SSHAddress{IP: "127.0.0.1", Port: "9992"},
+		key,
+		20*time.Second)
 }

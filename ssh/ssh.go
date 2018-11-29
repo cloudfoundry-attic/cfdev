@@ -56,6 +56,24 @@ func (s *SSH) CopyFile(filePath string, remoteFilePath string, address SSHAddres
 	return session.Run(command)
 }
 
+func (s *SSH) RetrieveFile(filePath string, remoteFilePath string, address SSHAddress, privateKey []byte, timeout time.Duration) error {
+	client, session, err := s.newSession(address, privateKey, timeout)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	defer session.Close()
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	session.Stdout = f
+	return session.Run("cat " + remoteFilePath)
+}
+
 func (s *SSH) RunSSHCommand(command string, addresses SSHAddress, privateKey []byte, timeout time.Duration, stdout io.Writer, stderr io.Writer) (err error) {
 	client, session, err := s.newSession(addresses, privateKey, timeout)
 	if err != nil {
