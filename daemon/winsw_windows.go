@@ -94,7 +94,8 @@ func (w *WinSW) Stop(label string) error {
 	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v\n", label)
 
 	var executablePath string
-	if running, _ := w.IsRunning(label); running {
+	running, _ := w.IsRunning(label)
+	for running {
 		fmt.Printf("DEBUG: %v IS RUNNING\n", label)
 		_, executablePath := getServicePaths(label, w.ServicesDir)
 
@@ -104,16 +105,9 @@ func (w *WinSW) Stop(label string) error {
 			return err
 		}
 		fmt.Printf("DEBUG: %v SHOULD HAVE STOPPED\n", executablePath)
-
-		return nil
-	}
-
-	if running, _ := w.IsRunning(label); running {
-		fmt.Printf("DEBUG: TRYING TO STOP %v AGAIN\n", executablePath)
 		time.Sleep(2 * time.Second)
-		w.Stop(label)
-		}
-
+		running, _ = w.IsRunning(label)
+	}
 	return nil
 }
 
@@ -128,7 +122,7 @@ func (w *WinSW) IsRunning(label string) (bool, error) {
 
 	output, err := cmd.Output()
 
-	fmt.Printf("DEBUG: STATUS: %v \n", string(output))
+	fmt.Printf("DEBUG: STATUS: %v\n", string(output))
 
 	if err != nil {
 		return false, err
@@ -190,6 +184,7 @@ func isInstalled(label string) bool {
 
 func runCommand(command *exec.Cmd) error {
 	output, err := command.CombinedOutput()
+	fmt.Printf("DEBUG: OUTPUT FROM TRYING TO STOP SERVICE: %v\n", output)
 	if err != nil {
 		return fmt.Errorf("Failed to execute %s, %v: %s: %s", command.Path, command.Args, err, string(output))
 	}
