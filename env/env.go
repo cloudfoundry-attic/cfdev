@@ -120,6 +120,10 @@ func (e *Env) SetupState() error {
 			Dst:     e.Config.StateBosh,
 		},
 		{
+			Include: "ca.yml",
+			Dst:     e.Config.StateBosh,
+		},
+		{
 			Include: "id_rsa",
 			Dst:     e.Config.CacheDir,
 		},
