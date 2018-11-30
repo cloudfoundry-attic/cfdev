@@ -99,18 +99,13 @@ func (w *WinSW) Stop(label string) error {
 		fmt.Printf("DEBUG: %v IS RUNNING\n", label)
 		_, executablePath = getServicePaths(label, w.ServicesDir)
 
-		//cmd := exec.Command(executablePath, "stop")
-		//err := runCommand(cmd)
-		//sc delete org.cloudfoundry.cfdev.vpnkit
-		cmd := exec.Command("cmd", "/C", "sc", "delete", "org.cloudfoundry.cfdev.vpnkit")
-		output, err := cmd.CombinedOutput()
-		fmt.Printf("DEBUG: OUTPUT FROM %v sc delete: \n", output)
+		cmd := exec.Command(executablePath, "stop")
+		err := runCommand(cmd)
 		if err != nil {
 			return err
 		}
-
 		fmt.Printf("DEBUG: %v SHOULD HAVE STOPPED\n", executablePath)
-		time.Sleep(2 * time.Second)
+		time.Sleep(4 * time.Second)
 		running, _ = w.IsRunning(label)
 	}
 	return nil
