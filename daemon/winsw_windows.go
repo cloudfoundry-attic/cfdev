@@ -97,7 +97,7 @@ func (w *WinSW) Stop(label string) error {
 	running, _ := w.IsRunning(label)
 	for running {
 		fmt.Printf("DEBUG: %v IS RUNNING\n", label)
-		_, executablePath := getServicePaths(label, w.ServicesDir)
+		_, executablePath = getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
 		err := runCommand(cmd)
