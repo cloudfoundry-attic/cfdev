@@ -91,12 +91,9 @@ func (w *WinSW) Start(label string) error {
 }
 
 func (w *WinSW) Stop(label string) error {
-	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v\n", label)
-
 	var executablePath string
 	running, _ := w.IsRunning(label)
 	for running {
-		fmt.Printf("DEBUG: %v IS RUNNING\n", label)
 		_, executablePath = getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
@@ -104,7 +101,6 @@ func (w *WinSW) Stop(label string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("DEBUG: %v SHOULD HAVE STOPPED\n", executablePath)
 		time.Sleep(4 * time.Second)
 		running, _ = w.IsRunning(label)
 	}
@@ -113,7 +109,6 @@ func (w *WinSW) Stop(label string) error {
 
 func (w *WinSW) IsRunning(label string) (bool, error) {
 	if !isInstalled(label) {
-		fmt.Printf("DEBUG: %v IS NOT INSTALLED\n", label)
 		return false, nil
 	}
 
@@ -121,8 +116,6 @@ func (w *WinSW) IsRunning(label string) (bool, error) {
 	cmd := exec.Command(executablePath, "status")
 
 	output, err := cmd.Output()
-
-	fmt.Printf("DEBUG: STATUS: %v\n", string(output))
 
 	if err != nil {
 		return false, err

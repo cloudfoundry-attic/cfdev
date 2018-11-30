@@ -100,7 +100,6 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to destroy the VM")
 	}
 
-	fmt.Printf("DEBUG: STOP: ABOUT TO STOP VPNKIT \n")
 	if err := s.VpnKit.Stop(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}

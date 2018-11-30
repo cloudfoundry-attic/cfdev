@@ -140,7 +140,6 @@ func hasAnalyticsFor(analyticsChan chan string, eventName string, timeout time.D
 		case <-timeoutChan:
 			return false
 		case element := <-analyticsChan:
-			fmt.Printf("DEBUG: found an event in the channel: %v\n", element)
 			if element == eventName {
 				return true
 			}
