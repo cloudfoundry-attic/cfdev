@@ -56,10 +56,9 @@ var _ = Describe("cfdev lifecycle", func() {
 			return
 		}
 
-		telemetrySession := cf.Cf("dev", "telemetry", "--off")
-		Eventually(telemetrySession).Should(gexec.Exit())
-
-		startSession.Kill()
+		greenColor := "\x1b[32;1m"
+		endColor := "\x1b[0m"
+		fmt.Fprintf(GinkgoWriter, "%s\n[STEP] Cleaning up...%s\n\n", greenColor, endColor)
 
 		stopSession := cf.Cf("dev", "stop")
 		Eventually(stopSession).Should(gexec.Exit(0))
