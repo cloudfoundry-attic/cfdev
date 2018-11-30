@@ -104,7 +104,7 @@ func (w *WinSW) Stop(label string) error {
 		//sc delete org.cloudfoundry.cfdev.vpnkit
 		cmd := exec.Command("cmd", "/C", "sc", "delete", "org.cloudfoundry.cfdev.vpnkit")
 		output, err := cmd.CombinedOutput()
-		fmt.Printf("DEBUG: %v OUTPUT FROM %v sc delete: \n", output)
+		fmt.Printf("DEBUG: OUTPUT FROM %v sc delete: \n", output)
 		if err != nil {
 			return err
 		}
