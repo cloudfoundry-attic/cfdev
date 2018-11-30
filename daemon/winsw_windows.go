@@ -184,7 +184,7 @@ func isInstalled(label string) bool {
 
 func runCommand(command *exec.Cmd) error {
 	output, err := command.CombinedOutput()
-	fmt.Printf("DEBUG: OUTPUT FROM TRYING TO STOP SERVICE: %v\n", output)
+	fmt.Printf("DEBUG: OUTPUT FROM TRYING TO STOP SERVICE: %v\n", string(output))
 	if err != nil {
 		return fmt.Errorf("Failed to execute %s, %v: %s: %s", command.Path, command.Args, err, string(output))
 	}
