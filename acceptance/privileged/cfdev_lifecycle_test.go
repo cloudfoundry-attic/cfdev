@@ -82,8 +82,8 @@ var _ = Describe("cfdev lifecycle", func() {
 		EventuallyWeCanTargetTheBOSHDirector()
 
 		By("waiting for cfdev cli to exit when the deploy finished")
-		<-startSession.Exited
-		Eventually(startSession.ExitCode(), 2*time.Hour).Should(BeZero())
+		Eventually(startSession.Exited, 2*time.Hour).Should(BeClosed())
+		Expect(startSession.ExitCode()).To(BeZero())
 
 		By("waiting for cf router to listen")
 		loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
