@@ -110,6 +110,7 @@ func (w *WinSW) Stop(label string) error {
 
 func (w *WinSW) IsRunning(label string) (bool, error) {
 	if !isInstalled(label) {
+		fmt.Printf("DEBUG: %v IS NOT INSTALLED", label)
 		return false, nil
 	}
 
@@ -117,11 +118,14 @@ func (w *WinSW) IsRunning(label string) (bool, error) {
 	cmd := exec.Command(executablePath, "status")
 
 	output, err := cmd.Output()
+
+	fmt.Printf("DEBUG: IS RUNNING OUTPUT: %v ", string(output))
+
 	if err != nil {
 		return false, err
 	}
 
-	isRunning := strings.Contains(string(output), "Started")
+	isRunning := strings.Contains(string(output), "Started") || strings.Contains(string(output), "Running")
 	return isRunning, nil
 }
 
@@ -161,7 +165,10 @@ func createXml(serviceDst string, spec DaemonSpec) error {
 
 func getServicePaths(label string, servicesDir string) (string, string) {
 	serviceDst := filepath.Join(servicesDir, label)
+	fmt.Printf("DEBUG: SERVICE DIR: %v", serviceDst)
+
 	executablePath := filepath.Join(serviceDst, label+".exe")
+	fmt.Printf("DEBUG: executablePath: %v", executablePath)
 
 	return serviceDst, executablePath
 }
