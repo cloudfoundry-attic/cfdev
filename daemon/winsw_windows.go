@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type WinSW struct {
@@ -90,27 +91,33 @@ func (w *WinSW) Start(label string) error {
 }
 
 func (w *WinSW) Stop(label string) error {
-	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v", label)
+	fmt.Printf("DEBUG: ATTEMPTING TO STOP %v\n", label)
 	if running, _ := w.IsRunning(label); running {
-		fmt.Printf("DEBUG: %v IS RUNNING", label)
+		fmt.Printf("DEBUG: %v IS RUNNING\n", label)
 		_, executablePath := getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
 		err := runCommand(cmd)
 		if err != nil {
-			fmt.Printf("DEBUG: %v SHOULD HAVE STOPPED", executablePath)
 			return err
 		}
+		fmt.Printf("DEBUG: %v SHOULD HAVE STOPPED\n", executablePath)
 
 		return nil
 	}
+
+	if running, _ := w.IsRunning(label); running {
+		fmt.Printf("DEBUG: TRYING TO STOP %v AGAIN\n", executablePath)
+		time.Sleep(2 * time.Second)
+		w.Stop(label)
+		}
 
 	return nil
 }
 
 func (w *WinSW) IsRunning(label string) (bool, error) {
 	if !isInstalled(label) {
-		fmt.Printf("DEBUG: %v IS NOT INSTALLED", label)
+		fmt.Printf("DEBUG: %v IS NOT INSTALLED\n", label)
 		return false, nil
 	}
 
@@ -119,7 +126,7 @@ func (w *WinSW) IsRunning(label string) (bool, error) {
 
 	output, err := cmd.Output()
 
-	fmt.Printf("DEBUG: IS RUNNING OUTPUT: %v ", string(output))
+	fmt.Printf("DEBUG: STATUS: %v \n", string(output))
 
 	if err != nil {
 		return false, err
@@ -165,10 +172,8 @@ func createXml(serviceDst string, spec DaemonSpec) error {
 
 func getServicePaths(label string, servicesDir string) (string, string) {
 	serviceDst := filepath.Join(servicesDir, label)
-	fmt.Printf("DEBUG: SERVICE DIR: %v", serviceDst)
 
 	executablePath := filepath.Join(serviceDst, label+".exe")
-	fmt.Printf("DEBUG: executablePath: %v", executablePath)
 
 	return serviceDst, executablePath
 }
