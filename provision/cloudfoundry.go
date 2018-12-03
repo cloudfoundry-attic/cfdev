@@ -15,7 +15,7 @@ func (c *Controller) DeployCloudFoundry(ui UI, dockerRegistries []string) error 
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell.exe", filepath.Join(c.Config.ServicesDir, "deploy-cf.ps1"))
+		cmd = exec.Command("powershell.exe", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(c.Config.ServicesDir, "deploy-cf.ps1"))
 	} else {
 		cmd = exec.Command(filepath.Join(c.Config.ServicesDir, "deploy-cf"))
 	}

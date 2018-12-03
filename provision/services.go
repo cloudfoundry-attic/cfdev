@@ -13,7 +13,7 @@ func (c *Controller) DeployService(service Service) error {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell.exe", filepath.Join(c.Config.ServicesDir, service.Script+".ps1"))
+		cmd = exec.Command("powershell.exe", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(c.Config.ServicesDir, service.Script+".ps1"))
 	} else {
 		cmd = exec.Command(filepath.Join(c.Config.ServicesDir, service.Script))
 	}
