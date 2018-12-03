@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 type WinSW struct {
@@ -93,7 +92,7 @@ func (w *WinSW) Start(label string) error {
 func (w *WinSW) Stop(label string) error {
 	var executablePath string
 	running, _ := w.IsRunning(label)
-	for running {
+	if running {
 		_, executablePath = getServicePaths(label, w.ServicesDir)
 
 		cmd := exec.Command(executablePath, "stop")
@@ -101,8 +100,6 @@ func (w *WinSW) Stop(label string) error {
 		if err != nil {
 			return err
 		}
-		time.Sleep(4 * time.Second)
-		running, _ = w.IsRunning(label)
 	}
 	return nil
 }
@@ -177,7 +174,6 @@ func isInstalled(label string) bool {
 
 func runCommand(command *exec.Cmd) error {
 	output, err := command.CombinedOutput()
-	fmt.Printf("DEBUG: OUTPUT FROM TRYING TO STOP SERVICE: %v\n", string(output))
 	if err != nil {
 		return fmt.Errorf("Failed to execute %s, %v: %s: %s", command.Path, command.Args, err, string(output))
 	}

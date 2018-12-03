@@ -1,7 +1,6 @@
 package stop
 
 import (
-	"fmt"
 	"runtime"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
@@ -104,7 +103,6 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
 	}
 
-	fmt.Printf("DEBUG: STOP: FINISHED STOPPING & ABOUT TO DESTROY VPNKIT \n")
 	if err := s.VpnKit.Destroy(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
 	}

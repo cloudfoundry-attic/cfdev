@@ -276,9 +276,7 @@ func streamKinesis(analyticsChan chan string) {
 		eventTime, err := time.Parse(time.RFC3339, analyticsEvent.Timestamp)
 		tenMinutesAgo := time.Now().UTC().Add(-10 * time.Minute)
 		if eventTime.After(tenMinutesAgo) {
-			fmt.Printf("DEBUG: EVENT RECEIVED: `%v` event user:`%v` current user:`%v`\n", analyticsEvent.Event, analyticsEvent.UserId, userID)
 			if analyticsEvent.UserId == userID {
-				fmt.Printf("DEBUG: Add the event `%v` to the channel!!\n", analyticsEvent.Event)
 				analyticsChan <- analyticsEvent.Event
 			}
 		}
