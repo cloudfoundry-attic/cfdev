@@ -1,8 +1,7 @@
 $cache_dir="$HOME\.cfdev\cache"
 
 $pkg="code.cloudfoundry.org/cfdev/config"
-# $cfdepsUrl="$cache_dir\cf-deps.iso"
-$cfdepsUrl="C:\Users\pivotal\Downloads\cfdev-deps-windows-0.0.19.tgz"
+$cfdepsUrl="C:\Users\pivotal\.cfdev\cache\cfdev-deps.tgz"
 $cfAnalyticsdUrl="$PWD\analytix.exe"
 
 $date=(Get-Date -Format FileDate)
