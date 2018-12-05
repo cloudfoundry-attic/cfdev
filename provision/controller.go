@@ -4,7 +4,13 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"context"
 	"github.com/aemengo/bosh-runc-cpi/client"
+	"io"
 )
+
+type UI interface {
+	Say(message string, args ...interface{})
+	Writer() io.Writer
+}
 
 type Controller struct {
 	Config config.Config

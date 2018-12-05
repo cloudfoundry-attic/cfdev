@@ -1,136 +1,104 @@
 package provision_test
 
 import (
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/provision"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("DeployMysql", func() {
-	//var (
-	//	fakeClient *gardenfakes.FakeClient
-	//	err        error
-	//	gclient    *provision.Controller
-	//)
-	//
-	//BeforeEach(func() {
-	//	fakeClient = new(gardenfakes.FakeClient)
-	//	fakeClient.CreateReturns(nil, errors.New("some error"))
-	//	gclient = &provision.Controller{Client: fakeClient}
-	//})
-	//
-	//JustBeforeEach(func() {
-	//	err = gclient.DeployService("deploy-mysql", "bin/deploy-mysql")
-	//})
-	//
-	//It("creates a container", func() {
-	//	Expect(fakeClient.CreateCallCount()).To(Equal(1))
-	//	spec := fakeClient.CreateArgsForCall(0)
-	//
-	//	Expect(spec).To(Equal(garden.ContainerSpec{
-	//		Handle:     "deploy-mysql",
-	//		Privileged: true,
-	//		Network:    "10.246.0.0/16",
-	//		Image: garden.ImageRef{
-	//			URI: "/var/vcap/cache/workspace.tar",
-	//		},
-	//		BindMounts: []garden.BindMount{
-	//			{
-	//				SrcPath: "/var/vcap",
-	//				DstPath: "/var/vcap",
-	//				Mode:    garden.BindMountModeRW,
-	//			},
-	//			{
-	//				SrcPath: "/var/vcap/cache",
-	//				DstPath: "/var/vcap/cache",
-	//				Mode:    garden.BindMountModeRO,
-	//			},
-	//		},
-	//	}))
-	//})
-	//
-	//Context("creating the container succeeds", func() {
-	//	var (
-	//		fakeContainer *gardenfakes.FakeContainer
-	//	)
-	//
-	//	BeforeEach(func() {
-	//		fakeContainer = new(gardenfakes.FakeContainer)
-	//		fakeContainer.RunReturns(nil, errors.New("some error"))
-	//		fakeClient.CreateReturns(fakeContainer, nil)
-	//	})
-	//
-	//	It("starts to deploy mysql", func() {
-	//		Expect(fakeContainer.RunCallCount()).To(Equal(1))
-	//
-	//		spec, io := fakeContainer.RunArgsForCall(0)
-	//		Expect(io).To(Equal(garden.ProcessIO{}))
-	//		Expect(spec).To(Equal(garden.ProcessSpec{
-	//			ID:   "deploy-mysql",
-	//			Path: "/bin/bash",
-	//			Args: []string{"/var/vcap/cache/bin/deploy-mysql"},
-	//			User: "root",
-	//		}))
-	//	})
-	//
-	//	Context("when deploying mysql succeeds", func() {
-	//		BeforeEach(func() {
-	//			process := new(gardenfakes.FakeProcess)
-	//			process.WaitReturns(0, nil)
-	//			fakeContainer.RunReturns(process, nil)
-	//		})
-	//
-	//		It("returns without an error", func() {
-	//			Expect(err).ToNot(HaveOccurred())
-	//		})
-	//
-	//		It("deletes the container", func() {
-	//			Expect(fakeClient.DestroyCallCount()).To(Equal(1))
-	//			handle := fakeClient.DestroyArgsForCall(0)
-	//			Expect(handle).To(Equal("deploy-mysql"))
-	//		})
-	//	})
-	//
-	//	Context("when the deploy cannot start", func() {
-	//		BeforeEach(func() {
-	//			fakeContainer.RunReturns(nil, errors.New("unable to start process"))
-	//		})
-	//
-	//		It("returns an error", func() {
-	//			Expect(err).To(MatchError("unable to start process"))
-	//		})
-	//	})
-	//
-	//	Context("when the deploy finishes with a non-zero exit code", func() {
-	//		BeforeEach(func() {
-	//			process := new(gardenfakes.FakeProcess)
-	//			process.WaitReturns(23, nil)
-	//			fakeContainer.RunReturns(process, nil)
-	//		})
-	//
-	//		It("returns an error", func() {
-	//			Expect(err).To(MatchError("process exited with status 23"))
-	//		})
-	//	})
-	//
-	//	Context("when we cannot determine the state of the deploy", func() {
-	//		BeforeEach(func() {
-	//			process := new(gardenfakes.FakeProcess)
-	//			process.WaitReturns(-10, errors.New("connection to garden lost"))
-	//			fakeContainer.RunReturns(process, nil)
-	//		})
-	//
-	//		It("returns an error", func() {
-	//			Expect(err).To(MatchError("connection to garden lost"))
-	//		})
-	//	})
-	//})
-	//
-	//Context("creating the container fails", func() {
-	//	BeforeEach(func() {
-	//		fakeClient.CreateReturns(nil, errors.New("unable to create container"))
-	//	})
-	//
-	//	It("forwards the error", func() {
-	//		Expect(err).To(MatchError("unable to create container"))
-	//	})
-	//})
+var _ = Describe("When progress whitelist is called with", func() {
+	var (
+		c        *provision.Controller
+		services []provision.Service
+	)
+
+	BeforeEach(func() {
+		c = provision.NewController(config.Config{})
+
+		services = []provision.Service{
+			{
+				Name:          "service-one",
+				Flagname:      "service-one-flagname",
+				DefaultDeploy: true,
+				Handle:        "service-one-handle",
+				Script:        "/path/to/some-script",
+				Deployment:    "some-deployment",
+			},
+			{
+				Name:          "service-two",
+				Flagname:      "service-two-flagname",
+				DefaultDeploy: false,
+				Handle:        "service-two-handle",
+				Script:        "/path/to/some-script",
+				Deployment:    "some-deployment",
+			},
+			{
+				Name:          "service-three",
+				Flagname:      "service-three-flagname",
+				DefaultDeploy: true,
+				Handle:        "service-three-handle",
+				Script:        "/path/to/some-script",
+				Deployment:    "some-deployment",
+			},
+			{
+				Name:          "service-four",
+				Flagname:      "always-include",
+				DefaultDeploy: true,
+				Handle:        "service-four-handle",
+				Script:        "/path/to/some-script",
+				Deployment:    "some-deployment",
+			},
+		}
+	})
+
+	Context("an empty string", func() {
+		It("returns all and only the DefaultDeploy services", func() {
+			output, err := c.WhiteListServices("", services)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(output)).To(Equal(3))
+			Expect(output[0].Name).To(Equal("service-one"))
+			Expect(output[1].Name).To(Equal("service-three"))
+			Expect(output[2].Name).To(Equal("service-four"))
+		})
+	})
+
+	Context("all", func() {
+		It("returns all services", func() {
+			output, err := c.WhiteListServices("all", services)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(output)).To(Equal(4))
+		})
+	})
+
+	Context("service-three", func() {
+		It("returns service-three and the always-include service", func() {
+			output, err := c.WhiteListServices("service-three-flagname", services)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(output)).To(Equal(2))
+			Expect(output[0].Name).To(Equal("service-three"))
+			Expect(output[1].Name).To(Equal("service-four"))
+		})
+	})
+
+	Context("none", func() {
+		It("returns only the always-include service", func() {
+			output, err := c.WhiteListServices("none", services)
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(output)).To(Equal(1))
+			Expect(output[0].Name).To(Equal("service-four"))
+		})
+	})
+
+	Context("nil services", func() {
+		It("returns an error", func() {
+			_, err := c.WhiteListServices("service-one", nil)
+
+			Expect(err).To(HaveOccurred())
+		})
+	})
 })
