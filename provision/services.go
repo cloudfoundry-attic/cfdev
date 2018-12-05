@@ -2,7 +2,6 @@ package provision
 
 import (
 	"code.cloudfoundry.org/cfdev/bosh"
-	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,43 +21,46 @@ type Service struct {
 }
 
 func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]Service, error) {
-	if services == nil {
-		return nil, errors.New("Error whitelisting services")
-	}
-
-	if strings.ToLower(whiteList) == "all" {
-		return services, nil
-	}
-
 	var whiteListed []Service
 
-	if whiteList == "none" {
-		for _, service := range services {
-			if service.Flagname == "always-include" {
-				whiteListed = append(whiteListed, service)
-			}
-		}
-
-		return whiteListed, nil
-	}
-
-	if whiteList == "" {
-		for _, service := range services {
-			if service.DefaultDeploy {
-				whiteListed = append(whiteListed, service)
-			}
-		}
-
-		return whiteListed, nil
-	}
-
 	for _, service := range services {
-		if strings.Contains(strings.ToLower(whiteList), strings.ToLower(service.Flagname)) || (strings.ToLower(service.Flagname) == "always-include") {
+		if service.Flagname == "always-include" {
 			whiteListed = append(whiteListed, service)
 		}
 	}
 
-	return whiteListed, nil
+	switch strings.TrimSpace(strings.ToLower(whiteList)) {
+	case "all":
+		return services, nil
+	case "none":
+		return whiteListed, nil
+	case "":
+		for _, service := range services {
+			if service.DefaultDeploy && !contains(whiteListed, service.Name) {
+				whiteListed = append(whiteListed, service)
+			}
+		}
+
+		return whiteListed, nil
+	default:
+		for _, service := range services {
+			if strings.Contains(strings.ToLower(whiteList), strings.ToLower(service.Flagname)) && !contains(whiteListed, service.Name) {
+				whiteListed = append(whiteListed, service)
+			}
+		}
+
+		return whiteListed, nil
+	}
+}
+
+func contains(services []Service, name string) bool {
+	for _, s := range services {
+		if s.Name == name {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Controller) DeployServices(ui UI, services []Service) error {

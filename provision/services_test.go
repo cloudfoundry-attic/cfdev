@@ -58,9 +58,9 @@ var _ = Describe("When progress whitelist is called with", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(len(output)).To(Equal(3))
-			Expect(output[0].Name).To(Equal("service-one"))
-			Expect(output[1].Name).To(Equal("service-three"))
-			Expect(output[2].Name).To(Equal("service-four"))
+			Expect(output[0].Name).To(Equal("service-four"))
+			Expect(output[1].Name).To(Equal("service-one"))
+			Expect(output[2].Name).To(Equal("service-three"))
 		})
 	})
 
@@ -79,8 +79,8 @@ var _ = Describe("When progress whitelist is called with", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(len(output)).To(Equal(2))
-			Expect(output[0].Name).To(Equal("service-three"))
-			Expect(output[1].Name).To(Equal("service-four"))
+			Expect(output[0].Name).To(Equal("service-four"))
+			Expect(output[1].Name).To(Equal("service-three"))
 		})
 	})
 
@@ -90,9 +90,9 @@ var _ = Describe("When progress whitelist is called with", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(len(output)).To(Equal(3))
-			Expect(output[0].Name).To(Equal("service-two"))
-			Expect(output[1].Name).To(Equal("service-three"))
-			Expect(output[2].Name).To(Equal("service-four"))
+			Expect(output[0].Name).To(Equal("service-four"))
+			Expect(output[1].Name).To(Equal("service-two"))
+			Expect(output[2].Name).To(Equal("service-three"))
 		})
 	})
 
@@ -103,13 +103,6 @@ var _ = Describe("When progress whitelist is called with", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(output)).To(Equal(1))
 			Expect(output[0].Name).To(Equal("service-four"))
-		})
-	})
-
-	Context("nil services", func() {
-		It("returns an error", func() {
-			_, err := c.WhiteListServices("service-one", nil)
-			Expect(err).To(HaveOccurred())
 		})
 	})
 })
