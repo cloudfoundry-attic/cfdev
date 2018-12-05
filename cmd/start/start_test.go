@@ -859,7 +859,70 @@ var _ = Describe("Start", func() {
 				})
 			})
 
-			Context("arg is an unsupported service", func() {
+			Context("arg is multiple services", func() {
+				It("deploys all the specified services", func() {
+					if runtime.GOOS == "darwin" {
+						mockUI.EXPECT().Say("Installing cfdevd network helper...")
+						mockCFDevD.EXPECT().Install()
+					}
+
+					gomock.InOrder(
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
+						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
+						mockHost.EXPECT().CheckRequirements(),
+						mockHypervisor.EXPECT().IsRunning("cfdev").Return(false, nil),
+						mockStop.EXPECT().RunE(nil, nil),
+						mockEnv.EXPECT().CreateDirs(),
+
+						mockHostNet.EXPECT().AddLoopbackAliases("some-bosh-director-ip", "some-cf-router-ip"),
+						mockUI.EXPECT().Say("Downloading Resources..."),
+						mockCache.EXPECT().Sync(resource.Catalog{
+							Items: []resource.Item{
+								{Name: "some-item"},
+								{Name: "cfdev-deps.tgz"},
+							},
+						}),
+						mockUI.EXPECT().Say("Setting State..."),
+						mockEnv.EXPECT().SetupState(),
+						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+
+						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
+							"total memory":     uint64(222),
+							"available memory": uint64(111),
+						}),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": "some-service-flagname,some-other-service-flagname"}),
+						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(10000), nil),
+						mockUI.EXPECT().Say("Creating the VM..."),
+						mockHypervisor.EXPECT().CreateVM(hypervisor.VM{
+							Name:     "cfdev",
+							CPUs:     7,
+							MemoryMB: 8765,
+						}),
+						mockUI.EXPECT().Say("Starting VPNKit..."),
+						mockVpnKit.EXPECT().Start(),
+						mockVpnKit.EXPECT().Watch(localExitChan),
+						mockUI.EXPECT().Say("Starting the VM..."),
+						mockHypervisor.EXPECT().Start("cfdev"),
+						mockUI.EXPECT().Say("Waiting for the VM..."),
+						mockProvisioner.EXPECT().Ping(),
+						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0, DeploySingleService: "some-service-flagname,some-other-service-flagname"}),
+
+						mockToggle.EXPECT().Enabled().Return(true),
+						mockAnalyticsD.EXPECT().Start(),
+						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_END),
+					)
+
+					Expect(startCmd.Execute(start.Args{
+						Cpus:                7,
+						Mem:                 0,
+						DeploySingleService: "some-service-flagname,some-other-service-flagname",
+					})).To(Succeed())
+				})
+			})
+
+			Context("one of the args is an unsupported service", func() {
 				It("returns an error message and does not execute start command", func() {
 					if runtime.GOOS == "darwin" {
 						mockUI.EXPECT().Say("Installing cfdevd network helper...")
@@ -897,7 +960,7 @@ var _ = Describe("Start", func() {
 					Expect(startCmd.Execute(start.Args{
 						Cpus:                7,
 						Mem:                 6666,
-						DeploySingleService: "non-existent-service",
+						DeploySingleService: "some-service-flagname,non-existent-service",
 					}).Error()).To(ContainSubstring("is not supported"))
 				})
 			})

@@ -351,6 +351,16 @@ func (s *Start) isServiceSupported(service string, services []provision.Service)
 		return true
 	}
 
+	for _, s := range strings.Split(service, ",") {
+		if !contains(services, s) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func contains(services []provision.Service, service string) bool {
 	for _, s := range services {
 		if strings.ToLower(s.Flagname) == strings.ToLower(service) {
 			return true
