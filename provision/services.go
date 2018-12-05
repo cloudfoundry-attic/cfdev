@@ -53,7 +53,7 @@ func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]
 	}
 
 	for _, service := range services {
-		if (strings.ToLower(whiteList) == strings.ToLower(service.Flagname)) || (strings.ToLower(service.Flagname) == "always-include") {
+		if strings.Contains(strings.ToLower(whiteList), strings.ToLower(service.Flagname)) || (strings.ToLower(service.Flagname) == "always-include") {
 			whiteListed = append(whiteListed, service)
 		}
 	}

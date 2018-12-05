@@ -55,8 +55,8 @@ var _ = Describe("When progress whitelist is called with", func() {
 	Context("an empty string", func() {
 		It("returns all and only the DefaultDeploy services", func() {
 			output, err := c.WhiteListServices("", services)
-
 			Expect(err).ToNot(HaveOccurred())
+
 			Expect(len(output)).To(Equal(3))
 			Expect(output[0].Name).To(Equal("service-one"))
 			Expect(output[1].Name).To(Equal("service-three"))
@@ -67,8 +67,8 @@ var _ = Describe("When progress whitelist is called with", func() {
 	Context("all", func() {
 		It("returns all services", func() {
 			output, err := c.WhiteListServices("all", services)
-
 			Expect(err).ToNot(HaveOccurred())
+
 			Expect(len(output)).To(Equal(4))
 		})
 	})
@@ -76,11 +76,23 @@ var _ = Describe("When progress whitelist is called with", func() {
 	Context("service-three", func() {
 		It("returns service-three and the always-include service", func() {
 			output, err := c.WhiteListServices("service-three-flagname", services)
-
 			Expect(err).ToNot(HaveOccurred())
+
 			Expect(len(output)).To(Equal(2))
 			Expect(output[0].Name).To(Equal("service-three"))
 			Expect(output[1].Name).To(Equal("service-four"))
+		})
+	})
+
+	Context("multiple services", func() {
+		It("returns all the requested services", func() {
+			output, err := c.WhiteListServices("service-two-flagname,service-three-flagname", services)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(len(output)).To(Equal(3))
+			Expect(output[0].Name).To(Equal("service-two"))
+			Expect(output[1].Name).To(Equal("service-three"))
+			Expect(output[2].Name).To(Equal("service-four"))
 		})
 	})
 
@@ -97,7 +109,6 @@ var _ = Describe("When progress whitelist is called with", func() {
 	Context("nil services", func() {
 		It("returns an error", func() {
 			_, err := c.WhiteListServices("service-one", nil)
-
 			Expect(err).To(HaveOccurred())
 		})
 	})
