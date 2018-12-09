@@ -32,6 +32,7 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 * [CF CLI](https://github.com/cloudfoundry/cli)
 * Internet connection (or Dnsmasq or Acrylic) required for wildcard DNS resolution
 * Please note CF Dev only supports MacOS and Windows 10 at this time
+* When running on Windows 10, 8GB of free memory are required
 
 ## Install 
 1. _(if needed)_ Uninstall your existing PCF Dev plugin if it is installed `cf uninstall-plugin pcfdev`
