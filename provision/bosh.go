@@ -23,7 +23,6 @@ func (c *Controller) DeployBosh() error {
 	s := ssh.SSH{}
 
 	srcDst := []string{
-		filepath.Join(c.Config.CacheDir, "director.yml"),
 		filepath.Join(c.Config.StateBosh, "state.json"),
 		filepath.Join(c.Config.StateBosh, "creds.yml"),
 	}
@@ -41,7 +40,7 @@ func (c *Controller) DeployBosh() error {
 
 	command := fmt.Sprintf("%s --tty create-env %s --state %s --vars-store %s",
 		"/bosh/bosh",
-		"director.yml",
+		"/bosh/director.yml",
 		"state.json",
 		"creds.yml")
 
