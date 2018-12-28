@@ -15,6 +15,7 @@ import (
 	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
+	b9 "code.cloudfoundry.org/cfdev/cmd/deploy-service"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
 	b8 "code.cloudfoundry.org/cfdev/cmd/provision"
 	b5 "code.cloudfoundry.org/cfdev/cmd/start"
@@ -108,10 +109,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			MetaDataReader: metaDataReader,
 		},
 		&b2.Bosh{
-			Exit:        exit,
-			UI:          ui,
-			Config:      config,
-			Analytics:   analyticsClient,
+			Exit:      exit,
+			UI:        ui,
+			Config:    config,
+			Analytics: analyticsClient,
 		},
 		&b3.Catalog{
 			UI:     ui,
@@ -179,6 +180,12 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD:      analyticsD,
 		},
 		provisionCmd,
+		&b9.DeployService{
+			UI:             ui,
+			Provisioner:    provision.NewController(config),
+			MetaDataReader: metaDataReader,
+			Config:         config,
+		},
 	} {
 		dev.AddCommand(cmd.Cmd())
 	}

@@ -21,6 +21,7 @@ import (
 	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
+	b9 "code.cloudfoundry.org/cfdev/cmd/deploy-service"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/host"
@@ -186,6 +187,12 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD:      analyticsD,
 		},
 		provisionCmd,
+		&b9.DeployService{
+			UI:             ui,
+			Provisioner:    provision.NewController(config),
+			MetaDataReader: metaDataReader,
+			Config:         config,
+		},
 	} {
 		dev.AddCommand(cmd.Cmd())
 	}

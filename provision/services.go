@@ -2,6 +2,8 @@ package provision
 
 import (
 	"code.cloudfoundry.org/cfdev/bosh"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -51,6 +53,15 @@ func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]
 
 		return whiteListed, nil
 	}
+}
+
+func (c *Controller) GetWhiteListedService(serviceName string, whiteList []Service) (*Service, error) {
+	for _, service := range whiteList {
+		if strings.Contains(strings.ToLower(serviceName), strings.ToLower(service.Flagname)) {
+			return &service, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("The service '%s' is not a valid service", serviceName))
 }
 
 func contains(services []Service, name string) bool {
