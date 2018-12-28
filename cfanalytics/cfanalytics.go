@@ -19,6 +19,7 @@ const (
 	BOSH_ENV         = "bosh"
 	ERROR            = "error"
 	UNINSTALL        = "uninstall"
+	DEPLOY_SERVICE   = "deployed service"
 )
 
 //go:generate mockgen -package mocks -destination mocks/analytics_client.go gopkg.in/segmentio/analytics-go.v3 Client

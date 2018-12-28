@@ -19,6 +19,7 @@ var _ = Describe("DeployService", func() {
 		mockMetadataReader *mocks.MockMetaDataReader
 		mockProvisioner    *mocks.MockProvisioner
 		mockUI             *mocks.MockUI
+		mockAnalytics      *mocks.MockAnalytics
 		cmd                *deploy_service.DeployService
 	)
 	BeforeEach(func() {
@@ -26,6 +27,7 @@ var _ = Describe("DeployService", func() {
 		mockUI = mocks.NewMockUI(mockController)
 		mockMetadataReader = mocks.NewMockMetaDataReader(mockController)
 		mockProvisioner = mocks.NewMockProvisioner(mockController)
+		mockAnalytics = mocks.NewMockAnalytics(mockController)
 
 		cmd = &deploy_service.DeployService{
 			UI:             mockUI,
@@ -34,6 +36,7 @@ var _ = Describe("DeployService", func() {
 			Config: config.Config{
 				CacheDir: "some-cache-dir",
 			},
+			Analytics:      mockAnalytics,
 		}
 	})
 
@@ -48,10 +51,12 @@ var _ = Describe("DeployService", func() {
 				Version:  "v3",
 				Services: []provision.Service{service},
 			}, nil)
+
 			mockProvisioner.EXPECT().Ping().Return(nil)
 			mockProvisioner.EXPECT().GetWhiteListedService("some-service", []provision.Service{service}).Return(&service, nil)
-
 			mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{service}).Return(nil)
+
+			mockAnalytics.EXPECT().Event("deployed service", map[string]interface{}{"name": "some-service"})
 
 			err := cmd.Execute(deploy_service.Args{
 				Service: "some-service",

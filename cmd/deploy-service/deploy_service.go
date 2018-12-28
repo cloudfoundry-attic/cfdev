@@ -1,6 +1,7 @@
 package deploy_service
 
 import (
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	e "code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/metadata"
@@ -31,6 +32,11 @@ type Provisioner interface {
 	GetWhiteListedService(string, []provision.Service) (*provision.Service, error)
 }
 
+//go:generate mockgen -package mocks -destination mocks/analytics.go code.cloudfoundry.org/cfdev/cmd/stop Analytics
+type Analytics interface {
+	Event(event string, data ...map[string]interface{}) error
+}
+
 const compatibilityVersion = "v3"
 
 type DeployService struct {
@@ -39,6 +45,7 @@ type DeployService struct {
 	Provisioner    Provisioner
 	MetaDataReader MetaDataReader
 	Config         config.Config
+	Analytics      Analytics
 }
 
 type Args struct {
@@ -94,6 +101,9 @@ func (c *DeployService) Execute(args Args) error {
 	if err := c.Provisioner.DeployServices(c.UI, []provision.Service{*service}); err != nil {
 		return e.SafeWrap(err, "Failed to deploy services")
 	}
+
+	extraProperties := map[string]interface{}{"name": args.Service}
+	c.Analytics.Event(cfanalytics.DEPLOY_SERVICE, extraProperties)
 
 	return nil
 }

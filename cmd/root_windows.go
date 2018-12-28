@@ -192,6 +192,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Provisioner:    provision.NewController(config),
 			MetaDataReader: metaDataReader,
 			Config:         config,
+			Analytics:      analyticsClient,
 		},
 	} {
 		dev.AddCommand(cmd.Cmd())
