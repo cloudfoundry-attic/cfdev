@@ -84,6 +84,10 @@ var _ = Describe("cfdev lifecycle", func() {
 		Eventually(startSession.Exited, 2*time.Hour).Should(BeClosed())
 		Expect(startSession.ExitCode()).To(BeZero())
 
+		By("deploy mysql service")
+		serviceSession := cf.Cf("dev", "deploy-service", "mysql")
+		Eventually(serviceSession.Exited, 20*time.Minute).Should(BeClosed())
+
 		By("waiting for cf router to listen")
 		loginSession := cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space")
 		Eventually(loginSession).Should(gexec.Exit(0))
