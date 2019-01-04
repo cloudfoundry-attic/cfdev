@@ -54,7 +54,6 @@ var _ = Describe("Start", func() {
 		{
 			Name:          "some-service",
 			Flagname:      "some-service-flagname",
-			DefaultDeploy: true,
 			Handle:        "some-handle",
 			Script:        "/path/to/some-script",
 			Deployment:    "some-deployment",
@@ -62,7 +61,6 @@ var _ = Describe("Start", func() {
 		{
 			Name:          "some-other-service",
 			Flagname:      "some-other-service-flagname",
-			DefaultDeploy: false,
 			Handle:        "some-other-handle",
 			Script:        "/path/to/some-other-script",
 			Deployment:    "some-other-deployment",

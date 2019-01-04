@@ -15,7 +15,6 @@ import (
 type Service struct {
 	Name          string `yaml:"name"`
 	Flagname      string `yaml:"flag_name"`
-	DefaultDeploy bool   `yaml:"default_deploy"`
 	Handle        string `yaml:"handle"` //TODO <-- remove
 	Script        string `yaml:"script"`
 	Deployment    string `yaml:"deployment"`
@@ -34,15 +33,7 @@ func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]
 	switch strings.TrimSpace(strings.ToLower(whiteList)) {
 	case "all":
 		return services, nil
-	case "none":
-		return whiteListed, nil
-	case "":
-		for _, service := range services {
-			if service.DefaultDeploy && !contains(whiteListed, service.Name) {
-				whiteListed = append(whiteListed, service)
-			}
-		}
-
+	case "", "none":
 		return whiteListed, nil
 	default:
 		for _, service := range services {

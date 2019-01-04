@@ -20,7 +20,6 @@ var _ = Describe("When progress whitelist is called with", func() {
 			{
 				Name:          "service-one",
 				Flagname:      "service-one-flagname",
-				DefaultDeploy: true,
 				Handle:        "service-one-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
@@ -28,7 +27,6 @@ var _ = Describe("When progress whitelist is called with", func() {
 			{
 				Name:          "service-two",
 				Flagname:      "service-two-flagname",
-				DefaultDeploy: false,
 				Handle:        "service-two-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
@@ -36,7 +34,6 @@ var _ = Describe("When progress whitelist is called with", func() {
 			{
 				Name:          "service-three",
 				Flagname:      "service-three-flagname",
-				DefaultDeploy: true,
 				Handle:        "service-three-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
@@ -44,7 +41,6 @@ var _ = Describe("When progress whitelist is called with", func() {
 			{
 				Name:          "service-four",
 				Flagname:      "always-include",
-				DefaultDeploy: true,
 				Handle:        "service-four-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
@@ -53,14 +49,12 @@ var _ = Describe("When progress whitelist is called with", func() {
 	})
 
 	Context("an empty string", func() {
-		It("returns all and only the DefaultDeploy services", func() {
+		It("returns only the DefaultDeploy services", func() {
 			output, err := c.WhiteListServices("", services)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(len(output)).To(Equal(3))
+			Expect(len(output)).To(Equal(1))
 			Expect(output[0].Name).To(Equal("service-four"))
-			Expect(output[1].Name).To(Equal("service-one"))
-			Expect(output[2].Name).To(Equal("service-three"))
 		})
 	})
 
