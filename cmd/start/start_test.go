@@ -54,14 +54,12 @@ var _ = Describe("Start", func() {
 		{
 			Name:          "some-service",
 			Flagname:      "some-service-flagname",
-			Handle:        "some-handle",
 			Script:        "/path/to/some-script",
 			Deployment:    "some-deployment",
 		},
 		{
 			Name:          "some-other-service",
 			Flagname:      "some-other-service-flagname",
-			Handle:        "some-other-handle",
 			Script:        "/path/to/some-other-script",
 			Deployment:    "some-other-deployment",
 		},

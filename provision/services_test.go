@@ -20,28 +20,24 @@ var _ = Describe("When progress whitelist is called with", func() {
 			{
 				Name:          "service-one",
 				Flagname:      "service-one-flagname",
-				Handle:        "service-one-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
 			},
 			{
 				Name:          "service-two",
 				Flagname:      "service-two-flagname",
-				Handle:        "service-two-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
 			},
 			{
 				Name:          "service-three",
 				Flagname:      "service-three-flagname",
-				Handle:        "service-three-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
 			},
 			{
 				Name:          "service-four",
 				Flagname:      "always-include",
-				Handle:        "service-four-handle",
 				Script:        "/path/to/some-script",
 				Deployment:    "some-deployment",
 			},
