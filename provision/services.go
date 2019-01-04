@@ -77,9 +77,9 @@ func (c *Controller) DeployServices(ui UI, services []Service) error {
 
 		ui.Say("Deploying %s...", service.Name)
 
-		go func(handle string, serviceManifest string) {
-			errChan <- c.DeployService(service)
-		}(service.Handle, service.Script)
+		go func(s Service) {
+			errChan <- c.DeployService(s)
+		}(service)
 
 		err = c.report(start, ui, b, service, errChan)
 		if err != nil {
