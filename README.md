@@ -1,4 +1,5 @@
 ![ci.pcfdev.io](http://ci.pcfdev.io/api/v1/teams/main/pipelines/cfdev/jobs/build/badge)
+
 ```
 $ cf dev start
 Downloading Resources...
@@ -32,6 +33,12 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 * [CF CLI](https://github.com/cloudfoundry/cli)
 * Internet connection (or Dnsmasq or Acrylic) required for wildcard DNS resolution
 * Please note CF Dev only supports MacOS and Windows 10 at this time
+
+## Recommended system requirements
+* Operating system: MacOS 10.12+/Windows 10+
+* CPU: 2 Cores or more
+* Memory: 8 Gigabytes _available_ memory
+* Disk: 60GB available space
 
 ## Install 
 1. _(if needed)_ Uninstall your existing PCF Dev plugin if it is installed `cf uninstall-plugin pcfdev`
