@@ -46,6 +46,7 @@ var _ = Describe("Version Command", func() {
 				UI:             &mockUI,
 				MetaDataReader: mockMetaDataReader,
 				Version:        &semver.Version{Original: "1.2.3-rc.4"},
+				BuildVersion:   "some-build-version",
 			}
 		})
 
@@ -56,7 +57,8 @@ var _ = Describe("Version Command", func() {
 		Context("when the metadata file is not present", func() {
 			It("prints only the version of CLI", func() {
 				verCmd.Execute("")
-				Expect(mockUI.WasCalledWith).To(Equal("CLI: 1.2.3-rc.4\n"))
+				Expect(mockUI.WasCalledWith).To(ContainSubstring("CLI: 1.2.3-rc.4"))
+				Expect(mockUI.WasCalledWith).To(ContainSubstring("BUILD: some-build-version"))
 			})
 		})
 
@@ -91,6 +93,7 @@ var _ = Describe("Version Command", func() {
 
 				verCmd.Execute("")
 				Expect(mockUI.WasCalledWith).To(ContainSubstring("CLI: 1.2.3-rc.4"))
+				Expect(mockUI.WasCalledWith).To(ContainSubstring("BUILD: some-build-version"))
 				Expect(mockUI.WasCalledWith).To(ContainSubstring("some-release-1: some-version-1"))
 				Expect(mockUI.WasCalledWith).To(ContainSubstring("some-release-2: some-version-2"))
 			})
@@ -201,11 +204,3 @@ var _ = Describe("Version Command", func() {
 		})
 	})
 })
-
-func exists(s string) bool {
-	_, err := os.Stat(s)
-	if err != nil {
-		return true
-	}
-	return false
-}

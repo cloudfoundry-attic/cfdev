@@ -38,6 +38,7 @@ go build \
      -X $pkg.analyticsdSize=$(wc -c < "$analyticsd" | tr -d '[:space:]')
 
      -X $pkg.cliVersion=0.0.$(date +%Y%m%d-%H%M%S)
+     -X $pkg.buildVersion=dev
      -X $pkg.testAnalyticsKey=$analyticskey" \
      code.cloudfoundry.org/cfdev
 

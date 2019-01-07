@@ -25,6 +25,7 @@ type MetaDataReader interface {
 type Version struct {
 	UI             UI
 	Version        *semver.Version
+	BuildVersion   string
 	Config         config.Config
 	MetaDataReader MetaDataReader
 }
@@ -77,7 +78,7 @@ func (v *Version) Execute(pathTarball string) {
 }
 
 func (v *Version) printCliVersion() {
-	v.UI.Say(fmt.Sprintf("CLI: %s\n", v.Version.Original))
+	v.UI.Say(fmt.Sprintf("CLI: %s\nBUILD: %s\n", v.Version.Original, v.BuildVersion))
 }
 
 func (v *Version) Cmd() *cobra.Command {

@@ -22,5 +22,6 @@ go build -ldflags `
     -X $pkg.cfdepsSize=$((Get-Item $cfdepsUrl).length)
 
     -X $pkg.cliVersion=0.0.$date
+    -X $pkg.buildVersion=dev
     -X $pkg.testAnalyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" `
     code.cloudfoundry.org/cfdev

@@ -117,6 +117,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		&b1.Version{
 			UI:             ui,
 			Version:        config.CliVersion,
+			BuildVersion:   config.BuildVersion,
 			Config:         config,
 			MetaDataReader: metaDataReader,
 		},

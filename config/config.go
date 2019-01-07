@@ -31,6 +31,7 @@ var (
 	testAnalyticsKey string
 
 	cliVersion string
+	buildVersion string
 )
 
 type Config struct {
@@ -49,6 +50,7 @@ type Config struct {
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
 	CliVersion             *semver.Version
+	BuildVersion           string
 	AnalyticsKey           string
 	ServicesDir            string
 	CFDomain               string
@@ -87,6 +89,7 @@ func NewConfig() (Config, error) {
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
 		CliVersion:             semver.Must(semver.New(cliVersion)),
+		BuildVersion:           buildVersion,
 		AnalyticsKey:           analytixKey,
 		ServicesDir:            filepath.Join(cfdevHome, "services"),
 		CFDomain:               "dev.cfdev.sh",
