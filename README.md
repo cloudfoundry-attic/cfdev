@@ -1,4 +1,4 @@
-![ci.pcfdev.io](http://ci.pcfdev.io/api/v1/teams/main/pipelines/cfdev/jobs/build/badge)
+![ci.pcfdev.io](http://ci.pcfdev.io/api/v1/teams/main/pipelines/cfdev/jobs/build-cli/badge)
 
 ```
 $ cf dev start
