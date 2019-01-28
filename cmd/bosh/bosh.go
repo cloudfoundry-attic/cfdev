@@ -1,15 +1,11 @@
 package bosh
 
 import (
-	"code.cloudfoundry.org/cfdev/bosh"
-	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"os"
 
 	"runtime"
 
-	"code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/shell"
 	"github.com/spf13/cobra"
 )
 
@@ -58,19 +54,19 @@ func (b *Bosh) Env() error {
 		os.Exit(128)
 	}()
 
-	config, err := bosh.FetchConfig(b.Config)
-	if err != nil {
-		return errors.SafeWrap(err, "failed to fetch bosh configuration")
-	}
+	//config, err := bosh.FetchConfig(b.Config)
+	//if err != nil {
+	//	return errors.SafeWrap(err, "failed to fetch bosh configuration")
+	//}
+	//
+	//b.Analytics.Event(cfanalytics.BOSH_ENV)
+	//
+	//env := shell.Environment{}
+	//shellScript, err := env.Prepare(config)
+	//if err != nil {
+	//	return errors.SafeWrap(err, "failed to prepare bosh configuration")
+	//}
 
-	b.Analytics.Event(cfanalytics.BOSH_ENV)
-
-	env := shell.Environment{}
-	shellScript, err := env.Prepare(config)
-	if err != nil {
-		return errors.SafeWrap(err, "failed to prepare bosh configuration")
-	}
-
-	b.UI.Say(shellScript)
+	b.UI.Say("")
 	return nil
 }

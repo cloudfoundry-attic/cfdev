@@ -34,15 +34,15 @@ func (m *MockProvisioner) EXPECT() *MockProvisionerMockRecorder {
 }
 
 // DeployServices mocks base method
-func (m *MockProvisioner) DeployServices(arg0 provision.UI, arg1 []provision.Service) error {
-	ret := m.ctrl.Call(m, "DeployServices", arg0, arg1)
+func (m *MockProvisioner) DeployServices(arg0 provision.UI, arg1 []provision.Service, arg2 []string) error {
+	ret := m.ctrl.Call(m, "DeployServices", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeployServices indicates an expected call of DeployServices
-func (mr *MockProvisionerMockRecorder) DeployServices(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployServices", reflect.TypeOf((*MockProvisioner)(nil).DeployServices), arg0, arg1)
+func (mr *MockProvisionerMockRecorder) DeployServices(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployServices", reflect.TypeOf((*MockProvisioner)(nil).DeployServices), arg0, arg1, arg2)
 }
 
 // GetWhiteListedService mocks base method

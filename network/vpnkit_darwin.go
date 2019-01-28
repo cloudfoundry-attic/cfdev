@@ -46,7 +46,7 @@ func (v *VpnKit) Destroy() error {
 func (v *VpnKit) daemonSpec() daemon.DaemonSpec {
 	return daemon.DaemonSpec{
 		Label:       v.Label,
-		Program:     path.Join(v.Config.CacheDir, "vpnkit"),
+		Program:     path.Join(v.Config.BinaryDir, "vpnkit"),
 		SessionType: "Background",
 		ProgramArguments: []string{
 			path.Join(v.Config.CacheDir, "vpnkit"),

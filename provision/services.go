@@ -2,6 +2,7 @@ package provision
 
 import (
 	"code.cloudfoundry.org/cfdev/bosh"
+	"code.cloudfoundry.org/cfdev/config"
 	"errors"
 	"fmt"
 	"os"
@@ -13,11 +14,11 @@ import (
 )
 
 type Service struct {
-	Name          string `yaml:"name"`
-	Flagname      string `yaml:"flag_name"`
-	Script        string `yaml:"script"`
-	Deployment    string `yaml:"deployment"`
-	IsErrand      bool   `yaml:"errand"`
+	Name       string `yaml:"name"`
+	Flagname   string `yaml:"flag_name"`
+	Script     string `yaml:"script"`
+	Deployment string `yaml:"deployment"`
+	IsErrand   bool   `yaml:"errand"`
 }
 
 func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]Service, error) {
@@ -64,7 +65,7 @@ func contains(services []Service, name string) bool {
 	return false
 }
 
-func (c *Controller) DeployServices(ui UI, services []Service) error {
+func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries []string) error {
 	b, err := bosh.New(c.Config)
 	if err != nil {
 		return err
@@ -78,7 +79,7 @@ func (c *Controller) DeployServices(ui UI, services []Service) error {
 		ui.Say("Deploying %s...", service.Name)
 
 		go func(s Service) {
-			errChan <- c.DeployService(s)
+			errChan <- c.DeployService(s, dockerRegistries)
 		}(service)
 
 		err = c.report(start, ui, b, service, errChan)
@@ -90,7 +91,7 @@ func (c *Controller) DeployServices(ui UI, services []Service) error {
 	return nil
 }
 
-func (c *Controller) DeployService(service Service) error {
+func (c *Controller) DeployService(service Service, dockerRegistries []string) error {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
@@ -100,7 +101,12 @@ func (c *Controller) DeployService(service Service) error {
 	}
 
 	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, configEnvs(c.Config)...)
 	cmd.Env = append(cmd.Env, bosh.Envs(c.Config)...)
+
+	if strings.HasPrefix(service.Deployment, "cf") {
+		cmd.Env = append(cmd.Env, dockerRegistriesAsEnvVar(dockerRegistries))
+	}
 
 	logFile, err := os.Create(filepath.Join(c.Config.LogDir, "deploy-"+strings.ToLower(service.Name)+".log"))
 	if err != nil {
@@ -112,4 +118,22 @@ func (c *Controller) DeployService(service Service) error {
 	cmd.Stderr = logFile
 
 	return cmd.Run()
+}
+
+func configEnvs(cfg config.Config) []string {
+	return []string{
+		"BINARY_DIR=" + cfg.BinaryDir,
+		"BOSH_STATE=" + cfg.StateBosh,
+		"CF_DOMAIN=" + cfg.CFDomain,
+		"SERVICES_DIR=" + cfg.ServicesDir,
+	}
+}
+
+func dockerRegistriesAsEnvVar(registries []string) string {
+	var arr []string
+	for _, registry := range registries {
+		arr = append(arr, fmt.Sprintf(`%q`, registry))
+	}
+
+	return fmt.Sprintf(`DOCKER_REGISTRIES=[%s]`, strings.Join(arr, ","))
 }

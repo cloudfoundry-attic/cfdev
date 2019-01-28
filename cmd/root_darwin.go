@@ -63,7 +63,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
 	root.PersistentFlags().Bool("help", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
-	lctl := daemon.New(config.CFDevHome)
+	lctl := daemon.New(config.StateDir)
 
 	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
 	root.SetUsageTemplate(usageTemplate)

@@ -62,7 +62,7 @@ var _ = Describe("cfdevd test", func() {
 		session, err = gexec.Start(exec.Command("ifconfig"), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(session).Should(gexec.Exit(0))
-		Expect(string(session.Out.Contents())).Should(ContainSubstring("10.144.0.4"))
+		Expect(string(session.Out.Contents())).Should(ContainSubstring("10.144.0.2"))
 		Expect(string(session.Out.Contents())).Should(ContainSubstring("10.144.0.34"))
 	})
 
@@ -119,13 +119,13 @@ var _ = Describe("cfdevd test", func() {
 			magic, err := recvHello(conn)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(magic).To(Equal("CFD3V"))
-			Expect(sendBindAddr(conn, "10.144.0.4", 1777)).To(Succeed())
-			ln, _, err := recvBindAddr(conn, "10.144.0.4", 1777)
+			Expect(sendBindAddr(conn, "10.144.0.2", 1777)).To(Succeed())
+			ln, _, err := recvBindAddr(conn, "10.144.0.2", 1777)
 			Expect(err).NotTo(HaveOccurred())
 			defer ln.Close()
 
 			msg := "Hello from test"
-			go sendMessage("10.144.0.4:1777", msg)
+			go sendMessage("10.144.0.2:1777", msg)
 			Expect(readFromListener(ln)).To(Equal(msg))
 		})
 
@@ -146,7 +146,7 @@ var _ = Describe("cfdevd test", func() {
 			Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
 			Expect(recvHello(conn)).To(Equal("CFD3V"))
 			Expect(sendBindAddr(conn, "127.0.0.1", 1888)).To(Succeed())
-			_, b, _ := recvBindAddr(conn, "10.144.0.4", 1888)
+			_, b, _ := recvBindAddr(conn, "10.144.0.2", 1888)
 			Expect(b[0]).To(Equal(uint8(71)))
 		})
 
@@ -154,7 +154,7 @@ var _ = Describe("cfdevd test", func() {
 			var prior net.Listener
 			BeforeEach(func() {
 				var err error
-				prior, err = net.Listen("tcp", "10.144.0.4:1999")
+				prior, err = net.Listen("tcp", "10.144.0.2:1999")
 				Expect(err).NotTo(HaveOccurred())
 			})
 			AfterEach(func() { prior.Close() })
@@ -162,8 +162,8 @@ var _ = Describe("cfdevd test", func() {
 			It("sends an error", func() {
 				Expect(sendHello(conn, "VMN3T", 22, "0123456789012345678901234567890123456789")).To(Succeed())
 				Expect(recvHello(conn)).To(Equal("CFD3V"))
-				Expect(sendBindAddr(conn, "10.144.0.4", 1999)).To(Succeed())
-				_, b, _ := recvBindAddr(conn, "10.144.0.4", 1999)
+				Expect(sendBindAddr(conn, "10.144.0.2", 1999)).To(Succeed())
+				_, b, _ := recvBindAddr(conn, "10.144.0.2", 1999)
 				Expect(b[0]).To(Equal(uint8(48)))
 			})
 		})

@@ -53,12 +53,12 @@ func (v *VpnKit) Destroy() error {
 }
 
 func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
-	dnsPath := filepath.Join(v.Config.CFDevHome, "resolv.conf")
-	dhcpPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
+	dnsPath := filepath.Join(v.Config.VpnKitStateDir, "resolv.conf")
+	dhcpPath := filepath.Join(v.Config.VpnKitStateDir, "dhcp.json")
 
 	return daemon.DaemonSpec{
 		Label:   v.Label,
-		Program: path.Join(v.Config.CacheDir, "vpnkit.exe"),
+		Program: path.Join(v.Config.BinaryDir, "vpnkit.exe"),
 		ProgramArguments: []string{
 			fmt.Sprintf("--ethernet hyperv-connect://%s/%s", vmGuid, v.EthernetGUID),
 			fmt.Sprintf("--port hyperv-connect://%s/%s", vmGuid, v.PortGUID),
@@ -132,7 +132,7 @@ func (v *VpnKit) writeResolvConf() error {
 		dnsFile += fmt.Sprintf("nameserver %s\r\n", line)
 	}
 
-	resolvConfPath := filepath.Join(v.Config.CFDevHome, "resolv.conf")
+	resolvConfPath := filepath.Join(v.Config.VpnKitStateDir, "resolv.conf")
 	if fileExists(resolvConfPath) {
 		os.RemoveAll(resolvConfPath)
 	}
@@ -163,7 +163,7 @@ func (v *VpnKit) writeDHCPJSON() error {
 		}
 	}
 
-	dhcpJsonPath := filepath.Join(v.Config.CFDevHome, "dhcp.json")
+	dhcpJsonPath := filepath.Join(v.Config.VpnKitStateDir, "dhcp.json")
 	if fileExists(dhcpJsonPath) {
 		os.RemoveAll(dhcpJsonPath)
 	}

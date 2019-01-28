@@ -24,6 +24,7 @@ var _ = Describe("LinuxKit process", func() {
 				CFDevHome:      "/home-dir/.cfdev",
 				StateDir:       "/home-dir/.cfdev/state",
 				CacheDir:       "/home-dir/.cfdev/cache",
+				BinaryDir:      "/home-dir/.cfdev/bin",
 				StateLinuxkit:  "/home-dir/.cfdev/state/linuxkit",
 				VpnKitStateDir: "/home-dir/.cfdev/state_vpnkit",
 			},
@@ -38,7 +39,7 @@ var _ = Describe("LinuxKit process", func() {
 		start, err := linuxkit.DaemonSpec(4, 4096)
 		Expect(err).ToNot(HaveOccurred())
 
-		linuxkitExecPath := "/home-dir/.cfdev/cache/linuxkit"
+		linuxkitExecPath := "/home-dir/.cfdev/bin/linuxkit"
 		Expect(start.Program).To(Equal(linuxkitExecPath))
 		Expect(start.ProgramArguments).To(ConsistOf(
 			linuxkitExecPath,
@@ -46,13 +47,13 @@ var _ = Describe("LinuxKit process", func() {
 			"-console-file",
 			"-cpus", "4",
 			"-mem", "4096",
-			"-hyperkit", "/home-dir/.cfdev/cache/hyperkit",
+			"-hyperkit", "/home-dir/.cfdev/bin/hyperkit",
 			"-networking", "vpnkit,/home-dir/.cfdev/state_vpnkit/vpnkit_eth.sock,/home-dir/.cfdev/state_vpnkit/vpnkit_port.sock",
-			"-fw", "/home-dir/.cfdev/cache/UEFI.fd",
-			"-disk", "type=qcow,size=80G,trim=true,qcow-tool=/home-dir/.cfdev/cache/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
+			"-fw", "/home-dir/.cfdev/bin/UEFI.fd",
+			"-disk", "type=qcow,size=120G,trim=true,qcow-tool=/home-dir/.cfdev/bin/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
 			"-state", "/home-dir/.cfdev/state/linuxkit",
 			"-uefi",
-			"/home-dir/.cfdev/cache/cfdev-efi-v2.iso",
+			"/home-dir/.cfdev/bin/cfdev-efi-v2.iso",
 		))
 	})
 })

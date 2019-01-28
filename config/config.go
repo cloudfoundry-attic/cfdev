@@ -30,7 +30,7 @@ var (
 	analyticsKey     string
 	testAnalyticsKey string
 
-	cliVersion string
+	cliVersion   string
 	buildVersion string
 )
 
@@ -43,9 +43,9 @@ type Config struct {
 	StateBosh              string
 	StateLinuxkit          string
 	CacheDir               string
+	BinaryDir              string
 	VpnKitStateDir         string
 	LogDir                 string
-	DepsFile               *string
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
@@ -71,27 +71,25 @@ func NewConfig() (Config, error) {
 		analytixKey = analyticsKey
 	}
 
-	depsFile := ""
-
 	return Config{
-		BoshDirectorIP:         "10.144.0.4",
+		BoshDirectorIP:         "10.144.0.2",
 		CFRouterIP:             "10.144.0.34",
 		HostIP:                 "192.168.65.2",
 		CFDevHome:              cfdevHome,
 		StateDir:               filepath.Join(cfdevHome, "state"),
 		StateBosh:              filepath.Join(cfdevHome, "state", "bosh"),
 		StateLinuxkit:          filepath.Join(cfdevHome, "state", "linuxkit"),
-		CacheDir:               filepath.Join(cfdevHome, "cache"),
 		VpnKitStateDir:         filepath.Join(cfdevHome, "state", "vpnkit"),
+		ServicesDir:            filepath.Join(cfdevHome, "services"),
+		CacheDir:               filepath.Join(cfdevHome, "cache"),
+		BinaryDir:              filepath.Join(cfdevHome, "bin"),
 		LogDir:                 filepath.Join(cfdevHome, "log"),
-		DepsFile:               &depsFile,
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
 		CliVersion:             semver.Must(semver.New(cliVersion)),
 		BuildVersion:           buildVersion,
 		AnalyticsKey:           analytixKey,
-		ServicesDir:            filepath.Join(cfdevHome, "services"),
 		CFDomain:               "dev.cfdev.sh",
 	}, nil
 }

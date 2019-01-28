@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	BoshDirectorIP = "10.144.0.4"
+	BoshDirectorIP = "10.144.0.2"
 )
 
 func SetupDependencies(cacheDir string) {

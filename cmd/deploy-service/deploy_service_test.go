@@ -34,7 +34,7 @@ var _ = Describe("DeployService", func() {
 			MetaDataReader: mockMetadataReader,
 			Provisioner:    mockProvisioner,
 			Config: config.Config{
-				CacheDir: "some-cache-dir",
+				StateDir: "some-state-dir",
 			},
 			Analytics:      mockAnalytics,
 		}
@@ -47,14 +47,14 @@ var _ = Describe("DeployService", func() {
 			service := provision.Service{
 				Name: "some-service",
 			}
-			mockMetadataReader.EXPECT().Read(filepath.Join("some-cache-dir", "metadata.yml")).Return(metadata.Metadata{
+			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
 				Version:  "v3",
 				Services: []provision.Service{service},
 			}, nil)
 
 			mockProvisioner.EXPECT().Ping().Return(nil)
 			mockProvisioner.EXPECT().GetWhiteListedService("some-service", []provision.Service{service}).Return(&service, nil)
-			mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{service}).Return(nil)
+			mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{service}, []string{}).Return(nil)
 
 			mockAnalytics.EXPECT().Event("deployed service", map[string]interface{}{"name": "some-service"})
 
@@ -70,7 +70,7 @@ var _ = Describe("DeployService", func() {
 			service := provision.Service{
 				Name: "some-service",
 			}
-			mockMetadataReader.EXPECT().Read(filepath.Join("some-cache-dir", "metadata.yml")).Return(metadata.Metadata{
+			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
 				Version:  "v3",
 				Services: []provision.Service{service},
 			}, nil)
@@ -89,7 +89,7 @@ var _ = Describe("DeployService", func() {
 			service := provision.Service{
 				Name: "some-service",
 			}
-			mockMetadataReader.EXPECT().Read(filepath.Join("some-cache-dir", "metadata.yml")).Return(metadata.Metadata{
+			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
 				Version:  "v3",
 				Services: []provision.Service{service},
 			}, nil)

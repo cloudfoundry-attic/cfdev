@@ -38,24 +38,22 @@ var _ = Describe("Provision", func() {
 			Provisioner:    mockProvisioner,
 			MetaDataReader: mockMetadataReader,
 			Config: config.Config{
-				CacheDir: "some-cache-dir",
+				StateDir: "some-state-dir",
 			},
 		}
 	})
 
 	Describe("happy path", func() {
-		It("deploys bosh and cf and services", func() {
+		It("deploys bosh and services", func() {
 			gomock.InOrder(
-				mockMetadataReader.EXPECT().Read(filepath.Join("some-cache-dir", "metadata.yml")).Return(metadata.Metadata{
-					Version: "v3",
+				mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
+					Version: "v4",
 				}, nil),
 				mockProvisioner.EXPECT().Ping(),
 				mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 				mockProvisioner.EXPECT().DeployBosh(),
-				mockUI.EXPECT().Say("Deploying CF..."),
-				mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, nil),
 				mockProvisioner.EXPECT().WhiteListServices("", nil).Return([]prvsion.Service{}, nil),
-				mockProvisioner.EXPECT().DeployServices(mockUI, []prvsion.Service{}),
+				mockProvisioner.EXPECT().DeployServices(mockUI, []prvsion.Service{}, nil),
 			)
 
 			err := cmd.Execute(start.Args{})
@@ -66,7 +64,7 @@ var _ = Describe("Provision", func() {
 	Describe("when version is not compatible", func() {
 		It("return an error", func() {
 			gomock.InOrder(
-				mockMetadataReader.EXPECT().Read(filepath.Join("some-cache-dir", "metadata.yml")).Return(metadata.Metadata{
+				mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
 					Version: "v10",
 				}, nil),
 			)
@@ -77,18 +75,16 @@ var _ = Describe("Provision", func() {
 	})
 
 	Describe("when docker registry flags are present", func() {
-		It("pass them to CF", func() {
+		It("pass them to services", func() {
 			gomock.InOrder(
-				mockMetadataReader.EXPECT().Read(filepath.Join("some-cache-dir", "metadata.yml")).Return(metadata.Metadata{
-					Version: "v3",
+				mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
+					Version: "v4",
 				}, nil),
 				mockProvisioner.EXPECT().Ping(),
 				mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 				mockProvisioner.EXPECT().DeployBosh(),
-				mockUI.EXPECT().Say("Deploying CF..."),
-				mockProvisioner.EXPECT().DeployCloudFoundry(mockUI, []string{"domain1.com", "domain2.com"}),
 				mockProvisioner.EXPECT().WhiteListServices("", nil).Return([]prvsion.Service{}, nil),
-				mockProvisioner.EXPECT().DeployServices(mockUI, []prvsion.Service{}),
+				mockProvisioner.EXPECT().DeployServices(mockUI, []prvsion.Service{}, []string{"domain1.com","domain2.com"}),
 			)
 
 			err := cmd.Execute(start.Args{
@@ -101,8 +97,8 @@ var _ = Describe("Provision", func() {
 	Describe("when the vm is not running", func() {
 		It("return an error", func() {
 			gomock.InOrder(
-				mockMetadataReader.EXPECT().Read(filepath.Join("some-cache-dir", "metadata.yml")).Return(metadata.Metadata{
-					Version: "v3",
+				mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
+					Version: "v4",
 				}, nil),
 				mockProvisioner.EXPECT().Ping().Return(errors.New("not running")),
 			)

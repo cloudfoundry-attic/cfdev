@@ -28,23 +28,30 @@ var _ = Describe("VpnKit", func() {
 		var err error
 		tmpDir, err = ioutil.TempDir("/var/tmp", "vpnkit-test")
 		Expect(err).NotTo(HaveOccurred())
+
+		binaryDir := filepath.Join(tmpDir, "some-bin-dir")
 		cacheDir := filepath.Join(tmpDir, "some-cache-dir")
 		vpnkitStateDir = filepath.Join(tmpDir, "some-vpnkit-state-dir")
 		stateDir := filepath.Join(tmpDir, "some-state-dir")
 		homeDir := filepath.Join(tmpDir, "some-home-dir")
 		logDir := filepath.Join(tmpDir, "some-log-dir")
+
+		Expect(os.Mkdir(binaryDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(cacheDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(vpnkitStateDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(stateDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(homeDir, 0777)).To(Succeed())
 		Expect(os.Mkdir(logDir, 0777)).To(Succeed())
-		downloadVpnKit(cacheDir, "https://s3.amazonaws.com/cfdev-ci/vpnkit/vpnkit-darwin-amd64-0.0.0-build.3")
+
+		downloadVpnKit(binaryDir, "https://s3.amazonaws.com/cfdev-ci/vpnkit/vpnkit-darwin-amd64-0.0.0-build.3")
+
 		lctl = &daemon.Launchd{
 			PListDir: tmpDir,
 		}
 
 		vkit = network.VpnKit{
 			Config: config.Config{
+				BinaryDir:      binaryDir,
 				CacheDir:       cacheDir,
 				VpnKitStateDir: vpnkitStateDir,
 				StateDir:       stateDir,

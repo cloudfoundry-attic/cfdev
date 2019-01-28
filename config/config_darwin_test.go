@@ -26,7 +26,7 @@ var _ = Describe("config", func() {
 			It("returns a config object with default values", func() {
 				conf, err := config.NewConfig()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(conf.BoshDirectorIP).To(Equal("10.144.0.4"))
+				Expect(conf.BoshDirectorIP).To(Equal("10.144.0.2"))
 				Expect(conf.CFRouterIP).To(Equal("10.144.0.34"))
 				Expect(conf.HostIP).To(Equal("192.168.65.2"))
 				Expect(conf.CFDevHome).To(Equal(filepath.Join("some-home-dir", ".cfdev")))
@@ -35,6 +35,7 @@ var _ = Describe("config", func() {
 				Expect(conf.StateLinuxkit).To(Equal(filepath.Join("some-home-dir", ".cfdev", "state", "linuxkit")))
 				Expect(conf.VpnKitStateDir).To(Equal(filepath.Join("some-home-dir", ".cfdev", "state", "vpnkit")))
 				Expect(conf.CacheDir).To(Equal(filepath.Join("some-home-dir", ".cfdev", "cache")))
+				Expect(conf.BinaryDir).To(Equal(filepath.Join("some-home-dir", ".cfdev", "bin")))
 				Expect(conf.ServicesDir).To(Equal(filepath.Join("some-home-dir", ".cfdev", "services")))
 				Expect(conf.LogDir).To(Equal(filepath.Join("some-home-dir", ".cfdev", "log")))
 			})
@@ -52,7 +53,7 @@ var _ = Describe("config", func() {
 		It("returns a config object with default values", func() {
 			conf, err := config.NewConfig()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(conf.BoshDirectorIP).To(Equal("10.144.0.4"))
+			Expect(conf.BoshDirectorIP).To(Equal("10.144.0.2"))
 			Expect(conf.CFRouterIP).To(Equal("10.144.0.34"))
 			Expect(conf.HostIP).To(Equal("192.168.65.2"))
 			Expect(conf.CFDevHome).To(Equal(filepath.Join("some-cfdev-home")))
@@ -61,6 +62,7 @@ var _ = Describe("config", func() {
 			Expect(conf.StateLinuxkit).To(Equal(filepath.Join("some-cfdev-home", "state", "linuxkit")))
 			Expect(conf.VpnKitStateDir).To(Equal(filepath.Join("some-cfdev-home", "state", "vpnkit")))
 			Expect(conf.CacheDir).To(Equal(filepath.Join("some-cfdev-home", "cache")))
+			Expect(conf.BinaryDir).To(Equal(filepath.Join("some-cfdev-home", "bin")))
 			Expect(conf.ServicesDir).To(Equal(filepath.Join("some-cfdev-home", "services")))
 			Expect(conf.LogDir).To(Equal(filepath.Join("some-cfdev-home", "log")))
 		})

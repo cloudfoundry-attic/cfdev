@@ -28,7 +28,7 @@ type MetaDataReader interface {
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/deploy-service Provisioner
 type Provisioner interface {
 	Ping() error
-	DeployServices(provision.UI, []provision.Service) error
+	DeployServices(provision.UI, []provision.Service, []string) error
 	GetWhiteListedService(string, []provision.Service) (*provision.Service, error)
 }
 
@@ -79,7 +79,7 @@ func (c *DeployService) RunE(cmd *cobra.Command, args []string) error {
 }
 
 func (c *DeployService) Execute(args Args) error {
-	metadataConfig, err := c.MetaDataReader.Read(filepath.Join(c.Config.CacheDir, "metadata.yml"))
+	metadataConfig, err := c.MetaDataReader.Read(filepath.Join(c.Config.StateDir, "metadata.yml"))
 	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("something went wrong while reading the assets. Please execute 'cf dev start'"))
 	}
@@ -98,7 +98,7 @@ func (c *DeployService) Execute(args Args) error {
 		return e.SafeWrap(err, "Failed to whitelist service")
 	}
 
-	if err := c.Provisioner.DeployServices(c.UI, []provision.Service{*service}); err != nil {
+	if err := c.Provisioner.DeployServices(c.UI, []provision.Service{*service}, []string{}); err != nil {
 		return e.SafeWrap(err, "Failed to deploy services")
 	}
 

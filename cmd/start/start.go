@@ -111,7 +111,7 @@ type Stop interface {
 //go:generate mockgen -package mocks -destination mocks/env.go code.cloudfoundry.org/cfdev/cmd/start Env
 type Env interface {
 	CreateDirs() error
-	SetupState() error
+	SetupState(depsFile string) error
 }
 
 type Args struct {
@@ -145,7 +145,7 @@ type Start struct {
 	Profiler        SystemProfiler
 }
 
-const compatibilityVersion = "v3"
+const compatibilityVersion = "v4"
 const defaultMemory = 4192
 
 func (s *Start) Cmd() *cobra.Command {
@@ -185,23 +185,25 @@ func (s *Start) Execute(args Args) error {
 		os.Exit(128)
 	}()
 
-	depsFileName := "cf"
-	*s.Config.DepsFile = filepath.Join(s.Config.CacheDir, "cfdev-deps.tgz")
+	depsPath := filepath.Join(s.Config.CacheDir, "cfdev-deps.tgz")
+
 	if args.DepsPath != "" {
-		depsFileName = filepath.Base(args.DepsPath)
 		var err error
-		*s.Config.DepsFile, err = filepath.Abs(args.DepsPath)
+		depsPath, err = filepath.Abs(args.DepsPath)
 		if err != nil {
 			return e.SafeWrap(err, "determining absolute path to deps iso")
 		}
-		if _, err := os.Stat(*s.Config.DepsFile); os.IsNotExist(err) {
-			return fmt.Errorf("no file found at: %s", *s.Config.DepsFile)
+
+		if _, err := os.Stat(depsPath); os.IsNotExist(err) {
+			return fmt.Errorf("no file found at: %s", depsPath)
 		}
 
 		s.Config.Dependencies.Remove("cfdev-deps.tgz")
 	}
 
-	s.AnalyticsToggle.SetProp("type", depsFileName)
+	//TODO re-introduce "type" prop
+	//TODO introduce "artifact" prop
+	//s.AnalyticsToggle.SetProp("type", depsFileName)
 
 	aMem, err := s.Profiler.GetAvailableMemory()
 	if err != nil {
@@ -235,11 +237,13 @@ func (s *Start) Execute(args Args) error {
 
 	if cfdevd := s.Config.Dependencies.Lookup("cfdevd"); cfdevd != nil {
 		s.UI.Say("Downloading Network Helper...")
+
 		if err := s.Cache.Sync(resource.Catalog{
 			Items: []resource.Item{*cfdevd},
 		}); err != nil {
 			return e.SafeWrap(err, "Unable to download network helper")
 		}
+
 		s.Config.Dependencies.Remove("cfdevd")
 	}
 
@@ -257,16 +261,17 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Setting State...")
-	if err := s.Env.SetupState(); err != nil {
+	if err := s.Env.SetupState(depsPath); err != nil {
 		return e.SafeWrap(err, "Unable to setup directories")
 	}
 
-	metaData, err := s.MetaDataReader.Read(filepath.Join(s.Config.CacheDir, "metadata.yml"))
+	metaData, err := s.MetaDataReader.Read(filepath.Join(s.Config.StateDir, "metadata.yml"))
 	if err != nil {
-		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsFileName))
+		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsPath))
 	}
+
 	if metaData.Version != compatibilityVersion {
-		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsFileName)
+		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsPath)
 	}
 
 	s.Analytics.PromptOptInIfNeeded(metaData.AnalyticsMessage)
@@ -296,10 +301,12 @@ func (s *Start) Execute(args Args) error {
 	}); err != nil {
 		return e.SafeWrap(err, "creating the vm")
 	}
+
 	s.UI.Say("Starting VPNKit...")
 	if err := s.VpnKit.Start(); err != nil {
 		return e.SafeWrap(err, "starting vpnkit")
 	}
+
 	s.VpnKit.Watch(s.LocalExit)
 
 	s.UI.Say("Starting the VM...")
@@ -327,7 +334,6 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.Analytics.Event(cfanalytics.START_END)
-
 	return nil
 }
 

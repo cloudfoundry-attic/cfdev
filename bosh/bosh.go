@@ -2,14 +2,10 @@ package bosh
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
-	"time"
-
 	"code.cloudfoundry.org/cfdev/errors"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	"github.com/onsi/ginkgo"
+	"time"
 )
 
 var VMProgressInterval = 1 * time.Second
@@ -19,27 +15,21 @@ type Bosh struct {
 }
 
 func New(cfg config.Config) (*Bosh, error) {
-	content, err := ioutil.ReadFile(filepath.Join(cfg.StateBosh, "secret"))
-	if err != nil {
-		return nil, err
-	}
+	var (
+		f         = boshdir.NewFactory(&Logger{})
+		envs      = envsMapping(cfg)
+		host, _   = envs["BOSH_ENVIRONMENT"]
+		client, _ = envs["BOSH_CLIENT"]
+		secret, _ = envs["BOSH_CLIENT_SECRET"]
+		caCert, _ = envs["BOSH_CA_CERT"]
+	)
 
-	secret := strings.TrimSpace(string(content))
-
-	content, err = ioutil.ReadFile(filepath.Join(cfg.StateBosh, "ca.crt"))
-	if err != nil {
-		return nil, err
-	}
-
-	caCert := strings.TrimSpace(string(content))
-
-	f := boshdir.NewFactory(&Logger{})
 	dir, err := f.New(boshdir.FactoryConfig{
-		Host:         cfg.BoshDirectorIP,
+		Host:         host,
 		Port:         25555,
-		CACert:       caCert,
-		Client:       "admin",
+		Client:       client,
 		ClientSecret: secret,
+		CACert:       caCert,
 	}, &TaskReporter{}, &FileReporter{})
 	if err != nil {
 		return nil, errors.SafeWrap(err, "failed to connect to bosh director")

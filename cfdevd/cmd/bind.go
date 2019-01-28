@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-const BOSH_IP = "10.144.0.4"
+const BOSH_IP = "10.144.0.2"
 const GOROUTER_IP = "10.144.0.34"
 
 const (

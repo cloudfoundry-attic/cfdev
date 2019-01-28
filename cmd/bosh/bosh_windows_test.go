@@ -16,7 +16,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Bosh", func() {
+var _ = XDescribe("Bosh", func() {
 	var (
 		mockController      *gomock.Controller
 		mockAnalyticsClient *mocks.MockAnalyticsClient

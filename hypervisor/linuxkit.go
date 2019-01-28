@@ -67,24 +67,24 @@ func (l *LinuxKit) IsRunning(vmName string) (bool, error) {
 }
 
 func (l *LinuxKit) DaemonSpec(cpus, mem int) (daemon.DaemonSpec, error) {
-	linuxkit := filepath.Join(l.Config.CacheDir, "linuxkit")
-	hyperkit := filepath.Join(l.Config.CacheDir, "hyperkit")
-	uefi := filepath.Join(l.Config.CacheDir, "UEFI.fd")
-	qcowtool := filepath.Join(l.Config.CacheDir, "qcow-tool")
-	vpnkitEthSock := filepath.Join(l.Config.VpnKitStateDir, "vpnkit_eth.sock")
-	vpnkitPortSock := filepath.Join(l.Config.VpnKitStateDir, "vpnkit_port.sock")
-
-	osImagePath := filepath.Join(l.Config.CacheDir, "cfdev-efi-v2.iso")
-
-	diskArgs := []string{
-		"type=qcow",
-		"size=80G",
-		"trim=true",
-		fmt.Sprintf("qcow-tool=%s", qcowtool),
-		"qcow-onflush=os",
-		"qcow-compactafter=262144",
-		"qcow-keeperased=262144",
-	}
+	var (
+		linuxkit       = filepath.Join(l.Config.BinaryDir, "linuxkit")
+		hyperkit       = filepath.Join(l.Config.BinaryDir, "hyperkit")
+		uefi           = filepath.Join(l.Config.BinaryDir, "UEFI.fd")
+		qcowtool       = filepath.Join(l.Config.BinaryDir, "qcow-tool")
+		osImagePath    = filepath.Join(l.Config.BinaryDir, "cfdev-efi-v2.iso")
+		vpnkitEthSock  = filepath.Join(l.Config.VpnKitStateDir, "vpnkit_eth.sock")
+		vpnkitPortSock = filepath.Join(l.Config.VpnKitStateDir, "vpnkit_port.sock")
+		diskArgs       = []string{
+			"type=qcow",
+			"size=120G",
+			"trim=true",
+			fmt.Sprintf("qcow-tool=%s", qcowtool),
+			"qcow-onflush=os",
+			"qcow-compactafter=262144",
+			"qcow-keeperased=262144",
+		}
+	)
 
 	return daemon.DaemonSpec{
 		Label:       LinuxKitLabel,

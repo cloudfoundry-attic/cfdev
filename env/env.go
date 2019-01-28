@@ -1,10 +1,12 @@
 package env
 
 import (
-	"code.cloudfoundry.org/cfdev/resource"
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
-	"runtime"
+	"path/filepath"
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/config"
@@ -61,19 +63,15 @@ type Env struct {
 func (e *Env) CreateDirs() error {
 	err := e.RemoveDirAlls(
 		e.Config.LogDir,
-		e.Config.ServicesDir,
-		e.Config.StateDir)
+		e.Config.StateDir,
+		e.Config.BinaryDir,
+		e.Config.ServicesDir)
 	if err != nil {
 		return err
 	}
 
 	return e.MkdirAlls(
-		e.Config.CFDevHome,
 		e.Config.CacheDir,
-		e.Config.VpnKitStateDir,
-		e.Config.StateLinuxkit,
-		e.Config.StateBosh,
-		e.Config.ServicesDir,
 		e.Config.LogDir)
 }
 
@@ -97,67 +95,54 @@ func (e *Env) RemoveDirAlls(dirs ...string) error {
 	return nil
 }
 
-func (e *Env) SetupState() error {
-	thingsToUntar := []resource.TarOpts{
-		{
-			Include: "state.json",
-			Dst:     e.Config.StateBosh,
-		},
-		{
-			Include: "creds.yml",
-			Dst:     e.Config.StateBosh,
-		},
-		{
-			Include: "secret",
-			Dst:     e.Config.StateBosh,
-		},
-		{
-			Include: "jumpbox.key",
-			Dst:     e.Config.StateBosh,
-		},
-		{
-			Include: "ca.crt",
-			Dst:     e.Config.StateBosh,
-		},
-		{
-			Include: "ca.yml",
-			Dst:     e.Config.StateBosh,
-		},
-		{
-			Include: "id_rsa",
-			Dst:     e.Config.CacheDir,
-		},
-		{
-			IncludeFolder: "services",
-			Dst:           e.Config.CFDevHome,
-		},
-		{
-			IncludeFolder: "binaries",
-			FlattenFolder: true,
-			Dst:           e.Config.CacheDir,
-		},
-		{
-			IncludeFolder: "deployment_config",
-			FlattenFolder: true,
-			Dst:           e.Config.CacheDir,
-		},
-	}
-
-	if runtime.GOOS == "windows" {
-		thingsToUntar = append(thingsToUntar, resource.TarOpts{
-			Include: "disk.vhdx",
-			Dst:     e.Config.StateLinuxkit,
-		})
-	} else {
-		thingsToUntar = append(thingsToUntar, resource.TarOpts{
-			Include: "disk.qcow2",
-			Dst:     e.Config.StateLinuxkit,
-		})
-	}
-
-	err := resource.Untar(*e.Config.DepsFile, thingsToUntar)
+func (e *Env) SetupState(depsFile string) error {
+	f, err := os.Open(depsFile)
 	if err != nil {
-		return errors.SafeWrap(err, "failed to untar the desired parts of the tarball")
+		return err
+	}
+	defer f.Close()
+
+	gzr, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+
+	for {
+		header, err := tr.Next()
+
+		switch {
+		case err == io.EOF:
+			return nil
+		case err != nil:
+			return err
+		case header == nil:
+			continue
+		}
+
+		target := filepath.Join(e.Config.CFDevHome, header.Name)
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0755); err != nil {
+					return err
+				}
+			}
+		case tar.TypeReg:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+
+			f.Close()
+		}
 	}
 
 	return nil

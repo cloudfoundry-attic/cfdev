@@ -2,7 +2,8 @@
 set -exo pipefail
 
 dir="$( cd "$( dirname "$0" )" && pwd )"
-cache_dir="$HOME"/.cfdev/cache
+home_dir=${CFDEV_HOME:-$HOME/.cfdev}
+cache_dir="$home_dir/cache"
 analyticskey="WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2"
 
 export GOOS=darwin

@@ -47,6 +47,7 @@ var _ = Describe("Start", func() {
 		localExitChan chan string
 		tmpDir        string
 		cacheDir      string
+		stateDir      string
 		metadata      mdata.Metadata
 	)
 
@@ -87,18 +88,17 @@ var _ = Describe("Start", func() {
 		localExitChan = make(chan string, 3)
 		tmpDir, err = ioutil.TempDir("", "start-test-home")
 		cacheDir = filepath.Join(tmpDir, "some-cache-dir")
+		stateDir = filepath.Join(tmpDir, "some-state-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		depsFile := ""
 		startCmd = start.Start{
 			Config: config.Config{
 				CFDevHome:      tmpDir,
-				StateDir:       filepath.Join(tmpDir, "some-state-dir"),
+				StateDir:       stateDir,
 				StateBosh:      filepath.Join(tmpDir, "some-bosh-state-dir"),
 				StateLinuxkit:  filepath.Join(tmpDir, "some-linuxkit-state-dir"),
 				VpnKitStateDir: filepath.Join(tmpDir, "some-vpnkit-state-dir"),
 				CacheDir:       cacheDir,
-				DepsFile:       &depsFile,
 				CFRouterIP:     "some-cf-router-ip",
 				BoshDirectorIP: "some-bosh-director-ip",
 				Dependencies: resource.Catalog{
@@ -129,7 +129,7 @@ var _ = Describe("Start", func() {
 		}
 
 		metadata = mdata.Metadata{
-			Version:          "v3",
+			Version:          "v4",
 			DefaultMemory:    8765,
 			DeploymentName:   "cf",
 			AnalyticsMessage: "",
@@ -151,7 +151,6 @@ var _ = Describe("Start", func() {
 				}
 
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 
@@ -169,8 +168,8 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
-					mockEnv.EXPECT().SetupState(),
-					mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+					mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 					mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -211,7 +210,6 @@ var _ = Describe("Start", func() {
 				}
 
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 					mockHost.EXPECT().CheckRequirements(),
@@ -228,8 +226,8 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
-					mockEnv.EXPECT().SetupState(),
-					mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+					mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 					mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -279,7 +277,6 @@ var _ = Describe("Start", func() {
 					}
 
 					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 						mockHost.EXPECT().CheckRequirements(),
@@ -302,8 +299,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -346,7 +343,6 @@ var _ = Describe("Start", func() {
 					}
 
 					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 						mockHost.EXPECT().CheckRequirements(),
@@ -363,9 +359,9 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(mdata.Metadata{
-							Version:          "v3",
+						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(mdata.Metadata{
+							Version:          "v4",
 							DeploymentName:   "cf",
 							AnalyticsMessage: "",
 							Services:         services,
@@ -412,7 +408,6 @@ var _ = Describe("Start", func() {
 					}
 
 					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 						mockHost.EXPECT().CheckRequirements(),
@@ -429,8 +424,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -477,7 +472,6 @@ var _ = Describe("Start", func() {
 					}
 
 					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 						mockHost.EXPECT().CheckRequirements(),
@@ -494,8 +488,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -540,7 +534,6 @@ var _ = Describe("Start", func() {
 							}
 
 							gomock.InOrder(
-								mockToggle.EXPECT().SetProp("type", "cf"),
 								mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(15000), nil),
 								mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(16000), nil),
 								mockHost.EXPECT().CheckRequirements(),
@@ -557,8 +550,8 @@ var _ = Describe("Start", func() {
 									},
 								}),
 								mockUI.EXPECT().Say("Setting State..."),
-								mockEnv.EXPECT().SetupState(),
-								mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+								mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+								mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 								mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 								mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -602,7 +595,6 @@ var _ = Describe("Start", func() {
 						}
 
 						gomock.InOrder(
-							mockToggle.EXPECT().SetProp("type", "cf"),
 							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(9000), nil),
 							mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(9500), nil),
 							mockHost.EXPECT().CheckRequirements(),
@@ -619,8 +611,8 @@ var _ = Describe("Start", func() {
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
-							mockEnv.EXPECT().SetupState(),
-							mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+							mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+							mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 							mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -667,7 +659,6 @@ var _ = Describe("Start", func() {
 						}
 
 						gomock.InOrder(
-							mockToggle.EXPECT().SetProp("type", "cf"),
 							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(15000), nil),
 							mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(16000), nil),
 							mockHost.EXPECT().CheckRequirements(),
@@ -684,9 +675,9 @@ var _ = Describe("Start", func() {
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
-							mockEnv.EXPECT().SetupState(),
-							mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(mdata.Metadata{
-								Version:          "v3",
+							mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+							mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(mdata.Metadata{
+								Version:          "v4",
 								DefaultMemory:    8765,
 								DeploymentName:   "some-deployment-name",
 								AnalyticsMessage: "some-custom-analytics-message",
@@ -734,7 +725,6 @@ var _ = Describe("Start", func() {
 						}
 
 						gomock.InOrder(
-							mockToggle.EXPECT().SetProp("type", "cf"),
 							mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(5000), nil),
 							mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(5500), nil),
 							mockHost.EXPECT().CheckRequirements(),
@@ -751,8 +741,8 @@ var _ = Describe("Start", func() {
 								},
 							}),
 							mockUI.EXPECT().Say("Setting State..."),
-							mockEnv.EXPECT().SetupState(),
-							mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+							mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+							mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 							mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -800,7 +790,6 @@ var _ = Describe("Start", func() {
 					}
 
 					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 						mockHost.EXPECT().CheckRequirements(),
@@ -817,8 +806,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -863,7 +852,6 @@ var _ = Describe("Start", func() {
 					}
 
 					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 						mockHost.EXPECT().CheckRequirements(),
@@ -880,8 +868,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -926,7 +914,6 @@ var _ = Describe("Start", func() {
 					}
 
 					gomock.InOrder(
-						mockToggle.EXPECT().SetProp("type", "cf"),
 						mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 						mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 						mockHost.EXPECT().CheckRequirements(),
@@ -943,8 +930,8 @@ var _ = Describe("Start", func() {
 							},
 						}),
 						mockUI.EXPECT().Say("Setting State..."),
-						mockEnv.EXPECT().SetupState(),
-						mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
+						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -974,7 +961,6 @@ var _ = Describe("Start", func() {
 				}
 
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "custom.tgz"),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 					mockHost.EXPECT().CheckRequirements(),
@@ -991,15 +977,15 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
-					mockEnv.EXPECT().SetupState(),
-					mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+					mockEnv.EXPECT().SetupState(tarballFile),
+					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 				)
 
 				Expect(startCmd.Execute(start.Args{
 					Cpus:     7,
 					Mem:      6666,
 					DepsPath: tarballFile,
-				})).To(MatchError("custom.tgz is not compatible with CF Dev. Please use a compatible file"))
+				})).To(MatchError(ContainSubstring("custom.tgz is not compatible with CF Dev. Please use a compatible file")))
 			})
 		})
 
@@ -1014,7 +1000,6 @@ var _ = Describe("Start", func() {
 				}
 
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "custom.tgz"),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 					mockHost.EXPECT().CheckRequirements(),
@@ -1031,8 +1016,8 @@ var _ = Describe("Start", func() {
 						},
 					}),
 					mockUI.EXPECT().Say("Setting State..."),
-					mockEnv.EXPECT().SetupState(),
-					mockMetadataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata, nil),
+					mockEnv.EXPECT().SetupState(customTarball),
+					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
 					mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
@@ -1072,7 +1057,6 @@ var _ = Describe("Start", func() {
 		Context("when linuxkit is already running", func() {
 			It("says cf dev is already running", func() {
 				gomock.InOrder(
-					mockToggle.EXPECT().SetProp("type", "cf"),
 					mockSystemProfiler.EXPECT().GetAvailableMemory().Return(uint64(111), nil),
 					mockSystemProfiler.EXPECT().GetTotalMemory().Return(uint64(222), nil),
 					mockHost.EXPECT().CheckRequirements(),

@@ -45,13 +45,13 @@ func (mr *MockEnvMockRecorder) CreateDirs() *gomock.Call {
 }
 
 // SetupState mocks base method
-func (m *MockEnv) SetupState() error {
-	ret := m.ctrl.Call(m, "SetupState")
+func (m *MockEnv) SetupState(arg0 string) error {
+	ret := m.ctrl.Call(m, "SetupState", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetupState indicates an expected call of SetupState
-func (mr *MockEnvMockRecorder) SetupState() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupState", reflect.TypeOf((*MockEnv)(nil).SetupState))
+func (mr *MockEnvMockRecorder) SetupState(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupState", reflect.TypeOf((*MockEnv)(nil).SetupState), arg0)
 }

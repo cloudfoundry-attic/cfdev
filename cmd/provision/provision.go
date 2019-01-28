@@ -31,12 +31,11 @@ type MetaDataReader interface {
 type Provisioner interface {
 	Ping() error
 	DeployBosh() error
-	DeployCloudFoundry(provision.UI, []string) error
 	WhiteListServices(string, []provision.Service) ([]provision.Service, error)
-	DeployServices(provision.UI, []provision.Service) error
+	DeployServices(provision.UI, []provision.Service, []string) error
 }
 
-const compatibilityVersion = "v3"
+const compatibilityVersion = "v4"
 
 type Provision struct {
 	Exit           chan struct{}
@@ -65,7 +64,7 @@ func (c *Provision) RunE(cmd *cobra.Command, args []string) error {
 }
 
 func (c *Provision) Execute(args start.Args) error {
-	metadataConfig, err := c.MetaDataReader.Read(filepath.Join(c.Config.CacheDir, "metadata.yml"))
+	metadataConfig, err := c.MetaDataReader.Read(filepath.Join(c.Config.StateDir, "metadata.yml"))
 	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("something went wrong while reading the assets. Please execute 'cf dev start'"))
 	}
@@ -93,17 +92,17 @@ func (c *Provision) provision(metadataConfig metadata.Metadata, registries []str
 		return e.SafeWrap(err, "Failed to deploy the BOSH Director")
 	}
 
-	c.UI.Say("Deploying CF...")
-	if err := c.Provisioner.DeployCloudFoundry(c.UI, registries); err != nil {
-		return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
-	}
+	//c.UI.Say("Deploying CF...")
+	//if err := c.Provisioner.DeployCloudFoundry(c.UI, registries); err != nil {
+	//	return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
+	//}
 
 	services, err := c.Provisioner.WhiteListServices(deploySingleService, metadataConfig.Services)
 	if err != nil {
 		return e.SafeWrap(err, "Failed to whitelist services")
 	}
 
-	if err := c.Provisioner.DeployServices(c.UI, services); err != nil {
+	if err := c.Provisioner.DeployServices(c.UI, services, registries); err != nil {
 		return e.SafeWrap(err, "Failed to deploy services")
 	}
 
