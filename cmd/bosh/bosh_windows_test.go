@@ -3,7 +3,6 @@ package bosh_test
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -16,13 +15,13 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = XDescribe("Bosh", func() {
+var _ = Describe("Bosh", func() {
 	var (
 		mockController      *gomock.Controller
-		mockAnalyticsClient *mocks.MockAnalyticsClient
 		mockUI              *mocks.MockUI
 		tmpDir              string
 		boshCmd             *cmd.Bosh
+		mockAnalyticsClient *mocks.MockAnalyticsClient
 	)
 
 	BeforeEach(func() {
@@ -30,16 +29,15 @@ var _ = XDescribe("Bosh", func() {
 		mockAnalyticsClient = mocks.NewMockAnalyticsClient(mockController)
 		mockUI = mocks.NewMockUI(mockController)
 
-		var err error
-		tmpDir, err = ioutil.TempDir("", "cmd-bosh-test")
-		Expect(err).NotTo(HaveOccurred())
-
 		cfg := config.Config{
 			StateBosh: tmpDir,
-			BoshDirectorIP: "10.0.0.1",
 		}
 
-		ioutil.WriteFile(filepath.Join(tmpDir, "secret"), []byte("some-bosh-secret"), 0600)
+		content := `---
+BOSH_ENVIRONMENT: 10.0.0.1
+BOSH_CLIENT: admin`
+
+		ioutil.WriteFile(filepath.Join(tmpDir, "env.yml"), []byte(content), 0600)
 
 		boshCmd = &cmd.Bosh{
 			UI:          mockUI,
@@ -68,18 +66,12 @@ var _ = XDescribe("Bosh", func() {
 
 			It("prints unset and export statements", func() {
 				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
-				mockUI.EXPECT().Say(fmt.Sprintf(`Remove-Item Env:BOSH_SOME_OTHER_VAR;
-Remove-Item Env:BOSH_SOME_VAR;
-$env:BOSH_ENVIRONMENT="10.0.0.1";
-$env:BOSH_CLIENT="admin";
-$env:BOSH_CLIENT_SECRET="some-bosh-secret";
-$env:BOSH_CA_CERT="%s";
-$env:BOSH_GW_HOST="10.0.0.1";
-$env:BOSH_GW_PRIVATE_KEY="%s";
-$env:BOSH_GW_USER="jumpbox";`,
-					filepath.Join(tmpDir, "ca.crt"),
-					filepath.Join(tmpDir, "jumpbox.key"),
-				))
+				mockUI.EXPECT().Say(gomock.Any()).Do(func(arg string) {
+					Expect(arg).To(ContainSubstring(`Remove-Item Env:BOSH_SOME_OTHER_VAR;`))
+					Expect(arg).To(ContainSubstring(`Remove-Item Env:BOSH_SOME_VAR;`))
+					Expect(arg).To(ContainSubstring(`$env:BOSH_ENVIRONMENT="10.0.0.1";`))
+					Expect(arg).To(ContainSubstring(`$env:BOSH_CLIENT="admin";`))
+				})
 
 				Expect(boshCmd.Env()).To(Succeed())
 			})

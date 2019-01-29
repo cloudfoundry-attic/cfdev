@@ -3,7 +3,6 @@ package bosh_test
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -16,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = XDescribe("Bosh", func() {
+var _ = Describe("Bosh", func() {
 	var (
 		mockController      *gomock.Controller
 		mockUI              *mocks.MockUI
@@ -31,15 +30,18 @@ var _ = XDescribe("Bosh", func() {
 		mockUI = mocks.NewMockUI(mockController)
 
 		var err error
-		tmpDir, err = ioutil.TempDir("", "cmd-bosh-test")
+		tmpDir, err := ioutil.TempDir("", "cfdev-bosh-env-")
 		Expect(err).NotTo(HaveOccurred())
 
 		cfg := config.Config{
 			StateBosh: tmpDir,
-			BoshDirectorIP: "10.0.0.1",
 		}
 
-		ioutil.WriteFile(filepath.Join(tmpDir, "secret"), []byte("some-bosh-secret"), 0600)
+		content := `---
+BOSH_ENVIRONMENT: 10.0.0.1
+BOSH_CLIENT: admin`
+
+		ioutil.WriteFile(filepath.Join(tmpDir, "env.yml"), []byte(content), 0600)
 
 		boshCmd = &cmd.Bosh{
 			UI:          mockUI,
@@ -68,19 +70,12 @@ var _ = XDescribe("Bosh", func() {
 
 			It("prints unset and export statements", func() {
 				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
-				mockUI.EXPECT().Say(fmt.Sprintf(
-					`unset BOSH_SOME_VAR;
-unset BOSH_SOME_OTHER_VAR;
-export BOSH_ENVIRONMENT="10.0.0.1";
-export BOSH_CLIENT="admin";
-export BOSH_CLIENT_SECRET="some-bosh-secret";
-export BOSH_CA_CERT="%s";
-export BOSH_GW_HOST="10.0.0.1";
-export BOSH_GW_PRIVATE_KEY="%s";
-export BOSH_GW_USER="jumpbox";`,
-					filepath.Join(tmpDir, "ca.crt"),
-					filepath.Join(tmpDir, "jumpbox.key"),
-				))
+				mockUI.EXPECT().Say(gomock.Any()).Do(func(arg string) {
+					Expect(arg).To(ContainSubstring(`unset BOSH_SOME_VAR;`))
+					Expect(arg).To(ContainSubstring(`unset BOSH_SOME_OTHER_VAR;`))
+					Expect(arg).To(ContainSubstring(`export BOSH_ENVIRONMENT="10.0.0.1";`))
+					Expect(arg).To(ContainSubstring(`export BOSH_CLIENT="admin";`))
+				})
 
 				Expect(boshCmd.Env()).To(Succeed())
 			})

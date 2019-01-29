@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Controller) report(start time.Time, ui UI, b *bosh.Bosh, service Service, errChan chan error) error {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
 
 	for {
 		select {
@@ -24,8 +24,8 @@ func (c *Controller) report(start time.Time, ui UI, b *bosh.Bosh, service Servic
 			p := b.GetVMProgress(start, service.Deployment, service.IsErrand)
 
 			switch p.State {
-			case bosh.UploadingReleases:
-				ui.Writer().Write([]byte(fmt.Sprintf("\r\033[K  Uploaded Releases: %d (%s)", p.Releases, p.Duration.Round(time.Second))))
+			case bosh.Preparing:
+				ui.Writer().Write([]byte(fmt.Sprintf("\r\033[K  Preparing deployment (%s)", p.Duration.Round(time.Second))))
 			case bosh.Deploying:
 				ui.Writer().Write([]byte(fmt.Sprintf("\r\033[K  Progress: %d of %d (%s)", p.Done, p.Total, p.Duration.Round(time.Second))))
 			case bosh.RunningErrand:

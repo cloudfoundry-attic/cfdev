@@ -92,11 +92,6 @@ func (c *Provision) provision(metadataConfig metadata.Metadata, registries []str
 		return e.SafeWrap(err, "Failed to deploy the BOSH Director")
 	}
 
-	//c.UI.Say("Deploying CF...")
-	//if err := c.Provisioner.DeployCloudFoundry(c.UI, registries); err != nil {
-	//	return e.SafeWrap(err, "Failed to deploy the Cloud Foundry")
-	//}
-
 	services, err := c.Provisioner.WhiteListServices(deploySingleService, metadataConfig.Services)
 	if err != nil {
 		return e.SafeWrap(err, "Failed to whitelist services")

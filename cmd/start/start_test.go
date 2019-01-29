@@ -132,6 +132,7 @@ var _ = Describe("Start", func() {
 			Version:          "v4",
 			DefaultMemory:    8765,
 			DeploymentName:   "cf",
+			ArtifactVersion:  "some-artifact-version",
 			AnalyticsMessage: "",
 			Services:         services,
 		}
@@ -171,6 +172,8 @@ var _ = Describe("Start", func() {
 					mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+					mockToggle.EXPECT().SetProp("type", "cf"),
+					mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 					mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 						"total memory":     uint64(222),
@@ -229,6 +232,8 @@ var _ = Describe("Start", func() {
 					mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+					mockToggle.EXPECT().SetProp("type", "cf"),
+					mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 					mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 						"total memory":     uint64(222),
@@ -302,6 +307,8 @@ var _ = Describe("Start", func() {
 						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 							"total memory":     uint64(222),
@@ -363,10 +370,13 @@ var _ = Describe("Start", func() {
 						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(mdata.Metadata{
 							Version:          "v4",
 							DeploymentName:   "cf",
+							ArtifactVersion:  "some-artifact-version",
 							AnalyticsMessage: "",
 							Services:         services,
 						}, nil),
 
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 							"total memory":     uint64(222),
@@ -427,6 +437,8 @@ var _ = Describe("Start", func() {
 						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 							"total memory":     uint64(222),
@@ -491,6 +503,8 @@ var _ = Describe("Start", func() {
 						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 							"total memory":     uint64(222),
@@ -553,6 +567,8 @@ var _ = Describe("Start", func() {
 								mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 								mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+								mockToggle.EXPECT().SetProp("type", "cf"),
+								mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 								mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 								mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 									"total memory":     uint64(16000),
@@ -614,6 +630,8 @@ var _ = Describe("Start", func() {
 							mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 							mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+							mockToggle.EXPECT().SetProp("type", "cf"),
+							mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 							mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 								"total memory":     uint64(9500),
@@ -680,10 +698,13 @@ var _ = Describe("Start", func() {
 								Version:          "v4",
 								DefaultMemory:    8765,
 								DeploymentName:   "some-deployment-name",
+								ArtifactVersion:  "some-other-artifact-version",
 								AnalyticsMessage: "some-custom-analytics-message",
 								Services:         services,
 							}, nil),
 
+							mockToggle.EXPECT().SetProp("type", "some-deployment-name"),
+							mockToggle.EXPECT().SetProp("artifact", "some-other-artifact-version"),
 							mockAnalyticsClient.EXPECT().PromptOptInIfNeeded("some-custom-analytics-message"),
 							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 								"total memory":     uint64(16000),
@@ -744,6 +765,8 @@ var _ = Describe("Start", func() {
 							mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 							mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+							mockToggle.EXPECT().SetProp("type", "cf"),
+							mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 							mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 							mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 								"total memory":     uint64(5500),
@@ -809,6 +832,8 @@ var _ = Describe("Start", func() {
 						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 							"total memory":     uint64(222),
@@ -871,6 +896,8 @@ var _ = Describe("Start", func() {
 						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 							"total memory":     uint64(222),
@@ -933,6 +960,8 @@ var _ = Describe("Start", func() {
 						mockEnv.EXPECT().SetupState(filepath.Join(cacheDir, "cfdev-deps.tgz")),
 						mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+						mockToggle.EXPECT().SetProp("type", "cf"),
+						mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 						mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 						mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 							"total memory":     uint64(222),
@@ -979,6 +1008,9 @@ var _ = Describe("Start", func() {
 					mockUI.EXPECT().Say("Setting State..."),
 					mockEnv.EXPECT().SetupState(tarballFile),
 					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
+
+					mockToggle.EXPECT().SetProp("type", "cf"),
+					mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 				)
 
 				Expect(startCmd.Execute(start.Args{
@@ -1019,6 +1051,8 @@ var _ = Describe("Start", func() {
 					mockEnv.EXPECT().SetupState(customTarball),
 					mockMetadataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata, nil),
 
+					mockToggle.EXPECT().SetProp("type", "cf"),
+					mockToggle.EXPECT().SetProp("artifact", "some-artifact-version"),
 					mockAnalyticsClient.EXPECT().PromptOptInIfNeeded(""),
 					mockAnalyticsClient.EXPECT().Event(cfanalytics.START_BEGIN, map[string]interface{}{
 						"total memory":     uint64(222),

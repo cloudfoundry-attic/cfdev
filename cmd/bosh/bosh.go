@@ -1,8 +1,12 @@
 package bosh
 
 import (
+	"code.cloudfoundry.org/cfdev/bosh"
+	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
+	"fmt"
 	"os"
+	"strings"
 
 	"runtime"
 
@@ -54,19 +58,30 @@ func (b *Bosh) Env() error {
 		os.Exit(128)
 	}()
 
-	//config, err := bosh.FetchConfig(b.Config)
-	//if err != nil {
-	//	return errors.SafeWrap(err, "failed to fetch bosh configuration")
-	//}
-	//
-	//b.Analytics.Event(cfanalytics.BOSH_ENV)
-	//
-	//env := shell.Environment{}
-	//shellScript, err := env.Prepare(config)
-	//if err != nil {
-	//	return errors.SafeWrap(err, "failed to prepare bosh configuration")
-	//}
+	b.Analytics.Event(cfanalytics.BOSH_ENV)
 
-	b.UI.Say("")
+	var output []string
+	envsMapping := bosh.EnvsMapping(b.Config)
+
+	for _, envvar := range os.Environ() {
+		if strings.HasPrefix(envvar, "BOSH_") {
+			envvar = strings.Split(envvar, "=")[0]
+			if runtime.GOOS != "windows" {
+				output = append(output, fmt.Sprintf("unset %s;", envvar))
+			} else {
+				output = append(output, fmt.Sprintf("Remove-Item Env:%s;", envvar))
+			}
+		}
+	}
+
+	for key, value := range envsMapping {
+		if runtime.GOOS != "windows" {
+			output = append(output, fmt.Sprintf("export %s=\"%s\";", key, value))
+		} else {
+			output = append(output, fmt.Sprintf("$env:%s=\"%s\";", key, value))
+		}
+	}
+
+	b.UI.Say(strings.Join(output, "\n"))
 	return nil
 }

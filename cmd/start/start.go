@@ -201,10 +201,6 @@ func (s *Start) Execute(args Args) error {
 		s.Config.Dependencies.Remove("cfdev-deps.tgz")
 	}
 
-	//TODO re-introduce "type" prop
-	//TODO introduce "artifact" prop
-	//s.AnalyticsToggle.SetProp("type", depsFileName)
-
 	aMem, err := s.Profiler.GetAvailableMemory()
 	if err != nil {
 		fmt.Printf("AVAILABLE MEMORY ERROR: %v", err)
@@ -269,6 +265,9 @@ func (s *Start) Execute(args Args) error {
 	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsPath))
 	}
+
+	s.AnalyticsToggle.SetProp("type", metaData.DeploymentName)
+	s.AnalyticsToggle.SetProp("artifact", metaData.ArtifactVersion)
 
 	if metaData.Version != compatibilityVersion {
 		return fmt.Errorf("%s is not compatible with CF Dev. Please use a compatible file", depsPath)

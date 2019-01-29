@@ -57,7 +57,7 @@ func (c *Controller) DeployBosh() error {
 		command = append(command, "--vars-store", "creds.yml")
 	}
 
-	// TODO: Added the time because we were seeing some delay
+	// Added the time because we were seeing some delay
 	// between the time the container was started
 	// and the time it could access the internet
 	// Find a better solution

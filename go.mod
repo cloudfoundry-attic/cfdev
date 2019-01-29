@@ -17,7 +17,7 @@ require (
 	github.com/charlievieth/fs v0.0.0-20170613215519-7dc373669fa1 // indirect
 	github.com/cheggaaa/pb v2.0.6+incompatible // indirect
 	github.com/cloudfoundry-incubator/cf-test-helpers v0.0.0-20181115000646-f917ca935238
-	github.com/cloudfoundry/bosh-cli v5.2.1+incompatible
+	github.com/cloudfoundry/bosh-cli v5.4.0+incompatible
 	github.com/cloudfoundry/bosh-utils v0.0.0-20180725223622-407dd7546455 // indirect
 	github.com/cloudfoundry/cli-plugin-repo v0.0.0-20181029233042-c6b431855994 // indirect
 	github.com/cloudfoundry/go-socks5 v0.0.0-20180221174514-54f73bdb8a8e // indirect
@@ -33,23 +33,18 @@ require (
 	github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d // indirect
 	github.com/elazarl/goproxy v0.0.0-20181111060418-2ce16c963a8a // indirect
 	github.com/fatih/color v1.7.0 // indirect
-	github.com/go-ini/ini v1.38.2 // indirect
 	github.com/gogo/protobuf v1.1.1 // indirect
 	github.com/golang/mock v1.1.1
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/harlow/kinesis-consumer v0.2.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
-	github.com/minio/minio-go v6.0.10+incompatible
-	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/onsi/ginkgo v1.6.0
 	github.com/onsi/gomega v1.4.2
@@ -59,8 +54,6 @@ require (
 	github.com/poy/eachers v0.0.0-20181020210610-23942921fe77 // indirect
 	github.com/segmentio/backo-go v0.0.0-20160424052352-204274ad699c // indirect
 	github.com/sirupsen/logrus v1.0.6 // indirect
-	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
-	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.2 // indirect
 	github.com/square/certstrap v1.1.1 // indirect
@@ -81,12 +74,9 @@ require (
 	gopkg.in/cheggaaa/pb.v2 v2.0.6 // indirect
 	gopkg.in/fatih/color.v1 v1.7.0 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
-	gopkg.in/ini.v1 v1.39.0 // indirect
 	gopkg.in/mattn/go-colorable.v0 v0.0.9 // indirect
 	gopkg.in/mattn/go-isatty.v0 v0.0.4 // indirect
 	gopkg.in/mattn/go-runewidth.v0 v0.0.3 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.0.1
 	gopkg.in/yaml.v2 v2.2.1
 )
-
-replace github.com/cloudfoundry/bosh-cli => github.com/pcfdev-forks/bosh-cli v0.0.0-20180831162148-70729ce5b5db

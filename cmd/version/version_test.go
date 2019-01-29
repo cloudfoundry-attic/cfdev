@@ -64,27 +64,27 @@ var _ = Describe("Version Command", func() {
 
 		Context("when the metadata file is present", func() {
 			var (
-				cacheDir string
+				stateDir string
 			)
 
 			BeforeEach(func() {
 				var err error
-				cacheDir, err = ioutil.TempDir("", "cfdev-version-cache-test-")
+				stateDir, err = ioutil.TempDir("", "cfdev-version-cache-test-")
 				Expect(err).NotTo(HaveOccurred())
 
-				f, err := os.Create(filepath.Join(cacheDir, "metadata.yml"))
+				f, err := os.Create(filepath.Join(stateDir, "metadata.yml"))
 				Expect(err).NotTo(HaveOccurred())
 				f.Close()
 
-				verCmd.Config.CacheDir = cacheDir
+				verCmd.Config.StateDir = stateDir
 			})
 
 			AfterEach(func() {
-				os.RemoveAll(cacheDir)
+				os.RemoveAll(stateDir)
 			})
 
 			It("reports the versions in the metadata", func() {
-				mockMetaDataReader.EXPECT().Read(filepath.Join(cacheDir, "metadata.yml")).Return(metadata.Metadata{
+				mockMetaDataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata.Metadata{
 					Versions: []metadata.Version{
 						{Name: "some-release-1", Value: "some-version-1"},
 						{Name: "some-release-2", Value: "some-version-2"},

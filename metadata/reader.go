@@ -19,6 +19,7 @@ type Version struct {
 
 type Metadata struct {
 	Version          string              `yaml:"compatibility_version"`
+	ArtifactVersion  string              `yaml:"artifact_version"`
 	Message          string              `yaml:"splash_message"`
 	DeploymentName   string              `yaml:"deployment_name"`
 	AnalyticsMessage string              `yaml:"analytics_message"`

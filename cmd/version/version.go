@@ -33,8 +33,8 @@ type Version struct {
 func (v *Version) Execute(pathTarball string) {
 	var (
 		message     []string
-		metadataYml = filepath.Join(v.Config.CacheDir, "metadata.yml")
 		tmpDir      string
+		metadataYml = filepath.Join(v.Config.StateDir, "metadata.yml")
 	)
 
 	if pathTarball != "" {

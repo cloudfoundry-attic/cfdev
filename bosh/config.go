@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-func envsMapping(cfg config.Config) map[string]string {
+func EnvsMapping(cfg config.Config) map[string]string {
 	data, _ := ioutil.ReadFile(filepath.Join(cfg.StateBosh, "env.yml"))
 
 	mapping := map[string]string{}
@@ -18,7 +18,7 @@ func envsMapping(cfg config.Config) map[string]string {
 
 func Envs(cfg config.Config) []string {
 	var results []string
-	for k, v := range envsMapping(cfg) {
+	for k, v := range EnvsMapping(cfg) {
 		results = append(results, k+"="+v)
 	}
 

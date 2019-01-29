@@ -66,11 +66,7 @@ func contains(services []Service, name string) bool {
 }
 
 func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries []string) error {
-	b, err := bosh.New(c.Config)
-	if err != nil {
-		return err
-	}
-
+	b := bosh.New(c.Config)
 	errChan := make(chan error, 1)
 
 	for _, service := range services {
@@ -82,7 +78,7 @@ func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries 
 			errChan <- c.DeployService(s, dockerRegistries)
 		}(service)
 
-		err = c.report(start, ui, b, service, errChan)
+		err := c.report(start, ui, b, service, errChan)
 		if err != nil {
 			return err
 		}
