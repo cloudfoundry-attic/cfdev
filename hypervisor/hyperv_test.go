@@ -38,24 +38,24 @@ var _ = Describe("HyperV", func() {
 		hyperV = hypervisor.HyperV{
 			Config: config.Config{
 				CFDevHome:     cfdevHome,
-				CacheDir:      filepath.Join(cfdevHome, "cache"),
-				StateLinuxkit: filepath.Join(cfdevHome, "state", "linuxkit"),
+				BinaryDir:      filepath.Join(cfdevHome, "bin"),
+				StateDir: filepath.Join(cfdevHome, "state"),
 			},
 		}
 
-		err = os.MkdirAll(hyperV.Config.CacheDir, 0666)
+		err = os.MkdirAll(hyperV.Config.BinaryDir, 0666)
 		Expect(err).ToNot(HaveOccurred())
-		err = os.MkdirAll(hyperV.Config.StateLinuxkit, 0666)
+		err = os.MkdirAll(hyperV.Config.StateDir, 0666)
 		Expect(err).ToNot(HaveOccurred())
 
 		copyFile(
 			filepath.Join(assetDir, "cfdev-efi-v2.iso"),
-			filepath.Join(hyperV.Config.CacheDir, "cfdev-efi-v2.iso"),
+			filepath.Join(hyperV.Config.BinaryDir, "cfdev-efi-v2.iso"),
 		)
 
 		copyFile(
 			filepath.Join(assetDir, "disk.vhdx"),
-			filepath.Join(hyperV.Config.StateLinuxkit, "disk.vhdx"),
+			filepath.Join(hyperV.Config.StateDir, "disk.vhdx"),
 		)
 	})
 

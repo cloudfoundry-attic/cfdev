@@ -48,7 +48,7 @@ var _ = Describe("DeployService", func() {
 				Name: "some-service",
 			}
 			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
-				Version:  "v3",
+				Version:  "v4",
 				Services: []provision.Service{service},
 			}, nil)
 
@@ -71,7 +71,7 @@ var _ = Describe("DeployService", func() {
 				Name: "some-service",
 			}
 			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
-				Version:  "v3",
+				Version:  "v4",
 				Services: []provision.Service{service},
 			}, nil)
 			mockProvisioner.EXPECT().Ping().Return(errors.New("some issue happened"))
@@ -90,7 +90,7 @@ var _ = Describe("DeployService", func() {
 				Name: "some-service",
 			}
 			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
-				Version:  "v3",
+				Version:  "v4",
 				Services: []provision.Service{service},
 			}, nil)
 			mockProvisioner.EXPECT().Ping().Return(nil)

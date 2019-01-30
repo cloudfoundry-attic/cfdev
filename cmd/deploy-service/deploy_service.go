@@ -37,7 +37,7 @@ type Analytics interface {
 	Event(event string, data ...map[string]interface{}) error
 }
 
-const compatibilityVersion = "v3"
+const compatibilityVersion = "v4"
 
 type DeployService struct {
 	Exit           chan struct{}

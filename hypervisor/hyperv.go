@@ -16,8 +16,8 @@ type HyperV struct {
 }
 
 func (h *HyperV) CreateVM(vm VM) error {
-	var cfdevEfiIso = filepath.Join(h.Config.CacheDir, "cfdev-efi-v2.iso")
-	var cfDevVHD = filepath.Join(h.Config.StateLinuxkit, "disk.vhdx")
+	var cfdevEfiIso = filepath.Join(h.Config.BinaryDir, "cfdev-efi-v2.iso")
+	var cfDevVHD = filepath.Join(h.Config.StateDir, "disk.vhdx")
 
 	command := fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", vm.Name)
 	_, err := h.Powershell.Output(command)
