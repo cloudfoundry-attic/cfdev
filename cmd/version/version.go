@@ -1,12 +1,14 @@
 package version
 
 import (
+	"archive/tar"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/metadata"
-	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/semver"
+	"compress/gzip"
 	"fmt"
 	"github.com/spf13/cobra"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -45,13 +47,8 @@ func (v *Version) Execute(pathTarball string) {
 
 		tmpDir, _ = ioutil.TempDir("", "versioncmd")
 		defer os.RemoveAll(tmpDir)
-		resource.Untar(pathTarball, []resource.TarOpts{
-			{
-				Include:       "metadata.yml",
-				Dst:           tmpDir,
-				FlattenFolder: true,
-			},
-		})
+
+		untarFile(pathTarball, tmpDir, "metadata.yml")
 
 		if !exists(filepath.Join(tmpDir, "metadata.yml")) {
 			v.UI.Say("Metadata not found version unknown")
@@ -107,4 +104,51 @@ func exists(path string) bool {
 	}
 
 	return true
+}
+
+func untarFile(tarballPath, destinationDir, name string) error {
+	f, err := os.Open(tarballPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	gzr, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+
+	for {
+		header, err := tr.Next()
+
+		switch {
+		case err == io.EOF:
+			return nil
+		case err != nil:
+			return err
+		case header == nil:
+			continue
+		}
+
+		if filepath.Base(header.Name) == name {
+			target := filepath.Join(destinationDir, filepath.Base(header.Name))
+
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+
+			f.Close()
+			return nil
+		}
+	}
+
+	return nil
 }
