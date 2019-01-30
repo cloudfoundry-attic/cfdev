@@ -28,12 +28,12 @@ var _ = Describe("Winsw", func() {
 		tmpDir, err = ioutil.TempDir("", "testasset")
 		Expect(err).To(BeNil())
 
-		assetDir := filepath.Join(tmpDir, "cache")
+		binaryDir := filepath.Join(tmpDir, "bin")
 
-		err = os.MkdirAll(filepath.Join(tmpDir, "cache"), 0666)
+		err = os.MkdirAll(binaryDir, 0666)
 		Expect(err).To(BeNil())
 
-		assetPath := filepath.Join(assetDir, "winsw.exe")
+		assetPath := filepath.Join(binaryDir, "winsw.exe")
 
 		err = downloadTestAsset(assetPath, "https://github.com/kohsuke/winsw/releases/download/winsw-v2.1.2/WinSW.NET4.exe")
 		Expect(err).To(BeNil())

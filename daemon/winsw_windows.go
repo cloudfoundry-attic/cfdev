@@ -18,7 +18,7 @@ type WinSW struct {
 
 func NewWinSW(cfDevHome string) *WinSW {
 	return &WinSW{
-		BinaryPath:  filepath.Join(cfDevHome, "cache", "winsw.exe"),
+		BinaryPath:  filepath.Join(cfDevHome, "bin", "winsw.exe"),
 		ServicesDir: filepath.Join(cfDevHome, "winservice"),
 	}
 }
