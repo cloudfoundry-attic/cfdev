@@ -3,6 +3,7 @@ package bosh_test
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -30,7 +31,7 @@ var _ = Describe("Bosh", func() {
 		mockUI = mocks.NewMockUI(mockController)
 
 		var err error
-		tmpDir, err := ioutil.TempDir("", "cfdev-bosh-env-")
+		tmpDir, err = ioutil.TempDir("", "cfdev-bosh-env-")
 		Expect(err).NotTo(HaveOccurred())
 
 		cfg := config.Config{
@@ -39,14 +40,20 @@ var _ = Describe("Bosh", func() {
 
 		content := `---
 BOSH_ENVIRONMENT: 10.0.0.1
-BOSH_CLIENT: admin`
+BOSH_CLIENT: admin
+BOSH_CA_CERT: |
+  some ca cert
+  end pem block
+BOSH_GW_PRIVATE_KEY: |
+  some gw key
+  end pem block`
 
 		ioutil.WriteFile(filepath.Join(tmpDir, "env.yml"), []byte(content), 0600)
 
 		boshCmd = &cmd.Bosh{
-			UI:          mockUI,
-			Analytics:   mockAnalyticsClient,
-			Config: cfg,
+			UI:        mockUI,
+			Analytics: mockAnalyticsClient,
+			Config:    cfg,
 		}
 	})
 
@@ -79,6 +86,19 @@ BOSH_CLIENT: admin`
 
 				Expect(boshCmd.Env()).To(Succeed())
 			})
+		})
+
+		It("replaces the certificates with their file paths", func() {
+			mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
+			mockUI.EXPECT().Say(gomock.Any()).Do(func(arg string) {
+				Expect(strings.Count(arg,"BOSH_CA_CERT")).To(Equal(1))
+				Expect(strings.Count(arg,"BOSH_GW_PRIVATE_KEY")).To(Equal(1))
+
+				Expect(arg).To(ContainSubstring(fmt.Sprintf(`export BOSH_CA_CERT="%s";`,filepath.Join(tmpDir, "ca.crt"))))
+				Expect(arg).To(ContainSubstring(fmt.Sprintf(`export BOSH_GW_PRIVATE_KEY="%s";`, filepath.Join(tmpDir, "jumpbox.key"))))
+			})
+
+			Expect(boshCmd.Env()).To(Succeed())
 		})
 	})
 })

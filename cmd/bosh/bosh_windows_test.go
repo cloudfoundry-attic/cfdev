@@ -3,6 +3,7 @@ package bosh_test
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -29,13 +30,23 @@ var _ = Describe("Bosh", func() {
 		mockAnalyticsClient = mocks.NewMockAnalyticsClient(mockController)
 		mockUI = mocks.NewMockUI(mockController)
 
+		var err error
+		tmpDir, err = ioutil.TempDir("", "cfdev-bosh-env-")
+		Expect(err).NotTo(HaveOccurred())
+
 		cfg := config.Config{
 			StateBosh: tmpDir,
 		}
 
 		content := `---
 BOSH_ENVIRONMENT: 10.0.0.1
-BOSH_CLIENT: admin`
+BOSH_CLIENT: admin
+BOSH_CA_CERT: |
+  some ca cert
+  end pem block
+BOSH_GW_PRIVATE_KEY: |
+  some gw key
+  end pem block`
 
 		ioutil.WriteFile(filepath.Join(tmpDir, "env.yml"), []byte(content), 0600)
 
@@ -71,6 +82,19 @@ BOSH_CLIENT: admin`
 					Expect(arg).To(ContainSubstring(`Remove-Item Env:BOSH_SOME_VAR;`))
 					Expect(arg).To(ContainSubstring(`$env:BOSH_ENVIRONMENT="10.0.0.1";`))
 					Expect(arg).To(ContainSubstring(`$env:BOSH_CLIENT="admin";`))
+				})
+
+				Expect(boshCmd.Env()).To(Succeed())
+			})
+
+			It("replaces the certificates with their file paths", func() {
+				mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
+				mockUI.EXPECT().Say(gomock.Any()).Do(func(arg string) {
+					Expect(strings.Count(arg,"BOSH_CA_CERT")).To(Equal(1))
+					Expect(strings.Count(arg,"BOSH_GW_PRIVATE_KEY")).To(Equal(1))
+
+					Expect(arg).To(ContainSubstring(fmt.Sprintf(`$env:BOSH_CA_CERT=%q;`,filepath.Join(tmpDir, "ca.crt"))))
+					Expect(arg).To(ContainSubstring(fmt.Sprintf(`$env:BOSH_GW_PRIVATE_KEY=%q;`, filepath.Join(tmpDir, "jumpbox.key"))))
 				})
 
 				Expect(boshCmd.Env()).To(Succeed())

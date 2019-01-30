@@ -6,6 +6,7 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"runtime"
@@ -75,12 +76,26 @@ func (b *Bosh) Env() error {
 	}
 
 	for key, value := range envsMapping {
+		if key == "BOSH_CA_CERT" || key == "BOSH_GW_PRIVATE_KEY" {
+			continue
+		}
+
 		if runtime.GOOS != "windows" {
-			output = append(output, fmt.Sprintf("export %s=\"%s\";", key, value))
+			output = append(output, fmt.Sprintf(`export %s=%q;`, key, value))
 		} else {
-			output = append(output, fmt.Sprintf("$env:%s=\"%s\";", key, value))
+			output = append(output, fmt.Sprintf(`$env:%s=%q;`, key, value))
 		}
 	}
+
+	if runtime.GOOS == "windows" {
+		output = append(output, fmt.Sprintf(`$env:BOSH_CA_CERT=%q;`, filepath.Join(b.Config.StateBosh, "ca.crt")))
+		output = append(output, fmt.Sprintf(`$env:BOSH_GW_PRIVATE_KEY=%q;`, filepath.Join(b.Config.StateBosh, "jumpbox.key")))
+	} else {
+		output = append(output, fmt.Sprintf(`export BOSH_CA_CERT=%q;`, filepath.Join(b.Config.StateBosh, "ca.crt")))
+		output = append(output, fmt.Sprintf(`export BOSH_GW_PRIVATE_KEY=%q;`, filepath.Join(b.Config.StateBosh, "jumpbox.key")))
+	}
+
+	output = append(output, )
 
 	b.UI.Say(strings.Join(output, "\n"))
 	return nil

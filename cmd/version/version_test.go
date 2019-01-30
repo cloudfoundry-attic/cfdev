@@ -1,7 +1,6 @@
 package version_test
 
 import (
-	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"path/filepath"
 
@@ -153,7 +152,7 @@ var _ = Describe("Version Command", func() {
 					Expect(err).NotTo(HaveOccurred())
 					defer tarDst.Close()
 
-					Expect(resource.Tar(folderToTar, tarDst)).NotTo(HaveOccurred())
+					Expect(tarArchive(folderToTar, tarDst)).NotTo(HaveOccurred())
 				})
 
 				AfterEach(func() {
@@ -188,7 +187,7 @@ var _ = Describe("Version Command", func() {
 					Expect(err).NotTo(HaveOccurred())
 					defer tarDst.Close()
 
-					Expect(resource.Tar(folderToTar, tarDst)).NotTo(HaveOccurred())
+					Expect(tarArchive(folderToTar, tarDst)).NotTo(HaveOccurred())
 				})
 
 				AfterEach(func() {
