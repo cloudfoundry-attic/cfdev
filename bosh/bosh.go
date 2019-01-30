@@ -16,9 +16,21 @@ const (
 	RunningErrand = "running-errand"
 )
 
+//go:generate mockgen -package mocks -destination mocks/runner.go code.cloudfoundry.org/cfdev/bosh Runner
+type Runner interface {
+	Output(cmd *exec.Cmd) ([]byte, error)
+}
+
+type Instance struct {
+	ID           string `json:"instance"`
+	Process      string `json:"process"`
+	ProcessState string `json:"process_state"`
+}
+
 type Bosh struct {
-	envs []string
-	cfg  config.Config
+	envs   []string
+	cfg    config.Config
+	Runner Runner
 }
 
 type VMProgress struct {
@@ -28,10 +40,17 @@ type VMProgress struct {
 	Duration time.Duration
 }
 
+type runner struct {}
+
+func (r *runner) Output(cmd *exec.Cmd) ([]byte, error) {
+	return cmd.Output()
+}
+
 func New(cfg config.Config) *Bosh {
 	return &Bosh{
 		envs: Envs(cfg),
 		cfg:  cfg,
+		Runner: &runner{},
 	}
 }
 
@@ -45,37 +64,64 @@ func (b *Bosh) GetVMProgress(start time.Time, deploymentName string, isErrand bo
 		executable += ".exe"
 	}
 
-	command := exec.Command(executable, "--tty", "-d", deploymentName, "instances", "--json")
+	command := exec.Command(executable, "--tty", "-d", deploymentName, "instances", "--ps", "--json")
 	command.Env = append(os.Environ(), b.envs...)
-	output, err := command.Output()
+	output, err := b.Runner.Output(command)
 	if err != nil {
 		return VMProgress{State: Preparing, Duration: time.Now().Sub(start)}
 	}
 
 	var result struct {
 		Tables []struct {
-			Rows []struct {
-				State string `json:"process_state"`
-			}
-		}
+			Instances []Instance `json:"Rows"`
+		} `json:"Tables"`
 	}
 
 	err = json.Unmarshal(output, &result)
-	if err != nil || len(result.Tables) == 0 {
+	if err != nil || len(result.Tables) == 0 || len(result.Tables[0].Instances) == 0 {
 		return VMProgress{State: Preparing, Duration: time.Now().Sub(start)}
 	}
 
+	numDone, total := parseResults(result.Tables[0].Instances)
+	return VMProgress{State: Deploying, Total: total, Done: numDone, Duration: time.Now().Sub(start)}
+}
+
+func parseResults(instances []Instance) (int, int) {
 	var (
-		instances = result.Tables[0].Rows
-		total     = len(instances)
-		numDone   = 0
+		uniqInstances    = map[string]bool{}
+		isCompletedCount = func() int {
+			var count int
+			for _, v := range uniqInstances {
+				if v {
+					count++
+				}
+			}
+			return count
+		}
+		allProcessesRunning = func(id string) bool {
+			var hasAtLeastOneProcess bool
+			for _, i := range instances {
+				if i.ID == id && i.Process != "" {
+					hasAtLeastOneProcess = true
+
+					if i.ProcessState != "running" {
+						return false
+					}
+				}
+			}
+			return hasAtLeastOneProcess
+		}
 	)
 
 	for _, i := range instances {
-		if i.State == "running" {
-			numDone++
+		uniqInstances[i.ID] = false
+	}
+
+	for k, _ := range uniqInstances {
+		if allProcessesRunning(k) {
+			uniqInstances[k] = true
 		}
 	}
 
-	return VMProgress{State: Deploying, Total: total, Done: numDone, Duration: time.Now().Sub(start)}
+	return isCompletedCount(), len(uniqInstances)
 }
