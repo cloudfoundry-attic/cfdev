@@ -49,7 +49,7 @@ func (c *Controller) DeployBosh() error {
 	}
 
 	command := []string{
-		"/bosh/bosh", "--tty",
+		"/usr/local/bin/bosh", "--tty",
 		"create-env", "/bosh/director.yml", "--state", "state.json",
 	}
 
