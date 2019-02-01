@@ -16,7 +16,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 	"net"
-	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -32,26 +31,11 @@ import (
 var _ = Describe("cfdev lifecycle", func() {
 
 	var (
-		startSession  *gexec.Session
-		analyticsChan chan string
+		analyticsChan = make(chan string, 50)
 	)
 
-	BeforeEach(func() {
-		// stop should succeed even when nothing is running
-		stopSession := cf.Cf("dev", "stop")
-		Eventually(stopSession).Should(gexec.Exit(0))
-
-		if tarballPath := os.Getenv("TARBALL_PATH"); tarballPath != "" {
-			startSession = cf.Cf("dev", "start", "-f", tarballPath)
-		} else {
-			startSession = cf.Cf("dev", "start")
-		}
-
-		analyticsChan = make(chan string, 50)
-	})
-
 	AfterEach(func() {
-		if os.Getenv("CLEANUP") == "false" {
+		if !cfg.CleanUp {
 			fmt.Fprint(GinkgoWriter, "'CLEANUP=false' environment variable detected, skipping tear-down...")
 			return
 		}
@@ -73,16 +57,9 @@ var _ = Describe("cfdev lifecycle", func() {
 	})
 
 	It("runs the entire vm lifecycle", func() {
+		startUp()
+
 		go streamKinesis(analyticsChan)
-
-		By("waiting for bosh to deploy")
-		Eventually(startSession, 2*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
-
-		EventuallyWeCanTargetTheBOSHDirector()
-
-		By("waiting for cfdev cli to exit when the deploy finished")
-		Eventually(startSession.Exited, 2*time.Hour).Should(BeClosed())
-		Expect(startSession.ExitCode()).To(BeZero())
 
 		By("deploy mysql service")
 		serviceSession := cf.Cf("dev", "deploy-service", "mysql")
@@ -117,25 +94,57 @@ var _ = Describe("cfdev lifecycle", func() {
 		Expect(hasAnalyticsFor(analyticsChan, "telemetry off", 3*time.Minute)).To(BeTrue())
 
 		By("rerunning cf dev start")
-		startSession = cf.Cf("dev", "start")
+		startSession := cf.Cf("dev", "start")
 		Eventually(startSession).Should(gbytes.Say("CF Dev is already running..."))
 
 		By("checking for cf versions")
 		var versionSession *gexec.Session
 
-		if tarballPath := os.Getenv("TARBALL_PATH"); tarballPath != "" {
-			versionSession = cf.Cf("dev", "version", "-f", tarballPath)
+		if cfg.TarballPath != "" {
+			versionSession = cf.Cf("dev", "version", "-f", cfg.TarballPath)
 		} else {
 			versionSession = cf.Cf("dev", "version")
 		}
 
 		Eventually(versionSession).Should(gexec.Exit(0))
 		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("CLI:"))
-		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("cf:"))
+		Expect(string(versionSession.Out.Contents())).To(ContainSubstring("mysql:"))
 	})
 })
 
+func startUp() {
+	if !cfg.StartUp {
+		fmt.Fprintln(GinkgoWriter, "'STARTUP=false' environment variable detected, skipping start up...")
+		return
+	}
+
+	var startSession *gexec.Session
+
+	// stop should succeed even when nothing is running
+	stopSession := cf.Cf("dev", "stop")
+	Eventually(stopSession).Should(gexec.Exit(0))
+
+	if cfg.TarballPath != "" {
+		startSession = cf.Cf("dev", "start", "-f", cfg.TarballPath)
+	} else {
+		startSession = cf.Cf("dev", "start")
+	}
+
+	By("waiting for bosh to deploy")
+	Eventually(startSession, 2*time.Hour).Should(gbytes.Say("Deploying the BOSH Director"))
+
+	EventuallyWeCanTargetTheBOSHDirector()
+
+	By("waiting for cfdev cli to exit when the deploy finished")
+	Eventually(startSession.Exited, 2*time.Hour).Should(BeClosed())
+	Expect(startSession.ExitCode()).To(BeZero())
+}
+
 func hasAnalyticsFor(analyticsChan chan string, eventName string, timeout time.Duration) bool {
+	if cfg.AwsAccessKeyID == "" || cfg.AwsSecretAccessKey == "" {
+		return true
+	}
+
 	timeoutChan := time.After(timeout)
 	By(fmt.Sprintf("Waiting for analytics `%s` to be received", eventName))
 
@@ -187,7 +196,14 @@ func PushAnApp() {
 
 	Eventually(cf.Cf("push", "cf-test-app", "--no-start", "-p", "./fixture", "-b", "ruby_buildpack")).Should(gexec.Exit(0))
 	Eventually(cf.Cf("set-env", "cf-test-app", "HOST_SERVER_PORT", strconv.Itoa(port))).Should(gexec.Exit(0))
-	Eventually(cf.Cf("create-service", "p-mysql", "10mb", "mydb")).Should(gexec.Exit(0))
+	Eventually(cf.Cf("create-service", cfg.MysqlService, cfg.MysqlServicePlan, "mydb")).Should(gexec.Exit(0))
+
+	Eventually(func() string {
+		sesh := cf.Cf("service", "mydb")
+		<-sesh.Exited
+		return string(sesh.Out.Contents())
+	}, 30*time.Minute, 5*time.Second).Should(ContainSubstring("create succeeded"))
+
 	Eventually(cf.Cf("bind-service", "cf-test-app", "mydb")).Should(gexec.Exit(0))
 	Eventually(cf.Cf("start", "cf-test-app"), 10*time.Minute).Should(gexec.Exit(0))
 
@@ -249,10 +265,7 @@ type StatMessage struct {
 }
 
 func streamKinesis(analyticsChan chan string) {
-	accessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
-	secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
-
-	if accessKeyID == "" || secretAccessKey == "" {
+	if cfg.AwsAccessKeyID == "" || cfg.AwsSecretAccessKey == "" {
 		fmt.Fprintln(GinkgoWriter, "AWS keys not detected. Skipping assertions for analytics...")
 		return
 	}
@@ -263,7 +276,7 @@ func streamKinesis(analyticsChan chan string) {
 
 	myKinesisClient := kinesis.New(session.New(aws.NewConfig()), &aws.Config{
 		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewStaticCredentials(accessKeyID, secretAccessKey, ""),
+		Credentials: credentials.NewStaticCredentials(cfg.AwsAccessKeyID, cfg.AwsSecretAccessKey, ""),
 	})
 	newKclient, err := consumer.NewKinesisClient(consumer.WithKinesis(myKinesisClient))
 	c, err := consumer.New(
