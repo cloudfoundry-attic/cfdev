@@ -3,7 +3,6 @@ package network
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -53,24 +52,21 @@ func (v *VpnKit) Destroy() error {
 }
 
 func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
-	dnsPath := filepath.Join(v.Config.VpnKitStateDir, "resolv.conf")
-	dhcpPath := filepath.Join(v.Config.VpnKitStateDir, "dhcp.json")
-
 	return daemon.DaemonSpec{
 		Label:   v.Label,
-		Program: path.Join(v.Config.BinaryDir, "vpnkit.exe"),
+		Program: filepath.Join(v.Config.BinaryDir, "vpnkit.exe"),
 		ProgramArguments: []string{
-			fmt.Sprintf("--ethernet hyperv-connect://%s/%s", vmGuid, v.EthernetGUID),
-			fmt.Sprintf("--port hyperv-connect://%s/%s", vmGuid, v.PortGUID),
-			fmt.Sprintf("--port hyperv-connect://%s/%s", vmGuid, v.ForwarderGUID),
-			fmt.Sprintf("--dns %s", dnsPath),
-			fmt.Sprintf("--dhcp %s", dhcpPath),
-			"--http", path.Join(v.Config.VpnKitStateDir, "http_proxy.json"),
-			"--host-names host.cfdev.sh",
+			"--ethernet", fmt.Sprintf("hyperv-connect://%s/%s", vmGuid, v.EthernetGUID),
+			"--port", fmt.Sprintf("hyperv-connect://%s/%s", vmGuid, v.PortGUID),
+			"--port", fmt.Sprintf("hyperv-connect://%s/%s", vmGuid, v.ForwarderGUID),
+			"--dns", filepath.Join(v.Config.VpnKitStateDir, "resolv.conf"),
+			"--dhcp", filepath.Join(v.Config.VpnKitStateDir, "dhcp.json"),
+			"--http", filepath.Join(v.Config.VpnKitStateDir, "http_proxy.json"),
+			"--host-names", "host.cfdev.sh",
 		},
 		RunAtLoad:  false,
-		StdoutPath: path.Join(v.Config.LogDir, "vpnkit.stdout.log"),
-		StderrPath: path.Join(v.Config.LogDir, "vpnkit.stderr.log"),
+		StdoutPath: filepath.Join(v.Config.LogDir, "vpnkit.stdout.log"),
+		StderrPath: filepath.Join(v.Config.LogDir, "vpnkit.stderr.log"),
 	}
 }
 

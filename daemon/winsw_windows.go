@@ -29,7 +29,7 @@ type Config struct {
 	Name        string   `xml:"name"`
 	Description string   `xml:"description"`
 	Executable  string   `xml:"executable"`
-	Arguments   string   `xml:"arguments"`
+	Arguments   []string `xml:"argument"`
 	StartMode   string   `xml:"startmode"`
 	LogPath     string   `xml:"logpath"`
 	LogMode     string   `xml:"logmode"`
@@ -142,7 +142,7 @@ func createXml(serviceDst string, spec DaemonSpec) error {
 		Name:        spec.Label,
 		Description: spec.Label,
 		Executable:  spec.Program,
-		Arguments:   strings.Join(spec.ProgramArguments[:], " "),
+		Arguments:   spec.ProgramArguments,
 		StartMode:   "Manual",
 		LogPath:     filepath.Dir(spec.StdoutPath),
 		LogMode:     "rotate",
