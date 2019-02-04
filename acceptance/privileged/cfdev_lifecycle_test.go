@@ -36,7 +36,7 @@ var _ = Describe("cfdev lifecycle", func() {
 
 	AfterEach(func() {
 		if !cfg.CleanUp {
-			fmt.Fprint(GinkgoWriter, "'CLEANUP=false' environment variable detected, skipping tear-down...")
+			fmt.Fprintln(GinkgoWriter, "'CLEANUP=false' environment variable detected, skipping tear-down...")
 			return
 		}
 
