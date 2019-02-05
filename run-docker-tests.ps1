@@ -6,9 +6,6 @@ param (
 $domain="dev.cfdev.sh"
 $cats_path=$p
 
-$admin_client_secret="admin-client-secret"
-if (Test-Path env:ADMIN_CLIENT_SECRET) { $admin_client_secret="$env:ADMIN_CLIENT_SECRET" }
-
 $env:CONFIG="$env:TEMP\config.json"
 $REGISTRY_AUTH_FILE="$env:TEMP\registry.auth"
 
@@ -29,7 +26,7 @@ docker push localhost:5000/diego-docker-app-custom
   "apps_domain": "$domain",
   "admin_user": "admin",
   "admin_password": "admin",
-  "admin_secret": "$admin_client_secret",
+  "admin_secret": "admin-client-secret",
   "skip_ssl_validation": true,
   "use_http": true,
   "use_log_cache": false,
