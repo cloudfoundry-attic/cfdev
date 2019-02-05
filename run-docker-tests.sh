@@ -9,6 +9,7 @@ fi
 
 domain=dev.cfdev.sh
 cats_path=$1
+admin_client_secret=${ADMIN_CLIENT_SECRET:-admin-client-secret}
 
 function run_docker_registry_tests() {
   export CONFIG=$(mktemp -t config.XXXXXXXX)
@@ -40,7 +41,7 @@ cat <<EOF >${CONFIG}
   "apps_domain": "$domain",
   "admin_user": "admin",
   "admin_password": "admin",
-  "admin_secret": "admin-client-secret",
+  "admin_secret": "${admin_client_secret}",
   "skip_ssl_validation": true,
   "use_http": true,
   "use_log_cache": false,
