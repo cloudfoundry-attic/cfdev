@@ -138,6 +138,58 @@ var _ = Describe("Launchd", func() {
 </plist>
 `, label, executableToInstall, executableToInstall)))
 		})
+
+		It("sets environment variables on plist", func() {
+			executableToInstall := filepath.Join(binDir, "some-executable")
+			spec := daemon.DaemonSpec{
+				Label:            label,
+				Program:          executableToInstall,
+				SessionType:      "Background",
+				ProgramArguments: []string{executableToInstall, "some-arg"},
+				RunAtLoad:        true,
+				EnvironmentVariables: map[string]string{
+					"HTTP_PROXY": "localhost.com",
+					"HTTPS_PROXY": "localhost2.com",
+				},
+			}
+
+			Expect(lnchd.AddDaemon(spec)).To(Succeed())
+
+			Expect(ioutil.ReadFile(plistPath)).To(MatchXML(fmt.Sprintf(
+				`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>%s</string>
+
+  <key>Program</key>
+  <string>%s</string>
+
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>%s</string>
+    <string>some-arg</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HTTPS_PROXY</key>
+    <string>localhost2.com</string>
+
+    <key>HTTP_PROXY</key>
+    <string>localhost.com</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>
+`, label, executableToInstall, executableToInstall)))
+		})
 	})
 
 	Describe("RemoveDaemon", func() {

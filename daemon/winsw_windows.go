@@ -33,6 +33,12 @@ type Config struct {
 	StartMode   string   `xml:"startmode"`
 	LogPath     string   `xml:"logpath"`
 	LogMode     string   `xml:"logmode"`
+	EnvironmentVariables []EnvironmentVariable `xml:"env"`
+}
+
+type EnvironmentVariable struct {
+	Key string `xml:"name,attr"`
+	Value string `xml:"value,attr"`
 }
 
 func (w *WinSW) AddDaemon(spec DaemonSpec) error {
@@ -147,6 +153,14 @@ func createXml(serviceDst string, spec DaemonSpec) error {
 		LogPath:     filepath.Dir(spec.StdoutPath),
 		LogMode:     "rotate",
 	}
+
+	for key, value := range spec.EnvironmentVariables {
+		config.EnvironmentVariables = append(config.EnvironmentVariables, EnvironmentVariable{
+			Key: key,
+			Value: value,
+		})
+	}
+
 	configWriter := io.Writer(file)
 
 	enc := xml.NewEncoder(configWriter)

@@ -131,20 +131,35 @@ var plistTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <dict>
   <key>Label</key>
   <string>{{.Label}}</string>
+
   <key>Program</key>
   <string>{{.Program}}</string>
+
   {{if .SessionType}}
   <key>LimitLoadToSessionType</key>
   <string>{{.SessionType}}</string>
   {{end}}
+
   <key>ProgramArguments</key>
   <array>
   {{range .ProgramArguments}}
     <string>{{.}}</string>
   {{end}}
   </array>
+
+  {{if .EnvironmentVariables}}
+  <key>EnvironmentVariables</key>
+  <dict>
+    {{range $key, $value := .EnvironmentVariables}}
+    <key>{{$key}}</key>
+    <string>{{$value}}</string>
+    {{end}}
+  </dict>
+  {{end}}
+
   <key>RunAtLoad</key>
   <{{.RunAtLoad}}/>
+
   {{if .Sockets}}
   <key>Sockets</key>
   <dict>
@@ -159,14 +174,17 @@ var plistTemplate = `<?xml version="1.0" encoding="UTF-8"?>
     {{end}}
   </dict>
   {{end}}
+
   {{if .StdoutPath}}
   <key>StandardOutPath</key>
   <string>{{.StdoutPath}}</string>
   {{end}}
+
   {{if .StderrPath}}
   <key>StandardErrorPath</key>
   <string>{{.StderrPath}}</string>
   {{end}}
+
 </dict>
 </plist>
 `
