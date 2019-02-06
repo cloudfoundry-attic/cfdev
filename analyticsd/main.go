@@ -55,12 +55,12 @@ func main() {
 		osVersion = "unknown-os-version"
 	}
 
-	if len(os.Args) > 1 && os.Args[1] == "debug" {
+	if os.Getenv("CFDEV_MODE") == "debug" {
 		pollingInterval = 10 * time.Second
 	}
 
 	var analytixKey string
-	if (len(os.Args) > 1 && os.Args[1] == "debug") || analyticsKey == "" {
+	if os.Getenv("CFDEV_MODE") == "debug" || analyticsKey == "" {
 		analytixKey = testAnalyticsKey
 	} else {
 		analytixKey = analyticsKey

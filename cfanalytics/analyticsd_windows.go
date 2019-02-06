@@ -12,6 +12,9 @@ func (a *AnalyticsD) DaemonSpec() daemon.DaemonSpec {
 		Program:          filepath.Join(a.Config.CacheDir, "analyticsd.exe"),
 		SessionType:      "Background",
 		ProgramArguments: []string{os.Getenv("CFDEV_MODE")},
+		EnvironmentVariables: map[string]string{
+			"CFDEV_MODE": os.Getenv("CFDEV_MODE"),
+		},
 		StdoutPath:       filepath.Join(a.Config.LogDir, "analyticsd.stdout.log"),
 	}
 }
