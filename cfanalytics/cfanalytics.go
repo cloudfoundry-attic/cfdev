@@ -42,29 +42,31 @@ type UI interface {
 }
 
 type Analytics struct {
-	client    analytics.Client
-	toggle    Toggle
-	userId    string
-	version   string
-	osVersion string
-	exit      chan struct{}
-	ui        UI
+	client        analytics.Client
+	toggle        Toggle
+	userId        string
+	version       string
+	osVersion     string
+	isBehindProxy string
+	exit          chan struct{}
+	ui            UI
 }
 
-func New(toggle Toggle, client analytics.Client, version string, osVersion string, exit chan struct{}, ui UI) *Analytics {
+func New(toggle Toggle, client analytics.Client, version string, osVersion string, isBehindProxy string, exit chan struct{}, ui UI) *Analytics {
 	uuid, err := machineid.ProtectedID("cfdev")
 	if err != nil {
 		uuid = "UNKNOWN_ID"
 	}
 
 	return &Analytics{
-		client:    client,
-		toggle:    toggle,
-		userId:    uuid,
-		version:   version,
-		osVersion: osVersion,
-		exit:      exit,
-		ui:        ui,
+		client:        client,
+		toggle:        toggle,
+		userId:        uuid,
+		version:       version,
+		osVersion:     osVersion,
+		isBehindProxy: isBehindProxy,
+		exit:          exit,
+		ui:            ui,
 	}
 }
 
@@ -85,6 +87,7 @@ func (a *Analytics) Event(event string, data ...map[string]interface{}) error {
 	properties.Set("os", runtime.GOOS)
 	properties.Set("plugin_version", a.version)
 	properties.Set("os_version", a.osVersion)
+	properties.Set("proxy", a.isBehindProxy)
 	for k, v := range a.toggle.GetProps() {
 		properties.Set(k, v)
 	}

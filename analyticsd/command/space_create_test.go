@@ -34,6 +34,7 @@ var _ = Describe("SpaceCreate", func() {
 			UUID:            "some-user-uuid",
 			Version:         "some-version",
 			OSVersion:       "some-os-version",
+			IsBehindProxy:   "false",
 		}
 	})
 
@@ -51,6 +52,7 @@ var _ = Describe("SpaceCreate", func() {
 					"os":             runtime.GOOS,
 					"plugin_version": "some-version",
 					"os_version":     "some-os-version",
+					"proxy":          "false",
 				},
 			})
 

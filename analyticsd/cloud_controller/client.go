@@ -24,6 +24,7 @@ type Client struct {
 	analyticsClient analytics.Client
 	userUUID        string
 	version         string
+	isBehindProxy   string
 }
 
 type Event struct {
@@ -56,7 +57,7 @@ var eventTypes = []string{
 	"audit.route.create",
 }
 
-func New(host string, logger *log.Logger, httpClient *http.Client, analyticsClient analytics.Client, userUUID string, version string) *Client {
+func New(host string, logger *log.Logger, httpClient *http.Client, analyticsClient analytics.Client, userUUID string, version string, isBehindProxy string) *Client {
 	return &Client{
 		host:            host,
 		logger:          logger,
@@ -64,6 +65,7 @@ func New(host string, logger *log.Logger, httpClient *http.Client, analyticsClie
 		analyticsClient: analyticsClient,
 		userUUID:        userUUID,
 		version:         version,
+		isBehindProxy:   isBehindProxy,
 	}
 }
 
@@ -179,6 +181,7 @@ func (c *Client) Fetch(path string, params url.Values, dest interface{}) error {
 		"message": fmt.Sprintf("failed to contact cc api: [%v] %s", resp.Status, contents),
 		"os":      runtime.GOOS,
 		"version": c.version,
+		"proxy":   c.isBehindProxy,
 	}
 
 	c.logger.Println("Sending an error to segment.io...")

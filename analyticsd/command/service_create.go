@@ -16,6 +16,7 @@ type ServiceCreate struct {
 	UUID            string
 	Version         string
 	OSVersion       string
+	IsBehindProxy   string
 	Logger          *log.Logger
 }
 
@@ -61,6 +62,7 @@ func (c *ServiceCreate) HandleResponse(body json.RawMessage) error {
 		"os":             runtime.GOOS,
 		"plugin_version": c.Version,
 		"os_version":     c.OSVersion,
+		"proxy":          c.IsBehindProxy,
 	}
 
 	err = c.AnalyticsClient.Enqueue(analytics.Track{

@@ -14,6 +14,7 @@ func (a *AnalyticsD) DaemonSpec() daemon.DaemonSpec {
 		ProgramArguments: []string{os.Getenv("CFDEV_MODE")},
 		EnvironmentVariables: map[string]string{
 			"CFDEV_MODE": os.Getenv("CFDEV_MODE"),
+			"CFDEV_BEHIND_PROXY": fmt.Sprintf("%t", env.IsBehindProxy()),
 		},
 		StdoutPath:       filepath.Join(a.Config.LogDir, "analyticsd.stdout.log"),
 	}

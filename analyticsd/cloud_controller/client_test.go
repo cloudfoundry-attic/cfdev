@@ -36,6 +36,7 @@ var _ = Describe("Cloud Controller Client", func() {
 			mockAnalytics,
 			"some-user-id",
 			"some-version",
+			"false",
 		)
 	})
 

@@ -42,6 +42,7 @@ var _ = Describe("Integration", func() {
 			"some-user-uuid",
 			"some-version",
 			"some-os-version",
+			"false",
 			buffer,
 			httpClient,
 			mockAnalytics,
@@ -126,6 +127,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -138,6 +140,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -156,6 +159,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -168,6 +172,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -180,6 +185,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -192,6 +198,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 					startDaemon()
@@ -233,6 +240,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -245,6 +253,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -276,6 +285,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -319,6 +329,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -362,6 +373,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -392,6 +404,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 
@@ -424,6 +437,7 @@ var _ = Describe("Integration", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "some-version",
 							"os_version":     "some-os-version",
+							"proxy":          "false",
 						},
 					})
 

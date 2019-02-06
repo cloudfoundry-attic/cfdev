@@ -56,6 +56,13 @@ func BuildProxyConfig(boshDirectorIP string, cfRouterIP string, hostIP string) P
 	return proxyConfig
 }
 
+func IsBehindProxy() bool {
+	return os.Getenv("HTTP_PROXY") != "" ||
+		os.Getenv("http_proxy") != "" ||
+		os.Getenv("HTTPS_PROXY") != "" ||
+		os.Getenv("https_proxy") != ""
+}
+
 type Env struct {
 	Config config.Config
 }

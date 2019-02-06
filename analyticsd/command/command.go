@@ -29,6 +29,7 @@ func New(
 	UUID string,
 	version string,
 	osVersion string,
+	isBehindProxy string,
 	logger *log.Logger) (Command, bool) {
 
 	switch event {
@@ -42,6 +43,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.app.create":
@@ -54,6 +56,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "app.crash":
@@ -66,6 +69,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.organization.create":
@@ -78,6 +82,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.space.create":
@@ -90,6 +95,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.service_instance.create":
@@ -102,6 +108,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.service_binding.create":
@@ -114,6 +121,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.service_broker.create":
@@ -126,6 +134,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.user_provided_service_instance.create":
@@ -138,6 +147,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	case "audit.route.create":
@@ -150,6 +160,7 @@ func New(
 			UUID:            UUID,
 			Version:         version,
 			OSVersion:       osVersion,
+			IsBehindProxy:   isBehindProxy,
 			Logger:          logger,
 		}, true
 	default:
