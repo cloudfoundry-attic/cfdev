@@ -2,6 +2,8 @@ package cfanalytics
 
 import (
 	"code.cloudfoundry.org/cfdev/daemon"
+	"code.cloudfoundry.org/cfdev/env"
+	"fmt"
 	"os"
 	"path/filepath"
 )
