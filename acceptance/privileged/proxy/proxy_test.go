@@ -45,30 +45,6 @@ var _ = Describe("cf dev proxy settings", func() {
 			Consistently(fetchProxyLogs(proxyName)).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
 		})
 	})
-
-	Context("when the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables are set", func() {
-
-		BeforeEach(func() {
-			if IsWindows() {
-				Skip("'bosh ssh' is currently not working on windows. This test isn't ready yet..")
-			}
-		})
-
-		It("BOSH respect proxy environment variables", func() {
-			By("making HTTP requests")
-			boshCurl("http://example.com")
-			Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`Established connection to host ".*"`))
-
-			By("making HTTPS requests")
-			boshCurl("https://example.com")
-			Eventually(fetchProxyLogs(proxyName)).Should(gbytes.Say(`CONNECT .*:443 HTTP/1.1`))
-
-			By("making a request from a site in the NO_PROXY list")
-			boshCurl("http://google.com")
-			Consistently(fetchProxyLogs(proxyName)).ShouldNot(gbytes.Say(`Establish connection to host "google.com"`))
-		})
-	})
-
 })
 
 func httpGet(url string) (string, error) {
