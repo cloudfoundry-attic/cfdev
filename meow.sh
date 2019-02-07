@@ -40,6 +40,7 @@ function run_cats() {
     "include_sso": true,
     "include_tasks": true,
     "include_v3": true,
+    "java_buildpack_name": "${JAVA_BUILDPACK_NAME:-java_buildpack}",
     "default_timeout": 120,
     "cf_push_timeout": 120,
     "long_curl_timeout": 120,
