@@ -3,7 +3,6 @@ package cfanalytics
 import (
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/env"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -11,7 +10,6 @@ import (
 func (a *AnalyticsD) DaemonSpec() daemon.DaemonSpec {
 	environmentVariables := map[string]string{
 		"CFDEV_MODE":         os.Getenv("CFDEV_MODE"),
-		"CFDEV_BEHIND_PROXY": fmt.Sprintf("%t", env.IsBehindProxy()),
 	}
 
 	proxyConf := env.BuildProxyConfig(
@@ -34,7 +32,7 @@ func (a *AnalyticsD) DaemonSpec() daemon.DaemonSpec {
 		Label:                AnalyticsDLabel,
 		Program:              filepath.Join(a.Config.CacheDir, "analyticsd.exe"),
 		SessionType:          "Background",
-		ProgramArguments:     []string{os.Getenv("CFDEV_MODE")},
+		ProgramArguments:     []string{},
 		EnvironmentVariables: environmentVariables,
 		StdoutPath:           filepath.Join(a.Config.LogDir, "analyticsd.stdout.log"),
 	}

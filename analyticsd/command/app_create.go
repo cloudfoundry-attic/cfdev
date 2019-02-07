@@ -1,22 +1,15 @@
 package command
 
 import (
+	"code.cloudfoundry.org/cfdev/analyticsd/segment"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/segmentio/analytics-go.v3"
 	"log"
-	"runtime"
-	"time"
 )
 
 type AppCreate struct {
 	CCClient        CloudControllerClient
-	AnalyticsClient analytics.Client
-	TimeStamp       time.Time
-	UUID            string
-	Version         string
-	OSVersion       string
-	IsBehindProxy   string
+	AnalyticsClient *segment.Client
 	Logger          *log.Logger
 }
 
@@ -47,19 +40,8 @@ func (c *AppCreate) HandleResponse(body json.RawMessage) error {
 		buildpack = "custom"
 	}
 
-	var properties = analytics.Properties{
-		"buildpack":      buildpack,
-		"os":             runtime.GOOS,
-		"plugin_version": c.Version,
-		"os_version":     c.OSVersion,
-		"proxy":          c.IsBehindProxy,
-	}
-
-	err := c.AnalyticsClient.Enqueue(analytics.Track{
-		UserId:     c.UUID,
-		Event:      "app created",
-		Timestamp:  c.TimeStamp,
-		Properties: properties,
+	err := c.AnalyticsClient.Enqueue("app created", map[string]string{
+		"buildpack": buildpack,
 	})
 
 	if err != nil {

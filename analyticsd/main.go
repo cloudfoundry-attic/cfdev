@@ -71,7 +71,6 @@ func main() {
 		userID,
 		version,
 		osVersion,
-		os.Getenv("CFDEV_BEHIND_PROXY"),
 		os.Stdout,
 		cfg.Client(ctx),
 		analytics.New(analytixKey),

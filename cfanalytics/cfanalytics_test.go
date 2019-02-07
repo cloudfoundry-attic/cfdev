@@ -28,7 +28,7 @@ var _ = Describe("Analytics", func() {
 		mockToggle = mocks.NewMockToggle(mockController)
 		mockUI = mocks.NewMockUI(mockController)
 		exitChan = make(chan struct{}, 1)
-		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test", "some-os-version", "false", exitChan, mockUI)
+		subject = cfanalytics.New(mockToggle, mockClient, "4.5.6-unit-test", "some-os-version", false, exitChan, mockUI)
 	})
 	AfterEach(func() {
 		mockController.Finish()
@@ -213,7 +213,7 @@ var _ = Describe("Analytics", func() {
 							"os":             runtime.GOOS,
 							"plugin_version": "4.5.6-unit-test",
 							"os_version":     "some-os-version",
-							"proxy":          "false",
+							"proxy":          false,
 							"type":           "cf.1.2.3.iso",
 							"mykey":          "myval",
 						}),

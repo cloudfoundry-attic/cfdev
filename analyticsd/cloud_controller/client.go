@@ -3,12 +3,10 @@ package cloud_controller
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/segmentio/analytics-go.v3"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -21,10 +19,6 @@ type Client struct {
 	host            string
 	logger          *log.Logger
 	httpClient      *http.Client
-	analyticsClient analytics.Client
-	userUUID        string
-	version         string
-	isBehindProxy   string
 }
 
 type Event struct {
@@ -57,15 +51,11 @@ var eventTypes = []string{
 	"audit.route.create",
 }
 
-func New(host string, logger *log.Logger, httpClient *http.Client, analyticsClient analytics.Client, userUUID string, version string, isBehindProxy string) *Client {
+func New(host string, logger *log.Logger, httpClient *http.Client) *Client {
 	return &Client{
 		host:            host,
 		logger:          logger,
 		httpClient:      httpClient,
-		analyticsClient: analyticsClient,
-		userUUID:        userUUID,
-		version:         version,
-		isBehindProxy:   isBehindProxy,
 	}
 }
 
@@ -177,27 +167,6 @@ func (c *Client) Fetch(path string, params url.Values, dest interface{}) error {
 		return json.Unmarshal(contents, dest)
 	}
 
-	var properties = analytics.Properties{
-		"message": fmt.Sprintf("failed to contact cc api: [%v] %s", resp.Status, contents),
-		"os":      runtime.GOOS,
-		"version": c.version,
-		"proxy":   c.isBehindProxy,
-	}
-
-	c.logger.Println("Sending an error to segment.io...")
-
-	// Still not sure if sending every error to segment
-	// is preferred behavior
-	err = c.analyticsClient.Enqueue(analytics.Track{
-		UserId:     c.userUUID,
-		Event:      "analytics error",
-		Timestamp:  time.Now().UTC(),
-		Properties: properties,
-	})
-
-	if err != nil {
-		c.logger.Printf("Failed to send analytics error: %v\n", err)
-	}
-
+	c.logger.Printf("failed to contact cc api: [%v] %s", resp.Status, contents)
 	return nil
 }

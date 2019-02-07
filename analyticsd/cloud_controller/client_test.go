@@ -2,13 +2,11 @@ package cloud_controller_test
 
 import (
 	"code.cloudfoundry.org/cfdev/analyticsd/cloud_controller"
-	"code.cloudfoundry.org/cfdev/analyticsd/cloud_controller/mocks"
 	"encoding/json"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
-	"gopkg.in/segmentio/analytics-go.v3"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,22 +19,16 @@ var _ = Describe("Cloud Controller Client", func() {
 		client         *cloud_controller.Client
 		server         *ghttp.Server
 		mockController *gomock.Controller
-		mockAnalytics  *mocks.MockClient
 	)
 
 	BeforeEach(func() {
 		server = ghttp.NewServer()
 		mockController = gomock.NewController(GinkgoT())
-		mockAnalytics = mocks.NewMockClient(mockController)
 
 		client = cloud_controller.New(
 			server.URL(),
 			log.New(ioutil.Discard, "", log.LstdFlags),
 			&http.Client{},
-			mockAnalytics,
-			"some-user-id",
-			"some-version",
-			"false",
 		)
 	})
 
@@ -91,8 +83,6 @@ var _ = Describe("Cloud Controller Client", func() {
 
 		Context("when there is an error retrieving the timestamp", func() {
 			It("returns a current timestamp", func() {
-				mockAnalytics.EXPECT().Enqueue(gomock.Any())
-
 				server.AppendHandlers(ghttp.CombineHandlers(
 					ghttp.VerifyRequest(http.MethodGet, "/v2/events"),
 					ghttp.RespondWith(http.StatusInternalServerError, `some-error-message`)),
@@ -218,26 +208,6 @@ var _ = Describe("Cloud Controller Client", func() {
 				err := client.Fetch("/v2/some-endpoint", params, &result)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Message).To(Equal("some-success-message"))
-			})
-		})
-
-		Context("when cloud controller returns error status", func() {
-			It("sends the error to segment.io", func() {
-				server.AppendHandlers(ghttp.CombineHandlers(
-					ghttp.VerifyRequest(http.MethodGet, "/v2/some-endpoint"),
-					ghttp.RespondWith(http.StatusForbidden, `some-failure-message`),
-				))
-
-				mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(message analytics.Track) {
-					Expect(message.Event).To(Equal("analytics error"))
-					Expect(message.UserId).To(Equal("some-user-id"))
-					Expect(message.Properties).To(HaveKeyWithValue(
-						"message", "failed to contact cc api: [403 Forbidden] some-failure-message",
-					))
-				})
-
-				err := client.Fetch("/v2/some-endpoint", nil, nil)
-				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 	})

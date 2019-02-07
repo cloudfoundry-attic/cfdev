@@ -47,12 +47,12 @@ type Analytics struct {
 	userId        string
 	version       string
 	osVersion     string
-	isBehindProxy string
+	isBehindProxy bool
 	exit          chan struct{}
 	ui            UI
 }
 
-func New(toggle Toggle, client analytics.Client, version string, osVersion string, isBehindProxy string, exit chan struct{}, ui UI) *Analytics {
+func New(toggle Toggle, client analytics.Client, version string, osVersion string, isBehindProxy bool, exit chan struct{}, ui UI) *Analytics {
 	uuid, err := machineid.ProtectedID("cfdev")
 	if err != nil {
 		uuid = "UNKNOWN_ID"

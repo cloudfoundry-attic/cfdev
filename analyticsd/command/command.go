@@ -2,6 +2,7 @@ package command
 
 import (
 	"code.cloudfoundry.org/cfdev/analyticsd/config"
+	"code.cloudfoundry.org/cfdev/analyticsd/segment"
 	"encoding/json"
 	"gopkg.in/segmentio/analytics-go.v3"
 	"log"
@@ -9,8 +10,6 @@ import (
 	"strings"
 	"time"
 )
-
-//go:generate mockgen -package mocks -destination mocks/analytics.go gopkg.in/segmentio/analytics-go.v3 Client
 
 type Command interface {
 	HandleResponse(body json.RawMessage) error
@@ -29,138 +28,77 @@ func New(
 	UUID string,
 	version string,
 	osVersion string,
-	isBehindProxy string,
 	logger *log.Logger) (Command, bool) {
+
+	logger.Printf("Detected event for %q\n", event)
+
+	segmentClient := segment.New(
+		analyticsClient,
+		UUID,
+		version,
+		osVersion,
+		timeStamp,
+	)
 
 	switch event {
 	case "audit.app.restage":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &AppRestage{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.app.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &AppCreate{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "app.crash":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &AppCrash{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.organization.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &OrgCreate{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.space.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &SpaceCreate{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.service_instance.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &ServiceCreate{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.service_binding.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &ServiceBind{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.service_broker.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &ServiceBrokerCreate{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.user_provided_service_instance.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &UserProvidedServiceCreate{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	case "audit.route.create":
-		logger.Printf("Detected event for %q\n", event)
-
 		return &RouteCreate{
 			CCClient:        ccClient,
-			AnalyticsClient: analyticsClient,
-			TimeStamp:       timeStamp,
-			UUID:            UUID,
-			Version:         version,
-			OSVersion:       osVersion,
-			IsBehindProxy:   isBehindProxy,
+			AnalyticsClient: segmentClient,
 			Logger:          logger,
 		}, true
 	default:

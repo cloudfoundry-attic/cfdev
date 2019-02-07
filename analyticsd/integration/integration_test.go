@@ -42,7 +42,6 @@ var _ = Describe("Integration", func() {
 			"some-user-uuid",
 			"some-version",
 			"some-os-version",
-			"false",
 			buffer,
 			httpClient,
 			mockAnalytics,
@@ -118,30 +117,28 @@ var _ = Describe("Integration", func() {
 				})
 
 				It("sends the events when analytics is stopped before polling interval completes", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "ruby",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "ruby"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "go",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "go"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
 					startDaemon()
@@ -150,57 +147,54 @@ var _ = Describe("Integration", func() {
 				})
 
 				It("sends the events and continues polling", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "ruby",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "ruby"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "go",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "go"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 10, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "java",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 10, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "java"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 11, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "nodejs",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 11, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "nodejs"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
+
 					startDaemon()
 					<-time.After(2030 * time.Millisecond)
 					aDaemon.Stop()
@@ -231,30 +225,28 @@ var _ = Describe("Integration", func() {
 						))
 				})
 				It("sends the subsequent app push events", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "ruby",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "ruby"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app created",
-						Timestamp: time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"buildpack":      "go",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app created"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 8, 9, 7, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("buildpack", "go"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
 					startDaemon()
@@ -277,16 +269,15 @@ var _ = Describe("Integration", func() {
 						))
 				})
 				It("sends the crash event", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app push failed",
-						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app push failed"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
 					startDaemon()
@@ -320,17 +311,16 @@ var _ = Describe("Integration", func() {
 					))
 				})
 				It("sends the service create event", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "created service",
-						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"service":        "p-circuit-breaker-dashboard",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("created service"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("service",  "p-circuit-breaker-dashboard"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
 					startDaemon()
@@ -364,17 +354,16 @@ var _ = Describe("Integration", func() {
 					))
 				})
 				It("sends the service bind event", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app bound to service",
-						Timestamp: time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"service":        "p-circuit-breaker-dashboard",
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app bound to service"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 9, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("service", "p-circuit-breaker-dashboard"))
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
 					startDaemon()
@@ -396,16 +385,15 @@ var _ = Describe("Integration", func() {
 					))
 				})
 				It("sends the restage event", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "app restage",
-						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("app restage"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
 					startDaemon()
@@ -429,16 +417,15 @@ var _ = Describe("Integration", func() {
 					))
 				})
 				It("sends the user-provided-service event", func() {
-					mockAnalytics.EXPECT().Enqueue(analytics.Track{
-						UserId:    "some-user-uuid",
-						Event:     "created user provided service",
-						Timestamp: time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
-						Properties: map[string]interface{}{
-							"os":             runtime.GOOS,
-							"plugin_version": "some-version",
-							"os_version":     "some-os-version",
-							"proxy":          "false",
-						},
+					mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
+						Expect(event.UserId).To(Equal("some-user-uuid"))
+						Expect(event.Event).To(Equal("created user provided service"))
+						Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC)))
+
+						Expect(event.Properties).To(HaveKeyWithValue("os", runtime.GOOS))
+						Expect(event.Properties).To(HaveKeyWithValue("plugin_version", "some-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("os_version", "some-os-version"))
+						Expect(event.Properties).To(HaveKeyWithValue("proxy", false))
 					})
 
 					startDaemon()

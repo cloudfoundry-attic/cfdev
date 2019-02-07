@@ -1,22 +1,15 @@
 package command
 
 import (
+	"code.cloudfoundry.org/cfdev/analyticsd/segment"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/segmentio/analytics-go.v3"
 	"log"
-	"runtime"
-	"time"
 )
 
 type ServiceBind struct {
 	CCClient        CloudControllerClient
-	AnalyticsClient analytics.Client
-	TimeStamp       time.Time
-	UUID            string
-	Version         string
-	OSVersion       string
-	IsBehindProxy   string
+	AnalyticsClient *segment.Client
 	Logger          *log.Logger
 }
 
@@ -63,19 +56,8 @@ func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
 		return nil
 	}
 
-	var properties = analytics.Properties{
-		"service":        labelResp.Entity.Label,
-		"os":             runtime.GOOS,
-		"plugin_version": c.Version,
-		"os_version":     c.OSVersion,
-		"proxy":          c.IsBehindProxy,
-	}
-
-	err = c.AnalyticsClient.Enqueue(analytics.Track{
-		UserId:     c.UUID,
-		Event:      "app bound to service",
-		Timestamp:  c.TimeStamp,
-		Properties: properties,
+	err = c.AnalyticsClient.Enqueue("app bound to service", map[string]string{
+		"service": labelResp.Entity.Label,
 	})
 
 	if err != nil {

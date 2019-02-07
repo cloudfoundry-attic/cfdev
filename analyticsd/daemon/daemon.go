@@ -30,20 +30,18 @@ func New(
 	UUID string,
 	pluginVersion string,
 	osVersion string,
-	isBehindProxy string,
 	writer io.Writer,
 	httpClient *http.Client,
 	analyticsClient analytics.Client,
 	pollingInterval time.Duration,
 ) *Daemon {
 	logger := log.New(writer, "[ANALYTICSD] ", log.LstdFlags)
-	ccClient := cloud_controller.New(ccHost, logger, httpClient, analyticsClient, UUID, pluginVersion, isBehindProxy)
+	ccClient := cloud_controller.New(ccHost, logger, httpClient)
 
 	return &Daemon{
 		UUID:            UUID,
 		pluginVersion:   pluginVersion,
 		osVersion:       osVersion,
-		isBehindProxy:   isBehindProxy,
 		ccClient:        ccClient,
 		analyticsClient: analyticsClient,
 		pollingInterval: pollingInterval,
@@ -88,7 +86,7 @@ func (d *Daemon) do() error {
 	for _, event := range events {
 		d.saveLatestTime(event.Timestamp)
 
-		cmd, exists := command.New(event.Type, d.ccClient, d.analyticsClient, event.Timestamp, d.UUID, d.pluginVersion, d.osVersion, d.isBehindProxy, d.logger)
+		cmd, exists := command.New(event.Type, d.ccClient, d.analyticsClient, event.Timestamp, d.UUID, d.pluginVersion, d.osVersion, d.logger)
 		if !exists {
 			continue
 		}

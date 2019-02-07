@@ -4,7 +4,6 @@ import (
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/host"
 	_ "code.cloudfoundry.org/cfdev/unset-bosh-all-proxy"
-	"fmt"
 )
 import (
 	"io/ioutil"
@@ -81,7 +80,7 @@ func main() {
 	if err != nil {
 		osVersion = "unknown-os-version"
 	}
-	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, fmt.Sprintf("%t", env.IsBehindProxy()), exitChan, ui)
+	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, env.IsBehindProxy(), exitChan, ui)
 	defer analyticsClient.Close()
 
 	setWhiteListedProxyVariables()
