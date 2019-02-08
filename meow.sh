@@ -25,7 +25,7 @@ function run_cats() {
     "backend": "diego",
     "include_apps": true,
     "include_backend_compatibility": false,
-    "include_container_networking": true,
+    "include_container_networking": ${INCLUDE_CONTAINER_NETWORKING:-true},
     "include_capi_no_bridge" : true,
     "include_detect": true,
     "include_docker": true,
