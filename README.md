@@ -37,8 +37,8 @@ CF Dev is a new distribution of Cloud Foundry designed to run on a developer’s
 ## Recommended system requirements
 * Operating system: MacOS 10.12+/Windows 10+
 * CPU: 2 Cores or more
-* Memory: 8 Gigabytes _available_ memory
-* Disk: 60GB available space
+* Memory: 8 Gigabytes _available memory_
+* Disk: 60GB _flash_ storage
 
 ## Install 
 1. _(if needed)_ Uninstall your existing PCF Dev plugin if it is installed `cf uninstall-plugin pcfdev`
