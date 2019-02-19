@@ -3,6 +3,7 @@ package telemetry_test
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics/toggle"
 	"code.cloudfoundry.org/cfdev/cmd/telemetry"
+	"code.cloudfoundry.org/cfdev/config"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -40,6 +41,7 @@ var _ = Describe("Telemetry", func() {
 		t0ggle         *toggle.Toggle
 		telCmd         *cobra.Command
 		tempFilePath   string
+		tempDir        string
 	)
 
 	BeforeEach(func() {
@@ -51,6 +53,9 @@ var _ = Describe("Telemetry", func() {
 		tempFile, err := ioutil.TempFile("", "cfdev-telemetry-")
 		Expect(err).NotTo(HaveOccurred())
 		tempFilePath = tempFile.Name()
+
+		tempDir, err = ioutil.TempDir("", "cfdev-telemetry-")
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	JustBeforeEach(func() {
@@ -61,6 +66,9 @@ var _ = Describe("Telemetry", func() {
 			AnalyticsToggle: t0ggle,
 			AnalyticsD:      mockAnalyticsD,
 			Analytics:       &mockAnalytics,
+			Config: config.Config{
+				BinaryDir: tempDir,
+			},
 		}
 
 		telCmd = subject.Cmd()

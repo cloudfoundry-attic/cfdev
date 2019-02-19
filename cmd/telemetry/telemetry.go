@@ -2,8 +2,12 @@ package telemetry
 
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
+	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
 	"github.com/spf13/cobra"
+	"os"
+	"path/filepath"
+	"runtime"
 )
 
 type UI interface {
@@ -33,6 +37,7 @@ type Telemetry struct {
 	Analytics       Analytics
 	AnalyticsToggle Toggle
 	AnalyticsD      AnalyticsD
+	Config          config.Config
 	Args            struct {
 		FlagOff bool
 		FlagOn  bool
@@ -58,6 +63,13 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else if t.Args.FlagOn {
+		if runtime.GOOS == "windows" {
+			if _, err := os.Stat(filepath.Join(t.Config.BinaryDir)); os.IsNotExist(err) {
+				t.UI.Say("Please run 'cf dev start' before attempting to turn on telemetry")
+				return nil
+			}
+		}
+
 		err := t.turnTelemetryOn()
 		if err != nil {
 			return err
@@ -69,10 +81,11 @@ func (t *Telemetry) RunE(cmd *cobra.Command, args []string) error {
 	} else {
 		t.UI.Say("Telemetry is turned OFF")
 	}
+
 	return nil
 }
 
-func (t *Telemetry)turnTelemetryOff() error {
+func (t *Telemetry) turnTelemetryOff() error {
 	t.Analytics.Event(cfanalytics.STOP_TELEMETRY)
 
 	if err := t.AnalyticsToggle.SetCustomAnalyticsEnabled(false); err != nil {
