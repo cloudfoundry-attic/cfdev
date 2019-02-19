@@ -175,6 +175,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
 		&b7.Telemetry{
+			Config:          config,
 			UI:              ui,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,

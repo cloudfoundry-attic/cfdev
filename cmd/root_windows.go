@@ -182,6 +182,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD: analyticsD,
 		},
 		&b7.Telemetry{
+			Config:          config,
 			UI:              ui,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
