@@ -99,7 +99,5 @@ var _ = Describe("hyperkit starts and telemetry", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Consistently(session, 2*time.Second).ShouldNot(gbytes.Say("Are you ok with CF Dev periodically capturing anonymized telemetry"))
-
-		Expect(ioutil.ReadFile(filepath.Join(cfdevHome, "analytics", "analytics.txt"))).Should(MatchJSON([]byte(`{"cfAnalyticsEnabled": true,"customAnalyticsEnabled": false,"props":{}}`)))
 	})
 })
