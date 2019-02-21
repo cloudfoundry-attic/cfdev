@@ -4,8 +4,6 @@ import (
 	"code.cloudfoundry.org/cfdev/servicew/config"
 	"fmt"
 	"github.com/kardianos/service"
-	"io"
-	"log"
 	"os"
 	"os/exec"
 	"syscall"
@@ -21,11 +19,10 @@ const (
 type Program struct {
 	conf    config.Config
 	cmd     *exec.Cmd
-	logger  *log.Logger
 	Service service.Service
 }
 
-func New(conf config.Config, out io.Writer) (*Program, error) {
+func New(conf config.Config) (*Program, error) {
 	svConfig := &service.Config{
 		Name:        conf.Label,
 		DisplayName: conf.Label,
@@ -34,8 +31,7 @@ func New(conf config.Config, out io.Writer) (*Program, error) {
 	}
 
 	prog := &Program{
-		conf:   conf,
-		logger: log.New(out, "[PROG-MGR] ", log.LstdFlags),
+		conf: conf,
 	}
 
 	svc, err := service.New(prog, svConfig)
@@ -98,26 +94,18 @@ func (p *Program) Stop(s service.Service) error {
 }
 
 func (p *Program) StartService() error {
-	p.logger.Printf("Starting '%s'...\n", p.conf.Label)
-
 	return p.Service.Start()
 }
 
 func (p *Program) StopService() error {
-	p.logger.Printf("Stopping '%s'...\n", p.conf.Label)
-
 	return p.Service.Stop()
 }
 
 func (p *Program) Uninstall() error {
-	p.logger.Printf("Uninstalling '%s'...\n", p.conf.Label)
-
 	return p.Service.Uninstall()
 }
 
 func (p *Program) Install() error {
-	p.logger.Printf("Installing '%s'...\n", p.conf.Label)
-
 	return p.Service.Install()
 }
 

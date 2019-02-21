@@ -39,7 +39,7 @@ var _ = Describe("Program", func() {
 			Label:      "cfdev-program-test",
 			Executable: "sleep",
 			Args:       []string{"1234"},
-		}, ioutil.Discard)
+		})
 		Expect(err).NotTo(HaveOccurred())
 
 		err = p.Start(nil)
@@ -60,7 +60,7 @@ var _ = Describe("Program", func() {
 			Env: map[string]string{
 				"SLEEP_COUNT": "1235",
 			},
-		}, ioutil.Discard)
+		})
 		Expect(err).NotTo(HaveOccurred())
 
 		err = p.Start(nil)
@@ -84,7 +84,7 @@ var _ = Describe("Program", func() {
 			Executable: "sh",
 			Args:       []string{"-c", "while true; do echo hello; sleep 1; done"},
 			Log:        logPath,
-		}, ioutil.Discard)
+		})
 		Expect(err).NotTo(HaveOccurred())
 
 		err = p.Start(nil)

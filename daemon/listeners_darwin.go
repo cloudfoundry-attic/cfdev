@@ -1,5 +1,3 @@
-// +build darwin
-
 package daemon
 
 // #include <stdlib.h>

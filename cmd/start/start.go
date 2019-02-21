@@ -306,7 +306,7 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "starting vpnkit")
 	}
 
-	s.VpnKit.Watch(s.LocalExit)
+	// s.VpnKit.Watch(s.LocalExit)
 
 	s.UI.Say("Starting the VM...")
 	if err := s.Hypervisor.Start("cfdev"); err != nil {

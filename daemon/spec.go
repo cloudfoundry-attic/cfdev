@@ -10,4 +10,6 @@ type DaemonSpec struct {
 	Sockets              map[string]string
 	StdoutPath           string
 	StderrPath           string
+	LogPath              string
+	Options              map[string]interface{}
 }

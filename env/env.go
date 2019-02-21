@@ -72,13 +72,15 @@ func (e *Env) CreateDirs() error {
 		e.Config.LogDir,
 		e.Config.StateDir,
 		e.Config.BinaryDir,
-		e.Config.ServicesDir)
+		e.Config.ServicesDir,
+		e.Config.DaemonDir)
 	if err != nil {
 		return err
 	}
 
 	return e.mkdirAlls(
 		e.Config.CacheDir,
+		e.Config.DaemonDir,
 		e.Config.LogDir)
 }
 

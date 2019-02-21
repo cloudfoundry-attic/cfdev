@@ -33,10 +33,6 @@ type DaemonRunner interface {
 	IsRunning(string) (bool, error)
 }
 
-func (v *VpnKit) Stop() error {
-	return v.DaemonRunner.Stop(v.Label)
-}
-
 func (v *VpnKit) Watch(exit chan string) {
 	go func() {
 		for {
