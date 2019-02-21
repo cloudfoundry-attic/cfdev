@@ -73,8 +73,6 @@ func (s *Stop) Cmd() *cobra.Command {
 const vmName = "cfdev"
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
-
-
 	s.Analytics.Event(cfanalytics.STOP)
 
 	if err := s.Host.CheckRequirements(); err != nil {
@@ -107,7 +105,6 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
 	}
 
-
 	if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
 		reterr = errors.SafeWrap(err, "failed to remove IP aliases")
 	}
@@ -121,5 +118,6 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	if reterr != nil {
 		return errors.SafeWrap(reterr, "cf dev stop")
 	}
+
 	return nil
 }

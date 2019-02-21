@@ -53,6 +53,7 @@ type Config struct {
 	BuildVersion           string
 	AnalyticsKey           string
 	ServicesDir            string
+	DaemonDir              string
 	CFDomain               string
 }
 
@@ -81,6 +82,7 @@ func NewConfig() (Config, error) {
 		StateLinuxkit:          filepath.Join(cfdevHome, "state", "linuxkit"),
 		VpnKitStateDir:         filepath.Join(cfdevHome, "state", "vpnkit"),
 		ServicesDir:            filepath.Join(cfdevHome, "services"),
+		DaemonDir:              filepath.Join(cfdevHome, "daemons"),
 		CacheDir:               filepath.Join(cfdevHome, "cache"),
 		BinaryDir:              filepath.Join(cfdevHome, "bin"),
 		LogDir:                 filepath.Join(cfdevHome, "log"),

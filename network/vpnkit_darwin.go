@@ -43,6 +43,10 @@ func (v *VpnKit) Destroy() error {
 	return v.DaemonRunner.RemoveDaemon(v.Label)
 }
 
+func (v *VpnKit) Stop() error {
+	return v.DaemonRunner.Stop(v.Label)
+}
+
 func (v *VpnKit) daemonSpec() daemon.DaemonSpec {
 	return daemon.DaemonSpec{
 		Label:       v.Label,

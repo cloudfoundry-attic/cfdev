@@ -4,8 +4,6 @@ import (
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/host"
 	_ "code.cloudfoundry.org/cfdev/unset-bosh-all-proxy"
-)
-import (
 	"io/ioutil"
 	"log"
 	"os"

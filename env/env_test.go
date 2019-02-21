@@ -67,6 +67,7 @@ var _ = Describe("env", func() {
 			stateDir    string
 			binaryDir   string
 			cacheDir    string
+			daemonDir   string
 			servicesDir string
 			subject     env.Env
 			conf        config.Config
@@ -81,6 +82,8 @@ var _ = Describe("env", func() {
 
 			logDir = filepath.Join(dir, "log")
 			os.MkdirAll(logDir, os.ModePerm)
+			daemonDir = filepath.Join(dir, "daemon")
+			os.MkdirAll(daemonDir, os.ModePerm)
 			stateDir = filepath.Join(dir, "state")
 			os.MkdirAll(stateDir, os.ModePerm)
 			binaryDir = filepath.Join(dir, "bin")
@@ -93,6 +96,7 @@ var _ = Describe("env", func() {
 				StateDir:    stateDir,
 				CacheDir:    cacheDir,
 				BinaryDir:   binaryDir,
+				DaemonDir:   daemonDir,
 				ServicesDir: servicesDir,
 			}
 
@@ -110,10 +114,10 @@ var _ = Describe("env", func() {
 
 			Expect(stateDir).NotTo(BeAnExistingFile())
 			Expect(binaryDir).NotTo(BeAnExistingFile())
-			Expect(binaryDir).NotTo(BeAnExistingFile())
 			Expect(servicesDir).NotTo(BeAnExistingFile())
 
 			Expect(logDir).To(BeAnExistingFile())
+			Expect(daemonDir).To(BeAnExistingFile())
 			Expect(cacheDir).To(BeAnExistingFile())
 		})
 	})

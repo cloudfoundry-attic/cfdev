@@ -23,7 +23,7 @@ func main() {
 	err = yaml.Unmarshal(contents, &conf)
 	expectNoError(err)
 
-	prog, err := program.New(conf, os.Stdout)
+	prog, err := program.New(conf)
 	expectNoError(err)
 
 	if len(os.Args) == 1 {
