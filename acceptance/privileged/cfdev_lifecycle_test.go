@@ -205,7 +205,12 @@ func PushAnApp() {
 	}, 30*time.Minute, 5*time.Second).Should(ContainSubstring("create succeeded"))
 
 	Eventually(cf.Cf("bind-service", "cf-test-app", "mydb")).Should(gexec.Exit(0))
-	Eventually(cf.Cf("start", "cf-test-app"), 10*time.Minute).Should(gexec.Exit(0))
+
+	Eventually(func() int {
+		sesh := cf.Cf("start", "cf-test-app")
+		<-sesh.Exited
+		return sesh.ExitCode()
+	}, 10*time.Minute, 10*time.Second).Should(BeZero())
 
 	Expect(httpGet("http://cf-test-app.dev.cfdev.sh")).To(Equal("Hello, world!"))
 	Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external")).To(ContainSubstring("Example Domain"))

@@ -30,7 +30,12 @@ var _ = Describe("cf dev proxy settings", func() {
 	Context("when the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables are set", func() {
 		It("an app respect proxy environment variables", func() {
 			Eventually(cf.Cf("login", "-a", "https://api.dev.cfdev.sh", "--skip-ssl-validation", "-u", "admin", "-p", "admin", "-o", "cfdev-org", "-s", "cfdev-space"), 5*time.Minute).Should(gexec.Exit(0))
-			Eventually(cf.Cf("push", "cf-test-app", "-p", "../fixture", "-b", "ruby_buildpack"), 5*time.Minute).Should(gexec.Exit(0))
+
+			Eventually(func() int {
+				sesh := cf.Cf("push", "cf-test-app", "-p", "../fixture", "-b", "ruby_buildpack")
+				<-sesh.Exited
+				return sesh.ExitCode()
+			}, 10*time.Minute, 10*time.Second).Should(BeZero())
 
 			By("making HTTP requests")
 			Expect(httpGet("http://cf-test-app.dev.cfdev.sh/external")).To(ContainSubstring("Example Domain"))
