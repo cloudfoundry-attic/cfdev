@@ -2,7 +2,7 @@ module code.cloudfoundry.org/cfdev
 
 require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20180108190415-b31f603f5e1e // indirect
-	code.cloudfoundry.org/cli v6.38.0+incompatible
+	code.cloudfoundry.org/cli v6.43.0+incompatible
 	code.cloudfoundry.org/gofileutils v0.0.0-20170111115228-4d0c80011a0f // indirect
 	code.cloudfoundry.org/ykk v0.0.0-20170424192843-e4df4ce2fd4d // indirect
 	github.com/SermoDigital/jose v0.9.1 // indirect

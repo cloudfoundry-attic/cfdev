@@ -1,8 +1,8 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 code.cloudfoundry.org/bytefmt v0.0.0-20180108190415-b31f603f5e1e h1:R3Kkucb2Lbd/gFOKivb+HidzSL5o8eB+eWL2YqoIOss=
 code.cloudfoundry.org/bytefmt v0.0.0-20180108190415-b31f603f5e1e/go.mod h1:wN/zk7mhREp/oviagqUXY3EwuHhWyOvAdsn5Y4CzOrc=
-code.cloudfoundry.org/cli v6.38.0+incompatible h1:hMobKRvaN6GAMzUYcIh6y6LyyotP8ig5i/v3yz2hrNo=
-code.cloudfoundry.org/cli v6.38.0+incompatible/go.mod h1:e4d+EpbwevNhyTZKybrLlyTvpH+W22vMsmdmcTxs/Fo=
+code.cloudfoundry.org/cli v6.43.0+incompatible h1:jAaPyHN5Hb2r2sR9i8Y8ejKPiPpuBYMaHBFyKVmQ7T4=
+code.cloudfoundry.org/cli v6.43.0+incompatible/go.mod h1:e4d+EpbwevNhyTZKybrLlyTvpH+W22vMsmdmcTxs/Fo=
 code.cloudfoundry.org/gofileutils v0.0.0-20170111115228-4d0c80011a0f h1:UrKzEwTgeiff9vxdrfdqxibzpWjxLnuXDI5m6z3GJAk=
 code.cloudfoundry.org/gofileutils v0.0.0-20170111115228-4d0c80011a0f/go.mod h1:sk5LnIjB/nIEU7yP5sDQExVm62wu0pBh3yrElngUisI=
 code.cloudfoundry.org/ykk v0.0.0-20170424192843-e4df4ce2fd4d h1:M+zXqtXJqcsmpL76aU0tdl1ho23eYa4axYoM4gD62UA=
