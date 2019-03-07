@@ -33,6 +33,7 @@ require (
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/harlow/kinesis-consumer v0.2.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/kardianos/service v1.0.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
 	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329 // indirect
@@ -56,7 +57,6 @@ require (
 	golang.org/x/crypto v0.0.0-20180830192347-182538f80094
 	golang.org/x/net v0.0.0-20181017193950-04a2e542c03f // indirect
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
-	golang.org/x/sys v0.0.0-20181011152604-fa43e7bc11ba // indirect
 	google.golang.org/grpc v1.16.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
