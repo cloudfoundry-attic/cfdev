@@ -1,8 +1,8 @@
 package main
 
 import (
-	"code.cloudfoundry.org/cfdev/servicew/config"
-	"code.cloudfoundry.org/cfdev/servicew/program"
+	"code.cloudfoundry.org/cfdev/pkg/servicew/config"
+	"code.cloudfoundry.org/cfdev/pkg/servicew/program"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"

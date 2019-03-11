@@ -1,8 +1,8 @@
 package integration_test
 
 import (
-	"code.cloudfoundry.org/cfdev/servicew/client"
-	"code.cloudfoundry.org/cfdev/servicew/config"
+	"code.cloudfoundry.org/cfdev/pkg/servicew/client"
+	"code.cloudfoundry.org/cfdev/pkg/servicew/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v2"

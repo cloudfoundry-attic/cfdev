@@ -1,7 +1,7 @@
 package program
 
 import (
-	"code.cloudfoundry.org/cfdev/servicew/config"
+	"code.cloudfoundry.org/cfdev/pkg/servicew/config"
 	"fmt"
 	"github.com/kardianos/service"
 	"os"

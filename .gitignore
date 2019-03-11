@@ -15,7 +15,6 @@
 .idea
 
 /bin/
-/pkg/
 
 *.iso
 *.img

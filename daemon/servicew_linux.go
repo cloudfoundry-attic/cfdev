@@ -2,8 +2,8 @@ package daemon
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/servicew/client"
-	swconfig "code.cloudfoundry.org/cfdev/servicew/config"
+	"code.cloudfoundry.org/cfdev/pkg/servicew/client"
+	swconfig "code.cloudfoundry.org/cfdev/pkg/servicew/config"
 	"path/filepath"
 )
 

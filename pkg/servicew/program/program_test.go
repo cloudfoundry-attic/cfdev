@@ -1,7 +1,7 @@
 package program_test
 
 import (
-	"code.cloudfoundry.org/cfdev/servicew/config"
+	"code.cloudfoundry.org/cfdev/pkg/servicew/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	. "code.cloudfoundry.org/cfdev/servicew/program"
+	. "code.cloudfoundry.org/cfdev/pkg/servicew/program"
 )
 
 var _ = Describe("Program", func() {
