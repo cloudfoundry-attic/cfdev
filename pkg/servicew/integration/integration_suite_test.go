@@ -19,7 +19,7 @@ func TestIntegration(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	binaryPath, err = gexec.Build("code.cloudfoundry.org/cfdev/servicew")
+	binaryPath, err = gexec.Build("code.cloudfoundry.org/cfdev/pkg/servicew")
 	Expect(err).NotTo(HaveOccurred())
 })
 

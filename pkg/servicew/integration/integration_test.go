@@ -36,7 +36,7 @@ var _ = Describe("ServiceWrapper Lifecycle", func() {
 	})
 
 	It("installs, runs, and remove services", func() {
-		Expect(isRunning(swc, label)).To(BeFalse())
+		Expect(swc.IsRunning(label)).To(BeFalse())
 
 		contents, err := ioutil.ReadFile(fixturePath("simple.yml"))
 		Expect(err).NotTo(HaveOccurred())
@@ -46,12 +46,15 @@ var _ = Describe("ServiceWrapper Lifecycle", func() {
 		err = swc.Install(cfg)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(isRunning(swc, label)).To(BeFalse())
+		Expect(swc.IsRunning(label)).To(BeFalse())
 
 		err = swc.Start(label)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(isRunning(swc, label), 10*time.Second).Should(BeTrue())
+		Eventually(func() bool {
+			isRunning, _ := swc.IsRunning(label)
+			return isRunning
+		}, 10*time.Second).Should(BeTrue())
 
 		if runtime.GOOS != "windows" {
 			output := run("bash", "-c", "ps aux | grep 'sleep 12345'")
@@ -60,15 +63,9 @@ var _ = Describe("ServiceWrapper Lifecycle", func() {
 
 		err = swc.Stop(label)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(isRunning(swc, label)).To(BeFalse())
+		Expect(swc.IsRunning(label)).To(BeFalse())
 
 		err = swc.Uninstall(label)
-		Expect(isRunning(swc, label)).To(BeFalse())
+		Expect(swc.IsRunning(label)).To(BeFalse())
 	})
 })
-
-func isRunning(swc *client.ServiceWrapper, label string) bool {
-	isRunning, err := swc.IsRunning(label)
-	Expect(err).NotTo(HaveOccurred())
-	return isRunning
-}
