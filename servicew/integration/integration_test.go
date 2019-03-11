@@ -1,12 +1,13 @@
 package integration_test
 
 import (
+	"code.cloudfoundry.org/cfdev/servicew/client"
+	"code.cloudfoundry.org/cfdev/servicew/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -16,7 +17,8 @@ var _ = Describe("ServiceWrapper Lifecycle", func() {
 
 	var (
 		tempDir string
-		servicewPath string
+		swc     *client.ServiceWrapper
+		label   = "org.cfdev.servicew.simple"
 	)
 
 	BeforeEach(func() {
@@ -24,42 +26,49 @@ var _ = Describe("ServiceWrapper Lifecycle", func() {
 		tempDir, err = ioutil.TempDir("", "cfdev-service-wrapper-")
 		Expect(err).NotTo(HaveOccurred())
 
-		servicewPath = filepath.Join(tempDir, "test")
-		servicewConfigPath := filepath.Join(tempDir, "test.yml")
-
-		copy(binaryPath, servicewPath, true)
-		copy(fixturePath("simple.yml"), servicewConfigPath)
+		swc = client.New(binaryPath, tempDir)
 	})
 
 	AfterEach(func() {
-		exec.Command(servicewPath, "stop").Run()
-		exec.Command(servicewPath, "uninstall").Run()
+		swc.Stop(label)
+		swc.Uninstall(label)
 		os.RemoveAll(tempDir)
 	})
 
 	It("installs, runs, and remove services", func() {
-		Expect(status(servicewPath)).To(ContainSubstring("Error"))
+		Expect(isRunning(swc, label)).To(BeFalse())
 
-		run(servicewPath, "install")
-		Expect(status(servicewPath)).To(Equal("Stopped"))
+		contents, err := ioutil.ReadFile(fixturePath("simple.yml"))
+		Expect(err).NotTo(HaveOccurred())
 
-		run(servicewPath, "start")
-		time.Sleep(3*time.Second)
-		Expect(status(servicewPath)).To(Equal("Running"))
+		var cfg config.Config
+		yaml.Unmarshal(contents, &cfg)
+		err = swc.Install(cfg)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(isRunning(swc, label)).To(BeFalse())
+
+		err = swc.Start(label)
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(isRunning(swc, label), 10*time.Second).Should(BeTrue())
 
 		if runtime.GOOS != "windows" {
 			output := run("bash", "-c", "ps aux | grep 'sleep 12345'")
 			Expect(strings.TrimSpace(output)).NotTo(BeEmpty())
 		}
 
-		run(servicewPath, "stop")
-		Expect(status(servicewPath)).To(Equal("Stopped"))
+		err = swc.Stop(label)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(isRunning(swc, label)).To(BeFalse())
 
-		run(servicewPath, "uninstall")
-		Expect(status(servicewPath)).To(ContainSubstring("Error"))
+		err = swc.Uninstall(label)
+		Expect(isRunning(swc, label)).To(BeFalse())
 	})
 })
 
-func status(servicewPath string) string {
-	return strings.TrimSpace(run(servicewPath, "status"))
+func isRunning(swc *client.ServiceWrapper, label string) bool {
+	isRunning, err := swc.IsRunning(label)
+	Expect(err).NotTo(HaveOccurred())
+	return isRunning
 }

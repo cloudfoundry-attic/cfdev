@@ -1,5 +1,5 @@
 ---
-label: org.cfdev.servicew.sleep-fixture
+label: org.cfdev.servicew.simple
 executable: sleep
 args:
 - "12345"

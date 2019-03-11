@@ -2,8 +2,6 @@ package integration_test
 
 import (
 	"github.com/onsi/gomega/gexec"
-	"io"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -38,22 +36,4 @@ func run(executable string, args ...string) string {
 
 func fixturePath(name string) string {
 	return filepath.Join("fixtures", name)
-}
-
-func copy(src string, dest string, chmod ...bool) error {
-	target, err := os.Create(dest)
-	Expect(err).NotTo(HaveOccurred())
-	defer target.Close()
-
-	if len(chmod) != 0 && chmod[0] {
-		err = os.Chmod(dest, 0744)
-		Expect(err).NotTo(HaveOccurred())
-	}
-
-	binData, err := os.Open(src)
-	Expect(err).NotTo(HaveOccurred())
-	defer binData.Close()
-
-	_, err = io.Copy(target, binData)
-	return err
 }

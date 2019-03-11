@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func main() {
@@ -35,7 +34,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "status":
-		fmt.Println(strings.Title(prog.Status()))
+		fmt.Println(prog.Status())
 	case "install":
 		err = prog.Install()
 	case "start":
