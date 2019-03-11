@@ -1,10 +1,10 @@
 package command_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/command"
-	commandMocks "code.cloudfoundry.org/cfdev/analyticsd/command/mocks"
-	"code.cloudfoundry.org/cfdev/analyticsd/segment"
-	"code.cloudfoundry.org/cfdev/analyticsd/segment/mocks"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/command"
+	commandMocks "code.cloudfoundry.org/cfdev/pkg/analyticsd/command/mocks"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,9 +14,9 @@ import (
 	"time"
 )
 
-var _ = Describe("RouteCreate", func() {
+var _ = Describe("ServiceBrokerCreate", func() {
 	var (
-		cmd            *command.RouteCreate
+		cmd            *command.ServiceBrokerCreate
 		mockController *gomock.Controller
 		mockAnalytics  *mocks.MockClient
 		mockCCClient   *commandMocks.MockCloudControllerClient
@@ -34,7 +34,7 @@ var _ = Describe("RouteCreate", func() {
 			time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 		)
 
-		cmd = &command.RouteCreate{
+		cmd = &command.ServiceBrokerCreate{
 			Logger:          log.New(ioutil.Discard, "", log.LstdFlags),
 			CCClient:        mockCCClient,
 			AnalyticsClient: segmentClient,
@@ -45,14 +45,13 @@ var _ = Describe("RouteCreate", func() {
 		mockController.Finish()
 	})
 
-	Context("when route is created", func() {
+	Context("when service broker is created", func() {
 		It("sends the route information to segment.io", func() {
 			mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
 				Expect(event.UserId).To(Equal("some-user-uuid"))
-				Expect(event.Event).To(Equal("created route"))
+				Expect(event.Event).To(Equal("created service broker"))
 				Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC)))
 			})
-
 
 			body := []byte("")
 

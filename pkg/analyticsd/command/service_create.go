@@ -1,28 +1,22 @@
 package command
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/segment"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment"
 	"encoding/json"
 	"fmt"
 	"log"
 )
 
-type ServiceBind struct {
+type ServiceCreate struct {
 	CCClient        CloudControllerClient
 	AnalyticsClient *segment.Client
 	Logger          *log.Logger
 }
 
-func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
+func (c *ServiceCreate) HandleResponse(body json.RawMessage) error {
 	var metadata struct {
 		Request struct {
-			Relationships struct {
-				ServiceInstance struct {
-					Data struct {
-						Guid string
-					}
-				} `json:"service_instance"`
-			}
+			ServicePlanGuid string `json:"service_plan_guid"`
 		}
 	}
 
@@ -34,7 +28,7 @@ func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
 		}
 	}
 
-	path := "/v2/service_instances/" + metadata.Request.Relationships.ServiceInstance.Data.Guid
+	path := "/v2/service_plans/" + metadata.Request.ServicePlanGuid
 	err := c.CCClient.Fetch(path, nil, &urlResp)
 	if err != nil {
 		return fmt.Errorf("failed to make request to: %s: %s", path, err)
@@ -56,7 +50,7 @@ func (c *ServiceBind) HandleResponse(body json.RawMessage) error {
 		return nil
 	}
 
-	err = c.AnalyticsClient.Enqueue("app bound to service", map[string]string{
+	err = c.AnalyticsClient.Enqueue("created service", map[string]string{
 		"service": labelResp.Entity.Label,
 	})
 

@@ -1,7 +1,7 @@
 package command
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/segment"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment"
 	"encoding/json"
 	"fmt"
 	"log"

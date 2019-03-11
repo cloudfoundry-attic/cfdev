@@ -1,7 +1,7 @@
 package cloud_controller_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/cloud_controller"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/cloud_controller"
 	"encoding/json"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"

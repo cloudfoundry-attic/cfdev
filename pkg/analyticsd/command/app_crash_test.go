@@ -1,10 +1,9 @@
 package command_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/command"
-	commandMocks "code.cloudfoundry.org/cfdev/analyticsd/command/mocks"
-	"code.cloudfoundry.org/cfdev/analyticsd/segment"
-	"code.cloudfoundry.org/cfdev/analyticsd/segment/mocks"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/command"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,18 +13,16 @@ import (
 	"time"
 )
 
-var _ = Describe("OrgCreate", func() {
+var _ = Describe("AppCrash", func() {
 	var (
-		cmd            *command.OrgCreate
+		cmd            *command.AppCrash
 		mockController *gomock.Controller
 		mockAnalytics  *mocks.MockClient
-		mockCCClient   *commandMocks.MockCloudControllerClient
 	)
 
 	BeforeEach(func() {
 		mockController = gomock.NewController(GinkgoT())
 		mockAnalytics = mocks.NewMockClient(mockController)
-		mockCCClient = commandMocks.NewMockCloudControllerClient(mockController)
 		segmentClient := segment.New(
 			mockAnalytics,
 			"some-user-uuid",
@@ -34,9 +31,8 @@ var _ = Describe("OrgCreate", func() {
 			time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC),
 		)
 
-		cmd = &command.OrgCreate{
+		cmd = &command.AppCrash{
 			Logger:          log.New(ioutil.Discard, "", log.LstdFlags),
-			CCClient:        mockCCClient,
 			AnalyticsClient: segmentClient,
 		}
 	})
@@ -45,18 +41,24 @@ var _ = Describe("OrgCreate", func() {
 		mockController.Finish()
 	})
 
-	Context("when org is created", func() {
-		It("sends the org information to segment.io", func() {
+	Context("when an app crash event occurs", func() {
+		It("sends the the crash event to segment.io", func() {
 			mockAnalytics.EXPECT().Enqueue(gomock.Any()).Do(func(event analytics.Track) {
 				Expect(event.UserId).To(Equal("some-user-uuid"))
-				Expect(event.Event).To(Equal("org created"))
+				Expect(event.Event).To(Equal("app push failed"))
 				Expect(event.Timestamp).To(Equal(time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC)))
 			})
 
+			body := []byte(`
+			{
+                  "instance": "d73d6816-3101-4efb-4a9b-c4c1",
+                  "index": 0,
+                  "cell_id": "f5002113-527c-4bf9-b5e4-867f68a4ecfc",
+                  "exit_description": "APP/PROC/WEB: Exited with status 1",
+                  "reason": "CRASHED"
+            }`)
 
-			body := []byte("")
-
-			Expect(cmd.HandleResponse(body)).NotTo(HaveOccurred())
+			cmd.HandleResponse(body)
 		})
 	})
 })

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
-	"code.cloudfoundry.org/cfdev/analyticsd/daemon/mocks"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/daemon"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/daemon/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

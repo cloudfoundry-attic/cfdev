@@ -1,8 +1,8 @@
 package daemon
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/cloud_controller"
-	"code.cloudfoundry.org/cfdev/analyticsd/command"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/cloud_controller"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/command"
 	"gopkg.in/segmentio/analytics-go.v3"
 	"io"
 	"log"

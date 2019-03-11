@@ -1,7 +1,7 @@
 package command_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/command/mocks"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/command/mocks"
 	"encoding/json"
 	"github.com/golang/mock/gomock"
 	"net/url"

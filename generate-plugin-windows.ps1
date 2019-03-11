@@ -10,7 +10,7 @@ go build -ldflags `
   "-X main.version=0.0.$date
    -X main.testAnalyticsKey=WFz4dVFXZUxN2Y6MzfUHJNWtlgXuOYV2" `
    -o $cfAnalyticsdUrl `
-   code.cloudfoundry.org/cfdev/analyticsd
+   code.cloudfoundry.org/cfdev/pkg/analyticsd
 
 go build -ldflags `
    "-X $pkg.analyticsdUrl=$cfAnalyticsdUrl

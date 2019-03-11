@@ -1,8 +1,8 @@
 package command
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/config"
-	"code.cloudfoundry.org/cfdev/analyticsd/segment"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/config"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment"
 	"encoding/json"
 	"gopkg.in/segmentio/analytics-go.v3"
 	"log"

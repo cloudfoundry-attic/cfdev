@@ -19,7 +19,7 @@ go build \
   -ldflags \
     "-X $analyticsdpkg.testAnalyticsKey=$analyticskey
      -X $analyticsdpkg.version=0.0.$(date +%Y%m%d-%H%M%S)" \
-     code.cloudfoundry.org/cfdev/analyticsd
+     code.cloudfoundry.org/cfdev/pkg/analyticsd
 
 cfdepsUrl="$cache_dir/cfdev-deps.tgz"
 pkg="code.cloudfoundry.org/cfdev/config"

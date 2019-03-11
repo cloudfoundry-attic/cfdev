@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"code.cloudfoundry.org/cfdev/analyticsd/daemon"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/daemon"
 	"github.com/denisbrodbeck/machineid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"

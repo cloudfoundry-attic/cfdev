@@ -1,20 +1,20 @@
 package command
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/segment"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment"
 	"encoding/json"
 	"fmt"
 	"log"
 )
 
-type ServiceBrokerCreate struct {
+type AppRestage struct {
 	CCClient        CloudControllerClient
 	AnalyticsClient *segment.Client
 	Logger          *log.Logger
 }
 
-func (c *ServiceBrokerCreate) HandleResponse(body json.RawMessage) error {
-	err := c.AnalyticsClient.Enqueue( "created service broker", nil)
+func (c *AppRestage) HandleResponse(body json.RawMessage) error {
+	err := c.AnalyticsClient.Enqueue("app restage", nil)
 
 	if err != nil {
 		return fmt.Errorf("failed to send analytics: %v", err)

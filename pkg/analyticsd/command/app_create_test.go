@@ -1,9 +1,9 @@
 package command_test
 
 import (
-	"code.cloudfoundry.org/cfdev/analyticsd/command"
-	"code.cloudfoundry.org/cfdev/analyticsd/segment"
-	"code.cloudfoundry.org/cfdev/analyticsd/segment/mocks"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/command"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment"
+	"code.cloudfoundry.org/cfdev/pkg/analyticsd/segment/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
