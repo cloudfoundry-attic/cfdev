@@ -1,4 +1,4 @@
-package ssh
+package provision
 
 import (
 	"bytes"
@@ -13,8 +13,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-type SSH struct {
-}
+type SSH struct {}
 
 type SSHAddress struct {
 	IP   string

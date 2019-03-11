@@ -1,7 +1,6 @@
 package provision
 
 import (
-	"code.cloudfoundry.org/cfdev/ssh"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -15,7 +14,7 @@ func (c *Controller) DeployBosh() error {
 		// by looking to see if a creds.yml is present or not
 		// This is definitely not the most expressive solution
 		// and should be improved..
-		s                = ssh.SSH{}
+		s                = SSH{}
 		credsPath        = filepath.Join(c.Config.StateBosh, "creds.yml")
 		crehubIsDeployed = doesNotExist(credsPath)
 	)
@@ -38,7 +37,7 @@ func (c *Controller) DeployBosh() error {
 	}
 
 	for _, item := range srcDst {
-		s.CopyFile(item, filepath.Base(item), ssh.SSHAddress{
+		s.CopyFile(item, filepath.Base(item), SSHAddress{
 			IP:   "127.0.0.1",
 			Port: "9992",
 		},
@@ -65,7 +64,7 @@ func (c *Controller) DeployBosh() error {
 
 	err = s.RunSSHCommand(
 		strings.Join(command, " "),
-		ssh.SSHAddress{
+		SSHAddress{
 			IP:   "127.0.0.1",
 			Port: "9992",
 		},
@@ -82,7 +81,7 @@ func (c *Controller) DeployBosh() error {
 	return s.RetrieveFile(
 		filepath.Join(c.Config.StateBosh, "state.json"),
 		"/root/state.json",
-		ssh.SSHAddress{IP: "127.0.0.1", Port: "9992"},
+		SSHAddress{IP: "127.0.0.1", Port: "9992"},
 		key,
 		20*time.Second)
 }
