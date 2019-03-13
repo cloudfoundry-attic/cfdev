@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 const VpnKitLabel = "org.cloudfoundry.cfdev.vpnkit"
@@ -31,19 +30,6 @@ type DaemonRunner interface {
 	Start(string) error
 	Stop(string) error
 	IsRunning(string) (bool, error)
-}
-
-func (v *VpnKit) Watch(exit chan string) {
-	go func() {
-		for {
-			running, err := v.DaemonRunner.IsRunning(v.Label)
-			if !running && err == nil {
-				exit <- "vpnkit"
-				return
-			}
-			time.Sleep(5 * time.Second)
-		}
-	}()
 }
 
 func (v *VpnKit) writeHttpConfig() error {

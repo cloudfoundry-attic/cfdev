@@ -55,6 +55,19 @@ func (v *VpnKit) Stop() error {
 	return v.DaemonRunner.Stop(v.Label)
 }
 
+func (v *VpnKit) Watch(exit chan string) {
+	go func() {
+		for {
+			running, err := v.DaemonRunner.IsRunning(v.Label)
+			if !running && err == nil {
+				exit <- "vpnkit"
+				return
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}()
+}
+
 func (v *VpnKit) daemonSpec(vmGuid string) daemon.DaemonSpec {
 	return daemon.DaemonSpec{
 		Label:   v.Label,

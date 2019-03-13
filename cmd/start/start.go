@@ -90,7 +90,7 @@ type Hypervisor interface {
 
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/start Provisioner
 type Provisioner interface {
-	Ping() error
+	Ping(duration time.Duration) error
 }
 
 //go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/start Provision
@@ -306,7 +306,7 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "starting vpnkit")
 	}
 
-	// s.VpnKit.Watch(s.LocalExit)
+	s.VpnKit.Watch(s.LocalExit)
 
 	s.UI.Say("Starting the VM...")
 	if err := s.Hypervisor.Start("cfdev"); err != nil {
@@ -314,7 +314,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Waiting for the VM...")
-	err = s.waitForVM()
+	err = s.Provisioner.Ping(2 * time.Minute)
 	if err != nil {
 		return e.SafeWrap(err, "Timed out waiting for the VM")
 	}
@@ -334,21 +334,6 @@ func (s *Start) Execute(args Args) error {
 
 	s.Analytics.Event(cfanalytics.START_END)
 	return nil
-}
-
-func (s *Start) waitForVM() error {
-	timeout := 120
-	var err error
-	for i := 0; i < timeout; i++ {
-		err = s.Provisioner.Ping()
-		if err == nil {
-			return nil
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-
-	return err
 }
 
 func (s *Start) isServiceSupported(service string, services []provision.Service) bool {

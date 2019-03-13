@@ -52,7 +52,7 @@ var _ = Describe("DeployService", func() {
 				Services: []provision.Service{service},
 			}, nil)
 
-			mockProvisioner.EXPECT().Ping().Return(nil)
+			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(nil)
 			mockProvisioner.EXPECT().GetWhiteListedService("some-service", []provision.Service{service}).Return(&service, nil)
 			mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{service}, []string{}).Return(nil)
 
@@ -74,7 +74,7 @@ var _ = Describe("DeployService", func() {
 				Version:  "v4",
 				Services: []provision.Service{service},
 			}, nil)
-			mockProvisioner.EXPECT().Ping().Return(errors.New("some issue happened"))
+			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(errors.New("some issue happened"))
 
 			err := cmd.Execute(deploy_service.Args{
 				Service: "some-service",
@@ -93,7 +93,7 @@ var _ = Describe("DeployService", func() {
 				Version:  "v4",
 				Services: []provision.Service{service},
 			}, nil)
-			mockProvisioner.EXPECT().Ping().Return(nil)
+			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(nil)
 			mockProvisioner.EXPECT().GetWhiteListedService(
 				"some-service",
 				[]provision.Service{service}).Return(&service, errors.New("unknown service"))

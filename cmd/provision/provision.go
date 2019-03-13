@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 )
 
 //go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cmd/provision UI
@@ -29,7 +30,7 @@ type MetaDataReader interface {
 
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/provision Provisioner
 type Provisioner interface {
-	Ping() error
+	Ping(duration time.Duration) error
 	DeployBosh() error
 	WhiteListServices(string, []provision.Service) ([]provision.Service, error)
 	DeployServices(provision.UI, []provision.Service, []string) error
@@ -82,7 +83,7 @@ func (c *Provision) Execute(args start.Args) error {
 }
 
 func (c *Provision) provision(metadataConfig metadata.Metadata, registries []string, deploySingleService string) error {
-	err := c.Provisioner.Ping()
+	err := c.Provisioner.Ping(10 * time.Second)
 	if err != nil {
 		return e.SafeWrap(err, "VM is not running. Please execute 'cf dev start'")
 	}

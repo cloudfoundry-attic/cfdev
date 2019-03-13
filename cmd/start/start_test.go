@@ -192,7 +192,7 @@ var _ = XDescribe("Start", func() {
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for the VM..."),
-					mockProvisioner.EXPECT().Ping(),
+					mockProvisioner.EXPECT().Ping(gomock.Any()),
 					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 					mockToggle.EXPECT().Enabled().Return(true),
@@ -252,7 +252,7 @@ var _ = XDescribe("Start", func() {
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for the VM..."),
-					mockProvisioner.EXPECT().Ping(),
+					mockProvisioner.EXPECT().Ping(gomock.Any()),
 					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 					mockToggle.EXPECT().Enabled().Return(false),
@@ -327,7 +327,7 @@ var _ = XDescribe("Start", func() {
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
-						mockProvisioner.EXPECT().Ping(),
+						mockProvisioner.EXPECT().Ping(gomock.Any()),
 						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
@@ -395,7 +395,7 @@ var _ = XDescribe("Start", func() {
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
-						mockProvisioner.EXPECT().Ping(),
+						mockProvisioner.EXPECT().Ping(gomock.Any()),
 						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
@@ -458,7 +458,7 @@ var _ = XDescribe("Start", func() {
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
-						mockProvisioner.EXPECT().Ping(),
+						mockProvisioner.EXPECT().Ping(gomock.Any()),
 						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
@@ -524,7 +524,7 @@ var _ = XDescribe("Start", func() {
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
-						mockProvisioner.EXPECT().Ping(),
+						mockProvisioner.EXPECT().Ping(gomock.Any()),
 					)
 
 					//no provision message message
@@ -587,7 +587,7 @@ var _ = XDescribe("Start", func() {
 								mockUI.EXPECT().Say("Starting the VM..."),
 								mockHypervisor.EXPECT().Start("cfdev"),
 								mockUI.EXPECT().Say("Waiting for the VM..."),
-								mockProvisioner.EXPECT().Ping(),
+								mockProvisioner.EXPECT().Ping(gomock.Any()),
 								mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 10000}),
 
 								mockToggle.EXPECT().Enabled().Return(true),
@@ -651,7 +651,7 @@ var _ = XDescribe("Start", func() {
 							mockUI.EXPECT().Say("Starting the VM..."),
 							mockHypervisor.EXPECT().Start("cfdev"),
 							mockUI.EXPECT().Say("Waiting for the VM..."),
-							mockProvisioner.EXPECT().Ping(),
+							mockProvisioner.EXPECT().Ping(gomock.Any()),
 							mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 10000}),
 
 							mockToggle.EXPECT().Enabled().Return(true),
@@ -724,7 +724,7 @@ var _ = XDescribe("Start", func() {
 							mockUI.EXPECT().Say("Starting the VM..."),
 							mockHypervisor.EXPECT().Start("cfdev"),
 							mockUI.EXPECT().Say("Waiting for the VM..."),
-							mockProvisioner.EXPECT().Ping(),
+							mockProvisioner.EXPECT().Ping(gomock.Any()),
 							mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6000}),
 							mockToggle.EXPECT().Enabled().Return(true),
 							mockAnalyticsD.EXPECT().Start(),
@@ -787,7 +787,7 @@ var _ = XDescribe("Start", func() {
 							mockUI.EXPECT().Say("Starting the VM..."),
 							mockHypervisor.EXPECT().Start("cfdev"),
 							mockUI.EXPECT().Say("Waiting for the VM..."),
-							mockProvisioner.EXPECT().Ping(),
+							mockProvisioner.EXPECT().Ping(gomock.Any()),
 							mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6000}),
 
 							mockToggle.EXPECT().Enabled().Return(true),
@@ -853,7 +853,7 @@ var _ = XDescribe("Start", func() {
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
-						mockProvisioner.EXPECT().Ping(),
+						mockProvisioner.EXPECT().Ping(gomock.Any()),
 						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0, DeploySingleService: "all"}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
@@ -917,7 +917,7 @@ var _ = XDescribe("Start", func() {
 						mockUI.EXPECT().Say("Starting the VM..."),
 						mockHypervisor.EXPECT().Start("cfdev"),
 						mockUI.EXPECT().Say("Waiting for the VM..."),
-						mockProvisioner.EXPECT().Ping(),
+						mockProvisioner.EXPECT().Ping(gomock.Any()),
 						mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 0, DeploySingleService: "some-service-flagname,some-other-service-flagname"}),
 
 						mockToggle.EXPECT().Enabled().Return(true),
@@ -1072,7 +1072,7 @@ var _ = XDescribe("Start", func() {
 					mockUI.EXPECT().Say("Starting the VM..."),
 					mockHypervisor.EXPECT().Start("cfdev"),
 					mockUI.EXPECT().Say("Waiting for the VM..."),
-					mockProvisioner.EXPECT().Ping(),
+					mockProvisioner.EXPECT().Ping(gomock.Any()),
 					mockProvision.EXPECT().Execute(start.Args{Cpus: 7, Mem: 6666, DepsPath: customTarball}),
 
 					mockToggle.EXPECT().Enabled().Return(true),

@@ -19,6 +19,11 @@ func (c *Controller) DeployBosh() error {
 		crehubIsDeployed = doesNotExist(credsPath)
 	)
 
+	ip, err := c.fetchIP()
+	if err != nil {
+		return err
+	}
+
 	logFile, err := os.Create(filepath.Join(c.Config.LogDir, "deploy-bosh.log"))
 	if err != nil {
 		return err
@@ -38,7 +43,7 @@ func (c *Controller) DeployBosh() error {
 
 	for _, item := range srcDst {
 		s.CopyFile(item, filepath.Base(item), SSHAddress{
-			IP:   "127.0.0.1",
+			IP:   ip,
 			Port: "9992",
 		},
 			key,
@@ -65,7 +70,7 @@ func (c *Controller) DeployBosh() error {
 	err = s.RunSSHCommand(
 		strings.Join(command, " "),
 		SSHAddress{
-			IP:   "127.0.0.1",
+			IP:   ip,
 			Port: "9992",
 		},
 		key,
@@ -81,7 +86,7 @@ func (c *Controller) DeployBosh() error {
 	return s.RetrieveFile(
 		filepath.Join(c.Config.StateBosh, "state.json"),
 		"/root/state.json",
-		SSHAddress{IP: "127.0.0.1", Port: "9992"},
+		SSHAddress{IP: ip, Port: "9992"},
 		key,
 		20*time.Second)
 }

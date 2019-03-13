@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 //go:generate mockgen -package mocks -destination mocks/ui.go code.cloudfoundry.org/cfdev/cmd/deploy-service UI
@@ -27,7 +28,7 @@ type MetaDataReader interface {
 
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/deploy-service Provisioner
 type Provisioner interface {
-	Ping() error
+	Ping(duration time.Duration) error
 	DeployServices(provision.UI, []provision.Service, []string) error
 	GetWhiteListedService(string, []provision.Service) (*provision.Service, error)
 }
@@ -54,10 +55,10 @@ type Args struct {
 
 func (c *DeployService) Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "deploy-service",
-		RunE: c.RunE,
+		Use:   "deploy-service",
+		RunE:  c.RunE,
 		Short: "Deploy a new service",
-		Long: "Command deploy a new service provided as a parameter",
+		Long:  "Command deploy a new service provided as a parameter",
 	}
 
 	return cmd
@@ -88,7 +89,7 @@ func (c *DeployService) Execute(args Args) error {
 		return fmt.Errorf("asset version is incompatible with the current version of the plugin. Please execute 'cf dev start'")
 	}
 
-	if c.Provisioner.Ping() != nil {
+	if c.Provisioner.Ping(10*time.Second) != nil {
 		return fmt.Errorf("cf dev is not running. Please execute 'cf dev start'")
 	}
 

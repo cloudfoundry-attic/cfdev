@@ -16,6 +16,9 @@ func (v *VpnKit) Stop() error {
 	return nil
 }
 
+func (v *VpnKit) Watch(exit chan string) {
+}
+
 func (v *VpnKit) daemonSpec() daemon.DaemonSpec {
 	return daemon.DaemonSpec{}
 }

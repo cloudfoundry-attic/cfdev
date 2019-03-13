@@ -49,7 +49,7 @@ var _ = Describe("Provision", func() {
 				mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
 					Version: "v4",
 				}, nil),
-				mockProvisioner.EXPECT().Ping(),
+				mockProvisioner.EXPECT().Ping(gomock.Any()),
 				mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 				mockProvisioner.EXPECT().DeployBosh(),
 				mockProvisioner.EXPECT().WhiteListServices("", nil).Return([]prvsion.Service{}, nil),
@@ -80,7 +80,7 @@ var _ = Describe("Provision", func() {
 				mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
 					Version: "v4",
 				}, nil),
-				mockProvisioner.EXPECT().Ping(),
+				mockProvisioner.EXPECT().Ping(gomock.Any()),
 				mockUI.EXPECT().Say("Deploying the BOSH Director..."),
 				mockProvisioner.EXPECT().DeployBosh(),
 				mockProvisioner.EXPECT().WhiteListServices("", nil).Return([]prvsion.Service{}, nil),
@@ -100,7 +100,7 @@ var _ = Describe("Provision", func() {
 				mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
 					Version: "v4",
 				}, nil),
-				mockProvisioner.EXPECT().Ping().Return(errors.New("not running")),
+				mockProvisioner.EXPECT().Ping(gomock.Any()).Return(errors.New("not running")),
 			)
 
 			err := cmd.Execute(start.Args{})

@@ -8,6 +8,7 @@ import (
 	provision "code.cloudfoundry.org/cfdev/provision"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+	time "time"
 )
 
 // MockProvisioner is a mock of Provisioner interface
@@ -58,15 +59,15 @@ func (mr *MockProvisionerMockRecorder) DeployServices(arg0, arg1, arg2 interface
 }
 
 // Ping mocks base method
-func (m *MockProvisioner) Ping() error {
-	ret := m.ctrl.Call(m, "Ping")
+func (m *MockProvisioner) Ping(arg0 time.Duration) error {
+	ret := m.ctrl.Call(m, "Ping", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Ping indicates an expected call of Ping
-func (mr *MockProvisionerMockRecorder) Ping() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockProvisioner)(nil).Ping))
+func (mr *MockProvisionerMockRecorder) Ping(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockProvisioner)(nil).Ping), arg0)
 }
 
 // WhiteListServices mocks base method
