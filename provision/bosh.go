@@ -1,9 +1,11 @@
 package provision
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -16,6 +18,7 @@ func (c *Controller) DeployBosh() error {
 		// and should be improved..
 		s                = SSH{}
 		credsPath        = filepath.Join(c.Config.StateBosh, "creds.yml")
+		directorPath     = filepath.Join(c.Config.StateBosh, "director.yml")
 		crehubIsDeployed = doesNotExist(credsPath)
 	)
 
@@ -36,6 +39,39 @@ func (c *Controller) DeployBosh() error {
 	}
 
 	srcDst := []string{filepath.Join(c.Config.StateBosh, "state.json")}
+
+	// If we are on a linux platform
+	// We need to replace the eth0 address
+	// because it will be dynamic
+	if runtime.GOOS == "linux" {
+		err = s.RetrieveFile(
+			directorPath,
+			"/bosh/director.yml",
+			SSHAddress{IP: ip, Port: "9992"},
+			key,
+			20*time.Second)
+
+		contents, err := ioutil.ReadFile(directorPath)
+		if err != nil {
+			return err
+		}
+
+		contents = bytes.Replace(contents, []byte("192.168.65.3:9999"), []byte(ip+":9999"), -1)
+
+		err = ioutil.WriteFile(directorPath, contents, 0600)
+		if err != nil {
+			return err
+		}
+
+		s.CopyFile(directorPath, "/bosh/director.yml", SSHAddress{
+			IP:   ip,
+			Port: "9992",
+		},
+			key,
+			20*time.Second,
+			logFile,
+			logFile)
+	}
 
 	if !crehubIsDeployed {
 		srcDst = append(srcDst, credsPath)

@@ -38,7 +38,7 @@ func (s *SSH) CopyFile(filePath string, remoteFilePath string, address SSHAddres
 	go func() {
 		w, _ := session.StdinPipe()
 
-		fmt.Fprintln(w, "C0755", int64(len(contentsBytes)), remoteFilePath)
+		fmt.Fprintln(w, "C0755", int64(len(contentsBytes)), filepath.Base(remoteFilePath))
 		_, err = io.Copy(w, bytesReader)
 		if err != nil {
 			fmt.Print(err)
