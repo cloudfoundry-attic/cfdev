@@ -167,10 +167,10 @@ func catalog() (resource.Catalog, error) {
 				InUse: true,
 			},
 			resource.Item{
-				URL:   serviceWUrl,
+				URL:   servicewUrl,
 				Name:  "servicew",
-				MD5:   serviceWMd5,
-				Size:  aToUint64(serviceWSize),
+				MD5:   servicewMd5,
+				Size:  aToUint64(servicewSize),
 				InUse: true,
 			})
 	}
