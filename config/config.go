@@ -23,9 +23,9 @@ var (
 	cfdevdMd5  string
 	cfdevdSize string
 
-	serviceWUrl  string
-	serviceWMd5  string
-	serviceWSize string
+	servicewUrl  string
+	servicewMd5  string
+	servicewSize string
 
 	analyticsdUrl  string
 	analyticsdMd5  string
