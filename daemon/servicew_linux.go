@@ -13,7 +13,7 @@ type ServiceWrapper struct {
 
 func NewServiceWrapper(cfg config.Config) *ServiceWrapper {
 	var (
-		binaryPath = filepath.Join(cfg.BinaryDir, "servicew")
+		binaryPath = filepath.Join(cfg.CacheDir, "servicew")
 		workdir    = cfg.DaemonDir
 		swc        = client.New(binaryPath, workdir)
 	)

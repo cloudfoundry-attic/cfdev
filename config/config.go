@@ -23,6 +23,10 @@ var (
 	cfdevdMd5  string
 	cfdevdSize string
 
+	serviceWUrl  string
+	serviceWMd5  string
+	serviceWSize string
+
 	analyticsdUrl  string
 	analyticsdMd5  string
 	analyticsdSize string
@@ -127,7 +131,8 @@ func catalog() (resource.Catalog, error) {
 		},
 	}
 
-	if runtime.GOOS != "windows" {
+	switch runtime.GOOS {
+	case "darwin":
 		catalog.Items = append(catalog.Items,
 			resource.Item{
 				URL:   analyticsdUrl,
@@ -143,7 +148,7 @@ func catalog() (resource.Catalog, error) {
 				Size:  aToUint64(cfdevdSize),
 				InUse: true,
 			})
-	} else {
+	case "windows":
 		catalog.Items = append(catalog.Items,
 			resource.Item{
 				URL:   analyticsdUrl,
@@ -152,11 +157,28 @@ func catalog() (resource.Catalog, error) {
 				Size:  aToUint64(analyticsdSize),
 				InUse: true,
 			})
+	case "linux":
+		catalog.Items = append(catalog.Items,
+			resource.Item{
+				URL:   analyticsdUrl,
+				Name:  "analyticsd",
+				MD5:   analyticsdMd5,
+				Size:  aToUint64(analyticsdSize),
+				InUse: true,
+			},
+			resource.Item{
+				URL:   serviceWUrl,
+				Name:  "servicew",
+				MD5:   serviceWMd5,
+				Size:  aToUint64(serviceWSize),
+				InUse: true,
+			})
 	}
 
 	sort.Slice(catalog.Items, func(i, j int) bool {
 		return catalog.Items[i].Size < catalog.Items[j].Size
 	})
+
 	return catalog, nil
 }
 
