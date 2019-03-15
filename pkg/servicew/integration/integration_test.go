@@ -3,6 +3,7 @@ package integration_test
 import (
 	"code.cloudfoundry.org/cfdev/pkg/servicew/client"
 	"code.cloudfoundry.org/cfdev/pkg/servicew/config"
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v2"
@@ -38,7 +39,7 @@ var _ = Describe("ServiceWrapper Lifecycle", func() {
 	It("installs, runs, and remove services", func() {
 		Expect(swc.IsRunning(label)).To(BeFalse())
 
-		contents, err := ioutil.ReadFile(fixturePath("simple.yml"))
+		contents, err := ioutil.ReadFile(fixturePath(fmt.Sprintf("simple-%s.yml", runtime.GOOS)))
 		Expect(err).NotTo(HaveOccurred())
 
 		var cfg config.Config
