@@ -47,6 +47,7 @@ var _ = Describe("cfdev lifecycle", func() {
 		stopSession := cf.Cf("dev", "stop")
 		Eventually(stopSession).Should(gexec.Exit(0))
 
+		// TODO implement for linux
 		// check that VM is removed by stop command
 		if IsWindows() {
 			Expect(doesVMExist()).To(BeFalse())
