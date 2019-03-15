@@ -40,17 +40,14 @@ var _ = Describe("LinuxKit process", func() {
 		linuxkitExecPath := "/home-dir/.cfdev/bin/linuxkit"
 		Expect(start.Program).To(Equal(linuxkitExecPath))
 		Expect(start.ProgramArguments).To(ConsistOf(
-			linuxkitExecPath,
-			"run", "hyperkit",
-			"-console-file",
+			"run", "qemu",
 			"-cpus", "4",
 			"-mem", "4096",
-			"-hyperkit", "/home-dir/.cfdev/bin/hyperkit",
-			"-networking", "vpnkit,/home-dir/.cfdev/state_vpnkit/vpnkit_eth.sock,/home-dir/.cfdev/state_vpnkit/vpnkit_port.sock",
-			"-fw", "/home-dir/.cfdev/bin/UEFI.fd",
-			"-disk", "type=qcow,size=120G,trim=true,qcow-tool=/home-dir/.cfdev/bin/qcow-tool,qcow-onflush=os,qcow-compactafter=262144,qcow-keeperased=262144",
+			"-disk", "size=120G,format=qcow2,file=/home-dir/.cfdev/state/linuxkit/disk.qcow2",
+			"-fw", "/home-dir/.cfdev/bin/OVMF.fd",
 			"-state", "/home-dir/.cfdev/state/linuxkit",
-			"-uefi",
+			"-networking", "tap,cfdevtap0",
+			"-iso", "-uefi",
 			"/home-dir/.cfdev/bin/cfdev-efi-v2.iso",
 		))
 	})
