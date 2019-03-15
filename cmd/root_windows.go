@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"code.cloudfoundry.org/cfdev/driver/hyperv"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/profiler"
 	"code.cloudfoundry.org/cfdev/runner"
@@ -15,13 +16,13 @@ import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
+	b9 "code.cloudfoundry.org/cfdev/cmd/deploy-service"
 	b4 "code.cloudfoundry.org/cfdev/cmd/download"
 	b8 "code.cloudfoundry.org/cfdev/cmd/provision"
 	b5 "code.cloudfoundry.org/cfdev/cmd/start"
 	b6 "code.cloudfoundry.org/cfdev/cmd/stop"
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
-	b9 "code.cloudfoundry.org/cfdev/cmd/deploy-service"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/host"
@@ -105,6 +106,16 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		Config:         config,
 	}
 
+	driver := hyperv.New(
+		config,
+		lctl,
+		ui,
+		runner.Powershell{},
+		"7207f451-2ca3-4b88-8d01-820a21d78293",
+		"cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa",
+		"e3ae8f06-8c25-47fb-b6ed-c20702bcef5e",
+	)
+
 	dev := &cobra.Command{
 		Use:           "dev",
 		Short:         "Start and stop a single vm CF deployment running on your workstation",
@@ -122,10 +133,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			MetaDataReader: metaDataReader,
 		},
 		&b2.Bosh{
-			Exit:        exit,
-			UI:          ui,
-			Config:      config,
-			Analytics:   analyticsClient,
+			Exit:      exit,
+			UI:        ui,
+			Config:    config,
+			Analytics: analyticsClient,
 		},
 		&b3.Catalog{
 			UI:     ui,
@@ -154,6 +165,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			CFDevD:         &network.CFDevD{ExecutablePath: filepath.Join(config.CacheDir, "cfdevd")},
 			Hypervisor:     &hypervisor.HyperV{Config: config},
 			VpnKit:         vpnkit,
+			Driver:         driver,
 			Provisioner:    provision.NewController(config),
 			Provision:      provisionCmd,
 			MetaDataReader: metaDataReader,
@@ -162,6 +174,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				Analytics:  analyticsClient,
 				Hypervisor: &hypervisor.HyperV{Config: config},
 				VpnKit:     vpnkit,
+				Driver:     driver,
 				HostNet:    hostnet,
 				Host: &host.Host{
 					Powershell: &runner.Powershell{},
@@ -175,6 +188,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Analytics:  analyticsClient,
 			Hypervisor: &hypervisor.HyperV{Config: config},
 			VpnKit:     vpnkit,
+			Driver:     driver,
 			HostNet:    hostnet,
 			Host: &host.Host{
 				Powershell: &runner.Powershell{},

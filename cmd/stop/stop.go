@@ -1,8 +1,6 @@
 package stop
 
 import (
-	"runtime"
-
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
@@ -40,6 +38,11 @@ type Hypervisor interface {
 	Destroy(vmName string) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/driver.go code.cloudfoundry.org/cfdev/cmd/stop Driver
+type Driver interface {
+	Stop() error
+}
+
 //go:generate mockgen -package mocks -destination mocks/vpnkit.go code.cloudfoundry.org/cfdev/cmd/stop VpnKit
 type VpnKit interface {
 	Stop() error
@@ -55,6 +58,7 @@ type AnalyticsD interface {
 type Stop struct {
 	Hypervisor   Hypervisor
 	VpnKit       VpnKit
+	Driver       Driver
 	Config       config.Config
 	CfdevdClient CfdevdClient
 	Analytics    Analytics
@@ -69,8 +73,6 @@ func (s *Stop) Cmd() *cobra.Command {
 		RunE: s.RunE,
 	}
 }
-
-const vmName = "cfdev"
 
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	s.Analytics.Event(cfanalytics.STOP)
@@ -89,30 +91,8 @@ func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 		reterr = errors.SafeWrap(err, "failed to destroy analyticsd")
 	}
 
-	if err := s.Hypervisor.Stop(vmName); err != nil {
+	if err := s.Driver.Stop(); err != nil {
 		reterr = errors.SafeWrap(err, "failed to stop the VM")
-	}
-
-	if err := s.Hypervisor.Destroy(vmName); err != nil {
-		reterr = errors.SafeWrap(err, "failed to destroy the VM")
-	}
-
-	if err := s.VpnKit.Stop(); err != nil {
-		reterr = errors.SafeWrap(err, "failed to stop vpnkit")
-	}
-
-	if err := s.VpnKit.Destroy(); err != nil {
-		reterr = errors.SafeWrap(err, "failed to destroy vpnkit")
-	}
-
-	if err := s.HostNet.RemoveLoopbackAliases(s.Config.BoshDirectorIP, s.Config.CFRouterIP); err != nil {
-		reterr = errors.SafeWrap(err, "failed to remove IP aliases")
-	}
-
-	if runtime.GOOS == "darwin" {
-		if _, err := s.CfdevdClient.Uninstall(); err != nil {
-			reterr = errors.SafeWrap(err, "failed to uninstall cfdevd")
-		}
 	}
 
 	if reterr != nil {

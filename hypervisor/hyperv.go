@@ -55,7 +55,7 @@ func (h *HyperV) CreateVM(vm VM) error {
 					vm.Name, strings.TrimSpace(name))
 				_, err = h.Powershell.Output(command)
 				if err != nil {
-					fmt.Printf("failed to remove netowork adapter: %s", err)
+					fmt.Printf("failed to remove network adapter: %s", err)
 				}
 			}
 		}

@@ -2,6 +2,7 @@ package provision
 
 import (
 	"bytes"
+	"code.cloudfoundry.org/cfdev/driver"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,7 +23,7 @@ func (c *Controller) DeployBosh() error {
 		crehubIsDeployed = doesNotExist(credsPath)
 	)
 
-	ip, err := c.fetchIP()
+	ip, err := driver.IP(c.Config)
 	if err != nil {
 		return err
 	}
@@ -40,6 +41,7 @@ func (c *Controller) DeployBosh() error {
 
 	srcDst := []string{filepath.Join(c.Config.StateBosh, "state.json")}
 
+	// TODO: refactor
 	// If we are on a linux platform
 	// We need to replace the eth0 address
 	// because it will be dynamic
@@ -57,6 +59,9 @@ func (c *Controller) DeployBosh() error {
 		}
 
 		contents = bytes.Replace(contents, []byte("192.168.65.3:9999"), []byte(ip+":9999"), -1)
+
+		// Replace the name-server address too
+		contents = bytes.Replace(contents, []byte("192.168.65.1"), []byte("192.168.122.1"), -1)
 
 		err = ioutil.WriteFile(directorPath, contents, 0600)
 		if err != nil {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"code.cloudfoundry.org/cfdev/driver/kvm"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/profiler"
 	"io"
@@ -95,6 +96,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		Config:         config,
 	}
 
+	driver := kvm.New(config, daemonWrapper, ui)
+
 	dev := &cobra.Command{
 		Use:           "dev",
 		Short:         "Start and stop a single vm CF deployment running on your workstation",
@@ -145,6 +148,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				TimeSyncSocket: filepath.Join(config.StateLinuxkit, "00000003.0000f3a4"),
 			},
 			VpnKit:         vpnkit,
+			Driver:         driver,
 			AnalyticsD:     analyticsD,
 			Hypervisor:     linuxkit,
 			Provisioner:    provision.NewController(config),
@@ -160,6 +164,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 				Host:         &host.Host{},
 				AnalyticsD:   analyticsD,
 				VpnKit:       vpnkit,
+				Driver:       driver,
 				CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 			},
 			Profiler: &profiler.SystemProfiler{},
@@ -174,6 +179,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Host:         &host.Host{},
 			AnalyticsD:   analyticsD,
 			VpnKit:       vpnkit,
+			Driver:       driver,
 			CfdevdClient: cfdevdClient.New("CFD3V", config.CFDevDSocketPath),
 		},
 		&b7.Telemetry{

@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var _ = Describe("Stop", func() {
+var _ = XDescribe("Stop", func() {
 	var (
 		cfg              config.Config
 		stopCmd          *cobra.Command

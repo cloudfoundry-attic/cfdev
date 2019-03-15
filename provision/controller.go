@@ -2,14 +2,10 @@ package provision
 
 import (
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/driver"
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/aemengo/bosh-runc-cpi/client"
 	"io"
-	"io/ioutil"
-	"path/filepath"
-	"runtime"
 	"time"
 )
 
@@ -39,7 +35,7 @@ func (c *Controller) Ping(duration time.Duration) error {
 		select {
 		case <-ticker.C:
 			var ip string
-			ip, err = c.fetchIP()
+			ip, err = driver.IP(c.Config)
 			if err != nil {
 				continue
 			}
@@ -52,43 +48,4 @@ func (c *Controller) Ping(duration time.Duration) error {
 			return err
 		}
 	}
-}
-
-func (c *Controller) fetchIP() (string, error) {
-	if runtime.GOOS != "linux" {
-		return "127.0.0.1", nil
-	}
-
-	var (
-		macAddrPath     = filepath.Join(c.Config.StateLinuxkit, "mac-addr")
-		vBridgeInfoPath = filepath.Join("/var/lib/libvirt/dnsmasq/virbr0.status")
-	)
-
-	macAddr, err := ioutil.ReadFile(macAddrPath)
-	if err != nil {
-		return "", err
-	}
-
-	vBridgeInfo, err := ioutil.ReadFile(vBridgeInfoPath)
-	if err != nil {
-		return "", err
-	}
-
-	var results []struct {
-		IPAddr  string `json:"ip-address"`
-		MacAddr string `json:"mac-address"`
-	}
-
-	err = json.Unmarshal(vBridgeInfo, &results)
-	if err != nil {
-		return "", err
-	}
-
-	for _, result := range results {
-		if result.MacAddr == string(macAddr) {
-			return result.IPAddr, nil
-		}
-	}
-
-	return "", fmt.Errorf("unable to find VM IP address from '%s'", vBridgeInfoPath)
 }
