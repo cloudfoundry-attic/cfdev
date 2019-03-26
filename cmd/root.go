@@ -1,21 +1,14 @@
 package cmd
 
 import (
-	"code.cloudfoundry.org/cfdev/driver"
-	"code.cloudfoundry.org/cfdev/driver/hyperkit"
-	"code.cloudfoundry.org/cfdev/driver/hyperv"
-	"code.cloudfoundry.org/cfdev/driver/kvm"
 	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/profiler"
-	"code.cloudfoundry.org/cfdev/runner"
 	"io"
 	"net/http"
-	"runtime"
 	"strings"
 	"time"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
 	b2 "code.cloudfoundry.org/cfdev/cmd/bosh"
 	b3 "code.cloudfoundry.org/cfdev/cmd/catalog"
 	b9 "code.cloudfoundry.org/cfdev/cmd/deploy-service"
@@ -26,7 +19,6 @@ import (
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/host"
 	"code.cloudfoundry.org/cfdev/metadata"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
@@ -67,6 +59,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		writer         = ui.Writer()
 		metaDataReader = metadata.New()
 		driver         = newDriver(ui, config)
+		hst            = newHost()
 		analyticsD     = &cfanalytics.AnalyticsD{
 			Config:       config,
 			DaemonRunner: newDaemonRunner(config),
@@ -131,7 +124,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 		stop = &b6.Stop{
 			Analytics:  analyticsClient,
-			Host:       &host.Host{},
+			Host:       hst,
 			AnalyticsD: analyticsD,
 			Driver:     driver,
 		}
@@ -144,7 +137,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Env:             &env.Env{Config: config},
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			Host:            &host.Host{},
+			Host:            hst,
 			Driver:          driver,
 			AnalyticsD:      analyticsD,
 			Provisioner:     provision.NewController(config),
@@ -184,29 +177,4 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	dev.AddCommand(deployService.Cmd())
 	dev.AddCommand(helpCmd)
 	return root
-}
-
-func newDriver(ui UI, config config.Config) driver.Driver {
-	daemonRunner := newDaemonRunner(config)
-
-	switch runtime.GOOS {
-	case "darwin":
-		cfdevd := cfdevdClient.New("CFD3V", config.CFDevDSocketPath)
-
-		return hyperkit.New(config, daemonRunner, ui, cfdevd)
-	case "windows":
-		return hyperv.New(
-			config,
-			daemonRunner,
-			ui,
-			runner.Powershell{},
-			"7207f451-2ca3-4b88-8d01-820a21d78293",
-			"cc2a519a-fb40-4e45-a9f1-c7f04c5ad7fa",
-			"e3ae8f06-8c25-47fb-b6ed-c20702bcef5e",
-		)
-	case "linux":
-		return kvm.New(config, daemonRunner, ui)
-	}
-
-	return nil
 }
