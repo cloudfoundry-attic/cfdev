@@ -27,7 +27,6 @@ type Cache struct {
 	Dir                   string
 	HttpDo                func(req *http.Request) (*http.Response, error)
 	Progress              Progress
-	SkipAssetVerification bool
 	RetryWait             time.Duration
 	Writer                io.Writer
 }
@@ -133,9 +132,6 @@ func (c *Cache) downloadHTTP(url, tmpPath string) error {
 }
 
 func (c *Cache) checksumMatches(path, md5 string) (bool, error) {
-	if c.SkipAssetVerification {
-		return fileExists(path)
-	}
 	m, err := MD5(path)
 	if os.IsNotExist(err) {
 		return false, nil

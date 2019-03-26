@@ -333,24 +333,6 @@ var _ = Describe("Cache Sync", func() {
 		})
 	})
 
-	Context("asset verification is turned off", func() {
-		BeforeEach(func() {
-			cache.SkipAssetVerification = true
-		})
-
-		It("does not delete files with different checksums", func() {
-			Expect(cache.Sync(catalog)).To(Succeed())
-
-			corruptFile := filepath.Join(tmpDir, "second-resource")
-			Expect(ioutil.ReadFile(corruptFile)).To(Equal([]byte("wrong-content")))
-		})
-
-		It("doesn't re-download files with different checksums", func() {
-			Expect(cache.Sync(catalog)).To(Succeed())
-			Expect(downloads).ToNot(ContainElement("second-resource-url"))
-		})
-	})
-
 	Context("when asset InUse", func() {
 		It("true", func() {
 			Expect(cache.Sync(catalog)).To(Succeed())

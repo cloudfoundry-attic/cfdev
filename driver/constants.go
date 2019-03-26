@@ -20,3 +20,10 @@ type DaemonRunner interface {
 	Stop(string) error
 	IsRunning(string) (bool, error)
 }
+
+type Driver interface {
+	Prestart() error
+	Start(cpus int, memory int, efiPath string) error
+	Stop() error
+	IsRunning() (bool, error)
+}

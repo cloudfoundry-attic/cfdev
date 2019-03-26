@@ -1,6 +1,7 @@
 package start
 
 import (
+	"code.cloudfoundry.org/cfdev/driver"
 	"io"
 	"time"
 
@@ -46,11 +47,6 @@ type SystemProfiler interface {
 	GetTotalMemory() (uint64, error)
 }
 
-//go:generate mockgen -package mocks -destination mocks/network.go code.cloudfoundry.org/cfdev/cmd/start HostNet
-type HostNet interface {
-	AddLoopbackAliases(...string) error
-}
-
 //go:generate mockgen -package mocks -destination mocks/host.go code.cloudfoundry.org/cfdev/cmd/start Host
 type Host interface {
 	CheckRequirements() error
@@ -61,25 +57,7 @@ type Cache interface {
 	Sync(resource.Catalog) error
 }
 
-//go:generate mockgen -package mocks -destination mocks/cfdevd.go code.cloudfoundry.org/cfdev/cmd/start CFDevD
-type CFDevD interface {
-	Install() error
-}
-
 //go:generate mockgen -package mocks -destination mocks/driver.go code.cloudfoundry.org/cfdev/cmd/start Driver
-type Driver interface {
-	Prestart() error
-	Start(cpus int, memory int, efiPath string) error
-	Stop() error
-	IsRunning() (bool, error)
-}
-
-//go:generate mockgen -package mocks -destination mocks/vpnkit.go code.cloudfoundry.org/cfdev/cmd/start VpnKit
-type VpnKit interface {
-	Start() error
-	Stop() error
-	Watch(chan string)
-}
 
 //go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/start AnalyticsD
 type AnalyticsD interface {
@@ -134,20 +112,15 @@ type Args struct {
 
 type Start struct {
 	Exit            chan struct{}
-	LocalExit       chan string
 	UI              UI
 	Config          config.Config
 	MetaDataReader  MetaDataReader
 	Analytics       AnalyticsClient
 	AnalyticsToggle Toggle
-	HostNet         HostNet
 	Host            Host
 	Cache           Cache
-	CFDevD          CFDevD
-	VpnKit          VpnKit
 	AnalyticsD      AnalyticsD
-	Hypervisor      Hypervisor
-	Driver          Driver
+	Driver          driver.Driver
 	Stop            Stop
 	Provisioner     Provisioner
 	Provision       Provision
@@ -188,12 +161,8 @@ func (s *Start) Cmd() *cobra.Command {
 
 func (s *Start) Execute(args Args) error {
 	go func() {
-		select {
-		case <-s.Exit:
-			// no-op
-		case name := <-s.LocalExit:
-			s.UI.Say("ERROR: %s has stopped", name)
-		}
+		<-s.Exit
+
 		s.Driver.Stop()
 		os.Exit(128)
 	}()

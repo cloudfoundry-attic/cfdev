@@ -3,7 +3,6 @@ package download
 import (
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"net/http"
@@ -54,12 +53,9 @@ func (d *Download) RunE(cmd *cobra.Command, args []string) error {
 }
 
 func CacheSync(dependencies resource.Catalog, cacheDir string, writer io.Writer) error {
-	skipVerify := strings.ToLower(os.Getenv("CFDEV_SKIP_ASSET_CHECK"))
-
 	cache := resource.Cache{
 		Dir:                   cacheDir,
 		HttpDo:                http.DefaultClient.Do,
-		SkipAssetVerification: skipVerify == "true",
 		Progress:              progress.New(writer),
 		RetryWait:             time.Second,
 		Writer:                writer,
@@ -68,5 +64,6 @@ func CacheSync(dependencies resource.Catalog, cacheDir string, writer io.Writer)
 	if err := cache.Sync(dependencies); err != nil {
 		return errors.SafeWrap(err, "Unable to sync assets")
 	}
+
 	return nil
 }
