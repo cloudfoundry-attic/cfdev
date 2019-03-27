@@ -1,10 +1,11 @@
-package metadata_test
+package workspace_test
 
 import (
-	"code.cloudfoundry.org/cfdev/metadata"
+	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"io/ioutil"
+	"os"
 	"path/filepath"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -12,13 +13,15 @@ import (
 var _ = Describe("MetaData", func() {
 	Context("reader returns", func() {
 		var (
-			metaDataPath string
+			stateDir string
 		)
 
 		BeforeEach(func() {
-			tmp, err := ioutil.TempDir("", "tmp")
+			var err error
+			stateDir, err = ioutil.TempDir("", "tmp")
 			Expect(err).ToNot(HaveOccurred())
-			metaDataPath = filepath.Join(tmp, "metadata.yml")
+
+			metaDataPath := filepath.Join(stateDir, "metadata.yml")
 
 			ioutil.WriteFile(metaDataPath, []byte(`---
 compatibility_version: "v29"
@@ -42,10 +45,18 @@ versions:
   version: v9.9.9`), 0777)
 		})
 
-		It("metadata", func() {
-			metadata, err := metadata.New().Read(metaDataPath)
+		AfterEach(func() {
+			os.RemoveAll(stateDir)
+		})
 
+		It("reports metadata correctly", func() {
+			wk := workspace.New(config.Config{
+				StateDir: stateDir,
+			})
+
+			metadata, err := wk.Metadata()
 			Expect(err).ToNot(HaveOccurred())
+
 			Expect(metadata.Version).To(Equal("v29"))
 			Expect(metadata.Message).To(Equal("is simply dummy text"))
 			Expect(metadata.Versions[0].Name).To(Equal("some-release"))
@@ -53,3 +64,4 @@ versions:
 		})
 	})
 })
+

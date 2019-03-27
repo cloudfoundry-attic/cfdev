@@ -2,15 +2,13 @@ package start
 
 import (
 	"code.cloudfoundry.org/cfdev/driver"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"io"
 	"time"
-
-	"code.cloudfoundry.org/cfdev/metadata"
 
 	"code.cloudfoundry.org/cfdev/config"
 	e "code.cloudfoundry.org/cfdev/errors"
 	cfdevos "code.cloudfoundry.org/cfdev/os"
-	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -81,7 +79,7 @@ type Cache interface {
 
 //go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
 type MetaDataReader interface {
-	Read(tarballPath string) (metadata.Metadata, error)
+	Metadata() (workspace.Metadata, error)
 }
 
 type Args struct {
@@ -214,7 +212,7 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "Unable to setup directories")
 	}
 
-	metaData, err := s.MetaDataReader.Read(filepath.Join(s.Config.StateDir, "metadata.yml"))
+	metaData, err := s.MetaDataReader.Metadata()
 	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsPath))
 	}
@@ -274,7 +272,7 @@ func (s *Start) Execute(args Args) error {
 	return nil
 }
 
-func (s *Start) isServiceSupported(service string, services []provision.Service) bool {
+func (s *Start) isServiceSupported(service string, services []workspace.Service) bool {
 	if strings.ToLower(service) == "all" || strings.ToLower(service) == "none" {
 		return true
 	}
@@ -288,7 +286,7 @@ func (s *Start) isServiceSupported(service string, services []provision.Service)
 	return true
 }
 
-func contains(services []provision.Service, service string) bool {
+func contains(services []workspace.Service, service string) bool {
 	for _, s := range services {
 		if strings.ToLower(s.Flagname) == strings.ToLower(service) {
 			return true
@@ -298,7 +296,7 @@ func contains(services []provision.Service, service string) bool {
 	return false
 }
 
-func (s *Start) allocateMemory(metaData metadata.Metadata, stats cfdevos.Stats, requestedMem int) (int, error) {
+func (s *Start) allocateMemory(metaData workspace.Metadata, stats cfdevos.Stats, requestedMem int) (int, error) {
 	baseMem := defaultMemory
 	if metaData.DefaultMemory > 0 {
 		baseMem = metaData.DefaultMemory

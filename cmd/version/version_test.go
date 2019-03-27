@@ -1,13 +1,13 @@
 package version_test
 
 import (
+	"code.cloudfoundry.org/cfdev/workspace"
 	"fmt"
 	"path/filepath"
 
 	"code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/cmd/version/mocks"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/metadata"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -83,8 +83,8 @@ var _ = Describe("Version Command", func() {
 			})
 
 			It("reports the versions in the metadata", func() {
-				mockMetaDataReader.EXPECT().Read(filepath.Join(stateDir, "metadata.yml")).Return(metadata.Metadata{
-					Versions: []metadata.Version{
+				mockMetaDataReader.EXPECT().Metadata().Return(workspace.Metadata{
+					Versions: []workspace.Version{
 						{Name: "some-release-1", Value: "some-version-1"},
 						{Name: "some-release-2", Value: "some-version-2"},
 					},
@@ -107,7 +107,7 @@ var _ = Describe("Version Command", func() {
 
 			verCmd = &version.Version{
 				UI:             &mockUI,
-				MetaDataReader: metadata.New(),
+				MetaDataReader: nil,
 				Version:        &config.Version{Original: "1.2.3-rc.4"},
 			}
 		})
@@ -136,7 +136,6 @@ var _ = Describe("Version Command", func() {
 
 					folderToTar, err = ioutil.TempDir("", "folderToTar")
 					Expect(err).ToNot(HaveOccurred())
-					Expect(os.Mkdir(filepath.Join(folderToTar, "deployment_config"), 0766)).ToNot(HaveOccurred())
 
 					targetTar, err = ioutil.TempDir("", "targetTar")
 					Expect(err).ToNot(HaveOccurred())
@@ -144,7 +143,7 @@ var _ = Describe("Version Command", func() {
 					yml := `versions:
   - name: some-name
     version: some-version`
-					err = ioutil.WriteFile(filepath.Join(folderToTar, "deployment_config", "metadata.yml"), []byte(yml), 0666)
+					err = ioutil.WriteFile(filepath.Join(folderToTar, "metadata.yml"), []byte(yml), 0666)
 					Expect(err).ToNot(HaveOccurred())
 
 					tarFilepath = filepath.Join(targetTar, "deps.tgz")
@@ -153,6 +152,10 @@ var _ = Describe("Version Command", func() {
 					defer tarDst.Close()
 
 					Expect(tarArchive(folderToTar, tarDst)).NotTo(HaveOccurred())
+
+					verCmd.MetaDataReader = workspace.New(config.Config{
+						StateDir: folderToTar,
+					})
 				})
 
 				AfterEach(func() {
@@ -188,6 +191,10 @@ var _ = Describe("Version Command", func() {
 					defer tarDst.Close()
 
 					Expect(tarArchive(folderToTar, tarDst)).NotTo(HaveOccurred())
+
+					verCmd.MetaDataReader = workspace.New(config.Config{
+						StateDir: folderToTar,
+					})
 				})
 
 				AfterEach(func() {

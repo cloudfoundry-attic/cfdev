@@ -3,6 +3,7 @@ package provision
 import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/runner"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"errors"
 	"fmt"
 	"os"
@@ -13,16 +14,8 @@ import (
 	"time"
 )
 
-type Service struct {
-	Name       string `yaml:"name"`
-	Flagname   string `yaml:"flag_name"`
-	Script     string `yaml:"script"`
-	Deployment string `yaml:"deployment"`
-	IsErrand   bool   `yaml:"errand"`
-}
-
-func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]Service, error) {
-	var whiteListed []Service
+func (c *Controller) WhiteListServices(whiteList string, services []workspace.Service) ([]workspace.Service, error) {
+	var whiteListed []workspace.Service
 
 	for _, service := range services {
 		if service.Flagname == "always-include" {
@@ -46,7 +39,7 @@ func (c *Controller) WhiteListServices(whiteList string, services []Service) ([]
 	}
 }
 
-func (c *Controller) GetWhiteListedService(serviceName string, whiteList []Service) (*Service, error) {
+func (c *Controller) GetWhiteListedService(serviceName string, whiteList []workspace.Service) (*workspace.Service, error) {
 	for _, service := range whiteList {
 		if strings.Contains(strings.ToLower(serviceName), strings.ToLower(service.Flagname)) {
 			return &service, nil
@@ -55,7 +48,7 @@ func (c *Controller) GetWhiteListedService(serviceName string, whiteList []Servi
 	return nil, errors.New(fmt.Sprintf("The service '%s' is not a valid service", serviceName))
 }
 
-func contains(services []Service, name string) bool {
+func contains(services []workspace.Service, name string) bool {
 	for _, s := range services {
 		if s.Name == name {
 			return true
@@ -65,7 +58,7 @@ func contains(services []Service, name string) bool {
 	return false
 }
 
-func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries []string) error {
+func (c *Controller) DeployServices(ui UI, services []workspace.Service, dockerRegistries []string) error {
 	var (
 		b       = NewBosh(c.Config, &runner.Shell{}, c.Workspace.Envs())
 		errChan = make(chan error, 1)
@@ -76,7 +69,7 @@ func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries 
 
 		ui.Say("Deploying %s...", service.Name)
 
-		go func(s Service) {
+		go func(s workspace.Service) {
 			errChan <- c.DeployService(s, dockerRegistries)
 		}(service)
 
@@ -89,7 +82,7 @@ func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries 
 	return nil
 }
 
-func (c *Controller) DeployService(service Service, dockerRegistries []string) error {
+func (c *Controller) DeployService(service workspace.Service, dockerRegistries []string) error {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {

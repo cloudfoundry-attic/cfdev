@@ -4,13 +4,11 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd/deploy-service"
 	"code.cloudfoundry.org/cfdev/cmd/deploy-service/mocks"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/metadata"
-	"code.cloudfoundry.org/cfdev/provision"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"errors"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"path/filepath"
 )
 
 var _ = Describe("DeployService", func() {
@@ -36,7 +34,7 @@ var _ = Describe("DeployService", func() {
 			Config: config.Config{
 				StateDir: "some-state-dir",
 			},
-			Analytics:      mockAnalytics,
+			Analytics: mockAnalytics,
 		}
 	})
 
@@ -44,17 +42,17 @@ var _ = Describe("DeployService", func() {
 
 	Describe("happy path", func() {
 		It("deploys a new service", func() {
-			service := provision.Service{
+			service := workspace.Service{
 				Name: "some-service",
 			}
-			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
+			mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
 				Version:  "v4",
-				Services: []provision.Service{service},
+				Services: []workspace.Service{service},
 			}, nil)
 
 			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(nil)
-			mockProvisioner.EXPECT().GetWhiteListedService("some-service", []provision.Service{service}).Return(&service, nil)
-			mockProvisioner.EXPECT().DeployServices(mockUI, []provision.Service{service}, []string{}).Return(nil)
+			mockProvisioner.EXPECT().GetWhiteListedService("some-service", []workspace.Service{service}).Return(&service, nil)
+			mockProvisioner.EXPECT().DeployServices(mockUI, []workspace.Service{service}, []string{}).Return(nil)
 
 			mockAnalytics.EXPECT().Event("deployed service", map[string]interface{}{"name": "some-service"})
 
@@ -67,12 +65,12 @@ var _ = Describe("DeployService", func() {
 
 	Describe("When cf dev is not running", func() {
 		It("returns an error", func() {
-			service := provision.Service{
+			service := workspace.Service{
 				Name: "some-service",
 			}
-			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
+			mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
 				Version:  "v4",
-				Services: []provision.Service{service},
+				Services: []workspace.Service{service},
 			}, nil)
 			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(errors.New("some issue happened"))
 
@@ -86,18 +84,17 @@ var _ = Describe("DeployService", func() {
 
 	Describe("When service is not whitelisted", func() {
 		It("returns an error", func() {
-			service := provision.Service{
+			service := workspace.Service{
 				Name: "some-service",
 			}
-			mockMetadataReader.EXPECT().Read(filepath.Join("some-state-dir", "metadata.yml")).Return(metadata.Metadata{
+			mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
 				Version:  "v4",
-				Services: []provision.Service{service},
+				Services: []workspace.Service{service},
 			}, nil)
 			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(nil)
 			mockProvisioner.EXPECT().GetWhiteListedService(
 				"some-service",
-				[]provision.Service{service}).Return(&service, errors.New("unknown service"))
-
+				[]workspace.Service{service}).Return(&service, errors.New("unknown service"))
 
 			err := cmd.Execute(deploy_service.Args{
 				Service: "some-service",

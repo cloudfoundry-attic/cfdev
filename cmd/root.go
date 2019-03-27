@@ -20,7 +20,6 @@ import (
 	b7 "code.cloudfoundry.org/cfdev/cmd/telemetry"
 	b1 "code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/metadata"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"code.cloudfoundry.org/cfdev/resource/progress"
@@ -58,7 +57,6 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 	var (
 		writer         = ui.Writer()
-		metaDataReader = metadata.New()
 		driver         = newDriver(ui, config)
 		workspace      = workspace.New(config)
 		provisioner    = provision.NewController(config)
@@ -86,7 +84,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Version:        config.CliVersion,
 			BuildVersion:   config.BuildVersion,
 			Config:         config,
-			MetaDataReader: metaDataReader,
+			MetaDataReader: workspace,
 		}
 
 		bosh = &b2.Bosh{
@@ -121,7 +119,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Exit:           exit,
 			UI:             ui,
 			Provisioner:    provisioner,
-			MetaDataReader: metaDataReader,
+			MetaDataReader: workspace,
 			Config:         config,
 		}
 
@@ -143,7 +141,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD:      analyticsD,
 			Provisioner:     provisioner,
 			Provision:       provision,
-			MetaDataReader:  metaDataReader,
+			MetaDataReader:  workspace,
 			Stop:            stop,
 			OS:              &cfdevos.OS{},
 		}
@@ -151,7 +149,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		deployService = &b9.DeployService{
 			UI:             ui,
 			Provisioner:    provisioner,
-			MetaDataReader: metaDataReader,
+			MetaDataReader: workspace,
 			Analytics:      analyticsClient,
 			Config:         config,
 		}

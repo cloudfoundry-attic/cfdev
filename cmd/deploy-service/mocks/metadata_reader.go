@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	metadata "code.cloudfoundry.org/cfdev/metadata"
+	workspace "code.cloudfoundry.org/cfdev/workspace"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -33,15 +33,15 @@ func (m *MockMetaDataReader) EXPECT() *MockMetaDataReaderMockRecorder {
 	return m.recorder
 }
 
-// Read mocks base method
-func (m *MockMetaDataReader) Read(arg0 string) (metadata.Metadata, error) {
-	ret := m.ctrl.Call(m, "Read", arg0)
-	ret0, _ := ret[0].(metadata.Metadata)
+// Metadata mocks base method
+func (m *MockMetaDataReader) Metadata() (workspace.Metadata, error) {
+	ret := m.ctrl.Call(m, "Metadata")
+	ret0, _ := ret[0].(workspace.Metadata)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Read indicates an expected call of Read
-func (mr *MockMetaDataReaderMockRecorder) Read(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockMetaDataReader)(nil).Read), arg0)
+// Metadata indicates an expected call of Metadata
+func (mr *MockMetaDataReaderMockRecorder) Metadata() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Metadata", reflect.TypeOf((*MockMetaDataReader)(nil).Metadata))
 }

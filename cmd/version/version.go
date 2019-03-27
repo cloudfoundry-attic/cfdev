@@ -3,7 +3,7 @@ package version
 import (
 	"archive/tar"
 	"code.cloudfoundry.org/cfdev/config"
-	"code.cloudfoundry.org/cfdev/metadata"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"compress/gzip"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -20,7 +20,7 @@ type UI interface {
 
 //go:generate mockgen -package mocks -destination mocks/metadata.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
 type MetaDataReader interface {
-	Read(metadataPath string) (metadata.Metadata, error)
+	Metadata() (workspace.Metadata, error)
 }
 
 type Version struct {
@@ -60,7 +60,7 @@ func (v *Version) Execute(pathTarball string) {
 	v.printCliVersion()
 
 	if exists(metadataYml) {
-		mtData, err := v.MetaDataReader.Read(metadataYml)
+		mtData, err := v.MetaDataReader.Metadata()
 		if err != nil {
 			return
 		}

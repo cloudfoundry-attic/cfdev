@@ -12,8 +12,6 @@ type Analytics interface {
 	Event(event string, data ...map[string]interface{}) error
 }
 
-//go:generate mockgen -package mocks -destination mocks/driver.go code.cloudfoundry.org/cfdev/cmd/stop Driver
-
 //go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/stop AnalyticsD
 type AnalyticsD interface {
 	Stop() error

@@ -19,7 +19,6 @@ type UI interface {
 	Writer() io.Writer
 }
 
-//go:generate mockgen -package mocks -destination mocks/env.go code.cloudfoundry.org/cfdev/cmd/start Env
 type Env interface {
 	CreateDirs() error
 }

@@ -4,14 +4,13 @@ import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	e "code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/metadata"
 	"code.cloudfoundry.org/cfdev/provision"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -23,14 +22,14 @@ type UI interface {
 
 //go:generate mockgen -package mocks -destination mocks/metadata_reader.go code.cloudfoundry.org/cfdev/cmd/deploy-service MetaDataReader
 type MetaDataReader interface {
-	Read(tarballPath string) (metadata.Metadata, error)
+	Metadata() (workspace.Metadata, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/deploy-service Provisioner
 type Provisioner interface {
 	Ping(duration time.Duration) error
-	DeployServices(provision.UI, []provision.Service, []string) error
-	GetWhiteListedService(string, []provision.Service) (*provision.Service, error)
+	DeployServices(provision.UI, []workspace.Service, []string) error
+	GetWhiteListedService(string, []workspace.Service) (*workspace.Service, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/analytics.go code.cloudfoundry.org/cfdev/cmd/stop Analytics
@@ -80,7 +79,7 @@ func (c *DeployService) RunE(cmd *cobra.Command, args []string) error {
 }
 
 func (c *DeployService) Execute(args Args) error {
-	metadataConfig, err := c.MetaDataReader.Read(filepath.Join(c.Config.StateDir, "metadata.yml"))
+	metadataConfig, err := c.MetaDataReader.Metadata()
 	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("something went wrong while reading the assets. Please execute 'cf dev start'"))
 	}
@@ -93,13 +92,12 @@ func (c *DeployService) Execute(args Args) error {
 		return fmt.Errorf("cf dev is not running. Please execute 'cf dev start'")
 	}
 
-	var service *provision.Service
-	service, err = c.Provisioner.GetWhiteListedService(args.Service, metadataConfig.Services)
+	service, err := c.Provisioner.GetWhiteListedService(args.Service, metadataConfig.Services)
 	if err != nil {
 		return e.SafeWrap(err, "Failed to whitelist service")
 	}
 
-	if err := c.Provisioner.DeployServices(c.UI, []provision.Service{*service}, []string{}); err != nil {
+	if err := c.Provisioner.DeployServices(c.UI, []workspace.Service{*service}, []string{}); err != nil {
 		return e.SafeWrap(err, "Failed to deploy services")
 	}
 

@@ -3,6 +3,7 @@ package provision_test
 import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/provision"
+	"code.cloudfoundry.org/cfdev/workspace"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -10,13 +11,13 @@ import (
 var _ = Describe("When progress whitelist is called with", func() {
 	var (
 		c        *provision.Controller
-		services []provision.Service
+		services []workspace.Service
 	)
 
 	BeforeEach(func() {
 		c = provision.NewController(config.Config{})
 
-		services = []provision.Service{
+		services = []workspace.Service{
 			{
 				Name:          "service-one",
 				Flagname:      "service-one-flagname",

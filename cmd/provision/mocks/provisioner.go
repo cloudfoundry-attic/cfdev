@@ -6,6 +6,7 @@ package mocks
 
 import (
 	provision "code.cloudfoundry.org/cfdev/provision"
+	workspace "code.cloudfoundry.org/cfdev/workspace"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 	time "time"
@@ -47,7 +48,7 @@ func (mr *MockProvisionerMockRecorder) DeployBosh() *gomock.Call {
 }
 
 // DeployServices mocks base method
-func (m *MockProvisioner) DeployServices(arg0 provision.UI, arg1 []provision.Service, arg2 []string) error {
+func (m *MockProvisioner) DeployServices(arg0 provision.UI, arg1 []workspace.Service, arg2 []string) error {
 	ret := m.ctrl.Call(m, "DeployServices", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -71,9 +72,9 @@ func (mr *MockProvisionerMockRecorder) Ping(arg0 interface{}) *gomock.Call {
 }
 
 // WhiteListServices mocks base method
-func (m *MockProvisioner) WhiteListServices(arg0 string, arg1 []provision.Service) ([]provision.Service, error) {
+func (m *MockProvisioner) WhiteListServices(arg0 string, arg1 []workspace.Service) ([]workspace.Service, error) {
 	ret := m.ctrl.Call(m, "WhiteListServices", arg0, arg1)
-	ret0, _ := ret[0].([]provision.Service)
+	ret0, _ := ret[0].([]workspace.Service)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

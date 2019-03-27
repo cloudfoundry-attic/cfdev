@@ -1,13 +1,14 @@
 package provision
 
 import (
+	"code.cloudfoundry.org/cfdev/workspace"
 	"fmt"
 	"time"
 
 	"code.cloudfoundry.org/cfdev/errors"
 )
 
-func (c *Controller) report(start time.Time, ui UI, b *Bosh, service Service, errChan chan error) error {
+func (c *Controller) report(start time.Time, ui UI, b *Bosh, service workspace.Service, errChan chan error) error {
 	ticker := time.NewTicker(5 * time.Second)
 
 	for {
