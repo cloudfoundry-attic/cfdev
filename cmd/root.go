@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"code.cloudfoundry.org/cfdev/env"
-	"code.cloudfoundry.org/cfdev/profiler"
+	cfdevos "code.cloudfoundry.org/cfdev/os"
 	"io"
 	"net/http"
 	"strings"
@@ -141,7 +141,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Provision:       prvsn,
 			MetaDataReader:  metaDataReader,
 			Stop:            stop,
-			Profiler:        &profiler.SystemProfiler{},
+			OS:              &cfdevos.OS{},
 		}
 
 		deployService = &b9.DeployService{

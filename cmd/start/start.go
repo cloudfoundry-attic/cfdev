@@ -9,6 +9,7 @@ import (
 
 	"code.cloudfoundry.org/cfdev/config"
 	e "code.cloudfoundry.org/cfdev/errors"
+	cfdevos "code.cloudfoundry.org/cfdev/os"
 	"code.cloudfoundry.org/cfdev/provision"
 	"code.cloudfoundry.org/cfdev/resource"
 	"fmt"
@@ -47,10 +48,9 @@ type AnalyticsD interface {
 	IsRunning() (bool, error)
 }
 
-//go:generate mockgen -package mocks -destination mocks/system-profiler.go code.cloudfoundry.org/cfdev/cmd/start SystemProfiler
-type SystemProfiler interface {
-	GetAvailableMemory() (uint64, error)
-	GetTotalMemory() (uint64, error)
+//go:generate mockgen -package mocks -destination mocks/os.go code.cloudfoundry.org/cfdev/cmd/start OS
+type OS interface {
+	Stats() (cfdevos.Stats, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/cache.go code.cloudfoundry.org/cfdev/cmd/start Cache
@@ -110,7 +110,7 @@ type Start struct {
 	Provisioner     Provisioner
 	Provision       Provision
 	Env             Env
-	Profiler        SystemProfiler
+	OS              OS
 }
 
 const (
@@ -152,6 +152,7 @@ func (s *Start) Execute(args Args) error {
 		os.Exit(128)
 	}()
 
+	stats, _ := s.OS.Stats()
 	depsPath := filepath.Join(s.Config.CacheDir, "cfdev-deps.tgz")
 
 	if args.DepsPath != "" {
@@ -166,16 +167,6 @@ func (s *Start) Execute(args Args) error {
 		}
 
 		s.Config.Dependencies.Remove("cfdev-deps.tgz")
-	}
-
-	aMem, err := s.Profiler.GetAvailableMemory()
-	if err != nil {
-		fmt.Printf("AVAILABLE MEMORY ERROR: %v", err)
-	}
-
-	tMem, err := s.Profiler.GetTotalMemory()
-	if err != nil {
-		fmt.Printf("TOTAL MEMORY ERROR: %v", err)
 	}
 
 	if err := s.Driver.CheckRequirements(); err != nil {
@@ -210,7 +201,7 @@ func (s *Start) Execute(args Args) error {
 		s.Config.Dependencies.Remove("cfdevd")
 	}
 
-	err = s.Driver.Prestart()
+	err := s.Driver.Prestart()
 	if err != nil {
 		return e.SafeWrap(err, "Unable to invoke pre-start")
 	}
@@ -240,8 +231,8 @@ func (s *Start) Execute(args Args) error {
 	s.Analytics.PromptOptInIfNeeded(metaData.AnalyticsMessage)
 
 	s.Analytics.Event(cfanalytics.START_BEGIN, map[string]interface{}{
-		"total memory":     tMem,
-		"available memory": aMem,
+		"total memory":     stats.TotalMemory,
+		"available memory": stats.AvailableMemory,
 	})
 
 	if args.DeploySingleService != "" {
@@ -252,7 +243,7 @@ func (s *Start) Execute(args Args) error {
 		s.Analytics.Event(cfanalytics.SELECTED_SERVICE, map[string]interface{}{"services_requested": args.DeploySingleService})
 	}
 
-	memoryToAllocate, err := s.allocateMemory(metaData, args.Mem)
+	memoryToAllocate, err := s.allocateMemory(metaData, stats, args.Mem)
 	if err != nil {
 		return err
 	}
@@ -309,25 +300,20 @@ func contains(services []provision.Service, service string) bool {
 	return false
 }
 
-func (s *Start) allocateMemory(metaData metadata.Metadata, requestedMem int) (int, error) {
+func (s *Start) allocateMemory(metaData metadata.Metadata, stats cfdevos.Stats, requestedMem int) (int, error) {
 	baseMem := defaultMemory
 	if metaData.DefaultMemory > 0 {
 		baseMem = metaData.DefaultMemory
 	}
 
-	availableMem, err := s.Profiler.GetAvailableMemory()
-	if err != nil {
-		return 0, e.SafeWrap(err, "error retrieving available system memory")
-	}
-
 	customMemProvided := requestedMem > 0
 	if customMemProvided {
 		if requestedMem >= baseMem {
-			if availableMem >= uint64(requestedMem) {
+			if stats.AvailableMemory >= uint64(requestedMem) {
 				return requestedMem, nil
 			}
 
-			if availableMem < uint64(requestedMem) {
+			if stats.AvailableMemory < uint64(requestedMem) {
 				s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
 				return requestedMem, nil
 			}
@@ -335,17 +321,17 @@ func (s *Start) allocateMemory(metaData metadata.Metadata, requestedMem int) (in
 
 		if requestedMem < baseMem {
 			s.UI.Say(fmt.Sprintf("WARNING: It is recommended that you run %s Dev with at least %v MB of RAM.", strings.ToUpper(metaData.DeploymentName), baseMem))
-			if availableMem >= uint64(requestedMem) {
+			if stats.AvailableMemory >= uint64(requestedMem) {
 				return requestedMem, nil
 			}
 
-			if availableMem < uint64(requestedMem) {
+			if stats.AvailableMemory < uint64(requestedMem) {
 				s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
 				return requestedMem, nil
 			}
 		}
 	} else {
-		if availableMem >= uint64(baseMem) {
+		if stats.AvailableMemory >= uint64(baseMem) {
 			return baseMem, nil
 		} else {
 			s.UI.Say(fmt.Sprintf("WARNING: %s Dev requires %v MB of RAM to run. This machine may not have enough free RAM.", strings.ToUpper(metaData.DeploymentName), baseMem))
