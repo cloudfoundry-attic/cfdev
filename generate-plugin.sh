@@ -10,7 +10,7 @@ export GOOS=darwin
 export GOARCH=amd64
 
 cfdevd="$PWD"/cfdvd
-go build -o $cfdevd code.cloudfoundry.org/cfdev/cfdevd
+go build -o $cfdevd code.cloudfoundry.org/cfdev/pkg/cfdevd
 
 analyticsd="$PWD"/analytix
 analyticsdpkg="main"

@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
-	"code.cloudfoundry.org/cfdev/cfdevd/cmd/mocks"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/cmd"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/cmd/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

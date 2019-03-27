@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	cfdevdClient "code.cloudfoundry.org/cfdev/cfdevd/client"
+	cfdevdClient "code.cloudfoundry.org/cfdev/pkg/cfdevd/client"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/driver"

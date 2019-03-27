@@ -5,7 +5,7 @@ package cmd_test
 import (
 	"bytes"
 
-	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/cmd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

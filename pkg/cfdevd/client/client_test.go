@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"code.cloudfoundry.org/cfdev/cfdevd/client"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/client"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

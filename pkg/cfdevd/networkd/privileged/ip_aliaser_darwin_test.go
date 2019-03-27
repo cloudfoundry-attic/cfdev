@@ -3,7 +3,7 @@ package privileged
 import (
 	"os/exec"
 
-	"code.cloudfoundry.org/cfdev/cfdevd/networkd"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/networkd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"

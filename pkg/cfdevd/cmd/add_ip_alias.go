@@ -3,7 +3,7 @@ package cmd
 import (
 	"net"
 
-	"code.cloudfoundry.org/cfdev/cfdevd/networkd"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/networkd"
 )
 
 type AddIPAliasCommand struct {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"code.cloudfoundry.org/cfdev/cfdevd/cmd"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/cmd"
 	"log"
 	"net"
 	"os"
