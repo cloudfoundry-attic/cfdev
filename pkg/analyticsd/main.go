@@ -1,7 +1,6 @@
 package main
 
 import (
-	"code.cloudfoundry.org/cfdev/host"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	cfdevos "code.cloudfoundry.org/cfdev/os"
 	"code.cloudfoundry.org/cfdev/pkg/analyticsd/daemon"
 	"github.com/denisbrodbeck/machineid"
 	"golang.org/x/oauth2"
@@ -49,8 +49,8 @@ func main() {
 		userID = "UNKNOWN_ID"
 	}
 
-	h := host.Host{}
-	osVersion, err := h.Version()
+	o := cfdevos.OS{}
+	osVersion, err := o.Version()
 	if err != nil {
 		osVersion = "unknown-os-version"
 	}

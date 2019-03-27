@@ -53,11 +53,6 @@ type SystemProfiler interface {
 	GetTotalMemory() (uint64, error)
 }
 
-//go:generate mockgen -package mocks -destination mocks/host.go code.cloudfoundry.org/cfdev/cmd/start Host
-type Host interface {
-	CheckRequirements() error
-}
-
 //go:generate mockgen -package mocks -destination mocks/cache.go code.cloudfoundry.org/cfdev/cmd/start Cache
 type Cache interface {
 	Sync(resource.Catalog) error
@@ -108,7 +103,6 @@ type Start struct {
 	MetaDataReader  MetaDataReader
 	Analytics       AnalyticsClient
 	AnalyticsToggle Toggle
-	Host            Host
 	Cache           Cache
 	AnalyticsD      AnalyticsD
 	Driver          driver.Driver
@@ -184,7 +178,7 @@ func (s *Start) Execute(args Args) error {
 		fmt.Printf("TOTAL MEMORY ERROR: %v", err)
 	}
 
-	if err := s.Host.CheckRequirements(); err != nil {
+	if err := s.Driver.CheckRequirements(); err != nil {
 		return err
 	}
 

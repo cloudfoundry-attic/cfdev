@@ -12,11 +12,6 @@ type Analytics interface {
 	Event(event string, data ...map[string]interface{}) error
 }
 
-//go:generate mockgen -package mocks -destination mocks/host.go code.cloudfoundry.org/cfdev/cmd/stop Host
-type Host interface {
-	CheckRequirements() error
-}
-
 //go:generate mockgen -package mocks -destination mocks/driver.go code.cloudfoundry.org/cfdev/cmd/stop Driver
 
 //go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/stop AnalyticsD
@@ -29,7 +24,6 @@ type Stop struct {
 	Driver       driver.Driver
 	Analytics    Analytics
 	AnalyticsD   AnalyticsD
-	Host         Host
 }
 
 func (s *Stop) Cmd() *cobra.Command {
@@ -42,7 +36,7 @@ func (s *Stop) Cmd() *cobra.Command {
 func (s *Stop) RunE(cmd *cobra.Command, args []string) error {
 	s.Analytics.Event(cfanalytics.STOP)
 
-	if err := s.Host.CheckRequirements(); err != nil {
+	if err := s.Driver.CheckRequirements(); err != nil {
 		return err
 	}
 

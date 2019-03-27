@@ -1,4 +1,4 @@
-package host
+package os
 
 import (
 	"fmt"
@@ -6,10 +6,7 @@ import (
 	"strings"
 )
 
-func (*Host) CheckRequirements() error {
-	return nil
-}
-func (h *Host) Version() (string, error) {
+func (o *OS) Version() (string, error) {
 	name, err := exec.Command("sw_vers", "-productName").Output()
 	if err != nil {
 		return "", err

@@ -2,7 +2,6 @@ package main
 
 import (
 	"code.cloudfoundry.org/cfdev/env"
-	"code.cloudfoundry.org/cfdev/host"
 	_ "code.cloudfoundry.org/cfdev/unset-bosh-all-proxy"
 	"io/ioutil"
 	"log"
@@ -17,6 +16,7 @@ import (
 	"code.cloudfoundry.org/cfdev/cmd"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/errors"
+	cfdevos "code.cloudfoundry.org/cfdev/os"
 	"code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 	"code.cloudfoundry.org/cli/plugin"
@@ -73,8 +73,8 @@ func main() {
 		Logger: analytics.StdLogger(log.New(ioutil.Discard, "", 0)),
 	})
 
-	h := host.Host{}
-	osVersion, err := h.Version()
+	o := cfdevos.OS{}
+	osVersion, err := o.Version()
 	if err != nil {
 		osVersion = "unknown-os-version"
 	}

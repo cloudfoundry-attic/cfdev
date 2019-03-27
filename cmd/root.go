@@ -59,7 +59,6 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		writer         = ui.Writer()
 		metaDataReader = metadata.New()
 		driver         = newDriver(ui, config)
-		hst            = newHost()
 		analyticsD     = &cfanalytics.AnalyticsD{
 			Config:       config,
 			DaemonRunner: newDaemonRunner(config),
@@ -124,7 +123,6 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 		stop = &b6.Stop{
 			Analytics:  analyticsClient,
-			Host:       hst,
 			AnalyticsD: analyticsD,
 			Driver:     driver,
 		}
@@ -137,7 +135,6 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			Env:             &env.Env{Config: config},
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
-			Host:            hst,
 			Driver:          driver,
 			AnalyticsD:      analyticsD,
 			Provisioner:     provision.NewController(config),
