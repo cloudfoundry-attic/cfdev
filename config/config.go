@@ -1,16 +1,14 @@
 package config
 
 import (
-	"encoding/json"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 
-	"code.cloudfoundry.org/cfdev/errors"
-
 	"code.cloudfoundry.org/cfdev/resource"
-	"code.cloudfoundry.org/cfdev/semver"
 	"runtime"
 )
 
@@ -53,7 +51,7 @@ type Config struct {
 	Dependencies           resource.Catalog
 	CFDevDSocketPath       string
 	CFDevDInstallationPath string
-	CliVersion             *semver.Version
+	CliVersion             *Version
 	BuildVersion           string
 	AnalyticsKey           string
 	ServicesDir            string
@@ -62,14 +60,12 @@ type Config struct {
 }
 
 func NewConfig() (Config, error) {
-	cfdevHome := getCfdevHome()
+	var (
+		analytixKey string
+		cfdevHome   = getCfdevHome()
+		catalog     = catalog()
+	)
 
-	catalog, err := catalog()
-	if err != nil {
-		return Config{}, err
-	}
-
-	var analytixKey string
 	if os.Getenv("CFDEV_MODE") == "debug" || analyticsKey == "" {
 		analytixKey = testAnalyticsKey
 	} else {
@@ -93,11 +89,32 @@ func NewConfig() (Config, error) {
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
-		CliVersion:             semver.Must(semver.New(cliVersion)),
+		CliVersion:             Must(NewSemver(cliVersion)),
 		BuildVersion:           buildVersion,
 		AnalyticsKey:           analytixKey,
 		CFDomain:               "dev.cfdev.sh",
 	}, nil
+}
+
+func (c *Config) EnvsMapping() map[string]string {
+	mapping := map[string]string{}
+
+	data, err := ioutil.ReadFile(filepath.Join(c.StateBosh, "env.yml"))
+	if err != nil {
+		return mapping
+	}
+
+	yaml.Unmarshal(data, &mapping)
+	return mapping
+}
+
+func (c *Config) Envs() []string {
+	var results []string
+	for k, v := range c.EnvsMapping() {
+		results = append(results, k+"="+v)
+	}
+
+	return results
 }
 
 func aToUint64(a string) uint64 {
@@ -105,20 +122,11 @@ func aToUint64(a string) uint64 {
 	if err != nil {
 		return 0
 	}
+
 	return i
 }
 
-func catalog() (resource.Catalog, error) {
-	override := os.Getenv("CFDEV_CATALOG")
-
-	if override != "" {
-		var c resource.Catalog
-		if err := json.Unmarshal([]byte(override), &c); err != nil {
-			return resource.Catalog{}, errors.SafeWrap(err, "Unable to parse CFDEV_CATALOG env variable")
-		}
-		return c, nil
-	}
-
+func catalog() resource.Catalog {
 	catalog := resource.Catalog{
 		Items: []resource.Item{
 			{
@@ -179,7 +187,7 @@ func catalog() (resource.Catalog, error) {
 		return catalog.Items[i].Size < catalog.Items[j].Size
 	})
 
-	return catalog, nil
+	return catalog
 }
 
 func getCfdevHome() string {
@@ -193,4 +201,12 @@ func getCfdevHome() string {
 	} else {
 		return filepath.Join(os.Getenv("HOME"), ".cfdev")
 	}
+}
+
+func Must(v *Version, err error) *Version {
+	if err != nil {
+		panic(err)
+	}
+
+	return v
 }

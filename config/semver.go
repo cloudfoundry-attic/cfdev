@@ -1,4 +1,4 @@
-package semver
+package config
 
 import (
 	"strconv"
@@ -12,7 +12,7 @@ type Version struct {
 	Original string
 }
 
-func New(v string) (*Version, error) {
+func NewSemver(v string) (*Version, error) {
 	s := &Version{Original: v}
 	arr := strings.SplitN(v, ".", 3)
 	var err error
@@ -36,11 +36,4 @@ func New(v string) (*Version, error) {
 		}
 	}
 	return s, nil
-}
-
-func Must(v *Version, err error) *Version {
-	if err != nil {
-		panic(err)
-	}
-	return v
 }

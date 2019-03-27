@@ -6,8 +6,8 @@ import (
 
 	"code.cloudfoundry.org/cfdev/cmd/version"
 	"code.cloudfoundry.org/cfdev/cmd/version/mocks"
+	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/metadata"
-	"code.cloudfoundry.org/cfdev/semver"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -44,7 +44,7 @@ var _ = Describe("Version Command", func() {
 			verCmd = &version.Version{
 				UI:             &mockUI,
 				MetaDataReader: mockMetaDataReader,
-				Version:        &semver.Version{Original: "1.2.3-rc.4"},
+				Version:        &config.Version{Original: "1.2.3-rc.4"},
 				BuildVersion:   "some-build-version",
 			}
 		})
@@ -108,7 +108,7 @@ var _ = Describe("Version Command", func() {
 			verCmd = &version.Version{
 				UI:             &mockUI,
 				MetaDataReader: metadata.New(),
-				Version:        &semver.Version{Original: "1.2.3-rc.4"},
+				Version:        &config.Version{Original: "1.2.3-rc.4"},
 			}
 		})
 

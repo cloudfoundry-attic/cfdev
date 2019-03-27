@@ -53,13 +53,6 @@ type OS interface {
 	Stats() (cfdevos.Stats, error)
 }
 
-//go:generate mockgen -package mocks -destination mocks/cache.go code.cloudfoundry.org/cfdev/cmd/start Cache
-type Cache interface {
-	Sync(resource.Catalog) error
-}
-
-//go:generate mockgen -package mocks -destination mocks/driver.go code.cloudfoundry.org/cfdev/cmd/start Driver
-
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/start Provisioner
 type Provisioner interface {
 	Ping(duration time.Duration) error
@@ -68,11 +61,6 @@ type Provisioner interface {
 //go:generate mockgen -package mocks -destination mocks/provision.go code.cloudfoundry.org/cfdev/cmd/start Provision
 type Provision interface {
 	Execute(args Args) error
-}
-
-//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
-type MetaDataReader interface {
-	Read(tarballPath string) (metadata.Metadata, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/stop.go code.cloudfoundry.org/cfdev/cmd/start Stop
@@ -84,6 +72,16 @@ type Stop interface {
 type Env interface {
 	CreateDirs() error
 	SetupState(depsFile string) error
+}
+
+//go:generate mockgen -package mocks -destination mocks/cache.go code.cloudfoundry.org/cfdev/cmd/start Cache
+type Cache interface {
+	Sync(resource.Catalog) error
+}
+
+//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
+type MetaDataReader interface {
+	Read(tarballPath string) (metadata.Metadata, error)
 }
 
 type Args struct {

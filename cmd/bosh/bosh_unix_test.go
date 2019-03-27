@@ -1,3 +1,5 @@
+// +build !windows
+
 package bosh_test
 
 import (
@@ -91,10 +93,10 @@ BOSH_GW_PRIVATE_KEY: |
 		It("replaces the certificates with their file paths", func() {
 			mockAnalyticsClient.EXPECT().Event(cfanalytics.BOSH_ENV)
 			mockUI.EXPECT().Say(gomock.Any()).Do(func(arg string) {
-				Expect(strings.Count(arg,"BOSH_CA_CERT")).To(Equal(1))
-				Expect(strings.Count(arg,"BOSH_GW_PRIVATE_KEY")).To(Equal(1))
+				Expect(strings.Count(arg, "BOSH_CA_CERT")).To(Equal(1))
+				Expect(strings.Count(arg, "BOSH_GW_PRIVATE_KEY")).To(Equal(1))
 
-				Expect(arg).To(ContainSubstring(fmt.Sprintf(`export BOSH_CA_CERT="%s";`,filepath.Join(tmpDir, "ca.crt"))))
+				Expect(arg).To(ContainSubstring(fmt.Sprintf(`export BOSH_CA_CERT="%s";`, filepath.Join(tmpDir, "ca.crt"))))
 				Expect(arg).To(ContainSubstring(fmt.Sprintf(`export BOSH_GW_PRIVATE_KEY="%s";`, filepath.Join(tmpDir, "jumpbox.key"))))
 			})
 

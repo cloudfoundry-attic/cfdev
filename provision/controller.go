@@ -15,12 +15,12 @@ type UI interface {
 }
 
 type Controller struct {
-	Config config.Config
+	Config    config.Config
 }
 
 func NewController(config config.Config) *Controller {
 	return &Controller{
-		Config: config,
+		Config:    config,
 	}
 }
 

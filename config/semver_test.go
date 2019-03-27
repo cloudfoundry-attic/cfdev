@@ -1,14 +1,14 @@
-package semver_test
+package config_test
 
 import (
-	"code.cloudfoundry.org/cfdev/semver"
+	"code.cloudfoundry.org/cfdev/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Semver", func() {
 	It("parses 1.2.3", func() {
-		s, err := semver.New("1.2.3")
+		s, err := config.NewSemver("1.2.3")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(s.Major).To(Equal(1))
 		Expect(s.Minor).To(Equal(2))
@@ -17,7 +17,7 @@ var _ = Describe("Semver", func() {
 	})
 
 	It("parses 2.3.4-patch-1", func() {
-		s, err := semver.New("2.3.4-patch-1")
+		s, err := config.NewSemver("2.3.4-patch-1")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(s.Major).To(Equal(2))
 		Expect(s.Minor).To(Equal(3))
@@ -26,7 +26,7 @@ var _ = Describe("Semver", func() {
 	})
 
 	It("parses empty string", func() {
-		s, err := semver.New("")
+		s, err := config.NewSemver("")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(s.Major).To(Equal(0))
 		Expect(s.Minor).To(Equal(0))

@@ -1,8 +1,8 @@
 package provision
 
 import (
-	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/runner"
 	"errors"
 	"fmt"
 	"os"
@@ -66,8 +66,10 @@ func contains(services []Service, name string) bool {
 }
 
 func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries []string) error {
-	b := bosh.New(c.Config)
-	errChan := make(chan error, 1)
+	var (
+		b       = NewBosh(c.Config, &runner.Shell{})
+		errChan = make(chan error, 1)
+	)
 
 	for _, service := range services {
 		start := time.Now()
@@ -98,7 +100,7 @@ func (c *Controller) DeployService(service Service, dockerRegistries []string) e
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, configEnvs(c.Config)...)
-	cmd.Env = append(cmd.Env, bosh.Envs(c.Config)...)
+	cmd.Env = append(cmd.Env, c.Config.Envs()...)
 
 	if strings.HasPrefix(service.Deployment, "cf") {
 		cmd.Env = append(cmd.Env, dockerRegistriesAsEnvVar(dockerRegistries))

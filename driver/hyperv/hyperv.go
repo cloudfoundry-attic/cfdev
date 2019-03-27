@@ -8,7 +8,6 @@ import (
 
 func (d *HyperV) createVM(name string, cpus int, memory int, efiPath string) error {
 	var (
-		cfdevEfiIso = filepath.Join(d.Config.BinaryDir, "cfdev-efi-v2.iso")
 		cfDevVHD    = filepath.Join(d.Config.StateDir, "disk.vhdx")
 	)
 
@@ -31,9 +30,10 @@ func (d *HyperV) createVM(name string, cpus int, memory int, efiPath string) err
 		return fmt.Errorf("setting vm properites (memoryMB:%d, cpus:%d): %s", memory, cpus, err)
 	}
 
-	err = d.addVhdDrive(cfdevEfiIso, name)
+	command = fmt.Sprintf(`Add-VMDvdDrive -VMName %s -Path "%s"`, name, efiPath)
+	_, err = d.Powershell.Output(command)
 	if err != nil {
-		return fmt.Errorf("adding dvd drive %s: %s", cfdevEfiIso, err)
+		return fmt.Errorf("adding dvd drive %s: %s", efiPath, err)
 	}
 
 	command = fmt.Sprintf("Remove-VMNetworkAdapter -VMName %s", name)
@@ -133,16 +133,6 @@ func (d *HyperV) isRunning(vmName string) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func (d *HyperV) addVhdDrive(isoPath string, vmName string) error {
-	command := fmt.Sprintf(`Add-VMDvdDrive -VMName %s -Path "%s"`, vmName, isoPath)
-	_, err := d.Powershell.Output(command)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (d *HyperV) exists(vmName string) (bool, error) {

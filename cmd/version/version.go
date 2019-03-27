@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/metadata"
-	"code.cloudfoundry.org/cfdev/semver"
 	"compress/gzip"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -26,7 +25,7 @@ type MetaDataReader interface {
 
 type Version struct {
 	UI             UI
-	Version        *semver.Version
+	Version        *config.Version
 	BuildVersion   string
 	Config         config.Config
 	MetaDataReader MetaDataReader

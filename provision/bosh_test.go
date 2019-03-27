@@ -1,8 +1,8 @@
-package bosh_test
+package provision_test
 
 import (
-	"code.cloudfoundry.org/cfdev/bosh"
-	"code.cloudfoundry.org/cfdev/bosh/mocks"
+	"code.cloudfoundry.org/cfdev/provision"
+	"code.cloudfoundry.org/cfdev/provision/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,16 +13,16 @@ import (
 var _ = Describe("Bosh", func() {
 	Describe("GetVMProgress", func() {
 		var (
-			b bosh.Bosh
-			mockController      *gomock.Controller
-			mockRunner *mocks.MockRunner
+			b              provision.Bosh
+			mockController *gomock.Controller
+			mockRunner     *mocks.MockRunner
 		)
 
 		BeforeEach(func() {
 			mockController = gomock.NewController(GinkgoT())
 			mockRunner = mocks.NewMockRunner(mockController)
 
-			b = bosh.Bosh{
+			b = provision.Bosh{
 				Runner: mockRunner,
 			}
 		})
@@ -35,7 +35,7 @@ var _ = Describe("Bosh", func() {
 			It("returns the 'running errand' state", func() {
 				result := b.GetVMProgress(time.Now(), "some-deployment", true)
 
-				Expect(result.State).To(Equal(bosh.RunningErrand))
+				Expect(result.State).To(Equal(provision.RunningErrand))
 			})
 		})
 
@@ -45,7 +45,7 @@ var _ = Describe("Bosh", func() {
 
 				result := b.GetVMProgress(time.Now(), "some-deployment", false)
 
-				Expect(result.State).To(Equal(bosh.Preparing))
+				Expect(result.State).To(Equal(provision.Preparing))
 			})
 		})
 
@@ -62,7 +62,7 @@ var _ = Describe("Bosh", func() {
 
 				result := b.GetVMProgress(time.Now(), "some-deployment", false)
 
-				Expect(result.State).To(Equal(bosh.Preparing))
+				Expect(result.State).To(Equal(provision.Preparing))
 			})
 		})
 
@@ -92,7 +92,7 @@ var _ = Describe("Bosh", func() {
 
 				result := b.GetVMProgress(time.Now(), "some-deployment", false)
 
-				Expect(result.State).To(Equal(bosh.Preparing))
+				Expect(result.State).To(Equal(provision.Preparing))
 			})
 		})
 
@@ -143,7 +143,7 @@ var _ = Describe("Bosh", func() {
 
 				result := b.GetVMProgress(time.Now(), "some-deployment", false)
 
-				Expect(result.State).To(Equal(bosh.Deploying))
+				Expect(result.State).To(Equal(provision.Deploying))
 				Expect(result.Total).To(Equal(2))
 				Expect(result.Done).To(Equal(0))
 			})
@@ -196,7 +196,7 @@ var _ = Describe("Bosh", func() {
 
 				result := b.GetVMProgress(time.Now(), "some-deployment", false)
 
-				Expect(result.State).To(Equal(bosh.Deploying))
+				Expect(result.State).To(Equal(provision.Deploying))
 				Expect(result.Total).To(Equal(2))
 				Expect(result.Done).To(Equal(0))
 			})
@@ -249,7 +249,7 @@ var _ = Describe("Bosh", func() {
 
 				result := b.GetVMProgress(time.Now(), "some-deployment", false)
 
-				Expect(result.State).To(Equal(bosh.Deploying))
+				Expect(result.State).To(Equal(provision.Deploying))
 				Expect(result.Total).To(Equal(2))
 				Expect(result.Done).To(Equal(1))
 			})

@@ -1,7 +1,6 @@
 package bosh
 
 import (
-	"code.cloudfoundry.org/cfdev/bosh"
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
 	"fmt"
@@ -62,7 +61,7 @@ func (b *Bosh) Env() error {
 	b.Analytics.Event(cfanalytics.BOSH_ENV)
 
 	var output []string
-	envsMapping := bosh.EnvsMapping(b.Config)
+	envsMapping := b.Config.EnvsMapping()
 
 	for _, envvar := range os.Environ() {
 		if strings.HasPrefix(envvar, "BOSH_") {
@@ -94,8 +93,6 @@ func (b *Bosh) Env() error {
 		output = append(output, fmt.Sprintf(`export BOSH_CA_CERT=%q;`, filepath.Join(b.Config.StateBosh, "ca.crt")))
 		output = append(output, fmt.Sprintf(`export BOSH_GW_PRIVATE_KEY=%q;`, filepath.Join(b.Config.StateBosh, "jumpbox.key")))
 	}
-
-	output = append(output, )
 
 	b.UI.Say(strings.Join(output, "\n"))
 	return nil

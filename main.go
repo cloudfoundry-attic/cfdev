@@ -2,7 +2,6 @@ package main
 
 import (
 	"code.cloudfoundry.org/cfdev/env"
-	_ "code.cloudfoundry.org/cfdev/unset-bosh-all-proxy"
 	"io/ioutil"
 	"log"
 	"os"
@@ -29,9 +28,7 @@ type Command interface {
 }
 
 type Plugin struct {
-	Exit      chan struct{}
 	UI        terminal.UI
-	Config    config.Config
 	Analytics *cfanalytics.Analytics
 	Root      *cobra.Command
 	Version   plugin.VersionType
@@ -46,7 +43,6 @@ const (
 func main() {
 	exitChan := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(make(chan os.Signal), syscall.SIGHUP)
 	signal.Notify(sigChan, syscall.SIGINT)
 	signal.Notify(sigChan, syscall.SIGTERM)
 
@@ -54,6 +50,8 @@ func main() {
 		<-sigChan
 		close(exitChan)
 	}()
+
+	configureEnvironmentVariables()
 
 	ui := terminal.NewUI(
 		os.Stdin,
@@ -78,15 +76,14 @@ func main() {
 	if err != nil {
 		osVersion = "unknown-os-version"
 	}
+
 	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, env.IsBehindProxy(), exitChan, ui)
 	defer analyticsClient.Close()
 
-	setWhiteListedProxyVariables()
-
 	v := conf.CliVersion
+
 	cfdev := &Plugin{
 		UI:        ui,
-		Config:    conf,
 		Analytics: analyticsClient,
 		Root:      cmd.NewRoot(exitChan, ui, conf, analyticsClient, analyticsToggle),
 		Version:   plugin.VersionType{Major: v.Major, Minor: v.Minor, Build: v.Build},
@@ -95,16 +92,19 @@ func main() {
 	plugin.Start(cfdev)
 }
 
-func setWhiteListedProxyVariables() {
-	noProxyVars := os.Getenv("NO_PROXY")
-	if noProxyVars != "" {
-		noProxyVars = os.Getenv("no_proxy")
+func configureEnvironmentVariables() {
+	fetchNoProxyVariables := func() []string {
+		noProxyVars := os.Getenv("NO_PROXY")
+		if noProxyVars != "" {
+			noProxyVars = os.Getenv("no_proxy")
+		}
+
+		collection := strings.Split(noProxyVars, ",")
+		return append(collection, boshIP, routerIP, "."+domain)
 	}
 
-	arr := strings.Split(noProxyVars, ",")
-	arr = append(arr, boshIP, routerIP, "."+domain)
-
-	os.Setenv("NO_PROXY", strings.Join(arr, ","))
+	os.Unsetenv("BOSH_ALL_PROXY")
+	os.Setenv("NO_PROXY", strings.Join(fetchNoProxyVariables(), ","))
 }
 
 func (p *Plugin) GetMetadata() plugin.PluginMetadata {
