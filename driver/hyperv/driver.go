@@ -6,6 +6,7 @@ import (
 	e "code.cloudfoundry.org/cfdev/errors"
 )
 
+//go:generate mockgen -package mocks -destination mocks/runner.go code.cloudfoundry.org/cfdev/driver/hyperv Runner
 type Runner interface {
 	Output(command string) (string, error)
 }
