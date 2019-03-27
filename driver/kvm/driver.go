@@ -16,7 +16,11 @@ type KVM struct {
 	DaemonRunner driver.DaemonRunner
 }
 
-func New(cfg config.Config, daemonRunner driver.DaemonRunner, ui driver.UI) *KVM {
+func New(
+	cfg config.Config,
+	daemonRunner driver.DaemonRunner,
+	ui driver.UI,
+) driver.Driver {
 	return &KVM{
 		UI:           ui,
 		Config:       cfg,

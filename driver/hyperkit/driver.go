@@ -25,7 +25,7 @@ func New(
 	daemonRunner driver.DaemonRunner,
 	ui driver.UI,
 	cfdevdClient *client.Client,
-) *Hyperkit {
+) driver.Driver {
 	return &Hyperkit{
 		UI:           ui,
 		Config:       cfg,

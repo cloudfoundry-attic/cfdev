@@ -25,7 +25,7 @@ func New(
 	ethernetGUID string,
 	portGUID string,
 	forwarderGUID string,
-) *HyperV {
+) driver.Driver {
 	return &HyperV{
 		UI:            ui,
 		Config:        cfg,
