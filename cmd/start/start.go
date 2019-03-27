@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/cfdev/cfanalytics"
-	"code.cloudfoundry.org/cfdev/hypervisor"
 	"path/filepath"
 )
 
@@ -41,6 +40,13 @@ type Toggle interface {
 	SetProp(k, v string) error
 }
 
+//go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/start AnalyticsD
+type AnalyticsD interface {
+	Start() error
+	Stop() error
+	IsRunning() (bool, error)
+}
+
 //go:generate mockgen -package mocks -destination mocks/system-profiler.go code.cloudfoundry.org/cfdev/cmd/start SystemProfiler
 type SystemProfiler interface {
 	GetAvailableMemory() (uint64, error)
@@ -58,21 +64,6 @@ type Cache interface {
 }
 
 //go:generate mockgen -package mocks -destination mocks/driver.go code.cloudfoundry.org/cfdev/cmd/start Driver
-
-//go:generate mockgen -package mocks -destination mocks/analyticsd.go code.cloudfoundry.org/cfdev/cmd/start AnalyticsD
-type AnalyticsD interface {
-	Start() error
-	Stop() error
-	IsRunning() (bool, error)
-}
-
-//go:generate mockgen -package mocks -destination mocks/hypervisor.go code.cloudfoundry.org/cfdev/cmd/start Hypervisor
-type Hypervisor interface {
-	CreateVM(vm hypervisor.VM) error
-	Start(vmName string) error
-	Stop(vmName string) error
-	IsRunning(vmName string) (bool, error)
-}
 
 //go:generate mockgen -package mocks -destination mocks/provisioner.go code.cloudfoundry.org/cfdev/cmd/start Provisioner
 type Provisioner interface {
