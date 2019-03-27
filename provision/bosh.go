@@ -40,10 +40,10 @@ type VMProgress struct {
 	Duration time.Duration
 }
 
-func NewBosh(cfg config.Config, runner Runner) *Bosh {
+func NewBosh(cfg config.Config, runner Runner, envs []string) *Bosh {
 	return &Bosh{
 		cfg:  cfg,
-		envs: cfg.Envs(),
+		envs: envs,
 		Runner: runner,
 	}
 }

@@ -3,6 +3,7 @@ package bosh_test
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -54,6 +55,7 @@ BOSH_GW_PRIVATE_KEY: |
 			UI:        mockUI,
 			Analytics: mockAnalyticsClient,
 			Config:    cfg,
+			Workspace: workspace.New(cfg),
 		}
 	})
 

@@ -3,6 +3,7 @@ package provision
 import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/driver"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"context"
 	"github.com/aemengo/bosh-runc-cpi/client"
 	"io"
@@ -16,11 +17,13 @@ type UI interface {
 
 type Controller struct {
 	Config    config.Config
+	Workspace *workspace.Workspace
 }
 
 func NewController(config config.Config) *Controller {
 	return &Controller{
 		Config:    config,
+		Workspace: workspace.New(config),
 	}
 }
 

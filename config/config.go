@@ -1,8 +1,6 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -89,32 +87,11 @@ func NewConfig() (Config, error) {
 		Dependencies:           catalog,
 		CFDevDSocketPath:       filepath.Join("/var", "tmp", "cfdevd.socket"),
 		CFDevDInstallationPath: filepath.Join("/Library", "PrivilegedHelperTools", "org.cloudfoundry.cfdevd"),
-		CliVersion:             Must(NewSemver(cliVersion)),
+		CliVersion:             must(NewSemver(cliVersion)),
 		BuildVersion:           buildVersion,
 		AnalyticsKey:           analytixKey,
 		CFDomain:               "dev.cfdev.sh",
 	}, nil
-}
-
-func (c *Config) EnvsMapping() map[string]string {
-	mapping := map[string]string{}
-
-	data, err := ioutil.ReadFile(filepath.Join(c.StateBosh, "env.yml"))
-	if err != nil {
-		return mapping
-	}
-
-	yaml.Unmarshal(data, &mapping)
-	return mapping
-}
-
-func (c *Config) Envs() []string {
-	var results []string
-	for k, v := range c.EnvsMapping() {
-		results = append(results, k+"="+v)
-	}
-
-	return results
 }
 
 func aToUint64(a string) uint64 {
@@ -203,7 +180,7 @@ func getCfdevHome() string {
 	}
 }
 
-func Must(v *Version, err error) *Version {
+func must(v *Version, err error) *Version {
 	if err != nil {
 		panic(err)
 	}

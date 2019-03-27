@@ -67,7 +67,7 @@ func contains(services []Service, name string) bool {
 
 func (c *Controller) DeployServices(ui UI, services []Service, dockerRegistries []string) error {
 	var (
-		b       = NewBosh(c.Config, &runner.Shell{})
+		b       = NewBosh(c.Config, &runner.Shell{}, c.Workspace.Envs())
 		errChan = make(chan error, 1)
 	)
 
@@ -100,7 +100,7 @@ func (c *Controller) DeployService(service Service, dockerRegistries []string) e
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, configEnvs(c.Config)...)
-	cmd.Env = append(cmd.Env, c.Config.Envs()...)
+	cmd.Env = append(cmd.Env, c.Workspace.Envs()...)
 
 	if strings.HasPrefix(service.Deployment, "cf") {
 		cmd.Env = append(cmd.Env, dockerRegistriesAsEnvVar(dockerRegistries))

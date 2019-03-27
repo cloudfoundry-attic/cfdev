@@ -3,6 +3,7 @@ package bosh
 import (
 	"code.cloudfoundry.org/cfdev/cfanalytics"
 	"code.cloudfoundry.org/cfdev/config"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -29,6 +30,7 @@ type Bosh struct {
 	UI        UI
 	Config    config.Config
 	Analytics AnalyticsClient
+	Workspace *workspace.Workspace
 }
 
 func (b *Bosh) Cmd() *cobra.Command {
@@ -61,7 +63,7 @@ func (b *Bosh) Env() error {
 	b.Analytics.Event(cfanalytics.BOSH_ENV)
 
 	var output []string
-	envsMapping := b.Config.EnvsMapping()
+	envsMapping := b.Workspace.EnvsMapping()
 
 	for _, envvar := range os.Environ() {
 		if strings.HasPrefix(envvar, "BOSH_") {

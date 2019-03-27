@@ -3,6 +3,7 @@ package cmd
 import (
 	"code.cloudfoundry.org/cfdev/env"
 	cfdevos "code.cloudfoundry.org/cfdev/os"
+	"code.cloudfoundry.org/cfdev/workspace"
 	"io"
 	"net/http"
 	"strings"
@@ -59,6 +60,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		writer         = ui.Writer()
 		metaDataReader = metadata.New()
 		driver         = newDriver(ui, config)
+		workspace      = workspace.New(config)
+		provisioner    = provision.NewController(config)
 		analyticsD     = &cfanalytics.AnalyticsD{
 			Config:       config,
 			DaemonRunner: newDaemonRunner(config),
@@ -91,6 +94,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:        ui,
 			Config:    config,
 			Analytics: analyticsClient,
+			Workspace: workspace,
 		}
 
 		catalog = &b3.Catalog{
@@ -113,10 +117,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD:      analyticsD,
 		}
 
-		prvsn = &b8.Provision{
+		provision = &b8.Provision{
 			Exit:           exit,
 			UI:             ui,
-			Provisioner:    provision.NewController(config),
+			Provisioner:    provisioner,
 			MetaDataReader: metaDataReader,
 			Config:         config,
 		}
@@ -137,8 +141,8 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsToggle: analyticsToggle,
 			Driver:          driver,
 			AnalyticsD:      analyticsD,
-			Provisioner:     provision.NewController(config),
-			Provision:       prvsn,
+			Provisioner:     provisioner,
+			Provision:       provision,
 			MetaDataReader:  metaDataReader,
 			Stop:            stop,
 			OS:              &cfdevos.OS{},
@@ -146,7 +150,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 
 		deployService = &b9.DeployService{
 			UI:             ui,
-			Provisioner:    provision.NewController(config),
+			Provisioner:    provisioner,
 			MetaDataReader: metaDataReader,
 			Analytics:      analyticsClient,
 			Config:         config,
@@ -170,7 +174,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	dev.AddCommand(start.Cmd())
 	dev.AddCommand(stop.Cmd())
 	dev.AddCommand(telemetryCmd.Cmd())
-	dev.AddCommand(prvsn.Cmd())
+	dev.AddCommand(provision.Cmd())
 	dev.AddCommand(deployService.Cmd())
 	dev.AddCommand(helpCmd)
 	return root
