@@ -34,6 +34,10 @@ func New(
 	}
 }
 
+func (d *Hyperkit) CheckRequirements() error {
+	return nil
+}
+
 // This pre-start hook was added to accommodate, albeit hastily,
 // a request have any actions that require sudo privileges sooner
 // since 'cf dev start' can take some time. For now, only the darwin

@@ -4,14 +4,17 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/driver"
 	e "code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/runner"
 )
+
+type Runner interface {
+	Output(command string) (string, error)
+}
 
 type HyperV struct {
 	UI            driver.UI
 	Config        config.Config
 	DaemonRunner  driver.DaemonRunner
-	Powershell    runner.Powershell
+	Powershell    Runner
 	EthernetGUID  string
 	PortGUID      string
 	ForwarderGUID string
@@ -21,7 +24,7 @@ func New(
 	cfg config.Config,
 	daemonRunner driver.DaemonRunner,
 	ui driver.UI,
-	powershell runner.Powershell,
+	powershell Runner,
 	ethernetGUID string,
 	portGUID string,
 	forwarderGUID string,
@@ -35,6 +38,15 @@ func New(
 		PortGUID:      portGUID,
 		ForwarderGUID: forwarderGUID,
 	}
+}
+
+func (d *HyperV) CheckRequirements() error {
+	err := d.hasAdminPrivileged()
+	if err != nil {
+		return err
+	}
+
+	return d.hypervEnabled()
 }
 
 func (d *HyperV) Prestart() error {

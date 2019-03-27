@@ -22,6 +22,7 @@ type DaemonRunner interface {
 }
 
 type Driver interface {
+	CheckRequirements() error
 	Prestart() error
 	Start(cpus int, memory int, efiPath string) error
 	Stop() error

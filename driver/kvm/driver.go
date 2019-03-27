@@ -28,6 +28,11 @@ func New(
 	}
 }
 
+func (d *KVM) CheckRequirements() error {
+	// TODO:
+	return nil
+}
+
 func (d *KVM) Prestart() error {
 	// no-op
 	return nil
