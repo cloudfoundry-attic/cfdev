@@ -37,7 +37,7 @@ var _ = Describe("cfdevd test", func() {
 		Eventually(session).Should(gexec.Exit(), "You may need to log sudo in")
 		Expect(string(session.Out.Contents())).ShouldNot(ContainSubstring("org.cloudfoundry.cfdevd"))
 
-		bin, err = gexec.Build("code.cloudfoundry.org/cfdev/cfdevd")
+		bin, err = gexec.Build("code.cloudfoundry.org/cfdev/pkg/cfdevd")
 		Expect(err).NotTo(HaveOccurred())
 		session, err = gexec.Start(exec.Command("sudo", "--non-interactive", bin, "install", "--timesyncSock", timesyncSock), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
