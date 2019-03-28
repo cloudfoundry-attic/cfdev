@@ -3,7 +3,6 @@ package network
 import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
-	"code.cloudfoundry.org/cfdev/env"
 	"code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/runner"
 	"encoding/json"
@@ -35,7 +34,7 @@ type DaemonRunner interface {
 func (v *VpnKit) writeHttpConfig() error {
 	httpProxyPath := filepath.Join(v.Config.VpnKitStateDir, "http_proxy.json")
 
-	proxyConfig := env.BuildProxyConfig(v.Config.BoshDirectorIP, v.Config.CFRouterIP, v.Config.HostIP)
+	proxyConfig := v.Config.BuildProxyConfig()
 	proxyContents, err := json.Marshal(proxyConfig)
 	if err != nil {
 		return errors.SafeWrap(err, "Unable to create proxy config")

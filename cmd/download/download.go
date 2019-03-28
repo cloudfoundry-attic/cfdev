@@ -19,15 +19,15 @@ type UI interface {
 	Writer() io.Writer
 }
 
-type Env interface {
+type Workspace interface {
 	CreateDirs() error
 }
 
 type Download struct {
-	Exit   chan struct{}
-	UI     UI
-	Config config.Config
-	Env    Env
+	Exit      chan struct{}
+	UI        UI
+	Config    config.Config
+	Workspace Workspace
 }
 
 func (d *Download) Cmd() *cobra.Command {
@@ -43,7 +43,7 @@ func (d *Download) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(128)
 	}()
 
-	if err := d.Env.CreateDirs(); err != nil {
+	if err := d.Workspace.CreateDirs(); err != nil {
 		return errors.SafeWrap(err, "setup for download")
 	}
 
@@ -53,11 +53,11 @@ func (d *Download) RunE(cmd *cobra.Command, args []string) error {
 
 func CacheSync(dependencies resource.Catalog, cacheDir string, writer io.Writer) error {
 	cache := resource.Cache{
-		Dir:                   cacheDir,
-		HttpDo:                http.DefaultClient.Do,
-		Progress:              progress.New(writer),
-		RetryWait:             time.Second,
-		Writer:                writer,
+		Dir:       cacheDir,
+		HttpDo:    http.DefaultClient.Do,
+		Progress:  progress.New(writer),
+		RetryWait: time.Second,
+		Writer:    writer,
 	}
 
 	if err := cache.Sync(dependencies); err != nil {

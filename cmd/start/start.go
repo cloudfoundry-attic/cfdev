@@ -66,8 +66,8 @@ type Stop interface {
 	RunE(cmd *cobra.Command, args []string) error
 }
 
-//go:generate mockgen -package mocks -destination mocks/env.go code.cloudfoundry.org/cfdev/cmd/start Env
-type Env interface {
+//go:generate mockgen -package mocks -destination mocks/env.go code.cloudfoundry.org/cfdev/cmd/start Workspace
+type Workspace interface {
 	CreateDirs() error
 	SetupState(depsFile string) error
 }
@@ -105,7 +105,7 @@ type Start struct {
 	Stop            Stop
 	Provisioner     Provisioner
 	Provision       Provision
-	Env             Env
+	Workspace       Workspace
 	OS              OS
 }
 
@@ -181,7 +181,7 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "stopping cfdev")
 	}
 
-	if err := s.Env.CreateDirs(); err != nil {
+	if err := s.Workspace.CreateDirs(); err != nil {
 		return e.SafeWrap(err, "setting up cfdev home dir")
 	}
 
@@ -208,7 +208,7 @@ func (s *Start) Execute(args Args) error {
 	}
 
 	s.UI.Say("Setting State...")
-	if err := s.Env.SetupState(depsPath); err != nil {
+	if err := s.Workspace.SetupState(depsPath); err != nil {
 		return e.SafeWrap(err, "Unable to setup directories")
 	}
 

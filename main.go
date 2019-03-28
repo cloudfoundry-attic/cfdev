@@ -1,7 +1,6 @@
 package main
 
 import (
-	"code.cloudfoundry.org/cfdev/env"
 	"io/ioutil"
 	"log"
 	"os"
@@ -77,7 +76,7 @@ func main() {
 		osVersion = "unknown-os-version"
 	}
 
-	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, env.IsBehindProxy(), exitChan, ui)
+	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, config.IsBehindProxy(), exitChan, ui)
 	defer analyticsClient.Close()
 
 	v := conf.CliVersion

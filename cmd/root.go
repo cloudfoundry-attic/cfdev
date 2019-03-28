@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"code.cloudfoundry.org/cfdev/env"
 	cfdevos "code.cloudfoundry.org/cfdev/os"
 	"code.cloudfoundry.org/cfdev/workspace"
 	"io"
@@ -56,11 +55,11 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 	root.SetUsageTemplate(usageTemplate)
 
 	var (
-		writer         = ui.Writer()
-		driver         = newDriver(ui, config)
-		workspace      = workspace.New(config)
-		provisioner    = provision.NewController(config)
-		analyticsD     = &cfanalytics.AnalyticsD{
+		writer      = ui.Writer()
+		driver      = newDriver(ui, config)
+		workspace   = workspace.New(config)
+		provisioner = provision.NewController(config)
+		analyticsD  = &cfanalytics.AnalyticsD{
 			Config:       config,
 			DaemonRunner: newDaemonRunner(config),
 		}
@@ -101,10 +100,10 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 		}
 
 		download = &b4.Download{
-			Exit:   exit,
-			UI:     ui,
-			Config: config,
-			Env:    &env.Env{Config: config},
+			Exit:      exit,
+			UI:        ui,
+			Config:    config,
+			Workspace: workspace,
 		}
 
 		telemetryCmd = &b7.Telemetry{
@@ -134,7 +133,7 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			UI:              ui,
 			Config:          config,
 			Cache:           cache,
-			Env:             &env.Env{Config: config},
+			Workspace:       workspace,
 			Analytics:       analyticsClient,
 			AnalyticsToggle: analyticsToggle,
 			Driver:          driver,

@@ -2,30 +2,26 @@ package cfanalytics
 
 import (
 	"code.cloudfoundry.org/cfdev/daemon"
-	"code.cloudfoundry.org/cfdev/env"
 	"os"
 	"path/filepath"
 )
 
 func (a *AnalyticsD) DaemonSpec() daemon.DaemonSpec {
-	environmentVariables := map[string]string{
-		"CFDEV_MODE":         os.Getenv("CFDEV_MODE"),
-	}
-
-	proxyConf := env.BuildProxyConfig(
-		a.Config.BoshDirectorIP,
-		a.Config.CFRouterIP,
-		a.Config.HostIP,
+	var (
+		proxyConfig          = a.Config.BuildProxyConfig()
+		environmentVariables = map[string]string{
+			"CFDEV_MODE": os.Getenv("CFDEV_MODE"),
+		}
 	)
 
-	if proxyConf.Http != "" {
-		environmentVariables["HTTP_PROXY"] = proxyConf.Http
+	if proxyConfig.Http != "" {
+		environmentVariables["HTTP_PROXY"] = proxyConfig.Http
 	}
-	if proxyConf.Https != "" {
-		environmentVariables["HTTPS_PROXY"] = proxyConf.Https
+	if proxyConfig.Https != "" {
+		environmentVariables["HTTPS_PROXY"] = proxyConfig.Https
 	}
-	if proxyConf.NoProxy != "" {
-		environmentVariables["NO_PROXY"] = proxyConf.NoProxy
+	if proxyConfig.NoProxy != "" {
+		environmentVariables["NO_PROXY"] = proxyConfig.NoProxy
 	}
 
 	return daemon.DaemonSpec{
