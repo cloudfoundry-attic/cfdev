@@ -70,16 +70,12 @@ type Stop interface {
 type Workspace interface {
 	CreateDirs() error
 	SetupState(depsFile string) error
+	Metadata() (workspace.Metadata, error)
 }
 
 //go:generate mockgen -package mocks -destination mocks/cache.go code.cloudfoundry.org/cfdev/cmd/start Cache
 type Cache interface {
 	Sync(resource.Catalog) error
-}
-
-//go:generate mockgen -package mocks -destination mocks/isoreader.go code.cloudfoundry.org/cfdev/cmd/start MetaDataReader
-type MetaDataReader interface {
-	Metadata() (workspace.Metadata, error)
 }
 
 type Args struct {
@@ -96,7 +92,6 @@ type Start struct {
 	Exit            chan struct{}
 	UI              UI
 	Config          config.Config
-	MetaDataReader  MetaDataReader
 	Analytics       AnalyticsClient
 	AnalyticsToggle Toggle
 	Cache           Cache
@@ -212,7 +207,7 @@ func (s *Start) Execute(args Args) error {
 		return e.SafeWrap(err, "Unable to setup directories")
 	}
 
-	metaData, err := s.MetaDataReader.Metadata()
+	metaData, err := s.Workspace.Metadata()
 	if err != nil {
 		return e.SafeWrap(err, fmt.Sprintf("%s is not compatible with CF Dev. Please use a compatible file.", depsPath))
 	}

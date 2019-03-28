@@ -65,16 +65,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	analyticsToggle := toggle.New(filepath.Join(conf.CFDevHome, "analytics", "analytics.txt"))
-	baseAnalyticsClient, _ := analytics.NewWithConfig(conf.AnalyticsKey, analytics.Config{
-		Logger: analytics.StdLogger(log.New(ioutil.Discard, "", 0)),
-	})
-
 	o := cfdevos.OS{}
 	osVersion, err := o.Version()
 	if err != nil {
 		osVersion = "unknown-os-version"
 	}
+
+	analyticsToggle := toggle.New(filepath.Join(conf.CFDevHome, "analytics", "analytics.txt"))
+	baseAnalyticsClient, _ := analytics.NewWithConfig(conf.AnalyticsKey, analytics.Config{
+		Logger: analytics.StdLogger(log.New(ioutil.Discard, "", 0)),
+	})
 
 	analyticsClient := cfanalytics.New(analyticsToggle, baseAnalyticsClient, conf.CliVersion.Original, osVersion, config.IsBehindProxy(), exitChan, ui)
 	defer analyticsClient.Close()

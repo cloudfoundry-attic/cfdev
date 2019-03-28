@@ -140,7 +140,6 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			AnalyticsD:      analyticsD,
 			Provisioner:     provisioner,
 			Provision:       provision,
-			MetaDataReader:  workspace,
 			Stop:            stop,
 			OS:              &cfdevos.OS{},
 		}
