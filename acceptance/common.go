@@ -170,11 +170,7 @@ func GetCfdevHome() string {
 }
 
 func GetCfPluginPath() string {
-	if runtime.GOOS == "windows" {
-		return "cf"
-	} else {
-		return "/usr/local/bin/cf"
-	}
+	return "cf"
 }
 
 func RemoveIPAliases(aliases ...string) {
