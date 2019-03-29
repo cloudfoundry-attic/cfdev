@@ -14,7 +14,6 @@ import (
 
 type SSH struct {
 	client  *ssh.Client
-	session *ssh.Session
 	stdout  io.Writer
 	stderr  io.Writer
 	Error   error
@@ -33,24 +32,14 @@ func NewSSH(
 		return nil, err
 	}
 
-	session, err := client.NewSession()
-	if err != nil {
-		return nil, err
-	}
-
-	session.Stdout = stdout
-	session.Stderr = stderr
-
 	return &SSH{
 		client:  client,
-		session: session,
 		stdout:  stdout,
 		stderr:  stderr,
 	}, nil
 }
 
 func (s *SSH) Close() {
-	s.session.Close()
 	s.client.Close()
 }
 
@@ -59,7 +48,17 @@ func (s *SSH) Run(command string) {
 		return
 	}
 
-	s.Error = s.session.Run(command)
+	session, err := s.client.NewSession()
+	if err != nil {
+		s.Error = err
+		return
+	}
+	defer session.Close()
+
+	session.Stdout = s.stdout
+	session.Stderr = s.stderr
+
+	s.Error = session.Run(command)
 }
 
 func (s *SSH) SendFile(filePath string, remoteFilePath string) {
@@ -83,9 +82,18 @@ func (s *SSH) SendData(srcData []byte, remoteFilePath string) {
 	}
 
 	bytesReader := bytes.NewReader(srcData)
+	session, err := s.client.NewSession()
+	if err != nil {
+		s.Error = err
+		return
+	}
+	defer session.Close()
+
+	session.Stdout = s.stdout
+	session.Stderr = s.stderr
 
 	go func() {
-		w, _ := s.session.StdinPipe()
+		w, _ := session.StdinPipe()
 
 		fmt.Fprintln(w, "C0755", int64(len(srcData)), filepath.Base(remoteFilePath))
 		_, err := io.Copy(w, bytesReader)
@@ -94,12 +102,12 @@ func (s *SSH) SendData(srcData []byte, remoteFilePath string) {
 		}
 
 		fmt.Fprintln(w, "\x00")
-
-		defer w.Close()
 	}()
 
 	command := fmt.Sprintf("/usr/bin/scp -qt %s", filepath.Dir(remoteFilePath))
-	s.Error = s.session.Run(command)
+
+	// we are ignoring the error here because it happens even during success
+	session.Run(command)
 }
 
 func (s *SSH) RetrieveFile(filePath string, remoteFilePath string) {
@@ -114,9 +122,17 @@ func (s *SSH) RetrieveFile(filePath string, remoteFilePath string) {
 	}
 	defer f.Close()
 
-	s.session.Stdout = f
-	s.Error = s.session.Run("cat " + remoteFilePath)
-	s.session.Stdout = s.stdout
+	session, err := s.client.NewSession()
+	if err != nil {
+		s.Error = err
+		return
+	}
+	defer session.Close()
+
+	session.Stdout = f
+	session.Stderr = s.stderr
+
+	s.Error = session.Run("cat " + remoteFilePath)
 }
 
 func waitForSSH(ip string, port string, privateKey []byte, timeout time.Duration) (*ssh.Client, error) {

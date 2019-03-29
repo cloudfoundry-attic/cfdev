@@ -51,6 +51,7 @@ func (c *Controller) DeployBosh() error {
 	if err != nil {
 		return err
 	}
+	defer s.Close()
 
 	if runtime.GOOS == "linux" {
 		directorContents, err := ioutil.ReadFile(directorPath)
