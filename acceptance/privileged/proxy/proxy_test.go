@@ -1,7 +1,6 @@
 package proxy_test
 
 import (
-	. "code.cloudfoundry.org/cfdev/acceptance"
 	"fmt"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/onsi/ginkgo"
@@ -12,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime"
 	"time"
 )
 
@@ -70,7 +70,7 @@ func fetchProxyLogs(proxyName string) *gbytes.Buffer {
 
 func boshCurl(url string) {
 	var command *exec.Cmd
-	if !IsWindows() {
+	if runtime.GOOS != "windows" {
 		command = exec.Command("bash", "-c", fmt.Sprintf(`eval "$(cf dev bosh env)" && bosh -d cf ssh api -c "curl %s"`, url))
 
 	} else {

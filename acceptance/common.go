@@ -141,7 +141,7 @@ func IsServiceRunning(label string) func() (bool, error) {
 			cmd := exec.Command("systemctl", "is-active", label)
 			output, err := cmd.Output()
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("failed to query status of %s: %s: %s", label, err, output)
 			}
 
 			return strings.TrimSpace(string(output)) == "active", nil
