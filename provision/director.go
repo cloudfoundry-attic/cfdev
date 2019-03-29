@@ -7,8 +7,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
+)
+
+const (
+	vpnkitInternalIP   = "192.168.65.3"
+	vpnkitNameserverIP = "192.168.65.1"
+	kvmNameserverIP    = "192.168.122.1"
 )
 
 func (c *Controller) DeployBosh() error {
@@ -17,9 +22,9 @@ func (c *Controller) DeployBosh() error {
 		// by looking to see if a creds.yml is present or not
 		// This is definitely not the most expressive solution
 		// and should be improved..
-		s                = SSH{}
 		credsPath        = filepath.Join(c.Config.StateBosh, "creds.yml")
 		directorPath     = filepath.Join(c.Config.StateBosh, "director.yml")
+		stateJSONPath    = filepath.Join(c.Config.StateBosh, "state.json")
 		crehubIsDeployed = doesNotExist(credsPath)
 	)
 
@@ -39,67 +44,32 @@ func (c *Controller) DeployBosh() error {
 		return err
 	}
 
-	srcDst := []string{filepath.Join(c.Config.StateBosh, "state.json")}
+	directorContents, err := ioutil.ReadFile(directorPath)
+	if err != nil {
+		return err
+	}
 
-	// TODO: refactor
-	// If we are on a linux platform
-	// We need to replace the eth0 address
-	// because it will be dynamic
 	if runtime.GOOS == "linux" {
-		err = s.RetrieveFile(
-			directorPath,
-			"/bosh/director.yml",
-			SSHAddress{IP: ip, Port: "9992"},
-			key,
-			20*time.Second)
+		directorContents = bytes.Replace(directorContents, []byte(vpnkitInternalIP+":9999"), []byte(ip+":9999"), -1)
 
-		contents, err := ioutil.ReadFile(directorPath)
-		if err != nil {
-			return err
-		}
-
-		contents = bytes.Replace(contents, []byte("192.168.65.3:9999"), []byte(ip+":9999"), -1)
-
-		// Replace the name-server address too
-		contents = bytes.Replace(contents, []byte("192.168.65.1"), []byte("192.168.122.1"), -1)
-
-		err = ioutil.WriteFile(directorPath, contents, 0600)
-		if err != nil {
-			return err
-		}
-
-		s.CopyFile(directorPath, "/bosh/director.yml", SSHAddress{
-			IP:   ip,
-			Port: "9992",
-		},
-			key,
-			20*time.Second,
-			logFile,
-			logFile)
+		directorContents = bytes.Replace(directorContents, []byte(vpnkitNameserverIP), []byte(kvmNameserverIP), -1)
 	}
+
+	s, err := NewSSH(ip, "9992", key, 20*time.Second, logFile, logFile)
+	if err != nil {
+		return err
+	}
+
+	s.SendData(directorContents, "/bosh/director.yml")
+
+	s.SendFile(stateJSONPath, "/bosh/state.json")
+
+	command := "/usr/local/bin/bosh --tty create-env /bosh/director.yml --state /bosh/state.json"
 
 	if !crehubIsDeployed {
-		srcDst = append(srcDst, credsPath)
-	}
+		s.SendFile(credsPath, "/bosh/creds.yml")
 
-	for _, item := range srcDst {
-		s.CopyFile(item, filepath.Base(item), SSHAddress{
-			IP:   ip,
-			Port: "9992",
-		},
-			key,
-			20*time.Second,
-			logFile,
-			logFile)
-	}
-
-	command := []string{
-		"/usr/local/bin/bosh", "--tty",
-		"create-env", "/bosh/director.yml", "--state", "state.json",
-	}
-
-	if !crehubIsDeployed {
-		command = append(command, "--vars-store", "creds.yml")
+		command = command + " --vars-store /bosh/creds.yml"
 	}
 
 	// Added the time because we were seeing some delay
@@ -108,28 +78,10 @@ func (c *Controller) DeployBosh() error {
 	// Find a better solution
 	time.Sleep(7 * time.Second)
 
-	err = s.RunSSHCommand(
-		strings.Join(command, " "),
-		SSHAddress{
-			IP:   ip,
-			Port: "9992",
-		},
-		key,
-		20*time.Second,
-		logFile,
-		logFile,
-	)
+	s.Run(command)
 
-	if err != nil {
-		return err
-	}
-
-	return s.RetrieveFile(
-		filepath.Join(c.Config.StateBosh, "state.json"),
-		"/root/state.json",
-		SSHAddress{IP: ip, Port: "9992"},
-		key,
-		20*time.Second)
+	s.RetrieveFile(stateJSONPath, "/bosh/state.json")
+	return s.Error
 }
 
 func doesNotExist(path string) bool {

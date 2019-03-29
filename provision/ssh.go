@@ -3,43 +3,92 @@ package provision
 import (
 	"bytes"
 	"fmt"
+	"golang.org/x/crypto/ssh"
 	"io"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"time"
-
-	"golang.org/x/crypto/ssh"
 )
 
-type SSH struct {}
-
-type SSHAddress struct {
-	IP   string
-	Port string
+type SSH struct {
+	client  *ssh.Client
+	session *ssh.Session
+	stdout  io.Writer
+	stderr  io.Writer
+	Error   error
 }
 
-func (s *SSH) CopyFile(filePath string, remoteFilePath string, address SSHAddress, privateKey []byte, timeout time.Duration, stdout io.Writer, stderr io.Writer) error {
-	client, session, err := s.newSession(address, privateKey, timeout)
+func NewSSH(
+	ip string,
+	port string,
+	key []byte,
+	timeout time.Duration,
+	stdout io.Writer,
+	stderr io.Writer,
+) (*SSH, error) {
+	client, err := waitForSSH(ip, port, key, timeout)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer client.Close()
-	defer session.Close()
 
-	l, err := os.Open(filePath)
-	defer l.Close()
+	session, err := client.NewSession()
+	if err != nil {
+		return nil, err
+	}
 
-	command := fmt.Sprintf("/usr/bin/scp -qt %s", filepath.Dir(remoteFilePath))
-	contentsBytes, _ := ioutil.ReadAll(l)
-	bytesReader := bytes.NewReader(contentsBytes)
+	session.Stdout = stdout
+	session.Stderr = stderr
+
+	return &SSH{
+		client:  client,
+		session: session,
+		stdout:  stdout,
+		stderr:  stderr,
+	}, nil
+}
+
+func (s *SSH) Close() {
+	s.session.Close()
+	s.client.Close()
+}
+
+func (s *SSH) Run(command string) {
+	if s.Error != nil {
+		return
+	}
+
+	s.Error = s.session.Run(command)
+}
+
+func (s *SSH) SendFile(filePath string, remoteFilePath string) {
+	if s.Error != nil {
+		return
+	}
+
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		s.Error = err
+		return
+	}
+
+	s.SendData(data, remoteFilePath)
+}
+
+
+func (s *SSH) SendData(srcData []byte, remoteFilePath string) {
+	if s.Error != nil {
+		return
+	}
+
+	bytesReader := bytes.NewReader(srcData)
 
 	go func() {
-		w, _ := session.StdinPipe()
+		w, _ := s.session.StdinPipe()
 
-		fmt.Fprintln(w, "C0755", int64(len(contentsBytes)), filepath.Base(remoteFilePath))
-		_, err = io.Copy(w, bytesReader)
+		fmt.Fprintln(w, "C0755", int64(len(srcData)), filepath.Base(remoteFilePath))
+		_, err := io.Copy(w, bytesReader)
 		if err != nil {
 			fmt.Print(err)
 		}
@@ -49,113 +98,70 @@ func (s *SSH) CopyFile(filePath string, remoteFilePath string, address SSHAddres
 		defer w.Close()
 	}()
 
-	session.Stdout = stdout
-	session.Stderr = stderr
-
-	return session.Run(command)
+	command := fmt.Sprintf("/usr/bin/scp -qt %s", filepath.Dir(remoteFilePath))
+	s.Error = s.session.Run(command)
 }
 
-func (s *SSH) RetrieveFile(filePath string, remoteFilePath string, address SSHAddress, privateKey []byte, timeout time.Duration) error {
-	client, session, err := s.newSession(address, privateKey, timeout)
-	if err != nil {
-		return err
+func (s *SSH) RetrieveFile(filePath string, remoteFilePath string) {
+	if s.Error != nil {
+		return
 	}
-	defer client.Close()
-	defer session.Close()
 
 	f, err := os.Create(filePath)
 	if err != nil {
-		return err
+		s.Error = err
+		return
 	}
 	defer f.Close()
 
-	session.Stdout = f
-	return session.Run("cat " + remoteFilePath)
+	s.session.Stdout = f
+	s.Error = s.session.Run("cat " + remoteFilePath)
+	s.session.Stdout = s.stdout
 }
 
-func (s *SSH) RunSSHCommand(command string, addresses SSHAddress, privateKey []byte, timeout time.Duration, stdout io.Writer, stderr io.Writer) (err error) {
-	client, session, err := s.newSession(addresses, privateKey, timeout)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-	defer session.Close()
-
-	session.Stdout = stdout
-	session.Stderr = stderr
-
-	return session.Run(command)
-}
-
-func (s *SSH) WaitForSSH(addresses SSHAddress, privateKey []byte, timeout time.Duration) error {
-	client, err := s.waitForSSH(addresses, privateKey, timeout)
-	if err == nil {
-		client.Close()
-	}
-	return err
-}
-
-func (s *SSH) newSession(addresses SSHAddress, privateKey []byte, timeout time.Duration) (*ssh.Client, *ssh.Session, error) {
-	client, err := s.waitForSSH(addresses, privateKey, timeout)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	session, err := client.NewSession()
-	if err != nil {
-		client.Close()
-		return nil, nil, err
-	}
-
-	return client, session, nil
-}
-
-func (*SSH) waitForSSH(address SSHAddress, privateKey []byte, timeout time.Duration) (*ssh.Client, error) {
+func waitForSSH(ip string, port string, privateKey []byte, timeout time.Duration) (*ssh.Client, error) {
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse private key: %s", err)
 	}
 
-	config := &ssh.ClientConfig{
-		User: "root",
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
-		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-			return nil
-		},
-		Timeout: 10 * time.Second,
-	}
+	var (
+		clientChan = make(chan *ssh.Client, 1)
+		errorChan  = make(chan error, 1)
+		config     = &ssh.ClientConfig{
+			User:    "root",
+			Auth:    []ssh.AuthMethod{ssh.PublicKeys(signer)},
+			Timeout: 10 * time.Second,
+			HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+				return nil
+			},
+		}
+	)
 
-	clientChan := make(chan *ssh.Client, 1)
-	errorChan := make(chan error, 1)
-	doneChan := make(chan bool)
+	go func() {
+		var (
+			ticker  = time.NewTicker(time.Second)
+			timeout = time.After(timeout)
+			err     error
+		)
 
-	go func(ip string, port string) {
-		var client *ssh.Client
-		var dialErr error
-		timeoutChan := time.After(timeout)
 		for {
 			select {
-			case <-timeoutChan:
-				clientChan <- nil
-				errorChan <- fmt.Errorf("ssh connection timed out: %s", dialErr)
-				return
-			case <-doneChan:
-				return
-			default:
-				if client, dialErr = ssh.Dial("tcp", ip+":"+port, config); dialErr == nil {
+			case <-ticker.C:
+				var client *ssh.Client
+				client, err = ssh.Dial("tcp", ip+":"+port, config)
+				if err == nil {
 					clientChan <- client
 					errorChan <- nil
 					return
 				}
-				time.Sleep(time.Second)
+			case <-timeout:
+				clientChan <- nil
+				errorChan <- fmt.Errorf("ssh connection timed out: %s", err)
+				return
 			}
 		}
-	}(address.IP, address.Port)
+	}()
 
-	client := <-clientChan
-	err = <-errorChan
-	close(doneChan)
-	return client, err
+	return <-clientChan, <-errorChan
 }
