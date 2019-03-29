@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
-	"runtime"
 )
 
 func TestPrivileged(t *testing.T) {
@@ -23,10 +22,6 @@ var _ = BeforeSuite(func() {
 })
 
 func HasSudoPrivilege() bool {
-	if IsWindows() {
-		return true
-	}
-
 	cmd := exec.Command("sh", "-c", "sudo -n true")
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
@@ -36,8 +31,4 @@ func HasSudoPrivilege() bool {
 		return true
 	}
 	return false
-}
-
-func IsWindows() bool {
-	return runtime.GOOS == "windows"
 }
