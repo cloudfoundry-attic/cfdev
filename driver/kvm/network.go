@@ -2,6 +2,7 @@ package kvm
 
 import (
 	"code.cloudfoundry.org/cfdev/driver"
+	"os/exec"
 )
 
 // consider moving to more native go implementation
@@ -22,6 +23,13 @@ func (d *KVM) teardownRoutes() {
 }
 
 func (d *KVM) teardownNetworking(tapDevice string) {
-	d.SudoShell.Run("ip", "link", "set", "dev", tapDevice, "down")
-	d.SudoShell.Run("ip", "link", "del", "dev", tapDevice)
+	if d.tapDeviceExists(tapDevice) {
+		d.SudoShell.Run("ip", "link", "set", "dev", tapDevice, "down")
+		d.SudoShell.Run("ip", "link", "del", "dev", tapDevice)
+	}
+}
+
+func (d *KVM) tapDeviceExists(tapDevice string) bool {
+	err := exec.Command("ip", "link", "show", tapDevice).Run()
+	return err == nil
 }
