@@ -4,6 +4,7 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/driver"
+	"code.cloudfoundry.org/cfdev/runner"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -14,6 +15,7 @@ type KVM struct {
 	UI           driver.UI
 	Config       config.Config
 	DaemonRunner driver.DaemonRunner
+	SudoShell    *runner.SudoShell
 }
 
 func New(
@@ -25,6 +27,7 @@ func New(
 		UI:           ui,
 		Config:       cfg,
 		DaemonRunner: daemonRunner,
+		SudoShell:    &runner.SudoShell{},
 	}
 }
 

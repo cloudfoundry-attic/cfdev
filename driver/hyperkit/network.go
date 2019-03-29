@@ -5,8 +5,6 @@ import (
 	"code.cloudfoundry.org/cfdev/driver"
 	"fmt"
 	"net"
-	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"time"
@@ -57,11 +55,7 @@ func (d *Hyperkit) installCFDevDaemon() error {
 	var (
 		executablePath = filepath.Join(d.Config.CacheDir, "cfdevd")
 		timeSyncSocket = filepath.Join(d.Config.StateLinuxkit, "00000003.0000f3a4")
-		cmd            = exec.Command("sudo", "-S", executablePath, "install", "--timesyncSock", timeSyncSocket)
 	)
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	return cmd.Run()
+	return d.SudoShell.Run(executablePath, "install", "--timesyncSock", timeSyncSocket)
 }

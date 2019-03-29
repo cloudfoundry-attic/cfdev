@@ -1,12 +1,13 @@
 package hyperkit
 
 import (
-	"code.cloudfoundry.org/cfdev/pkg/cfdevd/client"
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/driver"
 	e "code.cloudfoundry.org/cfdev/errors"
 	"code.cloudfoundry.org/cfdev/hypervisor"
+	"code.cloudfoundry.org/cfdev/pkg/cfdevd/client"
+	"code.cloudfoundry.org/cfdev/runner"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -18,6 +19,7 @@ type Hyperkit struct {
 	Config       config.Config
 	DaemonRunner driver.DaemonRunner
 	CFDevD       *client.Client
+	SudoShell    *runner.SudoShell
 }
 
 func New(
@@ -31,6 +33,7 @@ func New(
 		Config:       cfg,
 		DaemonRunner: daemonRunner,
 		CFDevD:       cfdevdClient,
+		SudoShell:    &runner.SudoShell{},
 	}
 }
 
