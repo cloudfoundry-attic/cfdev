@@ -60,7 +60,7 @@ func contains(services []workspace.Service, name string) bool {
 
 func (c *Controller) DeployServices(ui UI, services []workspace.Service, dockerRegistries []string) error {
 	var (
-		b       = NewBosh(c.Config, &runner.Shell{}, c.Workspace.Envs())
+		b       = NewBosh(runner.NewBosh(c.Config))
 		errChan = make(chan error, 1)
 	)
 

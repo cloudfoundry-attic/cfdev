@@ -1,12 +1,7 @@
 package provision
 
 import (
-	"code.cloudfoundry.org/cfdev/config"
 	"encoding/json"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
 	"time"
 )
 
@@ -16,9 +11,9 @@ const (
 	RunningErrand = "running-errand"
 )
 
-//go:generate mockgen -package mocks -destination mocks/runner.go code.cloudfoundry.org/cfdev/provision Runner
-type Runner interface {
-	Output(cmd *exec.Cmd) ([]byte, error)
+//go:generate mockgen -package mocks -destination mocks/runner.go code.cloudfoundry.org/cfdev/provision BoshRunner
+type BoshRunner interface {
+	Output(args ...string) ([]byte, error)
 }
 
 type Instance struct {
@@ -28,9 +23,7 @@ type Instance struct {
 }
 
 type Bosh struct {
-	envs   []string
-	cfg    config.Config
-	Runner Runner
+	Runner BoshRunner
 }
 
 type VMProgress struct {
@@ -40,10 +33,8 @@ type VMProgress struct {
 	Duration time.Duration
 }
 
-func NewBosh(cfg config.Config, runner Runner, envs []string) *Bosh {
+func NewBosh(runner BoshRunner) *Bosh {
 	return &Bosh{
-		cfg:  cfg,
-		envs: envs,
 		Runner: runner,
 	}
 }
@@ -53,14 +44,7 @@ func (b *Bosh) GetVMProgress(start time.Time, deploymentName string, isErrand bo
 		return VMProgress{State: RunningErrand, Duration: time.Now().Sub(start)}
 	}
 
-	executable := filepath.Join(b.cfg.BinaryDir, "bosh")
-	if runtime.GOOS == "windows" {
-		executable += ".exe"
-	}
-
-	command := exec.Command(executable, "--tty", "-d", deploymentName, "instances", "--ps", "--json")
-	command.Env = append(os.Environ(), b.envs...)
-	output, err := b.Runner.Output(command)
+	output, err := b.Runner.Output("--tty", "-d", deploymentName, "instances", "--ps", "--json")
 	if err != nil {
 		return VMProgress{State: Preparing, Duration: time.Now().Sub(start)}
 	}

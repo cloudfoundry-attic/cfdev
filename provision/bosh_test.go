@@ -15,12 +15,12 @@ var _ = Describe("Bosh", func() {
 		var (
 			b              provision.Bosh
 			mockController *gomock.Controller
-			mockRunner     *mocks.MockRunner
+			mockRunner     *mocks.MockBoshRunner
 		)
 
 		BeforeEach(func() {
 			mockController = gomock.NewController(GinkgoT())
-			mockRunner = mocks.NewMockRunner(mockController)
+			mockRunner = mocks.NewMockBoshRunner(mockController)
 
 			b = provision.Bosh{
 				Runner: mockRunner,

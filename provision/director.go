@@ -3,6 +3,7 @@ package provision
 import (
 	"bytes"
 	"code.cloudfoundry.org/cfdev/driver"
+	"code.cloudfoundry.org/cfdev/runner"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -24,7 +25,9 @@ func (c *Controller) DeployBosh() error {
 		// and should be improved..
 		credsPath        = filepath.Join(c.Config.StateBosh, "creds.yml")
 		directorPath     = filepath.Join(c.Config.StateBosh, "director.yml")
+		cloudConfigPath  = filepath.Join(c.Config.StateBosh, "cloud-config.yml")
 		stateJSONPath    = filepath.Join(c.Config.StateBosh, "state.json")
+		boshRunner       = runner.NewBosh(c.Config)
 		crehubIsDeployed = doesNotExist(credsPath)
 	)
 
@@ -44,23 +47,23 @@ func (c *Controller) DeployBosh() error {
 		return err
 	}
 
-	directorContents, err := ioutil.ReadFile(directorPath)
-	if err != nil {
-		return err
-	}
-
-	if runtime.GOOS == "linux" {
-		directorContents = bytes.Replace(directorContents, []byte(vpnkitInternalIP+":9999"), []byte(ip+":9999"), -1)
-
-		directorContents = bytes.Replace(directorContents, []byte(vpnkitNameserverIP), []byte(kvmNameserverIP), -1)
-	}
-
 	s, err := NewSSH(ip, "9992", key, 20*time.Second, logFile, logFile)
 	if err != nil {
 		return err
 	}
 
-	s.SendData(directorContents, "/bosh/director.yml")
+	if runtime.GOOS == "linux" {
+		directorContents, err := ioutil.ReadFile(directorPath)
+		if err != nil {
+			return err
+		}
+
+		directorContents = bytes.Replace(directorContents, []byte(vpnkitInternalIP+":9999"), []byte(ip+":9999"), -1)
+
+		directorContents = bytes.Replace(directorContents, []byte(vpnkitNameserverIP), []byte(kvmNameserverIP), -1)
+
+		s.SendData(directorContents, "/bosh/director.yml")
+	}
 
 	s.SendFile(stateJSONPath, "/bosh/state.json")
 
@@ -81,7 +84,27 @@ func (c *Controller) DeployBosh() error {
 	s.Run(command)
 
 	s.RetrieveFile(stateJSONPath, "/bosh/state.json")
-	return s.Error
+	if s.Error != nil {
+		return s.Error
+	}
+
+	if runtime.GOOS == "linux" {
+		cloudConfigContents, err := ioutil.ReadFile(cloudConfigPath)
+		if err != nil {
+			return err
+		}
+
+		cloudConfigContents = bytes.Replace(cloudConfigContents, []byte(vpnkitNameserverIP), []byte(kvmNameserverIP), -1)
+
+		err = ioutil.WriteFile(cloudConfigPath, cloudConfigContents, 0600)
+		if err != nil {
+			return err
+		}
+
+		boshRunner.Output("-n", "update-cloud-config", cloudConfigPath)
+	}
+
+	return nil
 }
 
 func doesNotExist(path string) bool {
