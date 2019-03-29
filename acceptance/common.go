@@ -104,24 +104,28 @@ func processIsRunning(pid int) (bool, error) {
 	return true, nil
 }
 
-func IsLaunchdRunning(label string) func() (bool, error) {
+func IsServiceRunning(label string) func() (bool, error) {
 	return func() (bool, error) {
-		if runtime.GOOS == "darwin" {
+		switch runtime.GOOS {
+		case "darwin":
 			txt, err := exec.Command("launchctl", "list", label).CombinedOutput()
 			if err != nil {
 				if strings.Contains(string(txt), "Could not find service") {
 					return false, nil
 				}
+
 				return false, err
 			}
+
 			re := regexp.MustCompile(`^\s*"PID"\s*=`)
 			for _, line := range strings.Split(string(txt), "\n") {
 				if re.MatchString(line) {
 					return true, nil
 				}
 			}
+
 			return false, nil
-		} else {
+		case "windows":
 			cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-Service | Where-Object {$_.Name -eq \"%s\"}", label))
 			output, err := cmd.Output()
 			if err != nil {
@@ -133,6 +137,14 @@ func IsLaunchdRunning(label string) func() (bool, error) {
 			}
 
 			return false, nil
+		default:
+			cmd := exec.Command("systemctl", "is-active", label)
+			output, err := cmd.Output()
+			if err != nil {
+				return false, err
+			}
+
+			return strings.TrimSpace(string(output)) == "active", nil
 		}
 	}
 }
@@ -174,7 +186,7 @@ func GetCfPluginPath() string {
 }
 
 func RemoveIPAliases(aliases ...string) {
-	if IsWindows() {
+	if runtime.GOOS == "windows" {
 		return
 	}
 
@@ -187,12 +199,8 @@ func RemoveIPAliases(aliases ...string) {
 	}
 }
 
-func IsWindows() bool {
-	return runtime.GOOS == "windows"
-}
-
 func HasSudoPrivilege() bool {
-	if IsWindows() {
+	if runtime.GOOS == "windows" {
 		return true
 	}
 

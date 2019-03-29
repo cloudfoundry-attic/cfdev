@@ -17,6 +17,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 	"net"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -47,13 +48,14 @@ var _ = Describe("cfdev lifecycle", func() {
 		stopSession := cf.Cf("dev", "stop")
 		Eventually(stopSession).Should(gexec.Exit(0))
 
-		// TODO implement for linux
-		// check that VM is removed by stop command
-		if IsWindows() {
+		if runtime.GOOS == "windows" {
 			Expect(doesVMExist()).To(BeFalse())
-		} else {
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.linuxkit")).Should(BeFalse())
-			Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.vpnkit")).Should(BeFalse())
+		}
+
+		Eventually(IsServiceRunning("org.cloudfoundry.cfdev.linuxkit")).Should(BeFalse())
+
+		if runtime.GOOS != "linux" {
+			Eventually(IsServiceRunning("org.cloudfoundry.cfdev.vpnkit")).Should(BeFalse())
 		}
 	})
 
@@ -73,12 +75,12 @@ var _ = Describe("cfdev lifecycle", func() {
 		By("toggling off telemetry")
 		telemetrySession := cf.Cf("dev", "telemetry", "--off")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
-		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeFalse())
+		Eventually(IsServiceRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeFalse())
 
 		By("toggling telemetry on")
 		telemetrySession = cf.Cf("dev", "telemetry", "--on")
 		Eventually(telemetrySession).Should(gexec.Exit(0))
-		Eventually(IsLaunchdRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
+		Eventually(IsServiceRunning("org.cloudfoundry.cfdev.cfanalyticsd")).Should(BeTrue())
 
 		// wait for analytics to perculate before
 		// doing the rest of routine
@@ -173,7 +175,7 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 
 		var boshCmd *exec.Cmd
 
-		if IsWindows() {
+		if runtime.GOOS == "windows" {
 			boshCmd = exec.Command("powershell.exe",
 				"-Command",
 				`cf dev bosh env | Invoke-Expression; bosh env`)

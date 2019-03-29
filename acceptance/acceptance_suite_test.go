@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -67,7 +68,7 @@ var _ = AfterEach(func() {
 	session := cf.Cf("dev", "stop")
 	Eventually(session).Should(gexec.Exit())
 
-	if IsWindows() {
+	if runtime.GOOS == "windows" {
 		exec.Command("powershell.exe", "-Command", "Stop-Process -Name cfdev,cf -Force -EA 0").Run()
 	}
 
