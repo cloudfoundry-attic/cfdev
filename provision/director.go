@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	vpnkitInternalIP   = "192.168.65.3"
 	vpnkitNameserverIP = "192.168.65.1"
+	vpnkitHostIP       = "192.168.65.2"
+	vpnkitInternalIP   = "192.168.65.3"
 	kvmNameserverIP    = "192.168.122.1"
 )
 
@@ -26,6 +27,7 @@ func (c *Controller) DeployBosh() error {
 		credsPath        = filepath.Join(c.Config.StateBosh, "creds.yml")
 		directorPath     = filepath.Join(c.Config.StateBosh, "director.yml")
 		cloudConfigPath  = filepath.Join(c.Config.StateBosh, "cloud-config.yml")
+		dnsConfigPath    = filepath.Join(c.Config.StateBosh, "dns.yml")
 		stateJSONPath    = filepath.Join(c.Config.StateBosh, "state.json")
 		boshRunner       = runner.NewBosh(c.Config)
 		crehubIsDeployed = doesNotExist(credsPath)
@@ -103,6 +105,20 @@ func (c *Controller) DeployBosh() error {
 		}
 
 		boshRunner.Output("-n", "update-cloud-config", cloudConfigPath)
+
+		dnsConfigContents, err := ioutil.ReadFile(dnsConfigPath)
+		if err != nil {
+			return err
+		}
+
+		dnsConfigContents = bytes.Replace(dnsConfigContents, []byte(vpnkitHostIP), []byte(kvmNameserverIP), -1)
+
+		err = ioutil.WriteFile(dnsConfigPath, dnsConfigContents, 0600)
+		if err != nil {
+			return err
+		}
+
+		boshRunner.Output("-n", "update-runtime-config", dnsConfigPath)
 	}
 
 	return nil
