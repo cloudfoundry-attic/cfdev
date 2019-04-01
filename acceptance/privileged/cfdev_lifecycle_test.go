@@ -16,7 +16,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 	"io"
-	"net"
 	"os/exec"
 	"runtime"
 	"time"
@@ -231,23 +230,6 @@ func PushAnApp() {
 	Eventually(func() (string, error) {
 		return httpGet("http://tcp.dev.cfdev.sh:1030")
 	}).Should(Equal("Hello, world!"))
-}
-
-func fakeTcpServer() (net.Listener, int) {
-	server, err := net.Listen("tcp", "localhost:0")
-	Expect(err).NotTo(HaveOccurred())
-	go func() {
-		for {
-			conn, err := server.Accept()
-			if err != nil {
-				continue
-			}
-			_, err = conn.Write([]byte("Text From Test Code"))
-			Expect(err).NotTo(HaveOccurred())
-			conn.Close()
-		}
-	}()
-	return server, server.Addr().(*net.TCPAddr).Port
 }
 
 func httpGet(url string) (string, error) {
