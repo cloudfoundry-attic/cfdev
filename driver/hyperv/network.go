@@ -52,7 +52,7 @@ func (d *HyperV) networkingDaemonSpec(label, vmGUID string) daemon.DaemonSpec {
 			"--ethernet", fmt.Sprintf("hyperv-connect://%s/%s", vmGUID, d.EthernetGUID),
 			"--port", fmt.Sprintf("hyperv-connect://%s/%s", vmGUID, d.PortGUID),
 			"--port", fmt.Sprintf("hyperv-connect://%s/%s", vmGUID, d.ForwarderGUID),
-			"--dns", filepath.Join(d.Config.VpnKitStateDir, "resold.conf"),
+			"--dns", filepath.Join(d.Config.VpnKitStateDir, "resolv.conf"),
 			"--dhcp", filepath.Join(d.Config.VpnKitStateDir, "dhcp.json"),
 			"--http", filepath.Join(d.Config.VpnKitStateDir, "http_proxy.json"),
 			"--host-names", "host.cfdev.sh",
