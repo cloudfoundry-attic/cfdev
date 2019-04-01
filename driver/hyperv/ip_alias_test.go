@@ -2,6 +2,7 @@ package hyperv_test
 
 import (
 	"code.cloudfoundry.org/cfdev/driver/hyperv"
+	"code.cloudfoundry.org/cfdev/runner"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -13,13 +14,15 @@ import (
 	"time"
 )
 
-var _ = Describe("HostNet", func() {
+var _ = Describe("IP Alias", func() {
 	var (
 		hyperV *hyperv.HyperV
 	)
 
 	BeforeEach(func() {
-		hyperV = &hyperv.HyperV{}
+		hyperV = &hyperv.HyperV{
+			Powershell: &runner.Powershell{},
+		}
 	})
 
 	Describe("RemoveLoopbackAliases", func() {
@@ -40,7 +43,7 @@ var _ = Describe("HostNet", func() {
 			})
 
 			It("removes the switch", func() {
-				Expect(hyperV.RemoveLoopbackAliases("test-hostnest-vm-switch")).To(Succeed())
+				Expect(hyperV.RemoveLoopbackAliases("test-hostnet-vm-switch")).To(Succeed())
 
 				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch*")
 				output, err := command.Output()
@@ -58,7 +61,7 @@ var _ = Describe("HostNet", func() {
 			})
 
 			It("succeeds", func() {
-				Expect(hyperV.RemoveLoopbackAliases("test-hostnet-vm-switch ")).To(Succeed())
+				Expect(hyperV.RemoveLoopbackAliases("test-hostnet-vm-switch")).To(Succeed())
 			})
 		})
 	})
@@ -78,7 +81,7 @@ var _ = Describe("HostNet", func() {
 			})
 
 			It("we can bind and serve on these ips", func() {
-				Expect(hyperV.AddLoopbackAliases("test-hostnet-vm-switch ", "10.66.66.66", "10.22.33.44")).To(Succeed())
+				Expect(hyperV.AddLoopbackAliases("test-hostnet-vm-switch", "10.66.66.66", "10.22.33.44")).To(Succeed())
 				testBindAndServe("10.66.66.66:6666", "10.22.33.44:5555")
 			})
 
@@ -111,7 +114,7 @@ var _ = Describe("HostNet", func() {
 			})
 
 			It("succeeds", func() {
-				Expect(hyperV.AddLoopbackAliases("test-hostnet-vm-switch ", "10.66.66.66", "10.22.33.44")).To(Succeed())
+				Expect(hyperV.AddLoopbackAliases("test-hostnet-vm-switch", "10.66.66.66", "10.22.33.44")).To(Succeed())
 
 				command := exec.Command("powershell.exe", "-Command", "Get-VMSwitch test-hostnet-vm-switch | Measure-Object | Select -ExpandProperty Count")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
