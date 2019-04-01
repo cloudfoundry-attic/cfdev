@@ -47,13 +47,6 @@ type Toggle interface {
 }
 
 func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient AnalyticsClient, analyticsToggle Toggle) *cobra.Command {
-	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
-	root.PersistentFlags().Bool("help", false, "")
-	root.PersistentFlags().Lookup("help").Hidden = true
-
-	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
-	root.SetUsageTemplate(usageTemplate)
-
 	var (
 		writer      = ui.Writer()
 		driver      = newDriver(ui, config)
@@ -161,6 +154,13 @@ func NewRoot(exit chan struct{}, ui UI, config config.Config, analyticsClient An
 			},
 		}
 	)
+
+	root := &cobra.Command{Use: "cf", SilenceUsage: true, SilenceErrors: true}
+	root.PersistentFlags().Bool("help", false, "")
+	root.PersistentFlags().Lookup("help").Hidden = true
+
+	usageTemplate := strings.Replace(root.UsageTemplate(), "\n"+`Use "{{.CommandPath}} [command] --help" for more information about a command.`, "", -1)
+	root.SetUsageTemplate(usageTemplate)
 
 	root.AddCommand(dev)
 	dev.AddCommand(version.Cmd())
