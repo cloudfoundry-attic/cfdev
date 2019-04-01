@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
+	"io"
 	"net"
 	"os/exec"
 	"runtime"
@@ -192,13 +193,17 @@ func EventuallyWeCanTargetTheBOSHDirector() {
 }
 
 func PushAnApp() {
-	server, port := fakeTcpServer()
-	defer server.Close()
+	port := "36167"
+	srv := &http.Server{Addr: ":"+port}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "Text From Test Code")
+	})
 
-	By("pushing app")
+	go srv.ListenAndServe()
+	defer srv.Shutdown(context.TODO())
 
 	Eventually(cf.Cf("push", "cf-test-app", "--no-start", "-p", "./fixture", "-b", "ruby_buildpack")).Should(gexec.Exit(0))
-	Eventually(cf.Cf("set-env", "cf-test-app", "HOST_SERVER_PORT", strconv.Itoa(port))).Should(gexec.Exit(0))
+	Eventually(cf.Cf("set-env", "cf-test-app", "HOST_SERVER_PORT", port)).Should(gexec.Exit(0))
 	Eventually(cf.Cf("create-service", cfg.MysqlService, cfg.MysqlServicePlan, "mydb")).Should(gexec.Exit(0))
 
 	Eventually(func() string {

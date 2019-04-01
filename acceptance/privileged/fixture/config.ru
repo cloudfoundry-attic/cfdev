@@ -18,7 +18,7 @@ class App < Roda
       open('http://google.com').read
     end
     r.get 'host' do
-      TCPSocket.new('host.cfdev.sh', ENV['HOST_SERVER_PORT']).gets
+      open('http://host.cfdev.sh:'+ENV['HOST_SERVER_PORT']).read
     end
     r.get 'mysql' do
       db = Sequel.connect(ENV['DATABASE_URL'])
