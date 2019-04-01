@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+var (
+	tapDevice  = "cfdevtap0"
+	bridgeName = "virbr0"
+)
+
 type KVM struct {
 	UI           driver.UI
 	Config       config.Config
@@ -42,11 +47,6 @@ func (d *KVM) Prestart() error {
 }
 
 func (d *KVM) Start(cpus int, memory int, efiPath string) error {
-	var (
-		tapDevice  = "cfdevtap0"
-		bridgeName = "virbr0"
-	)
-
 	d.setupNetworking(tapDevice, bridgeName)
 
 	d.UI.Say("Creating the VM...")
@@ -72,10 +72,6 @@ func (d *KVM) Start(cpus int, memory int, efiPath string) error {
 }
 
 func (d *KVM) Stop() error {
-	var (
-		tapDevice = "cfdevtap0"
-	)
-
 	d.DaemonRunner.Stop(driver.LinuxKitLabel)
 	d.DaemonRunner.RemoveDaemon(driver.LinuxKitLabel)
 	d.teardownRoutes()
