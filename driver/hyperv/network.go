@@ -18,7 +18,7 @@ var (
 		`Foreach-Object { Remove-Item (Join-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" $_.PSChildName) }`
 )
 
-func (d *HyperV) setupNetworking() (string, error) {
+func (d *HyperV) SetupNetworking() (string, error) {
 	if err := d.registerServiceGUIDs(); err != nil {
 		return "", fmt.Errorf("generating service guids: %s", err)
 	}
@@ -28,7 +28,7 @@ func (d *HyperV) setupNetworking() (string, error) {
 	}
 
 	if err := d.writeResolvConf(); err != nil {
-		return "", fmt.Errorf("writing resold.conf: %s", err)
+		return "", fmt.Errorf("writing resolv.conf: %s", err)
 	}
 
 	if err := d.writeDHCPJSON(); err != nil {
@@ -103,7 +103,7 @@ func (d *HyperV) writeResolvConf() error {
 		dnsFile += fmt.Sprintf("nameserver %s\r\n", line)
 	}
 
-	resolvConfPath := filepath.Join(d.Config.VpnKitStateDir, "resold.conf")
+	resolvConfPath := filepath.Join(d.Config.VpnKitStateDir, "resolv.conf")
 	if fileExists(resolvConfPath) {
 		os.RemoveAll(resolvConfPath)
 	}

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (d *HyperV) createVM(name string, cpus int, memory int, efiPath string) error {
+func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) error {
 	var (
 		cfDevVHD    = filepath.Join(d.Config.StateDir, "disk.vhdx")
 	)
@@ -72,7 +72,7 @@ func (d *HyperV) createVM(name string, cpus int, memory int, efiPath string) err
 	return nil
 }
 
-func (d *HyperV) start(vmName string) error {
+func (d *HyperV) StartVM(vmName string) error {
 	if exists, err := d.exists(vmName); err != nil {
 		return err
 	} else if !exists {
@@ -87,7 +87,7 @@ func (d *HyperV) start(vmName string) error {
 	return nil
 }
 
-func (d *HyperV) stop(vmName string) error {
+func (d *HyperV) StopVM(vmName string) error {
 	if exists, err := d.exists(vmName); err != nil {
 		return err
 	} else if !exists {
@@ -102,7 +102,7 @@ func (d *HyperV) stop(vmName string) error {
 	return nil
 }
 
-func (d *HyperV) destroy(vmName string) error {
+func (d *HyperV) DestroyVM(vmName string) error {
 	if exists, err := d.exists(vmName); err != nil {
 		return err
 	} else if !exists {
@@ -117,7 +117,7 @@ func (d *HyperV) destroy(vmName string) error {
 	return nil
 }
 
-func (d *HyperV) isRunning(vmName string) (bool, error) {
+func (d *HyperV) IsVMRunning(vmName string) (bool, error) {
 	if exists, err := d.exists(vmName); err != nil || !exists {
 		return false, err
 	}

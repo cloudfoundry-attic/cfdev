@@ -57,13 +57,13 @@ func (d *HyperV) Prestart() error {
 
 func (d *HyperV) Start(cpus int, memory int, efiPath string) error {
 	d.UI.Say("Creating the VM...")
-	err := d.createVM(driver.VMName, cpus, memory, efiPath)
+	err := d.CreateVM(driver.VMName, cpus, memory, efiPath)
 	if err != nil {
 		return e.SafeWrap(err, "creating the vm")
 	}
 
 	d.UI.Say("Starting VPNKit...")
-	vmGUID, err := d.setupNetworking()
+	vmGUID, err := d.SetupNetworking()
 	if err != nil {
 		return e.SafeWrap(err, "setting up networking")
 	}
@@ -79,7 +79,7 @@ func (d *HyperV) Start(cpus int, memory int, efiPath string) error {
 	}
 
 	d.UI.Say("Starting the VM...")
-	if err := d.start(driver.VMName); err != nil {
+	if err := d.StartVM(driver.VMName); err != nil {
 		return e.SafeWrap(err, "starting the vm")
 	}
 
@@ -94,11 +94,11 @@ func (d *HyperV) Start(cpus int, memory int, efiPath string) error {
 func (d *HyperV) Stop() error {
 	var reterr error
 
-	if err := d.stop(driver.VMName); err != nil {
+	if err := d.StopVM(driver.VMName); err != nil {
 		reterr = e.SafeWrap(err, "failed to stop the VM")
 	}
 
-	if err := d.destroy(driver.VMName); err != nil {
+	if err := d.DestroyVM(driver.VMName); err != nil {
 		reterr = e.SafeWrap(err, "failed to destroy the VM")
 	}
 
@@ -124,5 +124,5 @@ func (d *HyperV) Stop() error {
 }
 
 func (d *HyperV) IsRunning() (bool, error) {
-	return d.isRunning(driver.VMName)
+	return d.IsVMRunning(driver.VMName)
 }
