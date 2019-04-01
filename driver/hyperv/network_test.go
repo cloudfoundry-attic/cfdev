@@ -6,6 +6,7 @@ import (
 	"code.cloudfoundry.org/cfdev/config"
 	"code.cloudfoundry.org/cfdev/driver/hyperv"
 	"code.cloudfoundry.org/cfdev/driver/hyperv/mocks"
+	"code.cloudfoundry.org/cfdev/runner"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -41,9 +43,17 @@ var _ = Describe("Network", func() {
 			EthernetGUID:  "65319afc-c1a2-4ad9-97a0-0058737b94c2",
 			PortGUID:      "d611c86d-22c9-417c-ac09-3ed4ce5fbfb0",
 			ForwarderGUID: "2ad4fb96-7f0b-4ff9-b42b-8e25da407647",
+			Powershell:    mockRunner,
 		}
 
-		mockRunner.EXPECT().Output(gomock.Any())
+		mockRunner.EXPECT().Output(gomock.Any()).DoAndReturn(func(command string) (string, error) {
+			if strings.Contains(command, "Get-VM") {
+				return "some-guild", nil
+			}
+
+			runner := &runner.Powershell{}
+			return runner.Output(command)
+		}).AnyTimes()
 	})
 
 	AfterEach(func() {
@@ -62,7 +72,8 @@ var _ = Describe("Network", func() {
 
 	Describe("Setup", func() {
 		It("writes the dhcp and resolv conf files in the cfdevDir", func() {
-			Expect(hyperV.SetupNetworking()).To(Succeed())
+			_, err := hyperV.SetupNetworking()
+			Expect(err).NotTo(HaveOccurred())
 
 			dnsPath := filepath.Join(tempDir, "resolv.conf")
 
@@ -81,7 +92,8 @@ var _ = Describe("Network", func() {
 		})
 
 		It("writes service guids to the registry", func() {
-			Expect(hyperV.SetupNetworking()).To(Succeed())
+			_, err := hyperV.SetupNetworking()
+			Expect(err).NotTo(HaveOccurred())
 
 			command := exec.Command("powershell.exe", "-Command", `dir "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices"`)
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
