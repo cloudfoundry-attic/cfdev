@@ -63,7 +63,7 @@ func (d *HyperV) Start(cpus int, memory int, efiPath string) error {
 	}
 
 	d.UI.Say("Starting VPNKit...")
-	vmGUID, err := d.setupNetworking()
+	vmGUID, err := d.SetupNetworking()
 	if err != nil {
 		return e.SafeWrap(err, "setting up networking")
 	}

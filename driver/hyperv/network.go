@@ -18,7 +18,7 @@ var (
 		`Foreach-Object { Remove-Item (Join-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" $_.PSChildName) }`
 )
 
-func (d *HyperV) setupNetworking() (string, error) {
+func (d *HyperV) SetupNetworking() (string, error) {
 	if err := d.registerServiceGUIDs(); err != nil {
 		return "", fmt.Errorf("generating service guids: %s", err)
 	}
