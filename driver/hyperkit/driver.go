@@ -5,7 +5,6 @@ import (
 	"code.cloudfoundry.org/cfdev/daemon"
 	"code.cloudfoundry.org/cfdev/driver"
 	e "code.cloudfoundry.org/cfdev/errors"
-	"code.cloudfoundry.org/cfdev/hypervisor"
 	"code.cloudfoundry.org/cfdev/pkg/cfdevd/client"
 	"code.cloudfoundry.org/cfdev/runner"
 	"fmt"
@@ -106,7 +105,7 @@ func (d *Hyperkit) Stop() error {
 		reterr = e.SafeWrap(err, "failed to stop the VM")
 	}
 
-	if err := hypervisor.SafeKill(filepath.Join(d.Config.StateLinuxkit, "hyperkit.pid"), "hyperkit"); err != nil {
+	if err := SafeKill(filepath.Join(d.Config.StateLinuxkit, "hyperkit.pid"), "hyperkit"); err != nil {
 		reterr = e.SafeWrap(err, "failed to stop the VM")
 	}
 
