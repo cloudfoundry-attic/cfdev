@@ -1,5 +1,3 @@
-// +build !linux,!windows,darwin
-
 package hyperkit_test
 
 import (
