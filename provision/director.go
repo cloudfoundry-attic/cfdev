@@ -58,27 +58,27 @@ func (c *Controller) DeployBosh() error {
 	}
 	defer s.Close()
 
-	if runtime.GOOS == "linux" {
-		directorContents, err := ioutil.ReadFile(directorPath)
-		if err != nil {
-			return err
-		}
+	directorContents, err := ioutil.ReadFile(directorPath)
+	if err != nil {
+		return err
+	}
 
+	if runtime.GOOS == "linux" {
 		directorContents = bytes.Replace(directorContents, []byte(vpnkitInternalIP+":9999"), []byte(ip+":9999"), -1)
 
 		directorContents = bytes.Replace(directorContents, []byte(vpnkitNameserverIP), []byte(kvmNameserverIP), -1)
-
-		s.SendData(directorContents, "/bosh/director.yml")
 	}
 
-	s.SendFile(stateJSONPath, "/bosh/state.json")
+	s.SendData(directorContents, "director.yml")
 
-	command := "/usr/local/bin/bosh --tty create-env /bosh/director.yml --state /bosh/state.json"
+	s.SendFile(stateJSONPath, "state.json")
+
+	command := "/usr/local/bin/bosh --tty create-env director.yml --state state.json"
 
 	if !credhubIsDeployed() {
-		s.SendFile(credsPath, "/bosh/creds.yml")
+		s.SendFile(credsPath, "creds.yml")
 
-		command = command + " --vars-store /bosh/creds.yml"
+		command = command + " --vars-store creds.yml"
 	}
 
 	// Added the time because we were seeing some delay
@@ -89,7 +89,7 @@ func (c *Controller) DeployBosh() error {
 
 	s.Run(command)
 
-	s.RetrieveFile(stateJSONPath, "/bosh/state.json")
+	s.RetrieveFile(stateJSONPath, "state.json")
 	if s.Error != nil {
 		return s.Error
 	}

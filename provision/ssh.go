@@ -94,6 +94,7 @@ func (s *SSH) SendData(srcData []byte, remoteFilePath string) {
 
 	go func() {
 		w, _ := session.StdinPipe()
+		defer w.Close()
 
 		fmt.Fprintln(w, "C0755", int64(len(srcData)), filepath.Base(remoteFilePath))
 		_, err := io.Copy(w, bytesReader)
