@@ -73,7 +73,9 @@ var _ = Describe("HyperV", func() {
 		})
 
 		It("creates hyperv VM", func() {
-			Expect(hyperV.CreateVM(vmName, 1, 2000, filepath.Join(assetDir, "cfdev-efi-v2.iso"))).To(Succeed())
+			guid, err := hyperV.CreateVM(vmName, 1, 2000, filepath.Join(assetDir, "cfdev-efi-v2.iso"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(guid).NotTo(BeEmpty())
 
 			cmd := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Get-VM -Name %s | format-list -Property MemoryStartup,ProcessorCount", vmName))
 			session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)

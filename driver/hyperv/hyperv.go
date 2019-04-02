@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) error {
+func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) (string, error) {
 	var (
 		cfDevVHD    = filepath.Join(d.Config.StateDir, "disk.vhdx")
 	)
@@ -14,7 +14,7 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) err
 	command := fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", name)
 	_, err := d.Powershell.Output(command)
 	if err != nil {
-		return fmt.Errorf("creating new vm: %s", err)
+		return "", fmt.Errorf("creating new vm: %s", err)
 	}
 
 	command = fmt.Sprintf("Set-VM -Name %s "+
@@ -27,13 +27,13 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) err
 		name)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
-		return fmt.Errorf("setting vm properites (memoryMB:%d, cpus:%d): %s", memory, cpus, err)
+		return "", fmt.Errorf("setting vm properites (memoryMB:%d, cpus:%d): %s", memory, cpus, err)
 	}
 
 	command = fmt.Sprintf(`Add-VMDvdDrive -VMName %s -Path "%s"`, name, efiPath)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
-		return fmt.Errorf("adding dvd drive %s: %s", efiPath, err)
+		return "", fmt.Errorf("adding dvd drive %s: %s", efiPath, err)
 	}
 
 	command = fmt.Sprintf("Remove-VMNetworkAdapter -VMName %s", name)
@@ -46,7 +46,7 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) err
 		`-Path "%s"`, name, cfDevVHD)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
-		return fmt.Errorf("adding vhd %s : %s", cfDevVHD, err)
+		return "", fmt.Errorf("adding vhd %s : %s", cfDevVHD, err)
 	}
 
 	command = fmt.Sprintf("Set-VMFirmware "+
@@ -56,7 +56,7 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) err
 		name)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
-		return fmt.Errorf("setting firmware: %s", err)
+		return "", fmt.Errorf("setting firmware: %s", err)
 	}
 
 	command = fmt.Sprintf("Set-VMComPort "+
@@ -66,10 +66,16 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) err
 		name)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
-		return fmt.Errorf("setting com port: %s", err)
+		return "", fmt.Errorf("setting com port: %s", err)
 	}
 
-	return nil
+	output, err := d.Powershell.Output("((Get-VM -Name cfdev).Id).Guid")
+	if err != nil {
+		return "", fmt.Errorf("fetching VM Guid: %s", err)
+	}
+
+	vmGUID := strings.TrimSpace(output)
+	return vmGUID, nil
 }
 
 func (d *HyperV) StartVM(vmName string) error {

@@ -18,30 +18,24 @@ var (
 		`Foreach-Object { Remove-Item (Join-Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" $_.PSChildName) }`
 )
 
-func (d *HyperV) SetupNetworking() (string, error) {
+func (d *HyperV) SetupNetworking() error {
 	if err := d.registerServiceGUIDs(); err != nil {
-		return "", fmt.Errorf("generating service guids: %s", err)
+		return fmt.Errorf("generating service guids: %s", err)
 	}
 
 	if err := driver.WriteHttpConfig(d.Config); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := d.writeResolvConf(); err != nil {
-		return "", fmt.Errorf("writing resolv.conf: %s", err)
+		return fmt.Errorf("writing resolv.conf: %s", err)
 	}
 
 	if err := d.writeDHCPJSON(); err != nil {
-		return "", fmt.Errorf("writing dhcp.json: %s", err)
+		return fmt.Errorf("writing dhcp.json: %s", err)
 	}
 
-	output, err := d.Powershell.Output("((Get-VM -Name cfdev).Id).Guid")
-	if err != nil {
-		return "", fmt.Errorf("fetching VM Guid: %s", err)
-	}
-
-	vmGUID := strings.TrimSpace(output)
-	return vmGUID, nil
+	return nil
 }
 
 func (d *HyperV) networkingDaemonSpec(label, vmGUID string) daemon.DaemonSpec {

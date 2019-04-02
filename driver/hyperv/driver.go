@@ -57,13 +57,13 @@ func (d *HyperV) Prestart() error {
 
 func (d *HyperV) Start(cpus int, memory int, efiPath string) error {
 	d.UI.Say("Creating the VM...")
-	err := d.CreateVM(driver.VMName, cpus, memory, efiPath)
+	vmGUID, err := d.CreateVM(driver.VMName, cpus, memory, efiPath)
 	if err != nil {
 		return e.SafeWrap(err, "creating the vm")
 	}
 
 	d.UI.Say("Starting VPNKit...")
-	vmGUID, err := d.SetupNetworking()
+	err = d.SetupNetworking()
 	if err != nil {
 		return e.SafeWrap(err, "setting up networking")
 	}
