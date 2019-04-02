@@ -20,17 +20,20 @@ const (
 
 func (c *Controller) DeployBosh() error {
 	var (
-		// For now we determine if we have a BOSH Director with credhub deployed
-		// by looking to see if a creds.yml is present or not
-		// This is definitely not the most expressive solution
-		// and should be improved..
-		credsPath        = filepath.Join(c.Config.StateBosh, "creds.yml")
-		directorPath     = filepath.Join(c.Config.StateBosh, "director.yml")
-		cloudConfigPath  = filepath.Join(c.Config.StateBosh, "cloud-config.yml")
-		dnsConfigPath    = filepath.Join(c.Config.StateBosh, "dns.yml")
-		stateJSONPath    = filepath.Join(c.Config.StateBosh, "state.json")
-		boshRunner       = runner.NewBosh(c.Config)
-		crehubIsDeployed = doesNotExist(credsPath)
+		credsPath         = filepath.Join(c.Config.StateBosh, "creds.yml")
+		directorPath      = filepath.Join(c.Config.StateBosh, "director.yml")
+		cloudConfigPath   = filepath.Join(c.Config.StateBosh, "cloud-config.yml")
+		dnsConfigPath     = filepath.Join(c.Config.StateBosh, "dns.yml")
+		stateJSONPath     = filepath.Join(c.Config.StateBosh, "state.json")
+		boshRunner        = runner.NewBosh(c.Config)
+		credhubIsDeployed = func() bool {
+			// For now we determine if we have a BOSH Director with credhub deployed
+			// by looking to see if a creds.yml is present or not
+			// This is definitely not the most expressive solution
+			// and should be improved..
+			_, err := os.Stat(credsPath)
+			return os.IsNotExist(err)
+		}
 	)
 
 	ip, err := driver.IP(c.Config)
@@ -72,7 +75,7 @@ func (c *Controller) DeployBosh() error {
 
 	command := "/usr/local/bin/bosh --tty create-env /bosh/director.yml --state /bosh/state.json"
 
-	if !crehubIsDeployed {
+	if !credhubIsDeployed() {
 		s.SendFile(credsPath, "/bosh/creds.yml")
 
 		command = command + " --vars-store /bosh/creds.yml"
@@ -122,9 +125,4 @@ func (c *Controller) DeployBosh() error {
 	}
 
 	return nil
-}
-
-func doesNotExist(path string) bool {
-	_, err := os.Stat(path)
-	return os.IsNotExist(err)
 }
