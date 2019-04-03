@@ -20,13 +20,14 @@ const (
 
 func (c *Controller) DeployBosh() error {
 	var (
-		credsPath         = filepath.Join(c.Config.StateBosh, "creds.yml")
-		directorPath      = filepath.Join(c.Config.StateBosh, "director.yml")
-		cloudConfigPath   = filepath.Join(c.Config.StateBosh, "cloud-config.yml")
-		dnsConfigPath     = filepath.Join(c.Config.StateBosh, "dns.yml")
-		stateJSONPath     = filepath.Join(c.Config.StateBosh, "state.json")
-		boshRunner        = runner.NewBosh(c.Config)
-		credhubIsDeployed = func() bool {
+		credsPath           = filepath.Join(c.Config.StateBosh, "creds.yml")
+		directorPath        = filepath.Join(c.Config.StateBosh, "director.yml")
+		cloudConfigPath     = filepath.Join(c.Config.StateBosh, "cloud-config.yml")
+		dnsConfigPath       = filepath.Join(c.Config.StateBosh, "dns.yml")
+		opsManDnsConfigPath = filepath.Join(c.Config.StateBosh, "ops-manager-dns-runtime.yml")
+		stateJSONPath       = filepath.Join(c.Config.StateBosh, "state.json")
+		boshRunner          = runner.NewBosh(c.Config)
+		credhubIsDeployed   = func() bool {
 			// For now we determine if we have a BOSH Director with credhub deployed
 			// by looking to see if a creds.yml is present or not
 			// This is definitely not the most expressive solution
@@ -95,34 +96,86 @@ func (c *Controller) DeployBosh() error {
 	}
 
 	if runtime.GOOS == "linux" {
-		cloudConfigContents, err := ioutil.ReadFile(cloudConfigPath)
+		err = c.updateCloudConfig(boshRunner, cloudConfigPath)
 		if err != nil {
 			return err
 		}
 
-		cloudConfigContents = bytes.Replace(cloudConfigContents, []byte(vpnkitNameserverIP), []byte(kvmNameserverIP), -1)
-
-		err = ioutil.WriteFile(cloudConfigPath, cloudConfigContents, 0600)
+		err = c.updateDNSRuntime(boshRunner, dnsConfigPath)
 		if err != nil {
 			return err
 		}
 
-		boshRunner.Output("-n", "update-cloud-config", cloudConfigPath)
-
-		dnsConfigContents, err := ioutil.ReadFile(dnsConfigPath)
+		err = c.updateOpsManDNSRuntime(boshRunner, opsManDnsConfigPath)
 		if err != nil {
 			return err
 		}
-
-		dnsConfigContents = bytes.Replace(dnsConfigContents, []byte(vpnkitHostIP), []byte(kvmNameserverIP), -1)
-
-		err = ioutil.WriteFile(dnsConfigPath, dnsConfigContents, 0600)
-		if err != nil {
-			return err
-		}
-
-		boshRunner.Output("-n", "update-runtime-config", dnsConfigPath)
 	}
 
 	return nil
+}
+
+func (c *Controller) updateCloudConfig(boshRunner *runner.Bosh, path string) error {
+	cloudConfigContents, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	cloudConfigContents = bytes.Replace(cloudConfigContents, []byte(vpnkitNameserverIP), []byte(kvmNameserverIP), -1)
+
+	err = ioutil.WriteFile(path, cloudConfigContents, 0600)
+	if err != nil {
+		return err
+	}
+
+	_, err = boshRunner.Output("-n", "update-cloud-config", path)
+	return err
+}
+
+func (c *Controller) updateDNSRuntime(boshRunner *runner.Bosh, path string) error {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		// dns.yml does not exist
+		// skipping in favor of next DNS runtime method updater
+		return nil
+	}
+
+	dnsConfigContents, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	dnsConfigContents = bytes.Replace(dnsConfigContents, []byte(vpnkitHostIP), []byte(kvmNameserverIP), -1)
+
+	err = ioutil.WriteFile(path, dnsConfigContents, 0600)
+	if err != nil {
+		return err
+	}
+
+	_, err = boshRunner.Output("-n", "update-runtime-config", path)
+	return err
+}
+
+func (c *Controller) updateOpsManDNSRuntime(boshRunner *runner.Bosh, path string) error {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		// dns.yml does not exist
+		// skipping in favor of next DNS runtime method updater
+		return nil
+	}
+
+	dnsConfigContents, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	dnsConfigContents = bytes.Replace(dnsConfigContents, []byte(vpnkitHostIP), []byte(kvmNameserverIP), -1)
+
+	err = ioutil.WriteFile(path, dnsConfigContents, 0600)
+	if err != nil {
+		return err
+	}
+
+	_, err = boshRunner.Output("-n", "update-config", "--name", "ops_manager_dns_runtime", "--type", "runtime", path)
+	return err
 }
