@@ -35,7 +35,7 @@ type Provisioner interface {
 	DeployServices(provision.UI, []workspace.Service, []string) error
 }
 
-const compatibilityVersion = "v4"
+const compatibilityVersion = "v5"
 
 type Provision struct {
 	Exit           chan struct{}

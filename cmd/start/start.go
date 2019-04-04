@@ -105,7 +105,7 @@ type Start struct {
 }
 
 const (
-	compatibilityVersion = "v4"
+	compatibilityVersion = "v5"
 	defaultMemory        = 4192
 )
 

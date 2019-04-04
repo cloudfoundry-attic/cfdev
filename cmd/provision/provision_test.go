@@ -44,7 +44,7 @@ var _ = Describe("Provision", func() {
 		It("deploys bosh and services", func() {
 			gomock.InOrder(
 				mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
-					Version: "v4",
+					Version: "v5",
 				}, nil),
 				mockProvisioner.EXPECT().Ping(gomock.Any()),
 				mockUI.EXPECT().Say("Deploying the BOSH Director..."),
@@ -75,7 +75,7 @@ var _ = Describe("Provision", func() {
 		It("pass them to services", func() {
 			gomock.InOrder(
 				mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
-					Version: "v4",
+					Version: "v5",
 				}, nil),
 				mockProvisioner.EXPECT().Ping(gomock.Any()),
 				mockUI.EXPECT().Say("Deploying the BOSH Director..."),
@@ -95,7 +95,7 @@ var _ = Describe("Provision", func() {
 		It("return an error", func() {
 			gomock.InOrder(
 				mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
-					Version: "v4",
+					Version: "v5",
 				}, nil),
 				mockProvisioner.EXPECT().Ping(gomock.Any()).Return(errors.New("not running")),
 			)

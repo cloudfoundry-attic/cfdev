@@ -46,7 +46,7 @@ var _ = Describe("DeployService", func() {
 				Name: "some-service",
 			}
 			mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
-				Version:  "v4",
+				Version:  "v5",
 				Services: []workspace.Service{service},
 			}, nil)
 
@@ -69,7 +69,7 @@ var _ = Describe("DeployService", func() {
 				Name: "some-service",
 			}
 			mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
-				Version:  "v4",
+				Version:  "v5",
 				Services: []workspace.Service{service},
 			}, nil)
 			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(errors.New("some issue happened"))
@@ -88,7 +88,7 @@ var _ = Describe("DeployService", func() {
 				Name: "some-service",
 			}
 			mockMetadataReader.EXPECT().Metadata().Return(workspace.Metadata{
-				Version:  "v4",
+				Version:  "v5",
 				Services: []workspace.Service{service},
 			}, nil)
 			mockProvisioner.EXPECT().Ping(gomock.Any()).Return(nil)
