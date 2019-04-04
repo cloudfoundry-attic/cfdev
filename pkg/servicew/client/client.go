@@ -3,6 +3,7 @@ package client
 import (
 	"code.cloudfoundry.org/cfdev/pkg/servicew/config"
 	"code.cloudfoundry.org/cfdev/pkg/servicew/program"
+	"code.cloudfoundry.org/cfdev/runner"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -15,12 +16,14 @@ import (
 type ServiceWrapper struct {
 	binaryPath string
 	workdir    string
+	runner     *runner.Sudo
 }
 
 func New(binaryPath string, workdir string) *ServiceWrapper {
 	return &ServiceWrapper{
 		binaryPath: binaryPath,
 		workdir:    workdir,
+		runner:     &runner.Sudo{},
 	}
 }
 
@@ -46,13 +49,7 @@ func (s *ServiceWrapper) Install(cfg config.Config) error {
 		return err
 	}
 
-	command := exec.Command(swrapperPath, "install")
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to install '%s': %s: %s", cfg.Label, err, output)
-	}
-
-	return nil
+	return s.runner.Run(swrapperPath, "install")
 }
 
 func (s *ServiceWrapper) Uninstall(label string) error {
@@ -65,10 +62,9 @@ func (s *ServiceWrapper) Uninstall(label string) error {
 		return nil
 	}
 
-	command := exec.Command(swrapperPath, "uninstall")
-	output, err := command.CombinedOutput()
+	err := s.runner.Run(swrapperPath, "uninstall")
 	if err != nil {
-		return fmt.Errorf("failed to uninstall '%s': %s: %s", label, err, output)
+		return fmt.Errorf("failed to uninstall '%s': %s", label, err)
 	}
 
 	err = os.RemoveAll(swrapperPath)
@@ -80,13 +76,7 @@ func (s *ServiceWrapper) Uninstall(label string) error {
 }
 
 func (s *ServiceWrapper) Start(label string) error {
-	command := exec.Command(s.swrapperPath(label), "start")
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to start '%s': %s: %s", label, err, output)
-	}
-
-	return nil
+	return s.runner.Run(s.swrapperPath(label), "start")
 }
 
 func (s *ServiceWrapper) Stop(label string) error {
@@ -94,13 +84,7 @@ func (s *ServiceWrapper) Stop(label string) error {
 		return nil
 	}
 
-	command := exec.Command(s.swrapperPath(label), "stop")
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to stop '%s': %s: %s", label, err, output)
-	}
-
-	return nil
+	return s.runner.Run(s.swrapperPath(label), "stop")
 }
 
 func (s *ServiceWrapper) IsRunning(label string) (bool, error) {

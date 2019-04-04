@@ -5,9 +5,9 @@ import (
 	"os/exec"
 )
 
-type SudoShell struct{}
+type Sudo struct{}
 
-func (s *SudoShell) Run(args ...string) error {
+func (s *Sudo) Run(args ...string) error {
 	var (
 		invocation = append([]string{"-S"}, args...)
 		cmd        = exec.Command("sudo", invocation...)

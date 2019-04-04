@@ -18,7 +18,7 @@ type Hyperkit struct {
 	Config       config.Config
 	DaemonRunner driver.DaemonRunner
 	CFDevD       *client.Client
-	SudoShell    *runner.SudoShell
+	SudoShell    *runner.Sudo
 }
 
 func New(
@@ -32,7 +32,7 @@ func New(
 		Config:       cfg,
 		DaemonRunner: daemonRunner,
 		CFDevD:       cfdevdClient,
-		SudoShell:    &runner.SudoShell{},
+		SudoShell:    &runner.Sudo{},
 	}
 }
 

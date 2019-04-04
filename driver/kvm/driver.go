@@ -20,7 +20,7 @@ type KVM struct {
 	UI           driver.UI
 	Config       config.Config
 	DaemonRunner driver.DaemonRunner
-	SudoShell    *runner.SudoShell
+	SudoShell    *runner.Sudo
 }
 
 func New(
@@ -32,7 +32,7 @@ func New(
 		UI:           ui,
 		Config:       cfg,
 		DaemonRunner: daemonRunner,
-		SudoShell:    &runner.SudoShell{},
+		SudoShell:    &runner.Sudo{},
 	}
 }
 
