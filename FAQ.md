@@ -3,7 +3,7 @@
 ## Can I configure the working directory?
 
 Yes you can, by exporting the environment variable `CFDEV_HOME` to your custom location before invoking CF Dev. All 
-state used by the plugin will be contained in the that directory. By default, the working directory is set to `~/.cfdev`.
+state used by the plugin will be contained in the directory. By default, the working directory is set to `~/.cfdev`.
 
 ## `cf dev start` failed while deploying. It got stuck at _Progress x of 15 (55m10s)_.
 
