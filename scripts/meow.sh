@@ -20,6 +20,7 @@ function run_cats() {
     "admin_password": "admin",
     "admin_secret": "admin-client-secret",
     "skip_ssl_validation": true,
+    "stacks": ["cflinuxfs3"],
     "use_http": true,
     "use_log_cache": false,
     "backend": "diego",
