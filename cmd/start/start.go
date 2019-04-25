@@ -304,10 +304,8 @@ func (s *Start) allocateMemory(metaData workspace.Metadata, stats cfdevos.Stats,
 				return requestedMem, nil
 			}
 
-			if stats.AvailableMemory < uint64(requestedMem) {
-				s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
-				return requestedMem, nil
-			}
+			s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
+			return requestedMem, nil
 		}
 
 		if requestedMem < baseMem {
@@ -316,18 +314,16 @@ func (s *Start) allocateMemory(metaData workspace.Metadata, stats cfdevos.Stats,
 				return requestedMem, nil
 			}
 
-			if stats.AvailableMemory < uint64(requestedMem) {
-				s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
-				return requestedMem, nil
-			}
+			s.UI.Say("WARNING: This machine may not have enough available RAM to run with what is specified.")
+			return requestedMem, nil
 		}
 	} else {
 		if stats.AvailableMemory >= uint64(baseMem) {
 			return baseMem, nil
-		} else {
-			s.UI.Say(fmt.Sprintf("WARNING: %s Dev requires %v MB of RAM to run. This machine may not have enough free RAM.", strings.ToUpper(metaData.DeploymentName), baseMem))
-			return baseMem, nil
 		}
+
+		s.UI.Say(fmt.Sprintf("WARNING: %s Dev requires %v MB of RAM to run. This machine may not have enough free RAM.", strings.ToUpper(metaData.DeploymentName), baseMem))
+		return baseMem, nil
 	}
 
 	return 0, nil
