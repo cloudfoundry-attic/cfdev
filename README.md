@@ -16,6 +16,7 @@ CF Dev is a distribution of Cloud Foundry designed to run on a developer’s lap
 * Disk: 60GB _flash_ storage
 * Dependencies: _QEMU_ and _Libvirt_ for Linux
   * Ubuntu: `sudo apt install qemu-kvm libvirt-bin libvirt-doc`
+  * MacOS: `brew install qemu libvirt` (Assumes you have Homebrew installed)
 
 ## Getting Started
 
