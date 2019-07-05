@@ -33,7 +33,7 @@ function run_cats() {
     "include_internet_dependent": true,
     "include_persistent_app": true,
     "include_privileged_container_support": false,
-    "include_route_services": true,
+    "include_route_services": false,
     "include_routing": true,
     "include_security_groups": true,
     "include_services": true,
