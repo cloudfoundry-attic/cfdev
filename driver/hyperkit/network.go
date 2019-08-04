@@ -43,7 +43,7 @@ func (d *Hyperkit) networkingDaemonSpec() daemon.DaemonSpec {
 			"--port", path.Join(d.Config.VpnKitStateDir, "vpnkit_port.sock"),
 			"--vsock-path", path.Join(d.Config.StateLinuxkit, "connect"),
 			"--http", path.Join(d.Config.VpnKitStateDir, "http_proxy.json"),
-			"--host-names", "host.cfded.sh",
+			"--host-names", "host.cfdev.sh",
 		},
 		RunAtLoad:  false,
 		StdoutPath: path.Join(d.Config.LogDir, "vpnkit.stdout.log"),
