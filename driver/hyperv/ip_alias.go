@@ -41,7 +41,7 @@ func (d *HyperV) RemoveLoopbackAliases(switchName string, addrs ...string) error
 		return nil
 	}
 
-	_, err = d.Powershell.Output(fmt.Sprintf("Remove-VMSwitch -Name %s -force", switchName))
+	_, err = d.Powershell.Output(fmt.Sprintf("Hyper-V\\Remove-VMSwitch -Name %s -force", switchName))
 	return err
 }
 
@@ -78,12 +78,12 @@ func (d *HyperV) createSwitchIfNotExist(switchName string) error {
 		return nil
 	}
 
-	_, err = d.Powershell.Output(fmt.Sprintf("New-VMSwitch -Name %s -SwitchType Internal -Notes 'Switch for CF Dev Networking'", switchName))
+	_, err = d.Powershell.Output(fmt.Sprintf("Hyper-V\\New-VMSwitch -Name %s -SwitchType Internal -Notes 'Switch for CF Dev Networking'", switchName))
 	return err
 }
 
 func (d *HyperV) switchExists(switchName string) (bool, error) {
-	output, err := d.Powershell.Output(fmt.Sprintf("Get-VMSwitch %s*", switchName))
+	output, err := d.Powershell.Output(fmt.Sprintf("Hyper-V\\Get-VMSwitch %s*", switchName))
 	if err != nil {
 		return false, err
 	} else if output == "" {

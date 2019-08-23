@@ -11,13 +11,13 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) (st
 		cfDevVHD    = filepath.Join(d.Config.StateDir, "disk.vhdx")
 	)
 
-	command := fmt.Sprintf("New-VM -Name %s -Generation 2 -NoVHD", name)
+	command := fmt.Sprintf("Hyper-V\\New-VM -Name %s -Generation 2 -NoVHD", name)
 	_, err := d.Powershell.Output(command)
 	if err != nil {
 		return "", fmt.Errorf("creating new vm: %s", err)
 	}
 
-	command = fmt.Sprintf("Set-VM -Name %s "+
+	command = fmt.Sprintf("Hyper-V\\Set-VM -Name %s "+
 		"-AutomaticStartAction Nothing "+
 		"-AutomaticStopAction ShutDown "+
 		"-CheckpointType Disabled "+
@@ -30,26 +30,26 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) (st
 		return "", fmt.Errorf("setting vm properites (memoryMB:%d, cpus:%d): %s", memory, cpus, err)
 	}
 
-	command = fmt.Sprintf(`Add-VMDvdDrive -VMName %s -Path "%s"`, name, efiPath)
+	command = fmt.Sprintf(`Hyper-V\Add-VMDvdDrive -VMName %s -Path "%s"`, name, efiPath)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
 		return "", fmt.Errorf("adding dvd drive %s: %s", efiPath, err)
 	}
 
-	command = fmt.Sprintf("Remove-VMNetworkAdapter -VMName %s", name)
+	command = fmt.Sprintf("Hyper-V\\Remove-VMNetworkAdapter -VMName %s", name)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
 		fmt.Printf("failed to remove network adapter: %s", err)
 	}
 
-	command = fmt.Sprintf("Add-VMHardDiskDrive -VMName %s "+
+	command = fmt.Sprintf("Hyper-V\\Add-VMHardDiskDrive -VMName %s "+
 		`-Path "%s"`, name, cfDevVHD)
 	_, err = d.Powershell.Output(command)
 	if err != nil {
 		return "", fmt.Errorf("adding vhd %s : %s", cfDevVHD, err)
 	}
 
-	command = fmt.Sprintf("Set-VMFirmware "+
+	command = fmt.Sprintf("Hyper-V\\Set-VMFirmware "+
 		"-VMName %s "+
 		"-EnableSecureBoot Off "+
 		"-FirstBootDevice $cdrom",
@@ -59,7 +59,7 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) (st
 		return "", fmt.Errorf("setting firmware: %s", err)
 	}
 
-	command = fmt.Sprintf("Set-VMComPort "+
+	command = fmt.Sprintf("Hyper-V\\Set-VMComPort "+
 		"-VMName %s "+
 		"-number 1 "+
 		"-Path \\\\.\\pipe\\cfdev-com",
@@ -69,7 +69,7 @@ func (d *HyperV) CreateVM(name string, cpus int, memory int, efiPath string) (st
 		return "", fmt.Errorf("setting com port: %s", err)
 	}
 
-	output, err := d.Powershell.Output("((Get-VM -Name cfdev).Id).Guid")
+	output, err := d.Powershell.Output("((Hyper-V\\Get-VM -Name cfdev).Id).Guid")
 	if err != nil {
 		return "", fmt.Errorf("fetching VM Guid: %s", err)
 	}
@@ -85,7 +85,7 @@ func (d *HyperV) StartVM(vmName string) error {
 		return fmt.Errorf("hyperv vm with name %s does not exist", vmName)
 	}
 
-	command := fmt.Sprintf("Start-VM -Name %s", vmName)
+	command := fmt.Sprintf("Hyper-V\\Start-VM -Name %s", vmName)
 	if _, err := d.Powershell.Output(command); err != nil {
 		return fmt.Errorf("start-vm: %s", err)
 	}
@@ -100,7 +100,7 @@ func (d *HyperV) StopVM(vmName string) error {
 		return nil
 	}
 
-	command := fmt.Sprintf("Stop-VM -Name %s -Turnoff", vmName)
+	command := fmt.Sprintf("Hyper-V\\Stop-VM -Name %s -Turnoff", vmName)
 	if _, err := d.Powershell.Output(command); err != nil {
 		return fmt.Errorf("stopping vm: %s", err)
 	}
@@ -115,7 +115,7 @@ func (d *HyperV) DestroyVM(vmName string) error {
 		return nil
 	}
 
-	command := fmt.Sprintf("Remove-VM -Name %s -Force", vmName)
+	command := fmt.Sprintf("Hyper-V\\Remove-VM -Name %s -Force", vmName)
 	if _, err := d.Powershell.Output(command); err != nil {
 		return fmt.Errorf("removing vm: %s", err)
 	}
@@ -128,7 +128,7 @@ func (d *HyperV) IsVMRunning(vmName string) (bool, error) {
 		return false, err
 	}
 
-	command := fmt.Sprintf("Get-VM -Name %s | format-list -Property State", vmName)
+	command := fmt.Sprintf("Hyper-V\\Get-VM -Name %s | format-list -Property State", vmName)
 	output, err := d.Powershell.Output(command)
 	if err != nil {
 		return false, err
@@ -142,7 +142,7 @@ func (d *HyperV) IsVMRunning(vmName string) (bool, error) {
 }
 
 func (d *HyperV) exists(vmName string) (bool, error) {
-	command := fmt.Sprintf("Get-VM -Name %s*", vmName)
+	command := fmt.Sprintf("Hyper-V\\Get-VM -Name %s*", vmName)
 	output, err := d.Powershell.Output(command)
 	if err != nil {
 		return false, fmt.Errorf("getting vms: %s", err)
