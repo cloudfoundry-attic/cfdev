@@ -86,7 +86,7 @@ func (d *KVM) IsRunning() (bool, error) {
 func (d *KVM) fetchIP() (string, error) {
 	var (
 		ticker  = time.NewTicker(time.Second)
-		timeout = time.After(2 * time.Minute)
+		timeout = time.After(5 * time.Minute)
 		err     error
 	)
 
