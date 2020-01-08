@@ -25,6 +25,8 @@ CF Dev is a distribution of Cloud Foundry designed to run on a developer’s lap
 1. Install the CF Dev plugin `cf install-plugin -r CF-Community cfdev`
 1. Run CF Dev `cf dev start`
 
+_Note: If you have multiple disks and wish to use a separate disk for the storage and configuration of the virtual machine, set the CFDEV_HOME environment variable._
+
 ### Use BOSH
 
 1. Install [BOSH CLI v2](https://bosh.io/docs/cli-v2.html).
