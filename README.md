@@ -1,7 +1,5 @@
 # CF Dev
 
-![ci.cfdev.sh](http://ci.cfdev.sh/api/v1/teams/main/pipelines/cfdev/jobs/build-cli/badge)
-
 ![start](./docs/start.png)
 
 ***********************************
@@ -10,7 +8,7 @@ CF Dev is a distribution of Cloud Foundry designed to run on a developer’s lap
 
 ## Recommended system requirements
 
-* Operating system: MacOS 10.12+/Windows 10+/Linux
+* Operating system: MacOS 10.12+/Windows 10+/Linux (**Note:** Only the `Ubuntu` distro is currently suppported)
 * CPU: 2 Cores or more
 * Memory: 8 Gigabytes _available memory_
 * Disk: 60GB _flash_ storage
