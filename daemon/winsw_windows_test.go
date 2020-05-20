@@ -35,7 +35,7 @@ var _ = Describe("Winsw", func() {
 
 		assetPath := filepath.Join(binaryDir, "winsw.exe")
 
-		err = downloadTestAsset(assetPath, "https://github.com/kohsuke/winsw/releases/download/winsw-v2.1.2/WinSW.NET4.exe")
+		err = downloadTestAsset(assetPath, "https://github.com/winsw/winsw/releases/download/v2.9.0/WinSW.NETCore31.x64.exe")
 		Expect(err).To(BeNil())
 		Expect(assetPath).To(BeAnExistingFile())
 		winsw = daemon.NewWinSW(tmpDir)
