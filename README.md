@@ -70,6 +70,10 @@ In addition to making this data completely anonymous, we require users to opt-in
 
 You can learn more about what we do with telemetry [here](https://github.com/cloudfoundry-incubator/cfdev/wiki/Telemetry)
 
+## Development
+
+See [Docs](https://pivotal.github.io/cfdev-docs).
+
 ## Community
 
 * [#cfdev on Cloudfoundry Slack](https://cloudfoundry.slack.com)
